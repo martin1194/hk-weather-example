@@ -577,6 +577,56 @@ def test_cli_place_when_nothing_matches(monkeypatch, capsys):
     }
 
 
+def test_cli_list_places_includes_humidity_only_stations(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response(
+            {
+                "updateTime": "2026-10-02T23:02:00+08:00",
+                "temperature": {
+                    "data": [
+                        {"place": "King's Park", "value": 27, "unit": "C"},
+                        {"place": "Sha Tin", "value": 26, "unit": "C"},
+                    ]
+                },
+                "humidity": {
+                    "data": [
+                        {"place": "Sha Tin", "value": 80, "unit": "percent"},
+                        {"place": "Chek Lap Kok", "value": 75, "unit": "percent"},
+                    ]
+                },
+            }
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--list-places", "--lang", "sc"]) == 0
+    assert "dataType=rhrread" in seen["url"]
+    assert "lang=sc" in seen["url"]
+    assert capsys.readouterr().out == (
+        "Hong Kong places\n"
+        "King's Park\n"
+        "Sha Tin\n"
+        "Chek Lap Kok\n"
+    )
+
+
+def test_cli_list_places_json(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {
+                "temperature": {
+                    "data": [{"place": "Hong Kong Observatory", "value": 28, "unit": "C"}]
+                }
+            }
+        ),
+    )
+    assert main(["--list-places", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {"places": ["Hong Kong Observatory"]}
+
+
 def test_cli_place_rejects_blank_name(capsys):
     assert main(["--place", "   "]) == 2
     assert "place must not be empty" in capsys.readouterr().err

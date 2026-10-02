@@ -19,6 +19,7 @@ from hk_weather.hko import (
     format_json,
     format_place_miss,
     format_nine_day,
+    format_places,
     format_report,
     format_stations,
     format_tips,
@@ -35,7 +36,8 @@ def build_parser() -> argparse.ArgumentParser:
             "Current conditions by default; --forecast prints the local forecast; "
             "--nine-day prints the 9-day forecast; --warnings lists active warnings; "
             "--uv prints the UV index; --tips prints special weather tips; "
-            "--stations lists each station; --place NAME filters those stations."
+            "--stations lists each station; --list-places lists their names; "
+            "--place NAME filters those stations."
         ),
     )
     parser.add_argument(
@@ -84,6 +86,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="List temperature and humidity at each station",
     )
     parser.add_argument(
+        "--list-places",
+        action="store_true",
+        help="List station names from the current report",
+    )
+    parser.add_argument(
         "--place",
         metavar="NAME",
         help="Print temperature and humidity for stations matching NAME",
@@ -120,6 +127,9 @@ def main(argv: list[str] | None = None) -> int:
         elif args.stations:
             stations = fetch_stations(timeout=args.timeout, lang=args.lang)
             text = format_json(stations) if args.json else format_stations(stations)
+        elif args.list_places:
+            places = fetch_stations(timeout=args.timeout, lang=args.lang)
+            text = format_places(places, as_json=args.json)
         elif args.place is not None:
             query = args.place.strip()
             if not query:

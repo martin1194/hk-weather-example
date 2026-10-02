@@ -464,6 +464,14 @@ def format_stations(report: StationReport) -> str:
     return "\n".join(lines) + "\n"
 
 
+def format_places(report: StationReport, *, as_json: bool = False) -> str:
+    """List station names from temperature and humidity readings."""
+    names = [station.place for station in report.stations]
+    if as_json:
+        return json.dumps({"places": names}, indent=2) + "\n"
+    return "Hong Kong places\n" + "\n".join(names) + "\n"
+
+
 def format_json(
     report: CurrentWeather | LocalForecast | NineDayForecast | UvIndex | SpecialTips | StationReport,
 ) -> str:
