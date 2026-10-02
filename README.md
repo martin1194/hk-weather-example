@@ -30,6 +30,8 @@ hk-weather --rain
 hk-weather --rain --json
 hk-weather --lightning
 hk-weather --lightning --json
+hk-weather --humidity
+hk-weather --humidity --json
 hk-weather --stations
 hk-weather --list-places
 hk-weather --place "King's Park"
@@ -79,6 +81,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --rain` (or `-r`) prints rainfall by district from the current report, one line per place. `--rain --json` prints that list as one JSON object. If no readings are present, it says so.
 
 `hk-weather --lightning` lists places where the current report shows lightning. `--lightning --json` prints those places as one JSON object. If none are reported, it says so.
+
+`hk-weather --humidity` prints humidity by place from the current report, with the record time when the Observatory includes it. `--humidity --json` prints that list as one JSON object. If no reading is present, it says so.
 
 `hk-weather --stations` lists each place in the current report with its temperature and, when the Observatory includes it, humidity.
 
