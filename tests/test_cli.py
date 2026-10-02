@@ -19,6 +19,14 @@ SAMPLE_WEATHER = CurrentWeather(
 )
 
 
+def test_cli_version_prints_package_metadata(monkeypatch, capsys):
+    monkeypatch.setattr("importlib.metadata.version", lambda name: "1.2.3")
+    with pytest.raises(SystemExit) as exc:
+        main(["--version"])
+    assert exc.value.code == 0
+    assert capsys.readouterr().out == "hk-weather 1.2.3\n"
+
+
 def test_cli_prints_report(monkeypatch, capsys):
     monkeypatch.setattr(
         "hk_weather.cli.fetch_current",

@@ -9,6 +9,7 @@ Data comes from the [Hong Kong Observatory Open Data API](https://www.hko.gov.hk
 ```bash
 pip install -e .
 hk-weather
+hk-weather --version
 hk-weather --short
 hk-weather --json
 hk-weather --forecast
@@ -27,6 +28,8 @@ hk-weather --list-places
 hk-weather --place "King's Park"
 hk-weather --place park --json
 ```
+
+`hk-weather --version` prints the installed package version and exits.
 
 Or without installing the script:
 

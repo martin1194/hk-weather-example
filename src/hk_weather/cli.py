@@ -29,6 +29,13 @@ from hk_weather.hko import (
 )
 
 
+def package_version() -> str:
+    """Return the installed hk-weather version from package metadata."""
+    from importlib.metadata import version
+
+    return version("hk-weather")
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="hk-weather",
@@ -40,6 +47,11 @@ def build_parser() -> argparse.ArgumentParser:
             "--stations lists each station; --list-places lists their names; "
             "--place NAME filters those stations."
         ),
+    )
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"%(prog)s {package_version()}",
     )
     parser.add_argument(
         "--timeout",
