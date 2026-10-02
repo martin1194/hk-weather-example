@@ -6,10 +6,14 @@ import pytest
 
 from hk_weather.hko import (
     DEFAULT_URL,
+    FORECAST_URL,
     WeatherError,
     fetch_current,
+    fetch_forecast,
+    format_forecast,
     format_report,
     parse_current_report,
+    parse_forecast,
 )
 
 SAMPLE = {
@@ -141,3 +145,52 @@ def test_fetch_current_invalid_json():
     with patch("hk_weather.hko.urllib.request.urlopen", return_value=Response()):
         with pytest.raises(WeatherError, match="invalid JSON"):
             fetch_current()
+
+
+FORECAST = {
+    "generalSituation": "A long situation paragraph.",
+    "tcInfo": "",
+    "fireDangerWarning": "",
+    "forecastPeriod": "Weather forecast for Hong Kong (Saturday, 3 Oct 2026)",
+    "forecastDesc": "Mainly cloudy with occasional showers.",
+    "outlook": "Still a few showers on Sunday.",
+    "updateTime": "2026-10-03T00:00:00+08:00",
+}
+
+
+def test_parse_forecast_keeps_the_short_fields():
+    forecast = parse_forecast(FORECAST)
+    text = format_forecast(forecast)
+    assert forecast.period.startswith("Weather forecast for Hong Kong")
+    assert forecast.forecast == "Mainly cloudy with occasional showers."
+    assert "Outlook: Still a few showers on Sunday." in text
+    assert "long situation paragraph" not in text
+
+
+def test_parse_forecast_requires_description():
+    with pytest.raises(WeatherError, match="local forecast"):
+        parse_forecast({"forecastDesc": "  ", "outlook": "Later."})
+
+
+def test_fetch_forecast_uses_flw(monkeypatch):
+    class Response:
+        def read(self):
+            return json.dumps(FORECAST).encode()
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return Response()
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    forecast = fetch_forecast(timeout=4)
+    assert seen["url"] == FORECAST_URL
+    assert "dataType=flw" in seen["url"]
+    assert forecast.outlook == "Still a few showers on Sunday."
