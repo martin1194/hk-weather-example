@@ -22,6 +22,7 @@ from hk_weather.hko import (
     fetch_today,
     fetch_tomorrow,
     fetch_uv,
+    fetch_visibility,
     fetch_warning_info,
     fetch_warnings,
     fetch_weekend,
@@ -47,6 +48,7 @@ from hk_weather.hko import (
     format_tomorrow,
     format_tomorrow_miss,
     format_uv,
+    format_visibility,
     format_warning_info,
     format_warnings,
     format_weekend,
@@ -90,7 +92,8 @@ def build_parser() -> argparse.ArgumentParser:
             "--day N prints forecast day N (1 is the first entry); "
             "--psr lists the chance of significant rain; "
             "--warning-info prints detailed warning messages; "
-            "--weekend prints Saturday and Sunday."
+            "--weekend prints Saturday and Sunday; "
+            "--visibility lists 10-minute mean visibility."
         ),
     )
     parser.add_argument(
@@ -165,6 +168,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--quake",
         action="store_true",
         help="List the latest Observatory quick earthquake message",
+    )
+    parser.add_argument(
+        "-V",
+        "--visibility",
+        action="store_true",
+        help="Print the latest 10-minute mean visibility",
     )
     parser.add_argument(
         "-w",
@@ -299,6 +308,9 @@ def main(argv: list[str] | None = None) -> int:
         elif args.quake:
             quakes = fetch_quakes(timeout=args.timeout, lang=args.lang)
             text = format_json(quakes) if args.json else format_quakes(quakes)
+        elif args.visibility:
+            visibility = fetch_visibility(timeout=args.timeout, lang=args.lang)
+            text = format_json(visibility) if args.json else format_visibility(visibility)
         elif args.uv:
             uv = fetch_uv(timeout=args.timeout, lang=args.lang)
             text = format_json(uv) if args.json else format_uv(uv)

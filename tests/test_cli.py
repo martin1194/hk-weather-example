@@ -1071,6 +1071,66 @@ def test_cli_quake_when_none_reported(monkeypatch, capsys):
     assert capsys.readouterr().out == "No recent earthquake is reported.\n"
 
 
+def test_cli_visibility_lists_stations(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response(
+            {
+                "fields": ["Date time", "Automatic Weather Station", "10 minute mean visibility"],
+                "data": [
+                    ["202610030730", "Central", "14 km"],
+                    ["202610030730", "Chek Lap Kok", "N/A"],
+                    ["202610030730", "Sai Wan Ho", "30 km"],
+                    ["bad"],
+                ],
+            }
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["-V", "--lang", "tc"]) == 0
+    assert "opendata.php" in seen["url"]
+    assert "dataType=LTMV" in seen["url"]
+    assert "rformat=json" in seen["url"]
+    assert "lang=tc" in seen["url"]
+    assert capsys.readouterr().out == (
+        "Hong Kong visibility\n"
+        "2026-10-03 07:30  Central  14 km\n"
+        "2026-10-03 07:30  Sai Wan Ho  30 km\n"
+    )
+
+
+def test_cli_visibility_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {"data": [["202610030730", "Waglan Island", "10 km"]]}
+        ),
+    )
+    assert main(["--visibility", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "readings": [
+            {
+                "time": "2026-10-03 07:30",
+                "place": "Waglan Island",
+                "visibility": "10 km",
+            }
+        ]
+    }
+
+
+def test_cli_visibility_when_none_available(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {"data": [["202610030730", "Chek Lap Kok", "N/A"]]}
+        ),
+    )
+    assert main(["--visibility"]) == 0
+    assert capsys.readouterr().out == "No visibility readings are available.\n"
+
+
 def test_cli_wind_when_none_available(monkeypatch, capsys):
     monkeypatch.setattr(
         "hk_weather.hko.urllib.request.urlopen",
