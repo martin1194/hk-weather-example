@@ -284,8 +284,11 @@ def parse_warnings(payload: dict) -> tuple[WeatherWarning, ...]:
     return tuple(warnings)
 
 
-def format_warnings(warnings: tuple[WeatherWarning, ...]) -> str:
-    """Render active warnings as a short list, or a note when none are in force."""
+def format_warnings(warnings: tuple[WeatherWarning, ...], *, as_json: bool = False) -> str:
+    """Render active warnings as a short list, or one JSON object."""
+    if as_json:
+        payload = {"warnings": [asdict(warning) for warning in warnings]}
+        return json.dumps(payload, indent=2) + "\n"
     if not warnings:
         return "No weather warnings are in force.\n"
     lines = ["Hong Kong weather warnings"]
