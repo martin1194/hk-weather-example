@@ -24,6 +24,12 @@ TIPS_URL = f"{_API}?dataType=swt&lang=en"
 # Quick earthquake messages live on earthquake.php. dataType=qem is the latest
 # magnitude 6+ event; dataType=eeq is not a valid Observatory parameter.
 QUAKE_URL = "https://data.weather.gov.hk/weatherAPI/opendata/earthquake.php?dataType=qem&lang=en"
+# Latest 10-minute mean visibility. weather.php rejects dataType=LTMV; this feed
+# is the open-data endpoint and needs rformat=json plus lang.
+VISIBILITY_URL = (
+    "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php"
+    "?dataType=LTMV&rformat=json&lang=en"
+)
 UV_URL = DEFAULT_URL
 _CANCELLED = {"CANCEL", "CANCELLED"}
 HKO_STATION = "Hong Kong Observatory"
@@ -159,6 +165,18 @@ class Earthquake:
 @dataclass(frozen=True)
 class QuakeReport:
     quakes: tuple[Earthquake, ...]
+
+
+@dataclass(frozen=True)
+class VisibilityReading:
+    time: str
+    place: str
+    visibility: str
+
+
+@dataclass(frozen=True)
+class VisibilityReport:
+    readings: tuple[VisibilityReading, ...]
 
 
 @dataclass(frozen=True)
@@ -310,6 +328,13 @@ def fetch_wind(url: str = NINE_DAY_URL, timeout: float = 10, lang: str = "en") -
 def fetch_quakes(url: str = QUAKE_URL, timeout: float = 10, lang: str = "en") -> QuakeReport:
     """Download the latest quick earthquake message (`dataType=qem`)."""
     return parse_quakes(_fetch_json(_apply_lang(url, lang), timeout))
+
+
+def fetch_visibility(
+    url: str = VISIBILITY_URL, timeout: float = 10, lang: str = "en"
+) -> VisibilityReport:
+    """Download the latest 10-minute mean visibility (`dataType=LTMV`)."""
+    return parse_visibility(_fetch_json(_apply_lang(url, lang), timeout))
 
 
 def fetch_uv(url: str = UV_URL, timeout: float = 10, lang: str = "en") -> UvIndex:
@@ -854,6 +879,41 @@ def _quake(item: dict) -> Earthquake | None:
     )
 
 
+def parse_visibility(payload: dict) -> VisibilityReport:
+    """Turn an `LTMV` document into one visibility reading per station."""
+    raw = payload.get("data")
+    if not isinstance(raw, list):
+        return VisibilityReport(())
+    readings: list[VisibilityReading] = []
+    for item in raw:
+        if not isinstance(item, list) or len(item) < 3:
+            continue
+        place = _text(item[1])
+        visibility = _text(item[2])
+        if not place or not visibility or visibility.casefold() == "n/a":
+            continue
+        readings.append(VisibilityReading(_visibility_time(item[0]), place, visibility))
+    return VisibilityReport(tuple(readings))
+
+
+def format_visibility(report: VisibilityReport) -> str:
+    """Render 10-minute mean visibility, one station per line."""
+    if not report.readings:
+        return "No visibility readings are available.\n"
+    lines = ["Hong Kong visibility"]
+    lines.extend(
+        f"{reading.time}  {reading.place}  {reading.visibility}" for reading in report.readings
+    )
+    return "\n".join(lines) + "\n"
+
+
+def _visibility_time(value: object) -> str:
+    text = _text(value)
+    if len(text) == 12 and text.isdigit():
+        return f"{text[:4]}-{text[4:6]}-{text[6:8]} {text[8:10]}:{text[10:12]}"
+    return text
+
+
 def _optional_number(value: object) -> float | None:
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         return None
@@ -1157,7 +1217,8 @@ def format_json(
     | QuakeReport
     | TomorrowForecast
     | PsrForecast
-    | WeekendForecast,
+    | WeekendForecast
+    | VisibilityReport,
 ) -> str:
     """Render the same report as one JSON object."""
     return json.dumps(asdict(report), indent=2) + "\n"
