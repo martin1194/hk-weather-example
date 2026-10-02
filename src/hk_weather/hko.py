@@ -119,6 +119,18 @@ class HumidityReport:
 
 
 @dataclass(frozen=True)
+class TempReading:
+    place: str
+    temperature_c: float
+
+
+@dataclass(frozen=True)
+class TempReport:
+    record_time: str
+    readings: tuple[TempReading, ...]
+
+
+@dataclass(frozen=True)
 class UvIndex:
     update_time: str
     place: str | None
@@ -179,6 +191,11 @@ def fetch_lightning(url: str = DEFAULT_URL, timeout: float = 10, lang: str = "en
 def fetch_humidity(url: str = DEFAULT_URL, timeout: float = 10, lang: str = "en") -> HumidityReport:
     """Download humidity readings from the current report (`dataType=rhrread`)."""
     return parse_humidity(_fetch_json(_apply_lang(url, lang), timeout))
+
+
+def fetch_temps(url: str = DEFAULT_URL, timeout: float = 10, lang: str = "en") -> TempReport:
+    """Download temperature readings from the current report (`dataType=rhrread`)."""
+    return parse_temps(_fetch_json(_apply_lang(url, lang), timeout))
 
 
 def _apply_lang(url: str, lang: str) -> str:
@@ -615,6 +632,37 @@ def format_humidity(report: HumidityReport) -> str:
     return "\n".join(lines) + "\n"
 
 
+def parse_temps(payload: dict) -> TempReport:
+    """Turn `rhrread` temperature data into one reading per place."""
+    section = payload.get("temperature")
+    record_time = _text(section.get("recordTime")) if isinstance(section, dict) else ""
+    readings: list[TempReading] = []
+    seen: set[str] = set()
+    for item in _data_list(section):
+        place = _text(item.get("place"))
+        value = item.get("value")
+        if not place or place in seen:
+            continue
+        if not isinstance(value, (int, float)) or isinstance(value, bool):
+            continue
+        seen.add(place)
+        readings.append(TempReading(place, float(value)))
+    return TempReport(record_time, tuple(readings))
+
+
+def format_temps(report: TempReport) -> str:
+    """Render temperatures, one line per place."""
+    if not report.readings:
+        return "No temperature readings are available.\n"
+    lines = ["Hong Kong temperatures"]
+    if report.record_time:
+        lines.append(f"Recorded: {report.record_time}")
+    lines.extend(
+        f"{reading.place}  {_number(reading.temperature_c)}°C" for reading in report.readings
+    )
+    return "\n".join(lines) + "\n"
+
+
 def format_json(
     report: CurrentWeather
     | LocalForecast
@@ -624,7 +672,8 @@ def format_json(
     | StationReport
     | RainReport
     | LightningReport
-    | HumidityReport,
+    | HumidityReport
+    | TempReport,
 ) -> str:
     """Render the same report as one JSON object."""
     return json.dumps(asdict(report), indent=2) + "\n"
