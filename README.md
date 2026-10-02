@@ -18,6 +18,8 @@ hk-weather --forecast
 hk-weather --forecast --json
 hk-weather --nine-day
 hk-weather --nine-day --json
+hk-weather --tomorrow
+hk-weather -T --json
 hk-weather --wind
 hk-weather --wind --json
 hk-weather --quake
@@ -75,6 +77,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --forecast` prints the local forecast period, description, and outlook. With `--json`, that same forecast is one JSON object. Current conditions stay the default.
 
 `hk-weather --nine-day` (or `-n`) prints each day with the date, weather, high and low temperature, humidity range, and chance of rain when the Observatory includes them. `--nine-day --json` prints that same forecast as one JSON object.
+
+`hk-weather --tomorrow` (or `-T`) prints only tomorrow's day from that forecast, including wind when the Observatory sends it. `--tomorrow --json` prints that day as one JSON object. `--lang` applies. If that day is missing, it says so.
 
 `hk-weather --wind` prints the forecast wind for each day from that same 9-day forecast. `--wind --json` prints those days as one JSON object. If no wind text is present, it says so.
 

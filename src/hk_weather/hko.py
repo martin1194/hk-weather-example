@@ -6,6 +6,7 @@ import json
 import urllib.error
 import urllib.request
 from dataclasses import asdict, dataclass
+from datetime import datetime, timedelta, timezone
 
 from hk_weather.icons import icon_label
 
@@ -75,6 +76,20 @@ class ForecastDay:
 class NineDayForecast:
     update_time: str
     days: tuple[ForecastDay, ...]
+
+
+@dataclass(frozen=True)
+class TomorrowForecast:
+    update_time: str
+    date: str
+    week: str
+    weather: str
+    temp_high_c: float | None
+    temp_low_c: float | None
+    humidity_high_percent: float | None
+    humidity_low_percent: float | None
+    rain_chance: str | None
+    wind: str | None
 
 
 @dataclass(frozen=True)
@@ -194,6 +209,16 @@ def fetch_nine_day(
 ) -> NineDayForecast:
     """Download the 9-day forecast (`dataType=fnd`)."""
     return parse_nine_day(_fetch_json(_apply_lang(url, lang), timeout))
+
+
+def fetch_tomorrow(
+    url: str = NINE_DAY_URL, timeout: float = 10, lang: str = "en"
+) -> TomorrowForecast | None:
+    """Download tomorrow's day from the 9-day forecast (`dataType=fnd`)."""
+    return parse_tomorrow(
+        _fetch_json(_apply_lang(url, lang), timeout),
+        _hong_kong_tomorrow(),
+    )
 
 
 def fetch_wind(url: str = NINE_DAY_URL, timeout: float = 10, lang: str = "en") -> WindForecast:
@@ -439,6 +464,78 @@ def format_nine_day(forecast: NineDayForecast) -> str:
         if day.weather:
             lines.append(day.weather)
     return "\n".join(lines) + "\n"
+
+
+def parse_tomorrow(payload: dict, tomorrow: str) -> TomorrowForecast | None:
+    """Pick the 9-day entry whose date is tomorrow in Hong Kong."""
+    raw_days = payload.get("weatherForecast")
+    if not isinstance(raw_days, list):
+        return None
+    for item in raw_days:
+        if not isinstance(item, dict):
+            continue
+        if _forecast_date(item.get("forecastDate")) != tomorrow:
+            continue
+        day = _forecast_day(item)
+        if day is None:
+            return None
+        return TomorrowForecast(
+            update_time=_text(payload.get("updateTime")) or "unknown",
+            date=day.date,
+            week=day.week,
+            weather=day.weather,
+            temp_high_c=day.temp_high_c,
+            temp_low_c=day.temp_low_c,
+            humidity_high_percent=day.humidity_high_percent,
+            humidity_low_percent=day.humidity_low_percent,
+            rain_chance=day.rain_chance,
+            wind=_text(item.get("forecastWind")) or None,
+        )
+    return None
+
+
+def format_tomorrow(forecast: TomorrowForecast) -> str:
+    """Render a single forecast day, including wind when the Observatory sends it."""
+    heading = " ".join(part for part in (forecast.date, forecast.week) if part)
+    details: list[str] = []
+    if forecast.temp_high_c is not None:
+        details.append(f"high {_number(forecast.temp_high_c)}°C")
+    if forecast.temp_low_c is not None:
+        details.append(f"low {_number(forecast.temp_low_c)}°C")
+    humidity = _humidity_span(forecast.humidity_low_percent, forecast.humidity_high_percent)
+    if humidity:
+        details.append(humidity)
+    if forecast.rain_chance:
+        details.append(f"rain {forecast.rain_chance}")
+    lines = [
+        "Hong Kong forecast for tomorrow",
+        "Source: Hong Kong Observatory open data",
+        f"Updated: {forecast.update_time}",
+        "",
+        f"{heading}  {'  '.join(details)}".rstrip(),
+    ]
+    if forecast.weather:
+        lines.append(forecast.weather)
+    if forecast.wind:
+        lines.append(f"Wind: {forecast.wind}")
+    return "\n".join(lines) + "\n"
+
+
+def format_tomorrow_miss(*, as_json: bool = False) -> str:
+    """Say that tomorrow is not in the 9-day forecast."""
+    message = "Tomorrow's forecast is not available."
+    if as_json:
+        return json.dumps({"message": message}, indent=2) + "\n"
+    return message + "\n"
+
+
+def _hong_kong_tomorrow(now: datetime | None = None) -> str:
+    """Return tomorrow's calendar date in Hong Kong (UTC+8), as YYYY-MM-DD."""
+    moment = now.astimezone(_HKT) if now is not None else datetime.now(_HKT)
+    return (moment.date() + timedelta(days=1)).isoformat()
+
+
+_HKT = timezone(timedelta(hours=8))
 
 
 def parse_wind(payload: dict) -> WindForecast:
@@ -806,7 +903,8 @@ def format_json(
     | HumidityReport
     | TempReport
     | WindForecast
-    | QuakeReport,
+    | QuakeReport
+    | TomorrowForecast,
 ) -> str:
     """Render the same report as one JSON object."""
     return json.dumps(asdict(report), indent=2) + "\n"

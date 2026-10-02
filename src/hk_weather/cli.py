@@ -17,6 +17,7 @@ from hk_weather.hko import (
     fetch_stations,
     fetch_temps,
     fetch_tips,
+    fetch_tomorrow,
     fetch_uv,
     fetch_warnings,
     fetch_wind,
@@ -35,6 +36,8 @@ from hk_weather.hko import (
     format_stations,
     format_temps,
     format_tips,
+    format_tomorrow,
+    format_tomorrow_miss,
     format_uv,
     format_warnings,
     format_wind,
@@ -60,7 +63,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--place NAME filters those stations; --rain lists district rainfall; "
             "--lightning lists lightning locations; --humidity lists humidity readings; "
             "--temps lists temperatures by place; --wind lists the forecast wind; "
-            "--quake lists the latest earthquake message."
+            "--quake lists the latest earthquake message; --tomorrow prints tomorrow."
         ),
     )
     parser.add_argument(
@@ -95,6 +98,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--nine-day",
         action="store_true",
         help="Print the 9-day forecast",
+    )
+    parser.add_argument(
+        "-T",
+        "--tomorrow",
+        action="store_true",
+        help="Print tomorrow's day from the 9-day forecast",
     )
     parser.add_argument(
         "--wind",
@@ -186,6 +195,12 @@ def main(argv: list[str] | None = None) -> int:
         elif args.nine_day:
             nine_day = fetch_nine_day(timeout=args.timeout, lang=args.lang)
             text = format_json(nine_day) if args.json else format_nine_day(nine_day)
+        elif args.tomorrow:
+            tomorrow = fetch_tomorrow(timeout=args.timeout, lang=args.lang)
+            if tomorrow is None:
+                text = format_tomorrow_miss(as_json=args.json)
+            else:
+                text = format_json(tomorrow) if args.json else format_tomorrow(tomorrow)
         elif args.wind:
             wind = fetch_wind(timeout=args.timeout, lang=args.lang)
             text = format_json(wind) if args.json else format_wind(wind)
