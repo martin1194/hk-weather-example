@@ -821,7 +821,7 @@ def format_places(report: StationReport, *, as_json: bool = False) -> str:
 
 
 def parse_rain(payload: dict) -> RainReport:
-    """Turn `rhrread` rainfall data into one reading per place."""
+    """Turn `rhrread` rainfall data into one reading per place, wettest first."""
     readings: list[RainReading] = []
     seen: set[str] = set()
     for item in _data_list(payload.get("rainfall")):
@@ -833,6 +833,7 @@ def parse_rain(payload: dict) -> RainReport:
             continue
         seen.add(place)
         readings.append(RainReading(place, float(value)))
+    readings.sort(key=lambda reading: reading.rainfall_mm, reverse=True)
     return RainReport(tuple(readings))
 
 

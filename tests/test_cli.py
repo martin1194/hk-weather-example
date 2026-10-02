@@ -1146,9 +1146,37 @@ def test_cli_rain_lists_districts(monkeypatch, capsys):
     assert "dataType=rhrread" in seen["url"]
     assert "lang=tc" in seen["url"]
     out = capsys.readouterr().out
-    assert out == "Hong Kong rainfall\nWan Chai  0 mm\nSai Kung  2 mm\n"
+    assert out == "Hong Kong rainfall\nSai Kung  2 mm\nWan Chai  0 mm\n"
     assert "28°C" not in out
     assert "Islands District" not in out
+
+
+def test_cli_rain_lists_wettest_first(monkeypatch, capsys):
+    payload = {
+        "rainfall": {
+            "data": [
+                {"place": "Wan Chai", "max": 0.5, "unit": "mm"},
+                {"place": "North", "max": 8, "unit": "mm"},
+                {"place": "Wong Tai Sin", "max": 3, "unit": "mm"},
+            ]
+        }
+    }
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(payload),
+    )
+    assert main(["--rain"]) == 0
+    assert capsys.readouterr().out == (
+        "Hong Kong rainfall\nNorth  8 mm\nWong Tai Sin  3 mm\nWan Chai  0.5 mm\n"
+    )
+    assert main(["--rain", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "readings": [
+            {"place": "North", "rainfall_mm": 8.0},
+            {"place": "Wong Tai Sin", "rainfall_mm": 3.0},
+            {"place": "Wan Chai", "rainfall_mm": 0.5},
+        ]
+    }
 
 
 def test_cli_rain_json_is_one_object(monkeypatch, capsys):
