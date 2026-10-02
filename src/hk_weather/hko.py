@@ -1,4 +1,4 @@
-"""Fetch and format the Hong Kong Observatory current weather report."""
+"""Fetch and format Hong Kong Observatory current weather and the local forecast."""
 
 from __future__ import annotations
 
