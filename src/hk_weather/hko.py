@@ -278,6 +278,16 @@ def fetch_tomorrow(
     )
 
 
+def fetch_today(
+    url: str = NINE_DAY_URL, timeout: float = 10, lang: str = "en"
+) -> TomorrowForecast | None:
+    """Download today's day from the 9-day forecast (`dataType=fnd`)."""
+    return parse_tomorrow(
+        _fetch_json(_apply_lang(url, lang), timeout),
+        _hong_kong_today(),
+    )
+
+
 def fetch_forecast_day(
     day: int, url: str = NINE_DAY_URL, timeout: float = 10, lang: str = "en"
 ) -> TomorrowForecast | None:
@@ -747,6 +757,11 @@ def format_tomorrow_miss(*, as_json: bool = False) -> str:
     return _unavailable("Tomorrow's forecast is not available.", as_json=as_json)
 
 
+def format_today_miss(*, as_json: bool = False) -> str:
+    """Say that today is not in the 9-day forecast."""
+    return _unavailable("Today's forecast is not available.", as_json=as_json)
+
+
 def format_day_miss(day: int, *, as_json: bool = False) -> str:
     """Say that forecast day N is not in the 9-day list."""
     return _unavailable(f"Forecast day {day} is not available.", as_json=as_json)
@@ -756,6 +771,12 @@ def _unavailable(message: str, *, as_json: bool) -> str:
     if as_json:
         return json.dumps({"message": message}, indent=2) + "\n"
     return message + "\n"
+
+
+def _hong_kong_today(now: datetime | None = None) -> str:
+    """Return today's calendar date in Hong Kong (UTC+8), as YYYY-MM-DD."""
+    moment = now.astimezone(_HKT) if now is not None else datetime.now(_HKT)
+    return moment.date().isoformat()
 
 
 def _hong_kong_tomorrow(now: datetime | None = None) -> str:

@@ -19,6 +19,7 @@ from hk_weather.hko import (
     fetch_stations,
     fetch_temps,
     fetch_tips,
+    fetch_today,
     fetch_tomorrow,
     fetch_uv,
     fetch_warning_info,
@@ -42,6 +43,7 @@ from hk_weather.hko import (
     format_stations,
     format_temps,
     format_tips,
+    format_today_miss,
     format_tomorrow,
     format_tomorrow_miss,
     format_uv,
@@ -83,7 +85,8 @@ def build_parser() -> argparse.ArgumentParser:
             "--place NAME filters those stations; --rain lists district rainfall; "
             "--lightning lists lightning locations; --humidity lists humidity readings; "
             "--temps lists temperatures by place; --wind lists the forecast wind; "
-            "--quake lists the latest earthquake message; --tomorrow prints tomorrow; "
+            "--quake lists the latest earthquake message; --today prints today; "
+            "--tomorrow prints tomorrow; "
             "--day N prints forecast day N (1 is the first entry); "
             "--psr lists the chance of significant rain; "
             "--warning-info prints detailed warning messages; "
@@ -122,6 +125,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--nine-day",
         action="store_true",
         help="Print the 9-day forecast",
+    )
+    parser.add_argument(
+        "-Y",
+        "--today",
+        action="store_true",
+        help="Print today's day from the 9-day forecast (Hong Kong calendar date)",
     )
     parser.add_argument(
         "-T",
@@ -248,6 +257,16 @@ def main(argv: list[str] | None = None) -> int:
         elif args.nine_day:
             nine_day = fetch_nine_day(timeout=args.timeout, lang=args.lang)
             text = format_json(nine_day) if args.json else format_nine_day(nine_day)
+        elif args.today:
+            today = fetch_today(timeout=args.timeout, lang=args.lang)
+            if today is None:
+                text = format_today_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(today)
+                    if args.json
+                    else format_tomorrow(today, title="Hong Kong forecast for today")
+                )
         elif args.tomorrow:
             tomorrow = fetch_tomorrow(timeout=args.timeout, lang=args.lang)
             if tomorrow is None:
