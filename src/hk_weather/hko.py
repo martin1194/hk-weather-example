@@ -10,10 +10,11 @@ from dataclasses import asdict, dataclass
 from hk_weather.icons import icon_label
 
 # Hong Kong Observatory open data. No API key.
-# rhrread: current weather. flw: local forecast. warnsum: warning summary.
+# rhrread: current weather. flw: local forecast. fnd: 9-day. warnsum: warnings.
 _API = "https://data.weather.gov.hk/weatherAPI/opendata/weather.php"
 DEFAULT_URL = f"{_API}?dataType=rhrread&lang=en"
 FORECAST_URL = f"{_API}?dataType=flw&lang=en"
+NINE_DAY_URL = f"{_API}?dataType=fnd&lang=en"
 WARNINGS_URL = f"{_API}?dataType=warnsum&lang=en"
 _CANCELLED = {"CANCEL", "CANCELLED"}
 HKO_STATION = "Hong Kong Observatory"
@@ -51,6 +52,22 @@ class WeatherWarning:
     description: str
 
 
+@dataclass(frozen=True)
+class ForecastDay:
+    date: str
+    week: str
+    weather: str
+    temp_high_c: float | None
+    temp_low_c: float | None
+    rain_chance: str | None
+
+
+@dataclass(frozen=True)
+class NineDayForecast:
+    update_time: str
+    days: tuple[ForecastDay, ...]
+
+
 def fetch_current(url: str = DEFAULT_URL, timeout: float = 10) -> CurrentWeather:
     """Download the current weather report and return a summary."""
     return parse_current_report(_fetch_json(url, timeout))
@@ -64,6 +81,11 @@ def fetch_forecast(url: str = FORECAST_URL, timeout: float = 10) -> LocalForecas
 def fetch_warnings(url: str = WARNINGS_URL, timeout: float = 10) -> tuple[WeatherWarning, ...]:
     """Download active weather warnings (`dataType=warnsum`)."""
     return parse_warnings(_fetch_json(url, timeout))
+
+
+def fetch_nine_day(url: str = NINE_DAY_URL, timeout: float = 10) -> NineDayForecast:
+    """Download the 9-day forecast (`dataType=fnd`)."""
+    return parse_nine_day(_fetch_json(url, timeout))
 
 
 def _fetch_json(url: str, timeout: float) -> dict:
@@ -182,7 +204,46 @@ def format_warnings(warnings: tuple[WeatherWarning, ...]) -> str:
     return "\n".join(lines) + "\n"
 
 
-def format_json(report: CurrentWeather | LocalForecast) -> str:
+def parse_nine_day(payload: dict) -> NineDayForecast:
+    """Turn an `fnd` document into a compact day-by-day forecast."""
+    raw_days = payload.get("weatherForecast")
+    if not isinstance(raw_days, list):
+        raise WeatherError("9-day forecast is missing from the report")
+    days = tuple(
+        day for item in raw_days if (day := _forecast_day(item)) is not None
+    )
+    if not days:
+        raise WeatherError("9-day forecast is missing from the report")
+    return NineDayForecast(
+        update_time=_text(payload.get("updateTime")) or "unknown",
+        days=days,
+    )
+
+
+def format_nine_day(forecast: NineDayForecast) -> str:
+    """Render the 9-day forecast as a short day-by-day list."""
+    lines = [
+        "Hong Kong 9-day forecast",
+        "Source: Hong Kong Observatory open data",
+        f"Updated: {forecast.update_time}",
+    ]
+    for day in forecast.days:
+        heading = " ".join(part for part in (day.date, day.week) if part)
+        details: list[str] = []
+        if day.temp_high_c is not None:
+            details.append(f"high {_number(day.temp_high_c)}°C")
+        if day.temp_low_c is not None:
+            details.append(f"low {_number(day.temp_low_c)}°C")
+        if day.rain_chance:
+            details.append(f"rain {day.rain_chance}")
+        lines.append("")
+        lines.append(f"{heading}  {'  '.join(details)}".rstrip())
+        if day.weather:
+            lines.append(day.weather)
+    return "\n".join(lines) + "\n"
+
+
+def format_json(report: CurrentWeather | LocalForecast | NineDayForecast) -> str:
     """Render the same report as one JSON object."""
     return json.dumps(asdict(report), indent=2) + "\n"
 
@@ -276,6 +337,40 @@ def _data_list(section: object) -> list[dict]:
     if not isinstance(data, list):
         return []
     return [item for item in data if isinstance(item, dict)]
+
+
+def _forecast_day(item: object) -> ForecastDay | None:
+    if not isinstance(item, dict):
+        return None
+    date = _forecast_date(item.get("forecastDate"))
+    weather = _text(item.get("forecastWeather"))
+    if not date and not weather:
+        return None
+    rain = _text(item.get("PSR"))
+    return ForecastDay(
+        date=date or "unknown",
+        week=_text(item.get("week")),
+        weather=weather,
+        temp_high_c=_temp_value(item.get("forecastMaxtemp")),
+        temp_low_c=_temp_value(item.get("forecastMintemp")),
+        rain_chance=rain or None,
+    )
+
+
+def _forecast_date(value: object) -> str:
+    text = _text(value)
+    if len(text) == 8 and text.isdigit():
+        return f"{text[:4]}-{text[4:6]}-{text[6:]}"
+    return text
+
+
+def _temp_value(section: object) -> float | None:
+    if not isinstance(section, dict):
+        return None
+    value = section.get("value")
+    if not isinstance(value, (int, float)) or isinstance(value, bool):
+        return None
+    return float(value)
 
 
 def _text(value: object) -> str:
