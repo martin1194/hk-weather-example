@@ -413,6 +413,32 @@ def parse_stations(payload: dict) -> StationReport:
     )
 
 
+def filter_stations(report: StationReport, name: str) -> StationReport:
+    """Keep stations whose place name contains `name`, ignoring case."""
+    needle = name.strip().casefold()
+    if not needle:
+        matches: tuple[StationReading, ...] = ()
+    else:
+        matches = tuple(
+            station for station in report.stations if needle in station.place.casefold()
+        )
+    return StationReport(update_time=report.update_time, stations=matches)
+
+
+def format_place_miss(name: str, update_time: str, *, as_json: bool) -> str:
+    """Say that no station matched, as text or one JSON object."""
+    message = f'No station matches "{name.strip()}".'
+    if not as_json:
+        return message + "\n"
+    return (
+        json.dumps(
+            {"update_time": update_time, "stations": [], "message": message},
+            indent=2,
+        )
+        + "\n"
+    )
+
+
 def format_stations(report: StationReport) -> str:
     """Render station temperature and humidity as aligned lines."""
     width = max(len("Place"), *(len(station.place) for station in report.stations))

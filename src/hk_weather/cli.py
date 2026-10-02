@@ -14,8 +14,10 @@ from hk_weather.hko import (
     fetch_tips,
     fetch_uv,
     fetch_warnings,
+    filter_stations,
     format_forecast,
     format_json,
+    format_place_miss,
     format_nine_day,
     format_report,
     format_stations,
@@ -33,7 +35,7 @@ def build_parser() -> argparse.ArgumentParser:
             "Current conditions by default; --forecast prints the local forecast; "
             "--nine-day prints the 9-day forecast; --warnings lists active warnings; "
             "--uv prints the UV index; --tips prints special weather tips; "
-            "--stations lists each station."
+            "--stations lists each station; --place NAME filters those stations."
         ),
     )
     parser.add_argument(
@@ -82,6 +84,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="List temperature and humidity at each station",
     )
     parser.add_argument(
+        "--place",
+        metavar="NAME",
+        help="Print temperature and humidity for stations matching NAME",
+    )
+    parser.add_argument(
         "--lang",
         choices=("en", "tc", "sc"),
         default="en",
@@ -113,6 +120,19 @@ def main(argv: list[str] | None = None) -> int:
         elif args.stations:
             stations = fetch_stations(timeout=args.timeout, lang=args.lang)
             text = format_json(stations) if args.json else format_stations(stations)
+        elif args.place is not None:
+            query = args.place.strip()
+            if not query:
+                print("error: place must not be empty", file=sys.stderr)
+                return 2
+            matched = filter_stations(
+                fetch_stations(timeout=args.timeout, lang=args.lang),
+                query,
+            )
+            if matched.stations:
+                text = format_json(matched) if args.json else format_stations(matched)
+            else:
+                text = format_place_miss(query, matched.update_time, as_json=args.json)
         else:
             weather = fetch_current(timeout=args.timeout, lang=args.lang)
             text = format_json(weather) if args.json else format_report(weather)

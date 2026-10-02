@@ -510,6 +510,78 @@ def test_cli_stations_lists_temperature_and_humidity(monkeypatch, capsys):
     assert "Conditions:" not in out
 
 
+_STATIONS = {
+    "updateTime": "2026-10-02T23:02:00+08:00",
+    "temperature": {
+        "data": [
+            {"place": "King's Park", "value": 27, "unit": "C"},
+            {"place": "Hong Kong Observatory", "value": 28, "unit": "C"},
+            {"place": "Hong Kong Park", "value": 29, "unit": "C"},
+        ]
+    },
+    "humidity": {
+        "data": [{"place": "Hong Kong Observatory", "value": 85, "unit": "percent"}]
+    },
+}
+
+
+def test_cli_place_matches_stations(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response(_STATIONS)
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--place", "park", "--lang", "tc"]) == 0
+    assert "dataType=rhrread" in seen["url"]
+    assert "lang=tc" in seen["url"]
+    out = capsys.readouterr().out
+    assert "King's Park" in out
+    assert "27°C" in out
+    assert "Hong Kong Park" in out
+    assert "29°C" in out
+    assert "28°C" not in out
+    assert "85%" not in out
+
+
+def test_cli_place_json_is_case_insensitive(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(_STATIONS),
+    )
+    assert main(["--place", "oBsErVaToRy", "--json"]) == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["update_time"] == "2026-10-02T23:02:00+08:00"
+    assert payload["stations"] == [
+        {
+            "place": "Hong Kong Observatory",
+            "temperature_c": 28.0,
+            "humidity_percent": 85.0,
+        }
+    ]
+
+
+def test_cli_place_when_nothing_matches(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(_STATIONS),
+    )
+    assert main(["--place", "Atlantis"]) == 0
+    assert capsys.readouterr().out == 'No station matches "Atlantis".\n'
+    assert main(["--place", "Atlantis", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "update_time": "2026-10-02T23:02:00+08:00",
+        "stations": [],
+        "message": 'No station matches "Atlantis".',
+    }
+
+
+def test_cli_place_rejects_blank_name(capsys):
+    assert main(["--place", "   "]) == 2
+    assert "place must not be empty" in capsys.readouterr().err
+
+
 def test_cli_stations_missing_readings_is_an_error(monkeypatch, capsys):
     monkeypatch.setattr(
         "hk_weather.hko.urllib.request.urlopen",
