@@ -1,6 +1,8 @@
 import json
 from urllib.error import URLError
 
+import pytest
+
 from hk_weather.cli import main
 from hk_weather.hko import CurrentWeather, WeatherError
 
@@ -20,7 +22,7 @@ SAMPLE_WEATHER = CurrentWeather(
 def test_cli_prints_report(monkeypatch, capsys):
     monkeypatch.setattr(
         "hk_weather.cli.fetch_current",
-        lambda timeout: SAMPLE_WEATHER,
+        lambda timeout, lang="en": SAMPLE_WEATHER,
     )
     assert main([]) == 0
     out = capsys.readouterr().out
@@ -28,7 +30,7 @@ def test_cli_prints_report(monkeypatch, capsys):
 
 
 def test_cli_reports_fetch_errors(monkeypatch, capsys):
-    def boom(timeout):
+    def boom(timeout, lang="en"):
         raise WeatherError("could not reach Hong Kong Observatory: down")
 
     monkeypatch.setattr("hk_weather.cli.fetch_current", boom)
@@ -334,6 +336,98 @@ def test_cli_uv_when_unavailable(monkeypatch, capsys):
     out = capsys.readouterr().out
     assert "UV index is not available right now." in out
     assert "Temperature:" not in out
+
+
+@pytest.mark.parametrize(
+    ("argv", "query", "payload"),
+    [
+        (
+            ["--lang", "tc"],
+            "dataType=rhrread&lang=tc",
+            {
+                "updateTime": "2026-10-02T23:02:00+08:00",
+                "icon": [63],
+                "temperature": {
+                    "data": [{"place": "香港天文台", "value": 28, "unit": "C"}]
+                },
+            },
+        ),
+        (
+            ["--lang", "sc", "--json"],
+            "dataType=rhrread&lang=sc",
+            {
+                "updateTime": "2026-10-02T23:02:00+08:00",
+                "icon": [63],
+                "temperature": {
+                    "data": [{"place": "香港天文台", "value": 28, "unit": "C"}]
+                },
+            },
+        ),
+        (
+            ["--forecast", "--lang", "tc"],
+            "dataType=flw&lang=tc",
+            {
+                "updateTime": "2026-10-03T00:00:00+08:00",
+                "forecastPeriod": "今日",
+                "forecastDesc": "大致多雲。",
+                "outlook": "",
+            },
+        ),
+        (
+            ["--nine-day", "--lang", "sc"],
+            "dataType=fnd&lang=sc",
+            {
+                "updateTime": "2026-10-03T00:00:00+08:00",
+                "weatherForecast": [
+                    {
+                        "forecastDate": "20261003",
+                        "week": "星期六",
+                        "forecastWeather": "大致多云。",
+                        "forecastMaxtemp": {"value": 31, "unit": "C"},
+                        "forecastMintemp": {"value": 27, "unit": "C"},
+                    }
+                ],
+            },
+        ),
+        (
+            ["--warnings", "--lang", "tc"],
+            "dataType=warnsum&lang=tc",
+            {"WTS": {"name": "雷暴警告", "code": "WTS", "actionCode": "ISSUE"}},
+        ),
+        (
+            ["--uv", "--lang", "sc", "--json"],
+            "dataType=rhrread&lang=sc",
+            {
+                "updateTime": "2026-08-19T12:02:00+08:00",
+                "uvindex": {
+                    "data": [{"place": "京士柏", "value": 8, "desc": "甚高"}],
+                    "recordDesc": "過去一小時",
+                },
+            },
+        ),
+    ],
+)
+def test_cli_sends_lang_query(monkeypatch, capsys, argv, query, payload):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response(payload)
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(argv) == 0
+    assert query in seen["url"]
+    out = capsys.readouterr().out
+    if "--json" in argv:
+        assert isinstance(json.loads(out), dict)
+    else:
+        assert out.endswith("\n")
+
+
+def test_cli_rejects_unknown_lang():
+    with pytest.raises(SystemExit) as exc:
+        main(["--lang", "fr"])
+    assert exc.value.code == 2
 
 
 def test_cli_json_fetch_error_stays_on_stderr(monkeypatch, capsys):
