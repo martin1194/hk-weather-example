@@ -22,6 +22,7 @@ hk-weather --forecast --lang sc
 hk-weather --tips
 hk-weather --tips --json
 hk-weather --stations
+hk-weather --list-places
 hk-weather --place "King's Park"
 hk-weather --place park --json
 ```
@@ -63,6 +64,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --tips` (or `-t`) prints each special weather tip. `--tips --json` prints them as one JSON object. `--lang` applies. Current conditions stay the default.
 
 `hk-weather --stations` lists each place in the current report with its temperature and, when the Observatory includes it, humidity.
+
+`hk-weather --list-places` prints the station names from the current report (temperature and humidity), so you can see what to pass to `--place`.
 
 `hk-weather --place NAME` prints the same readings for stations whose name contains NAME (case-insensitive). `--json` and `--lang` apply. If nothing matches, it says so.
 
