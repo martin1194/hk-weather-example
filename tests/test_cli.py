@@ -251,6 +251,8 @@ def test_cli_nine_day_prints_compact_summary(monkeypatch, capsys):
                         "forecastWeather": "Mainly cloudy with occasional showers.",
                         "forecastMaxtemp": {"value": 31, "unit": "C"},
                         "forecastMintemp": {"value": 27, "unit": "C"},
+                        "forecastMaxrh": {"value": 95, "unit": "percent"},
+                        "forecastMinrh": {"value": 75, "unit": "percent"},
                         "PSR": "Medium High",
                     },
                     {
@@ -268,11 +270,13 @@ def test_cli_nine_day_prints_compact_summary(monkeypatch, capsys):
     assert main(["--nine-day"]) == 0
     out = capsys.readouterr().out
     assert "dataType=fnd" in seen["url"]
-    assert "2026-10-03 Saturday  high 31°C  low 27°C  rain Medium High" in out
+    assert "2026-10-03 Saturday  high 31°C  low 27°C  humidity 75-95%  rain Medium High" in out
     assert "Mainly cloudy with occasional showers." in out
     assert "2026-10-04 Sunday  high 30°C  low 25°C" in out
     assert "Sunny periods." in out
-    assert "rain" not in out.split("2026-10-04", 1)[1]
+    sunday = out.split("2026-10-04", 1)[1]
+    assert "rain" not in sunday
+    assert "humidity" not in sunday
 
 
 def test_cli_nine_day_json_is_one_object(monkeypatch, capsys):
@@ -288,6 +292,8 @@ def test_cli_nine_day_json_is_one_object(monkeypatch, capsys):
                         "forecastWeather": "Fine and dry.",
                         "forecastMaxtemp": {"value": 29, "unit": "C"},
                         "forecastMintemp": {"value": 24, "unit": "C"},
+                        "forecastMaxrh": {"value": 90, "unit": "percent"},
+                        "forecastMinrh": {"value": 65, "unit": "percent"},
                         "PSR": "Low",
                     }
                 ],
@@ -304,6 +310,8 @@ def test_cli_nine_day_json_is_one_object(monkeypatch, capsys):
                 "weather": "Fine and dry.",
                 "temp_high_c": 29.0,
                 "temp_low_c": 24.0,
+                "humidity_high_percent": 90.0,
+                "humidity_low_percent": 65.0,
                 "rain_chance": "Low",
             }
         ],

@@ -63,6 +63,8 @@ class ForecastDay:
     weather: str
     temp_high_c: float | None
     temp_low_c: float | None
+    humidity_high_percent: float | None
+    humidity_low_percent: float | None
     rain_chance: str | None
 
 
@@ -404,6 +406,9 @@ def format_nine_day(forecast: NineDayForecast) -> str:
             details.append(f"high {_number(day.temp_high_c)}°C")
         if day.temp_low_c is not None:
             details.append(f"low {_number(day.temp_low_c)}°C")
+        humidity = _humidity_span(day.humidity_low_percent, day.humidity_high_percent)
+        if humidity:
+            details.append(humidity)
         if day.rain_chance:
             details.append(f"rain {day.rain_chance}")
         lines.append("")
@@ -840,8 +845,21 @@ def _forecast_day(item: object) -> ForecastDay | None:
         weather=weather,
         temp_high_c=_temp_value(item.get("forecastMaxtemp")),
         temp_low_c=_temp_value(item.get("forecastMintemp")),
+        humidity_high_percent=_temp_value(item.get("forecastMaxrh")),
+        humidity_low_percent=_temp_value(item.get("forecastMinrh")),
         rain_chance=rain or None,
     )
+
+
+def _humidity_span(low: float | None, high: float | None) -> str:
+    """Format a relative-humidity range, or one side when the other is missing."""
+    if low is not None and high is not None:
+        return f"humidity {_number(low)}-{_number(high)}%"
+    if low is not None:
+        return f"humidity {_number(low)}%"
+    if high is not None:
+        return f"humidity {_number(high)}%"
+    return ""
 
 
 def _forecast_date(value: object) -> str:
