@@ -214,6 +214,32 @@ def format_report(weather: CurrentWeather) -> str:
     return "\n".join(lines) + "\n"
 
 
+def format_short(weather: CurrentWeather) -> str:
+    """Render current conditions as one compact line."""
+    humidity = (
+        f"{_number(weather.humidity_percent)}%"
+        if weather.humidity_percent is not None
+        else "n/a"
+    )
+    line = (
+        f"{weather.conditions}, {_number(weather.temperature_c)}°C, humidity {humidity}"
+    )
+    if weather.warnings:
+        note = _brief_warning(weather.warnings[0])
+        extra = len(weather.warnings) - 1
+        if extra:
+            note = f"{note} (+{extra} more)"
+        line = f"{line} — {note}"
+    return line + "\n"
+
+
+def _brief_warning(message: str) -> str:
+    sentence = message.strip().split(". ", 1)[0].rstrip(".")
+    if len(sentence) > 80:
+        return sentence[:77].rstrip() + "..."
+    return sentence
+
+
 def parse_forecast(payload: dict) -> LocalForecast:
     """Turn an `flw` JSON document into a short local forecast."""
     forecast = _text(payload.get("forecastDesc"))

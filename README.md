@@ -9,6 +9,7 @@ Data comes from the [Hong Kong Observatory Open Data API](https://www.hko.gov.hk
 ```bash
 pip install -e .
 hk-weather
+hk-weather --short
 hk-weather --json
 hk-weather --forecast
 hk-weather --forecast --json
@@ -50,6 +51,8 @@ Warnings:
 ```
 
 The temperature and humidity lines use the Hong Kong Observatory station when that reading is present.
+
+`hk-weather --short` (or `-s`) prints current conditions on one line, for example: `Rain, 28°C, humidity 85% — The Thunderstorm Warning has been issued`. The default multi-line report is unchanged.
 
 `hk-weather --forecast` prints the local forecast period, description, and outlook. With `--json`, that same forecast is one JSON object. Current conditions stay the default.
 

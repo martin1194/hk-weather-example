@@ -20,6 +20,7 @@ from hk_weather.hko import (
     format_place_miss,
     format_nine_day,
     format_places,
+    format_short,
     format_report,
     format_stations,
     format_tips,
@@ -50,6 +51,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--json",
         action="store_true",
         help="Print the report as one JSON object",
+    )
+    parser.add_argument(
+        "-s",
+        "--short",
+        action="store_true",
+        help="Print current conditions on one line",
     )
     parser.add_argument(
         "--forecast",
@@ -145,7 +152,12 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_place_miss(query, matched.update_time, as_json=args.json)
         else:
             weather = fetch_current(timeout=args.timeout, lang=args.lang)
-            text = format_json(weather) if args.json else format_report(weather)
+            if args.json:
+                text = format_json(weather)
+            elif args.short:
+                text = format_short(weather)
+            else:
+                text = format_report(weather)
     except WeatherError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
