@@ -9,6 +9,7 @@ from hk_weather.hko import (
     WeatherError,
     fetch_current,
     fetch_forecast,
+    fetch_forecast_day,
     fetch_humidity,
     fetch_lightning,
     fetch_nine_day,
@@ -22,6 +23,7 @@ from hk_weather.hko import (
     fetch_warnings,
     fetch_wind,
     filter_stations,
+    format_day_miss,
     format_forecast,
     format_humidity,
     format_json,
@@ -44,6 +46,17 @@ from hk_weather.hko import (
 )
 
 
+def _day_number(value: str) -> int:
+    """Argparse type: forecast day 1–9, where 1 is the first list entry."""
+    try:
+        number = int(value)
+    except ValueError:
+        raise argparse.ArgumentTypeError("day must be an integer from 1 to 9") from None
+    if number < 1 or number > 9:
+        raise argparse.ArgumentTypeError("day must be an integer from 1 to 9")
+    return number
+
+
 def package_version() -> str:
     """Return the installed hk-weather version from package metadata."""
     from importlib.metadata import version
@@ -63,7 +76,8 @@ def build_parser() -> argparse.ArgumentParser:
             "--place NAME filters those stations; --rain lists district rainfall; "
             "--lightning lists lightning locations; --humidity lists humidity readings; "
             "--temps lists temperatures by place; --wind lists the forecast wind; "
-            "--quake lists the latest earthquake message; --tomorrow prints tomorrow."
+            "--quake lists the latest earthquake message; --tomorrow prints tomorrow; "
+            "--day N prints forecast day N (1 is the first entry)."
         ),
     )
     parser.add_argument(
@@ -104,6 +118,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--tomorrow",
         action="store_true",
         help="Print tomorrow's day from the 9-day forecast",
+    )
+    parser.add_argument(
+        "--day",
+        type=_day_number,
+        metavar="N",
+        help="Print day N of the 9-day forecast (1 is the first entry, not tomorrow)",
     )
     parser.add_argument(
         "--wind",
@@ -201,6 +221,17 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_tomorrow_miss(as_json=args.json)
             else:
                 text = format_json(tomorrow) if args.json else format_tomorrow(tomorrow)
+        elif args.day is not None:
+            forecast_day = fetch_forecast_day(args.day, timeout=args.timeout, lang=args.lang)
+            if forecast_day is None:
+                text = format_day_miss(args.day, as_json=args.json)
+            else:
+                title = f"Hong Kong forecast day {args.day}"
+                text = (
+                    format_json(forecast_day)
+                    if args.json
+                    else format_tomorrow(forecast_day, title=title)
+                )
         elif args.wind:
             wind = fetch_wind(timeout=args.timeout, lang=args.lang)
             text = format_json(wind) if args.json else format_wind(wind)

@@ -221,6 +221,13 @@ def fetch_tomorrow(
     )
 
 
+def fetch_forecast_day(
+    day: int, url: str = NINE_DAY_URL, timeout: float = 10, lang: str = "en"
+) -> TomorrowForecast | None:
+    """Download forecast day N, where 1 is the first `weatherForecast` entry."""
+    return parse_forecast_day(_fetch_json(_apply_lang(url, lang), timeout), day)
+
+
 def fetch_wind(url: str = NINE_DAY_URL, timeout: float = 10, lang: str = "en") -> WindForecast:
     """Download forecast wind from the 9-day forecast (`dataType=fnd`)."""
     return parse_wind(_fetch_json(_apply_lang(url, lang), timeout))
@@ -476,26 +483,42 @@ def parse_tomorrow(payload: dict, tomorrow: str) -> TomorrowForecast | None:
             continue
         if _forecast_date(item.get("forecastDate")) != tomorrow:
             continue
-        day = _forecast_day(item)
-        if day is None:
-            return None
-        return TomorrowForecast(
-            update_time=_text(payload.get("updateTime")) or "unknown",
-            date=day.date,
-            week=day.week,
-            weather=day.weather,
-            temp_high_c=day.temp_high_c,
-            temp_low_c=day.temp_low_c,
-            humidity_high_percent=day.humidity_high_percent,
-            humidity_low_percent=day.humidity_low_percent,
-            rain_chance=day.rain_chance,
-            wind=_text(item.get("forecastWind")) or None,
-        )
+        return _forecast_entry(payload, item)
     return None
 
 
-def format_tomorrow(forecast: TomorrowForecast) -> str:
-    """Render a single forecast day, including wind when the Observatory sends it."""
+def parse_forecast_day(payload: dict, day: int) -> TomorrowForecast | None:
+    """Pick `weatherForecast[day - 1]`. Day 1 is the first entry, not tomorrow."""
+    raw_days = payload.get("weatherForecast")
+    index = day - 1
+    if not isinstance(raw_days, list) or index < 0 or index >= len(raw_days):
+        return None
+    item = raw_days[index]
+    if not isinstance(item, dict):
+        return None
+    return _forecast_entry(payload, item)
+
+
+def _forecast_entry(payload: dict, item: dict) -> TomorrowForecast | None:
+    day = _forecast_day(item)
+    if day is None:
+        return None
+    return TomorrowForecast(
+        update_time=_text(payload.get("updateTime")) or "unknown",
+        date=day.date,
+        week=day.week,
+        weather=day.weather,
+        temp_high_c=day.temp_high_c,
+        temp_low_c=day.temp_low_c,
+        humidity_high_percent=day.humidity_high_percent,
+        humidity_low_percent=day.humidity_low_percent,
+        rain_chance=day.rain_chance,
+        wind=_text(item.get("forecastWind")) or None,
+    )
+
+
+def format_tomorrow(forecast: TomorrowForecast, *, title: str = "Hong Kong forecast for tomorrow") -> str:
+    """Render one forecast day. The default title is tomorrow's."""
     heading = " ".join(part for part in (forecast.date, forecast.week) if part)
     details: list[str] = []
     if forecast.temp_high_c is not None:
@@ -508,7 +531,7 @@ def format_tomorrow(forecast: TomorrowForecast) -> str:
     if forecast.rain_chance:
         details.append(f"rain {forecast.rain_chance}")
     lines = [
-        "Hong Kong forecast for tomorrow",
+        title,
         "Source: Hong Kong Observatory open data",
         f"Updated: {forecast.update_time}",
         "",
@@ -523,7 +546,15 @@ def format_tomorrow(forecast: TomorrowForecast) -> str:
 
 def format_tomorrow_miss(*, as_json: bool = False) -> str:
     """Say that tomorrow is not in the 9-day forecast."""
-    message = "Tomorrow's forecast is not available."
+    return _unavailable("Tomorrow's forecast is not available.", as_json=as_json)
+
+
+def format_day_miss(day: int, *, as_json: bool = False) -> str:
+    """Say that forecast day N is not in the 9-day list."""
+    return _unavailable(f"Forecast day {day} is not available.", as_json=as_json)
+
+
+def _unavailable(message: str, *, as_json: bool) -> str:
     if as_json:
         return json.dumps({"message": message}, indent=2) + "\n"
     return message + "\n"
