@@ -837,6 +837,69 @@ def test_cli_lightning_when_none_reported(monkeypatch, capsys):
     assert capsys.readouterr().out == "No lightning is reported.\n"
 
 
+def test_cli_humidity_lists_places(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response(
+            {
+                "temperature": {
+                    "data": [{"place": "Hong Kong Observatory", "value": 28, "unit": "C"}]
+                },
+                "humidity": {
+                    "recordTime": "2026-10-02T23:00:00+08:00",
+                    "data": [
+                        {"place": "Hong Kong Observatory", "value": 85, "unit": "percent"},
+                        {"place": "Hong Kong Observatory", "value": 90, "unit": "percent"},
+                        {"place": "King's Park", "unit": "percent"},
+                    ],
+                },
+            }
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--humidity", "--lang", "tc"]) == 0
+    assert "dataType=rhrread" in seen["url"]
+    assert "lang=tc" in seen["url"]
+    out = capsys.readouterr().out
+    assert out == (
+        "Hong Kong humidity\n"
+        "Recorded: 2026-10-02T23:00:00+08:00\n"
+        "Hong Kong Observatory  85%\n"
+    )
+    assert "28°C" not in out
+    assert "King's Park" not in out
+
+
+def test_cli_humidity_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {
+                "humidity": {
+                    "recordTime": "2026-10-02T23:00:00+08:00",
+                    "data": [{"place": "Hong Kong Observatory", "value": 85, "unit": "percent"}],
+                }
+            }
+        ),
+    )
+    assert main(["--humidity", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "record_time": "2026-10-02T23:00:00+08:00",
+        "readings": [{"place": "Hong Kong Observatory", "humidity_percent": 85.0}],
+    }
+
+
+def test_cli_humidity_when_no_reading(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"humidity": ""}),
+    )
+    assert main(["--humidity"]) == 0
+    assert capsys.readouterr().out == "No humidity reading is available.\n"
+
+
 def test_cli_rain_when_no_readings(monkeypatch, capsys):
     monkeypatch.setattr(
         "hk_weather.hko.urllib.request.urlopen",
