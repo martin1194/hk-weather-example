@@ -19,6 +19,7 @@ DEFAULT_URL = f"{_API}?dataType=rhrread&lang=en"
 FORECAST_URL = f"{_API}?dataType=flw&lang=en"
 NINE_DAY_URL = f"{_API}?dataType=fnd&lang=en"
 WARNINGS_URL = f"{_API}?dataType=warnsum&lang=en"
+WARNING_INFO_URL = f"{_API}?dataType=warningInfo&lang=en"
 TIPS_URL = f"{_API}?dataType=swt&lang=en"
 # Quick earthquake messages live on earthquake.php. dataType=qem is the latest
 # magnitude 6+ event; dataType=eeq is not a valid Observatory parameter.
@@ -58,6 +59,14 @@ class LocalForecast:
 class WeatherWarning:
     code: str
     description: str
+
+
+@dataclass(frozen=True)
+class WarningDetail:
+    code: str
+    subtype: str
+    update_time: str
+    contents: tuple[str, ...]
 
 
 @dataclass(frozen=True)
@@ -215,6 +224,13 @@ def fetch_warnings(
 ) -> tuple[WeatherWarning, ...]:
     """Download active weather warnings (`dataType=warnsum`)."""
     return parse_warnings(_fetch_json(_apply_lang(url, lang), timeout))
+
+
+def fetch_warning_info(
+    url: str = WARNING_INFO_URL, timeout: float = 10, lang: str = "en"
+) -> tuple[WarningDetail, ...]:
+    """Download detailed warning messages (`dataType=warningInfo`)."""
+    return parse_warning_info(_fetch_json(_apply_lang(url, lang), timeout))
 
 
 def fetch_nine_day(
@@ -450,6 +466,64 @@ def format_warnings(warnings: tuple[WeatherWarning, ...], *, as_json: bool = Fal
         return "No weather warnings are in force.\n"
     lines = ["Hong Kong weather warnings"]
     lines.extend(f"{warning.code}  {warning.description}" for warning in warnings)
+    return "\n".join(lines) + "\n"
+
+
+def parse_warning_info(payload: dict) -> tuple[WarningDetail, ...]:
+    """Turn a `warningInfo` document into detailed warning messages."""
+    raw = payload.get("details")
+    if not isinstance(raw, list):
+        return ()
+    details: list[WarningDetail] = []
+    for item in raw:
+        if not isinstance(item, dict):
+            continue
+        raw_contents = item.get("contents")
+        if not isinstance(raw_contents, list):
+            continue
+        contents = tuple(
+            text
+            for part in raw_contents
+            if isinstance(part, str) and (text := part.strip())
+        )
+        if not contents:
+            continue
+        details.append(
+            WarningDetail(
+                code=_text(item.get("warningStatementCode")),
+                subtype=_text(item.get("subtype")),
+                update_time=_text(item.get("updateTime")),
+                contents=contents,
+            )
+        )
+    return tuple(details)
+
+
+def format_warning_info(details: tuple[WarningDetail, ...], *, as_json: bool = False) -> str:
+    """Render detailed warning messages, or one JSON object."""
+    if as_json:
+        payload = {
+            "warnings": [
+                {
+                    "code": item.code,
+                    "subtype": item.subtype,
+                    "update_time": item.update_time,
+                    "contents": list(item.contents),
+                }
+                for item in details
+            ]
+        }
+        return json.dumps(payload, indent=2) + "\n"
+    if not details:
+        return "No detailed warning information is available.\n"
+    lines = ["Hong Kong warning information"]
+    for item in details:
+        label = f"{item.code}  {item.subtype}".strip() or "Warning"
+        lines.append("")
+        lines.append(label)
+        if item.update_time:
+            lines.append(f"Updated: {item.update_time}")
+        lines.extend(f"- {paragraph}" for paragraph in item.contents)
     return "\n".join(lines) + "\n"
 
 
