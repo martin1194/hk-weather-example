@@ -238,6 +238,13 @@ class TempReport:
 
 
 @dataclass(frozen=True)
+class HottestReading:
+    record_time: str
+    place: str
+    temperature_c: float
+
+
+@dataclass(frozen=True)
 class UvIndex:
     update_time: str
     place: str | None
@@ -370,6 +377,17 @@ def fetch_humidity(url: str = DEFAULT_URL, timeout: float = 10, lang: str = "en"
 def fetch_temps(url: str = DEFAULT_URL, timeout: float = 10, lang: str = "en") -> TempReport:
     """Download temperature readings from the current report (`dataType=rhrread`)."""
     return parse_temps(_fetch_json(_apply_lang(url, lang), timeout))
+
+
+def fetch_hottest(
+    url: str = DEFAULT_URL, timeout: float = 10, lang: str = "en"
+) -> HottestReading | None:
+    """Download the warmest place from the current report (`dataType=rhrread`)."""
+    report = fetch_temps(url, timeout, lang)
+    if not report.readings:
+        return None
+    warmest = max(report.readings, key=lambda reading: reading.temperature_c)
+    return HottestReading(report.record_time, warmest.place, warmest.temperature_c)
 
 
 def _apply_lang(url: str, lang: str) -> str:
@@ -1202,6 +1220,20 @@ def format_temps(report: TempReport) -> str:
     return "\n".join(lines) + "\n"
 
 
+def format_hottest(reading: HottestReading) -> str:
+    """Render the warmest station from the current report."""
+    lines = ["Hong Kong hottest"]
+    if reading.record_time:
+        lines.append(f"Recorded: {reading.record_time}")
+    lines.append(f"{reading.place}  {_number(reading.temperature_c)}°C")
+    return "\n".join(lines) + "\n"
+
+
+def format_hottest_miss(*, as_json: bool = False) -> str:
+    """Say that the current report has no temperature readings."""
+    return _unavailable("No temperature readings are available.", as_json=as_json)
+
+
 def format_json(
     report: CurrentWeather
     | LocalForecast
@@ -1218,7 +1250,8 @@ def format_json(
     | TomorrowForecast
     | PsrForecast
     | WeekendForecast
-    | VisibilityReport,
+    | VisibilityReport
+    | HottestReading,
 ) -> str:
     """Render the same report as one JSON object."""
     return json.dumps(asdict(report), indent=2) + "\n"

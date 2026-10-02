@@ -10,6 +10,7 @@ from hk_weather.hko import (
     fetch_current,
     fetch_forecast,
     fetch_forecast_day,
+    fetch_hottest,
     fetch_humidity,
     fetch_lightning,
     fetch_nine_day,
@@ -30,6 +31,8 @@ from hk_weather.hko import (
     filter_stations,
     format_day_miss,
     format_forecast,
+    format_hottest,
+    format_hottest_miss,
     format_humidity,
     format_json,
     format_lightning,
@@ -93,7 +96,8 @@ def build_parser() -> argparse.ArgumentParser:
             "--psr lists the chance of significant rain; "
             "--warning-info prints detailed warning messages; "
             "--weekend prints Saturday and Sunday; "
-            "--visibility lists 10-minute mean visibility."
+            "--visibility lists 10-minute mean visibility; "
+            "--hottest prints the warmest place."
         ),
     )
     parser.add_argument(
@@ -221,6 +225,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="Print temperatures by place from the current report",
     )
     parser.add_argument(
+        "-H",
+        "--hottest",
+        action="store_true",
+        help="Print the warmest place from the current report",
+    )
+    parser.add_argument(
         "--stations",
         action="store_true",
         help="List temperature and humidity at each station",
@@ -329,6 +339,12 @@ def main(argv: list[str] | None = None) -> int:
         elif args.temps:
             temps = fetch_temps(timeout=args.timeout, lang=args.lang)
             text = format_json(temps) if args.json else format_temps(temps)
+        elif args.hottest:
+            hottest = fetch_hottest(timeout=args.timeout, lang=args.lang)
+            if hottest is None:
+                text = format_hottest_miss(as_json=args.json)
+            else:
+                text = format_json(hottest) if args.json else format_hottest(hottest)
         elif args.stations:
             stations = fetch_stations(timeout=args.timeout, lang=args.lang)
             text = format_json(stations) if args.json else format_stations(stations)

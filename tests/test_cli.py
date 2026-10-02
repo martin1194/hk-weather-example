@@ -1814,6 +1814,75 @@ def test_cli_temps_when_no_readings(monkeypatch, capsys):
     assert capsys.readouterr().out == "No temperature readings are available.\n"
 
 
+def test_cli_hottest_prints_warmest_place(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response(
+            {
+                "temperature": {
+                    "recordTime": "2026-10-02T23:00:00+08:00",
+                    "data": [
+                        {"place": "Hong Kong Observatory", "value": 28, "unit": "C"},
+                        {"place": "King's Park", "value": 31, "unit": "C"},
+                        {"place": "Sha Tin", "value": 31, "unit": "C"},
+                        {"place": "Tai Po", "unit": "C"},
+                    ],
+                }
+            }
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["-H", "--lang", "tc"]) == 0
+    assert "dataType=rhrread" in seen["url"]
+    assert "lang=tc" in seen["url"]
+    out = capsys.readouterr().out
+    assert out == (
+        "Hong Kong hottest\n"
+        "Recorded: 2026-10-02T23:00:00+08:00\n"
+        "King's Park  31°C\n"
+    )
+    assert "Sha Tin" not in out
+    assert "28°C" not in out
+
+
+def test_cli_hottest_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {
+                "temperature": {
+                    "recordTime": "2026-10-02T23:00:00+08:00",
+                    "data": [
+                        {"place": "Hong Kong Observatory", "value": 28, "unit": "C"},
+                        {"place": "King's Park", "value": 31, "unit": "C"},
+                    ],
+                }
+            }
+        ),
+    )
+    assert main(["--hottest", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "record_time": "2026-10-02T23:00:00+08:00",
+        "place": "King's Park",
+        "temperature_c": 31.0,
+    }
+
+
+def test_cli_hottest_when_no_readings(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"temperature": ""}),
+    )
+    assert main(["--hottest"]) == 0
+    assert capsys.readouterr().out == "No temperature readings are available.\n"
+    assert main(["--hottest", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No temperature readings are available."
+    }
+
+
 def test_cli_humidity_when_no_reading(monkeypatch, capsys):
     monkeypatch.setattr(
         "hk_weather.hko.urllib.request.urlopen",
