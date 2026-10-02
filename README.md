@@ -17,6 +17,7 @@ hk-weather --forecast --json
 hk-weather --nine-day
 hk-weather --nine-day --json
 hk-weather --warnings
+hk-weather --warnings --json
 hk-weather --uv
 hk-weather --uv --json
 hk-weather --lang tc
@@ -61,7 +62,7 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 
 `hk-weather --nine-day` (or `-n`) prints each day with the date, weather, high and low temperature, and chance of rain when the Observatory includes it. `--nine-day --json` prints that same forecast as one JSON object.
 
-`hk-weather --warnings` (or `-w`) prints each active warning as a code and description. If none are in force, it says so.
+`hk-weather --warnings` (or `-w`) prints each active warning as a code and description. `--warnings --json` prints them as one JSON object. If none are in force, it says so.
 
 `hk-weather --uv` (or `-u`) prints the Observatory UV index (place, value, and description). `--uv --json` prints that same reading as one JSON object. When the Observatory has no UV reading, it says so. Current conditions stay the default.
 

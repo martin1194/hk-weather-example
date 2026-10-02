@@ -189,6 +189,44 @@ def test_cli_warnings_lists_active_codes(monkeypatch, capsys):
     assert "Temperature:" not in out
 
 
+def test_cli_warnings_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {
+                "WTS": {
+                    "name": "Thunderstorm Warning",
+                    "code": "WTS",
+                    "actionCode": "ISSUE",
+                },
+                "WHOT": {
+                    "name": "Very Hot Weather Warning",
+                    "code": "WHOT",
+                    "actionCode": "CANCEL",
+                },
+            }
+        ),
+    )
+    assert main(["--warnings", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "warnings": [{"code": "WTS", "description": "Thunderstorm Warning"}]
+    }
+
+
+def test_cli_warnings_json_when_none_are_in_force(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response({})
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["-w", "--json", "--lang", "tc"]) == 0
+    assert "dataType=warnsum" in seen["url"]
+    assert "lang=tc" in seen["url"]
+    assert json.loads(capsys.readouterr().out) == {"warnings": []}
+
+
 def test_cli_warnings_when_none_are_in_force(monkeypatch, capsys):
     monkeypatch.setattr(
         "hk_weather.hko.urllib.request.urlopen",

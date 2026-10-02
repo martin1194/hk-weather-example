@@ -130,7 +130,10 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     try:
         if args.warnings:
-            text = format_warnings(fetch_warnings(timeout=args.timeout, lang=args.lang))
+            text = format_warnings(
+                fetch_warnings(timeout=args.timeout, lang=args.lang),
+                as_json=args.json,
+            )
         elif args.forecast:
             forecast = fetch_forecast(timeout=args.timeout, lang=args.lang)
             text = format_json(forecast) if args.json else format_forecast(forecast)
