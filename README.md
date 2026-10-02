@@ -20,6 +20,8 @@ hk-weather --nine-day
 hk-weather --nine-day --json
 hk-weather --tomorrow
 hk-weather -T --json
+hk-weather --weekend
+hk-weather -E --json
 hk-weather --day 1
 hk-weather --psr
 hk-weather --psr --json
@@ -83,6 +85,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --nine-day` (or `-n`) prints each day with the date, weather, high and low temperature, humidity range, and chance of rain when the Observatory includes them. `--nine-day --json` prints that same forecast as one JSON object.
 
 `hk-weather --tomorrow` (or `-T`) prints only tomorrow's day from that forecast, including wind when the Observatory sends it. `--tomorrow --json` prints that day as one JSON object. `--lang` applies. If that day is missing, it says so.
+
+`hk-weather --weekend` (or `-E`) prints only Saturday and Sunday from that forecast, with weather, high and low, humidity, chance of rain, and wind when the Observatory includes them. `--weekend --json` prints those days as one JSON object. If the 9-day window has no weekend day, it says so.
 
 `hk-weather --day 1` prints the first day in that same list (array index 0). `--day` takes 1 through 9. `--tomorrow` is the next Hong Kong calendar day, which is often a later entry.
 

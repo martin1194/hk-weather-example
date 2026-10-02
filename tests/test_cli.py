@@ -693,6 +693,130 @@ def test_cli_psr_json_is_one_object(monkeypatch, capsys):
     }
 
 
+def test_cli_weekend_prints_saturday_and_sunday(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response(
+            {
+                "updateTime": "2026-10-02T16:00:00+08:00",
+                "weatherForecast": [
+                    {
+                        "forecastDate": "20261002",
+                        "week": "Friday",
+                        "forecastWeather": "Weekday showers.",
+                        "forecastMaxtemp": {"value": 29, "unit": "C"},
+                        "forecastMintemp": {"value": 25, "unit": "C"},
+                        "PSR": "High",
+                    },
+                    {
+                        "forecastDate": "20261003",
+                        "week": "Saturday",
+                        "forecastWeather": "Sunny periods.",
+                        "forecastWind": "East force 3.",
+                        "forecastMaxtemp": {"value": 30, "unit": "C"},
+                        "forecastMintemp": {"value": 25, "unit": "C"},
+                        "forecastMaxrh": {"value": 95, "unit": "percent"},
+                        "forecastMinrh": {"value": 70, "unit": "percent"},
+                        "PSR": "Medium",
+                    },
+                    {
+                        "forecastDate": "20261004",
+                        "week": "Sunday",
+                        "forecastWeather": "Mainly fine.",
+                        "forecastMaxtemp": {"value": 31, "unit": "C"},
+                        "forecastMintemp": {"value": 26, "unit": "C"},
+                        "PSR": "Low",
+                    },
+                ],
+            }
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["-E", "--lang", "tc"]) == 0
+    assert "dataType=fnd" in seen["url"]
+    assert "lang=tc" in seen["url"]
+    out = capsys.readouterr().out
+    assert out == (
+        "Hong Kong weekend forecast\n"
+        "Source: Hong Kong Observatory open data\n"
+        "Updated: 2026-10-02T16:00:00+08:00\n"
+        "\n"
+        "2026-10-03 Saturday  high 30°C  low 25°C  humidity 70-95%  rain Medium\n"
+        "Sunny periods.\n"
+        "Wind: East force 3.\n"
+        "\n"
+        "2026-10-04 Sunday  high 31°C  low 26°C  rain Low\n"
+        "Mainly fine.\n"
+    )
+    assert "Weekday showers" not in out
+    assert "Friday" not in out
+
+
+def test_cli_weekend_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {
+                "updateTime": "2026-10-02T16:00:00+08:00",
+                "weatherForecast": [
+                    {
+                        "forecastDate": "20261003",
+                        "week": "星期六",
+                        "forecastWeather": "大致多云。",
+                        "forecastWind": "东风三至四级。",
+                        "forecastMaxtemp": {"value": 30, "unit": "C"},
+                        "forecastMintemp": {"value": 25, "unit": "C"},
+                        "PSR": "中",
+                    }
+                ],
+            }
+        ),
+    )
+    assert main(["--weekend", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "update_time": "2026-10-02T16:00:00+08:00",
+        "days": [
+            {
+                "date": "2026-10-03",
+                "week": "星期六",
+                "weather": "大致多云。",
+                "temp_high_c": 30.0,
+                "temp_low_c": 25.0,
+                "humidity_high_percent": None,
+                "humidity_low_percent": None,
+                "rain_chance": "中",
+                "wind": "东风三至四级。",
+            }
+        ],
+    }
+
+
+def test_cli_weekend_when_none_in_window(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {
+                "updateTime": "2026-10-05T00:00:00+08:00",
+                "weatherForecast": [
+                    {
+                        "forecastDate": "20261005",
+                        "week": "Monday",
+                        "forecastWeather": "Fine.",
+                    }
+                ],
+            }
+        ),
+    )
+    assert main(["--weekend"]) == 0
+    assert capsys.readouterr().out == "No weekend days are in the 9-day forecast.\n"
+    assert main(["--weekend", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No weekend days are in the 9-day forecast."
+    }
+
+
 def test_cli_wind_lists_forecast_wind(monkeypatch, capsys):
     seen = {}
 

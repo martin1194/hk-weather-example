@@ -23,6 +23,7 @@ from hk_weather.hko import (
     fetch_uv,
     fetch_warning_info,
     fetch_warnings,
+    fetch_weekend,
     fetch_wind,
     filter_stations,
     format_day_miss,
@@ -46,6 +47,8 @@ from hk_weather.hko import (
     format_uv,
     format_warning_info,
     format_warnings,
+    format_weekend,
+    format_weekend_miss,
     format_wind,
 )
 
@@ -83,7 +86,8 @@ def build_parser() -> argparse.ArgumentParser:
             "--quake lists the latest earthquake message; --tomorrow prints tomorrow; "
             "--day N prints forecast day N (1 is the first entry); "
             "--psr lists the chance of significant rain; "
-            "--warning-info prints detailed warning messages."
+            "--warning-info prints detailed warning messages; "
+            "--weekend prints Saturday and Sunday."
         ),
     )
     parser.add_argument(
@@ -124,6 +128,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--tomorrow",
         action="store_true",
         help="Print tomorrow's day from the 9-day forecast",
+    )
+    parser.add_argument(
+        "-E",
+        "--weekend",
+        action="store_true",
+        help="Print Saturday and Sunday from the 9-day forecast",
     )
     parser.add_argument(
         "--day",
@@ -244,6 +254,12 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_tomorrow_miss(as_json=args.json)
             else:
                 text = format_json(tomorrow) if args.json else format_tomorrow(tomorrow)
+        elif args.weekend:
+            weekend = fetch_weekend(timeout=args.timeout, lang=args.lang)
+            if not weekend.days:
+                text = format_weekend_miss(as_json=args.json)
+            else:
+                text = format_json(weekend) if args.json else format_weekend(weekend)
         elif args.day is not None:
             forecast_day = fetch_forecast_day(args.day, timeout=args.timeout, lang=args.lang)
             if forecast_day is None:

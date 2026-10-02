@@ -115,6 +115,25 @@ class TomorrowForecast:
 
 
 @dataclass(frozen=True)
+class WeekendDay:
+    date: str
+    week: str
+    weather: str
+    temp_high_c: float | None
+    temp_low_c: float | None
+    humidity_high_percent: float | None
+    humidity_low_percent: float | None
+    rain_chance: str | None
+    wind: str | None
+
+
+@dataclass(frozen=True)
+class WeekendForecast:
+    update_time: str
+    days: tuple[WeekendDay, ...]
+
+
+@dataclass(frozen=True)
 class WindDay:
     date: str
     week: str
@@ -264,6 +283,13 @@ def fetch_forecast_day(
 ) -> TomorrowForecast | None:
     """Download forecast day N, where 1 is the first `weatherForecast` entry."""
     return parse_forecast_day(_fetch_json(_apply_lang(url, lang), timeout), day)
+
+
+def fetch_weekend(
+    url: str = NINE_DAY_URL, timeout: float = 10, lang: str = "en"
+) -> WeekendForecast:
+    """Download Saturday and Sunday from the 9-day forecast (`dataType=fnd`)."""
+    return parse_weekend(_fetch_json(_apply_lang(url, lang), timeout))
 
 
 def fetch_wind(url: str = NINE_DAY_URL, timeout: float = 10, lang: str = "en") -> WindForecast:
@@ -626,29 +652,94 @@ def _forecast_entry(payload: dict, item: dict) -> TomorrowForecast | None:
 
 def format_tomorrow(forecast: TomorrowForecast, *, title: str = "Hong Kong forecast for tomorrow") -> str:
     """Render one forecast day. The default title is tomorrow's."""
-    heading = " ".join(part for part in (forecast.date, forecast.week) if part)
-    details: list[str] = []
-    if forecast.temp_high_c is not None:
-        details.append(f"high {_number(forecast.temp_high_c)}°C")
-    if forecast.temp_low_c is not None:
-        details.append(f"low {_number(forecast.temp_low_c)}°C")
-    humidity = _humidity_span(forecast.humidity_low_percent, forecast.humidity_high_percent)
-    if humidity:
-        details.append(humidity)
-    if forecast.rain_chance:
-        details.append(f"rain {forecast.rain_chance}")
     lines = [
         title,
         "Source: Hong Kong Observatory open data",
         f"Updated: {forecast.update_time}",
         "",
-        f"{heading}  {'  '.join(details)}".rstrip(),
+        *_day_lines(forecast),
     ]
-    if forecast.weather:
-        lines.append(forecast.weather)
-    if forecast.wind:
-        lines.append(f"Wind: {forecast.wind}")
     return "\n".join(lines) + "\n"
+
+
+def parse_weekend(payload: dict) -> WeekendForecast:
+    """Keep Saturday and Sunday entries from an `fnd` document."""
+    raw_days = payload.get("weatherForecast")
+    days: list[WeekendDay] = []
+    if isinstance(raw_days, list):
+        for item in raw_days:
+            if not isinstance(item, dict):
+                continue
+            entry = _forecast_entry(payload, item)
+            if entry is None or not _is_weekend(entry.date, entry.week):
+                continue
+            days.append(
+                WeekendDay(
+                    date=entry.date,
+                    week=entry.week,
+                    weather=entry.weather,
+                    temp_high_c=entry.temp_high_c,
+                    temp_low_c=entry.temp_low_c,
+                    humidity_high_percent=entry.humidity_high_percent,
+                    humidity_low_percent=entry.humidity_low_percent,
+                    rain_chance=entry.rain_chance,
+                    wind=entry.wind,
+                )
+            )
+    return WeekendForecast(
+        update_time=_text(payload.get("updateTime")) or "unknown",
+        days=tuple(days),
+    )
+
+
+def format_weekend(report: WeekendForecast) -> str:
+    """Render Saturday and Sunday from the 9-day forecast."""
+    lines = [
+        "Hong Kong weekend forecast",
+        "Source: Hong Kong Observatory open data",
+        f"Updated: {report.update_time}",
+    ]
+    for day in report.days:
+        lines.append("")
+        lines.extend(_day_lines(day))
+    return "\n".join(lines) + "\n"
+
+
+def format_weekend_miss(*, as_json: bool = False) -> str:
+    """Say that the 9-day window has no Saturday or Sunday."""
+    return _unavailable("No weekend days are in the 9-day forecast.", as_json=as_json)
+
+
+def _day_lines(day: TomorrowForecast | WeekendDay) -> list[str]:
+    heading = " ".join(part for part in (day.date, day.week) if part)
+    details: list[str] = []
+    if day.temp_high_c is not None:
+        details.append(f"high {_number(day.temp_high_c)}°C")
+    if day.temp_low_c is not None:
+        details.append(f"low {_number(day.temp_low_c)}°C")
+    humidity = _humidity_span(day.humidity_low_percent, day.humidity_high_percent)
+    if humidity:
+        details.append(humidity)
+    if day.rain_chance:
+        details.append(f"rain {day.rain_chance}")
+    lines = [f"{heading}  {'  '.join(details)}".rstrip()]
+    if day.weather:
+        lines.append(day.weather)
+    if day.wind:
+        lines.append(f"Wind: {day.wind}")
+    return lines
+
+
+def _is_weekend(date_text: str, week: str) -> bool:
+    """True for Saturday or Sunday, using the forecast date when it parses."""
+    try:
+        found = datetime.strptime(date_text, "%Y-%m-%d").date()
+    except ValueError:
+        found = None
+    if found is not None:
+        return found.weekday() >= 5
+    name = week.casefold()
+    return name in {"saturday", "sunday"} or week in {"星期六", "星期日", "星期天", "周六", "周日"}
 
 
 def format_tomorrow_miss(*, as_json: bool = False) -> str:
@@ -1044,7 +1135,8 @@ def format_json(
     | WindForecast
     | QuakeReport
     | TomorrowForecast
-    | PsrForecast,
+    | PsrForecast
+    | WeekendForecast,
 ) -> str:
     """Render the same report as one JSON object."""
     return json.dumps(asdict(report), indent=2) + "\n"
