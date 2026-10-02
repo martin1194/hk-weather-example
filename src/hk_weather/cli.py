@@ -18,6 +18,7 @@ from hk_weather.hko import (
     fetch_tips,
     fetch_uv,
     fetch_warnings,
+    fetch_wind,
     filter_stations,
     format_forecast,
     format_humidity,
@@ -34,6 +35,7 @@ from hk_weather.hko import (
     format_tips,
     format_uv,
     format_warnings,
+    format_wind,
 )
 
 
@@ -55,7 +57,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--stations lists each station; --list-places lists their names; "
             "--place NAME filters those stations; --rain lists district rainfall; "
             "--lightning lists lightning locations; --humidity lists humidity readings; "
-            "--temps lists temperatures by place."
+            "--temps lists temperatures by place; --wind lists the forecast wind."
         ),
     )
     parser.add_argument(
@@ -90,6 +92,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--nine-day",
         action="store_true",
         help="Print the 9-day forecast",
+    )
+    parser.add_argument(
+        "--wind",
+        action="store_true",
+        help="Print the forecast wind from the 9-day forecast",
     )
     parser.add_argument(
         "-w",
@@ -171,6 +178,9 @@ def main(argv: list[str] | None = None) -> int:
         elif args.nine_day:
             nine_day = fetch_nine_day(timeout=args.timeout, lang=args.lang)
             text = format_json(nine_day) if args.json else format_nine_day(nine_day)
+        elif args.wind:
+            wind = fetch_wind(timeout=args.timeout, lang=args.lang)
+            text = format_json(wind) if args.json else format_wind(wind)
         elif args.uv:
             uv = fetch_uv(timeout=args.timeout, lang=args.lang)
             text = format_json(uv) if args.json else format_uv(uv)

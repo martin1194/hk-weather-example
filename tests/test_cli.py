@@ -310,6 +310,90 @@ def test_cli_nine_day_json_is_one_object(monkeypatch, capsys):
     }
 
 
+def test_cli_wind_lists_forecast_wind(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response(
+            {
+                "updateTime": "2026-10-03T00:00:00+08:00",
+                "weatherForecast": [
+                    {
+                        "forecastDate": "20261003",
+                        "week": "Saturday",
+                        "forecastWind": "East force 3 to 4.",
+                        "forecastWeather": "Mainly cloudy with showers.",
+                        "forecastMaxtemp": {"value": 30, "unit": "C"},
+                    },
+                    {
+                        "forecastDate": "20261004",
+                        "week": "Sunday",
+                        "forecastWind": "  ",
+                        "forecastWeather": "Sunny periods.",
+                    },
+                    {
+                        "forecastDate": "20261005",
+                        "week": "Monday",
+                        "forecastWind": "North force 4.",
+                    },
+                ],
+            }
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--wind", "--lang", "tc"]) == 0
+    assert "dataType=fnd" in seen["url"]
+    assert "lang=tc" in seen["url"]
+    out = capsys.readouterr().out
+    assert out == (
+        "Hong Kong forecast wind\n"
+        "Updated: 2026-10-03T00:00:00+08:00\n"
+        "2026-10-03 Saturday  East force 3 to 4.\n"
+        "2026-10-05 Monday  North force 4.\n"
+    )
+    assert "Mainly cloudy" not in out
+    assert "30°C" not in out
+
+
+def test_cli_wind_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {
+                "updateTime": "2026-10-03T00:00:00+08:00",
+                "weatherForecast": [
+                    {
+                        "forecastDate": "20261003",
+                        "week": "Saturday",
+                        "forecastWind": "East force 3 to 4.",
+                    }
+                ],
+            }
+        ),
+    )
+    assert main(["--wind", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "update_time": "2026-10-03T00:00:00+08:00",
+        "days": [
+            {
+                "date": "2026-10-03",
+                "week": "Saturday",
+                "wind": "East force 3 to 4.",
+            }
+        ],
+    }
+
+
+def test_cli_wind_when_none_available(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"weatherForecast": []}),
+    )
+    assert main(["--wind"]) == 0
+    assert capsys.readouterr().out == "No forecast wind is available.\n"
+
+
 def test_cli_nine_day_missing_forecast_is_an_error(monkeypatch, capsys):
     monkeypatch.setattr(
         "hk_weather.hko.urllib.request.urlopen",

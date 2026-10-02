@@ -73,6 +73,19 @@ class NineDayForecast:
 
 
 @dataclass(frozen=True)
+class WindDay:
+    date: str
+    week: str
+    wind: str
+
+
+@dataclass(frozen=True)
+class WindForecast:
+    update_time: str
+    days: tuple[WindDay, ...]
+
+
+@dataclass(frozen=True)
 class SpecialTips:
     tips: tuple[str, ...]
 
@@ -161,6 +174,11 @@ def fetch_nine_day(
 ) -> NineDayForecast:
     """Download the 9-day forecast (`dataType=fnd`)."""
     return parse_nine_day(_fetch_json(_apply_lang(url, lang), timeout))
+
+
+def fetch_wind(url: str = NINE_DAY_URL, timeout: float = 10, lang: str = "en") -> WindForecast:
+    """Download forecast wind from the 9-day forecast (`dataType=fnd`)."""
+    return parse_wind(_fetch_json(_apply_lang(url, lang), timeout))
 
 
 def fetch_uv(url: str = UV_URL, timeout: float = 10, lang: str = "en") -> UvIndex:
@@ -392,6 +410,43 @@ def format_nine_day(forecast: NineDayForecast) -> str:
         lines.append(f"{heading}  {'  '.join(details)}".rstrip())
         if day.weather:
             lines.append(day.weather)
+    return "\n".join(lines) + "\n"
+
+
+def parse_wind(payload: dict) -> WindForecast:
+    """Turn `fnd` forecastWind fields into one line per day."""
+    raw_days = payload.get("weatherForecast")
+    days: list[WindDay] = []
+    if isinstance(raw_days, list):
+        for item in raw_days:
+            if not isinstance(item, dict):
+                continue
+            wind = _text(item.get("forecastWind"))
+            if not wind:
+                continue
+            days.append(
+                WindDay(
+                    date=_forecast_date(item.get("forecastDate")) or "unknown",
+                    week=_text(item.get("week")),
+                    wind=wind,
+                )
+            )
+    return WindForecast(
+        update_time=_text(payload.get("updateTime")),
+        days=tuple(days),
+    )
+
+
+def format_wind(report: WindForecast) -> str:
+    """Render forecast wind, one day per line."""
+    if not report.days:
+        return "No forecast wind is available.\n"
+    lines = ["Hong Kong forecast wind"]
+    if report.update_time:
+        lines.append(f"Updated: {report.update_time}")
+    for day in report.days:
+        heading = " ".join(part for part in (day.date, day.week) if part)
+        lines.append(f"{heading}  {day.wind}".strip())
     return "\n".join(lines) + "\n"
 
 
@@ -673,7 +728,8 @@ def format_json(
     | RainReport
     | LightningReport
     | HumidityReport
-    | TempReport,
+    | TempReport
+    | WindForecast,
 ) -> str:
     """Render the same report as one JSON object."""
     return json.dumps(asdict(report), indent=2) + "\n"
