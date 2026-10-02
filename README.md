@@ -93,4 +93,4 @@ pip install -e ".[dev]"
 pytest
 ```
 
-GitHub Actions runs the same install and `pytest` on pushes and pull requests to `main`.
+GitHub Actions runs the same install and `pytest` on Python 3.11 and 3.12 for pushes and pull requests to `main`.

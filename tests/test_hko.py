@@ -12,6 +12,7 @@ from hk_weather.hko import (
     fetch_forecast,
     format_forecast,
     format_report,
+    _number,
     parse_current_report,
     parse_forecast,
 )
@@ -69,6 +70,12 @@ def test_format_report_plain_text():
     assert "Lightning: Lantau" in text
     assert "- The Thunderstorm Warning has been issued." in text
     assert text.endswith("\n")
+
+
+def test_number_formats_int_and_float():
+    assert _number(28) == "28"
+    assert _number(28.0) == "28"
+    assert _number(29.5) == "29.5"
 
 
 def test_missing_humidity_and_unknown_icon():

@@ -713,6 +713,7 @@ def _text(value: object) -> str:
 
 
 def _number(value: float) -> str:
-    if value.is_integer():
-        return str(int(value))
-    return str(value)
+    number = float(value)
+    if number.is_integer():
+        return str(int(number))
+    return str(number)
