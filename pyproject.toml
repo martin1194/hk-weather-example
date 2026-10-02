@@ -13,7 +13,16 @@ authors = [{ name = "hk-weather-example contributors" }]
 dependencies = []
 
 [project.optional-dependencies]
-dev = ["pytest>=8"]
+dev = ["pytest>=8", "ruff>=0.6"]
+
+[tool.ruff]
+src = ["src", "tests"]
+target-version = "py310"
+
+[tool.ruff.lint]
+# Pyflakes and the pycodestyle error codes Ruff enables by default.
+# Line length is left alone so existing report strings stay as they are.
+select = ["E4", "E7", "E9", "F"]
 
 [project.scripts]
 hk-weather = "hk_weather.cli:main"
