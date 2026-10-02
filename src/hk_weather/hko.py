@@ -1,4 +1,4 @@
-"""Fetch and format the Hong Kong Observatory current weather report."""
+"""Fetch and format Hong Kong Observatory current weather and the local forecast."""
 
 from __future__ import annotations
 
@@ -9,11 +9,11 @@ from dataclasses import asdict, dataclass
 
 from hk_weather.icons import icon_label
 
-# Current Weather Report. No API key. See HKO Open Data API documentation.
-DEFAULT_URL = (
-    "https://data.weather.gov.hk/weatherAPI/opendata/weather.php"
-    "?dataType=rhrread&lang=en"
-)
+# Hong Kong Observatory open data. No API key.
+# rhrread: current weather report. flw: local weather forecast.
+_API = "https://data.weather.gov.hk/weatherAPI/opendata/weather.php"
+DEFAULT_URL = f"{_API}?dataType=rhrread&lang=en"
+FORECAST_URL = f"{_API}?dataType=flw&lang=en"
 HKO_STATION = "Hong Kong Observatory"
 USER_AGENT = "hk-weather-demo/0.1 (+https://github.com)"
 
@@ -35,8 +35,25 @@ class CurrentWeather:
     warnings: tuple[str, ...]
 
 
+@dataclass(frozen=True)
+class LocalForecast:
+    update_time: str
+    period: str
+    forecast: str
+    outlook: str
+
+
 def fetch_current(url: str = DEFAULT_URL, timeout: float = 10) -> CurrentWeather:
     """Download the current weather report and return a summary."""
+    return parse_current_report(_fetch_json(url, timeout))
+
+
+def fetch_forecast(url: str = FORECAST_URL, timeout: float = 10) -> LocalForecast:
+    """Download the local weather forecast (`dataType=flw`)."""
+    return parse_forecast(_fetch_json(url, timeout))
+
+
+def _fetch_json(url: str, timeout: float) -> dict:
     request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
     try:
         with urllib.request.urlopen(request, timeout=timeout) as response:
@@ -51,7 +68,7 @@ def fetch_current(url: str = DEFAULT_URL, timeout: float = 10) -> CurrentWeather
 
     if not isinstance(payload, dict):
         raise WeatherError("Hong Kong Observatory returned an unexpected payload")
-    return parse_current_report(payload)
+    return payload
 
 
 def parse_current_report(payload: dict) -> CurrentWeather:
@@ -99,9 +116,36 @@ def format_report(weather: CurrentWeather) -> str:
     return "\n".join(lines) + "\n"
 
 
-def format_json(weather: CurrentWeather) -> str:
+def parse_forecast(payload: dict) -> LocalForecast:
+    """Turn an `flw` JSON document into a short local forecast."""
+    forecast = _text(payload.get("forecastDesc"))
+    if not forecast:
+        raise WeatherError("local forecast is missing from the report")
+    return LocalForecast(
+        update_time=_text(payload.get("updateTime")) or "unknown",
+        period=_text(payload.get("forecastPeriod")) or "Hong Kong",
+        forecast=forecast,
+        outlook=_text(payload.get("outlook")),
+    )
+
+
+def format_forecast(forecast: LocalForecast) -> str:
+    """Render the local forecast as plain text."""
+    lines = [
+        "Hong Kong forecast",
+        "Source: Hong Kong Observatory open data",
+        f"Updated: {forecast.update_time}",
+        f"Period: {forecast.period}",
+        forecast.forecast,
+    ]
+    if forecast.outlook:
+        lines.append(f"Outlook: {forecast.outlook}")
+    return "\n".join(lines) + "\n"
+
+
+def format_json(report: CurrentWeather | LocalForecast) -> str:
     """Render the same report as one JSON object."""
-    return json.dumps(asdict(weather), indent=2) + "\n"
+    return json.dumps(asdict(report), indent=2) + "\n"
 
 
 def _temperature(payload: dict) -> tuple[str, float]:

@@ -2,7 +2,7 @@
 
 Small Python CLI that prints the current weather in Hong Kong. This repository is a **Cursor cloud-agent demo**: an agent started from an almost empty public repo and added the package, tests, and CI.
 
-Data comes from the [Hong Kong Observatory Open Data API](https://www.hko.gov.hk/en/abouthko/opendata_intro.htm) current weather report (`dataType=rhrread`). No API key or account is required.
+Data comes from the [Hong Kong Observatory Open Data API](https://www.hko.gov.hk/en/abouthko/opendata_intro.htm). The default is the current weather report (`dataType=rhrread`). `--forecast` prints the local weather forecast (`dataType=flw`). No API key or account is required.
 
 ## Run
 
@@ -10,6 +10,8 @@ Data comes from the [Hong Kong Observatory Open Data API](https://www.hko.gov.hk
 pip install -e .
 hk-weather
 hk-weather --json
+hk-weather --forecast
+hk-weather --forecast --json
 ```
 
 Or without installing the script:
@@ -35,6 +37,8 @@ Warnings:
 ```
 
 The temperature and humidity lines use the Hong Kong Observatory station when that reading is present.
+
+`hk-weather --forecast` prints the local forecast period, description, and outlook. With `--json`, that same forecast is one JSON object. Current conditions stay the default.
 
 ## Test
 

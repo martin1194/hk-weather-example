@@ -87,6 +87,68 @@ def test_cli_json_prints_one_object(monkeypatch, capsys):
     }
 
 
+def _json_response(payload: dict):
+    body = json.dumps(payload).encode()
+
+    class Response:
+        def read(self):
+            return body
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+    return Response()
+
+
+def test_cli_forecast_prints_plain_text(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response(
+            {
+                "forecastPeriod": "Weather forecast for Hong Kong (Saturday, 3 Oct 2026)",
+                "forecastDesc": "Mainly cloudy with occasional showers.",
+                "outlook": "Still a few showers on Sunday.",
+                "updateTime": "2026-10-03T00:00:00+08:00",
+            }
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--forecast"]) == 0
+    out = capsys.readouterr().out
+    assert "dataType=flw" in seen["url"]
+    assert "Hong Kong forecast" in out
+    assert "Mainly cloudy with occasional showers." in out
+    assert "Outlook: Still a few showers on Sunday." in out
+    assert "Temperature:" not in out
+
+
+def test_cli_forecast_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {
+                "forecastPeriod": "Tonight",
+                "forecastDesc": "Fine and dry.",
+                "outlook": "",
+                "updateTime": "2026-10-03T12:00:00+08:00",
+            }
+        ),
+    )
+    assert main(["--forecast", "--json"]) == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload == {
+        "update_time": "2026-10-03T12:00:00+08:00",
+        "period": "Tonight",
+        "forecast": "Fine and dry.",
+        "outlook": "",
+    }
+
+
 def test_cli_json_fetch_error_stays_on_stderr(monkeypatch, capsys):
     def boom(request, timeout):
         raise URLError("down")
