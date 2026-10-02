@@ -424,6 +424,59 @@ def test_cli_sends_lang_query(monkeypatch, capsys, argv, query, payload):
         assert out.endswith("\n")
 
 
+def test_cli_tips_requests_swt_and_lang(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response(
+            {
+                "swt": [
+                    {"desc": "Strong winds are expected from the east.", "updateTime": "2026-10-03T04:00:00+08:00"},
+                    {"desc": "  "},
+                    "Stay away from the shoreline.",
+                ]
+            }
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--tips", "--lang", "tc"]) == 0
+    assert "dataType=swt" in seen["url"]
+    assert "lang=tc" in seen["url"]
+    out = capsys.readouterr().out
+    assert out == (
+        "Hong Kong special weather tips\n"
+        "- Strong winds are expected from the east.\n"
+        "- Stay away from the shoreline.\n"
+    )
+    assert "Temperature:" not in out
+
+
+def test_cli_tips_json_is_one_object(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response({"swt": [{"desc": "Hot weather. Drink more water."}]})
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["-t", "--json"]) == 0
+    assert "dataType=swt" in seen["url"]
+    assert "lang=en" in seen["url"]
+    assert json.loads(capsys.readouterr().out) == {
+        "tips": ["Hot weather. Drink more water."]
+    }
+
+
+def test_cli_tips_when_none_are_in_force(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"swt": []}),
+    )
+    assert main(["--tips"]) == 0
+    assert capsys.readouterr().out == "No special weather tips are in force.\n"
+
+
 def test_cli_rejects_unknown_lang():
     with pytest.raises(SystemExit) as exc:
         main(["--lang", "fr"])
