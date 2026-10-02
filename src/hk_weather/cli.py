@@ -12,6 +12,7 @@ from hk_weather.hko import (
     fetch_humidity,
     fetch_lightning,
     fetch_nine_day,
+    fetch_quakes,
     fetch_rain,
     fetch_stations,
     fetch_temps,
@@ -27,6 +28,7 @@ from hk_weather.hko import (
     format_place_miss,
     format_nine_day,
     format_places,
+    format_quakes,
     format_rain,
     format_short,
     format_report,
@@ -57,7 +59,8 @@ def build_parser() -> argparse.ArgumentParser:
             "--stations lists each station; --list-places lists their names; "
             "--place NAME filters those stations; --rain lists district rainfall; "
             "--lightning lists lightning locations; --humidity lists humidity readings; "
-            "--temps lists temperatures by place; --wind lists the forecast wind."
+            "--temps lists temperatures by place; --wind lists the forecast wind; "
+            "--quake lists the latest earthquake message."
         ),
     )
     parser.add_argument(
@@ -97,6 +100,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--wind",
         action="store_true",
         help="Print the forecast wind from the 9-day forecast",
+    )
+    parser.add_argument(
+        "--quake",
+        action="store_true",
+        help="List the latest Observatory quick earthquake message",
     )
     parser.add_argument(
         "-w",
@@ -181,6 +189,9 @@ def main(argv: list[str] | None = None) -> int:
         elif args.wind:
             wind = fetch_wind(timeout=args.timeout, lang=args.lang)
             text = format_json(wind) if args.json else format_wind(wind)
+        elif args.quake:
+            quakes = fetch_quakes(timeout=args.timeout, lang=args.lang)
+            text = format_json(quakes) if args.json else format_quakes(quakes)
         elif args.uv:
             uv = fetch_uv(timeout=args.timeout, lang=args.lang)
             text = format_json(uv) if args.json else format_uv(uv)
