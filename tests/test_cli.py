@@ -643,6 +643,55 @@ def test_cli_stations_missing_readings_is_an_error(monkeypatch, capsys):
     assert "station readings are missing" in captured.err
 
 
+def test_cli_short_is_one_line(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response(
+            {
+                "updateTime": "2026-10-02T23:02:00+08:00",
+                "icon": [63],
+                "temperature": {
+                    "data": [{"place": "Hong Kong Observatory", "value": 28, "unit": "C"}]
+                },
+                "humidity": {
+                    "data": [{"place": "Hong Kong Observatory", "value": 85, "unit": "percent"}]
+                },
+                "warningMessage": [
+                    "The Thunderstorm Warning has been issued. It will remain effective until 1:00 a.m.",
+                    "The Amber Rainstorm Warning Signal is in force.",
+                ],
+            }
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["-s"]) == 0
+    assert "dataType=rhrread" in seen["url"]
+    out = capsys.readouterr().out
+    assert out == (
+        "Rain, 28°C, humidity 85% — "
+        "The Thunderstorm Warning has been issued (+1 more)\n"
+    )
+    assert "Hong Kong weather" not in out
+
+
+def test_cli_short_without_warning_or_humidity(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {
+                "icon": [50],
+                "temperature": {"data": [{"place": "Chek Lap Kok", "value": 30, "unit": "C"}]},
+                "humidity": "",
+                "warningMessage": "",
+            }
+        ),
+    )
+    assert main(["--short"]) == 0
+    assert capsys.readouterr().out == "Sunny, 30°C, humidity n/a\n"
+
+
 def test_cli_rejects_unknown_lang():
     with pytest.raises(SystemExit) as exc:
         main(["--lang", "fr"])
