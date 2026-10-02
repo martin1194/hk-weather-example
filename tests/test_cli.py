@@ -393,6 +393,72 @@ def test_cli_wind_json_is_one_object(monkeypatch, capsys):
     }
 
 
+def test_cli_quake_lists_latest_message(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response(
+            {
+                "lat": 51.79,
+                "lon": 159.6,
+                "mag": 6,
+                "region": "off east coast of Kamchatka",
+                "ptime": "2026-10-03T00:34:00+08:00",
+                "updateTime": "2026-10-03T00:50:00+08:00",
+            }
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--quake", "--lang", "tc"]) == 0
+    assert "earthquake.php" in seen["url"]
+    assert "dataType=qem" in seen["url"]
+    assert "lang=tc" in seen["url"]
+    assert capsys.readouterr().out == (
+        "Hong Kong earthquakes\n"
+        "Updated: 2026-10-03T00:50:00+08:00\n"
+        "2026-10-03T00:34:00+08:00  M6  off east coast of Kamchatka (51.79, 159.6)\n"
+    )
+
+
+def test_cli_quake_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {
+                "lat": 22.3,
+                "lon": 114.2,
+                "mag": 6.4,
+                "region": "near Hong Kong",
+                "ptime": "2026-10-03T01:00:00+08:00",
+                "updateTime": "2026-10-03T01:10:00+08:00",
+            }
+        ),
+    )
+    assert main(["--quake", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "quakes": [
+            {
+                "time": "2026-10-03T01:00:00+08:00",
+                "region": "near Hong Kong",
+                "magnitude": 6.4,
+                "latitude": 22.3,
+                "longitude": 114.2,
+                "update_time": "2026-10-03T01:10:00+08:00",
+            }
+        ]
+    }
+
+
+def test_cli_quake_when_none_reported(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({}),
+    )
+    assert main(["--quake"]) == 0
+    assert capsys.readouterr().out == "No recent earthquake is reported.\n"
+
+
 def test_cli_wind_when_none_available(monkeypatch, capsys):
     monkeypatch.setattr(
         "hk_weather.hko.urllib.request.urlopen",

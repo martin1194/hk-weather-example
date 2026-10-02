@@ -19,6 +19,9 @@ FORECAST_URL = f"{_API}?dataType=flw&lang=en"
 NINE_DAY_URL = f"{_API}?dataType=fnd&lang=en"
 WARNINGS_URL = f"{_API}?dataType=warnsum&lang=en"
 TIPS_URL = f"{_API}?dataType=swt&lang=en"
+# Quick earthquake messages live on earthquake.php. dataType=qem is the latest
+# magnitude 6+ event; dataType=eeq is not a valid Observatory parameter.
+QUAKE_URL = "https://data.weather.gov.hk/weatherAPI/opendata/earthquake.php?dataType=qem&lang=en"
 UV_URL = DEFAULT_URL
 _CANCELLED = {"CANCEL", "CANCELLED"}
 HKO_STATION = "Hong Kong Observatory"
@@ -85,6 +88,21 @@ class WindDay:
 class WindForecast:
     update_time: str
     days: tuple[WindDay, ...]
+
+
+@dataclass(frozen=True)
+class Earthquake:
+    time: str
+    region: str
+    magnitude: float | None
+    latitude: float | None
+    longitude: float | None
+    update_time: str
+
+
+@dataclass(frozen=True)
+class QuakeReport:
+    quakes: tuple[Earthquake, ...]
 
 
 @dataclass(frozen=True)
@@ -181,6 +199,11 @@ def fetch_nine_day(
 def fetch_wind(url: str = NINE_DAY_URL, timeout: float = 10, lang: str = "en") -> WindForecast:
     """Download forecast wind from the 9-day forecast (`dataType=fnd`)."""
     return parse_wind(_fetch_json(_apply_lang(url, lang), timeout))
+
+
+def fetch_quakes(url: str = QUAKE_URL, timeout: float = 10, lang: str = "en") -> QuakeReport:
+    """Download the latest quick earthquake message (`dataType=qem`)."""
+    return parse_quakes(_fetch_json(_apply_lang(url, lang), timeout))
 
 
 def fetch_uv(url: str = UV_URL, timeout: float = 10, lang: str = "en") -> UvIndex:
@@ -440,6 +463,54 @@ def parse_wind(payload: dict) -> WindForecast:
         update_time=_text(payload.get("updateTime")),
         days=tuple(days),
     )
+
+
+def parse_quakes(payload: dict) -> QuakeReport:
+    """Turn a quick-earthquake message into a one-item list, or none."""
+    quake = _quake(payload)
+    return QuakeReport(() if quake is None else (quake,))
+
+
+def format_quakes(report: QuakeReport) -> str:
+    """Render recent earthquakes, one event per line."""
+    if not report.quakes:
+        return "No recent earthquake is reported.\n"
+    lines = ["Hong Kong earthquakes"]
+    updated = next((quake.update_time for quake in report.quakes if quake.update_time), "")
+    if updated:
+        lines.append(f"Updated: {updated}")
+    for quake in report.quakes:
+        magnitude = f"M{_number(quake.magnitude)}" if quake.magnitude is not None else "M?"
+        region = quake.region or "unknown region"
+        when = quake.time or "unknown time"
+        if quake.latitude is not None and quake.longitude is not None:
+            place = f"{region} ({_number(quake.latitude)}, {_number(quake.longitude)})"
+        else:
+            place = region
+        lines.append(f"{when}  {magnitude}  {place}")
+    return "\n".join(lines) + "\n"
+
+
+def _quake(item: dict) -> Earthquake | None:
+    region = _text(item.get("region"))
+    when = _text(item.get("ptime"))
+    magnitude = _optional_number(item.get("mag"))
+    if not region and not when and magnitude is None:
+        return None
+    return Earthquake(
+        time=when,
+        region=region,
+        magnitude=magnitude,
+        latitude=_optional_number(item.get("lat")),
+        longitude=_optional_number(item.get("lon")),
+        update_time=_text(item.get("updateTime")),
+    )
+
+
+def _optional_number(value: object) -> float | None:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    return float(value)
 
 
 def format_wind(report: WindForecast) -> str:
@@ -734,7 +805,8 @@ def format_json(
     | LightningReport
     | HumidityReport
     | TempReport
-    | WindForecast,
+    | WindForecast
+    | QuakeReport,
 ) -> str:
     """Render the same report as one JSON object."""
     return json.dumps(asdict(report), indent=2) + "\n"

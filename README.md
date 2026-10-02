@@ -20,6 +20,8 @@ hk-weather --nine-day
 hk-weather --nine-day --json
 hk-weather --wind
 hk-weather --wind --json
+hk-weather --quake
+hk-weather --quake --json
 hk-weather --warnings
 hk-weather --warnings --json
 hk-weather --uv
@@ -75,6 +77,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --nine-day` (or `-n`) prints each day with the date, weather, high and low temperature, humidity range, and chance of rain when the Observatory includes them. `--nine-day --json` prints that same forecast as one JSON object.
 
 `hk-weather --wind` prints the forecast wind for each day from that same 9-day forecast. `--wind --json` prints those days as one JSON object. If no wind text is present, it says so.
+
+`hk-weather --quake` lists the latest quick earthquake message from the Observatory earthquake feed (`earthquake.php`, `dataType=qem`), for example `2026-10-03T00:34:00+08:00  M6  off east coast of Kamchatka (51.79, 159.6)`. `--quake --json` prints that list as one JSON object. `--lang` applies. If none is reported, it says so.
 
 `hk-weather --warnings` (or `-w`) prints each active warning as a code and description. `--warnings --json` prints them as one JSON object. If none are in force, it says so.
 
