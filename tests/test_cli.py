@@ -477,6 +477,50 @@ def test_cli_tips_when_none_are_in_force(monkeypatch, capsys):
     assert capsys.readouterr().out == "No special weather tips are in force.\n"
 
 
+def test_cli_stations_lists_temperature_and_humidity(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response(
+            {
+                "updateTime": "2026-10-02T23:02:00+08:00",
+                "temperature": {
+                    "data": [
+                        {"place": "King's Park", "value": 27, "unit": "C"},
+                        {"place": "Hong Kong Observatory", "value": 28, "unit": "C"},
+                    ]
+                },
+                "humidity": {
+                    "data": [
+                        {"place": "Hong Kong Observatory", "value": 85, "unit": "percent"}
+                    ]
+                },
+            }
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--stations"]) == 0
+    assert "dataType=rhrread" in seen["url"]
+    assert "lang=en" in seen["url"]
+    out = capsys.readouterr().out
+    assert "Place" in out and "Temp" in out and "Humidity" in out
+    assert "King's Park            27°C   n/a" in out
+    assert "Hong Kong Observatory  28°C   85%" in out
+    assert "Conditions:" not in out
+
+
+def test_cli_stations_missing_readings_is_an_error(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"temperature": {"data": []}, "humidity": ""}),
+    )
+    assert main(["--stations"]) == 1
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "station readings are missing" in captured.err
+
+
 def test_cli_rejects_unknown_lang():
     with pytest.raises(SystemExit) as exc:
         main(["--lang", "fr"])

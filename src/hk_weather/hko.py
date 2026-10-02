@@ -78,6 +78,19 @@ class SpecialTips:
 
 
 @dataclass(frozen=True)
+class StationReading:
+    place: str
+    temperature_c: float | None
+    humidity_percent: float | None
+
+
+@dataclass(frozen=True)
+class StationReport:
+    update_time: str
+    stations: tuple[StationReading, ...]
+
+
+@dataclass(frozen=True)
 class UvIndex:
     update_time: str
     place: str | None
@@ -118,6 +131,11 @@ def fetch_uv(url: str = UV_URL, timeout: float = 10, lang: str = "en") -> UvInde
 def fetch_tips(url: str = TIPS_URL, timeout: float = 10, lang: str = "en") -> SpecialTips:
     """Download special weather tips (`dataType=swt`)."""
     return parse_tips(_fetch_json(_apply_lang(url, lang), timeout))
+
+
+def fetch_stations(url: str = DEFAULT_URL, timeout: float = 10, lang: str = "en") -> StationReport:
+    """Download per-station temperature and humidity from the current report."""
+    return parse_stations(_fetch_json(_apply_lang(url, lang), timeout))
 
 
 def _apply_lang(url: str, lang: str) -> str:
@@ -366,8 +384,62 @@ def format_tips(report: SpecialTips) -> str:
     return "\n".join(lines) + "\n"
 
 
+def parse_stations(payload: dict) -> StationReport:
+    """List each place in an `rhrread` document, with humidity when that place has it."""
+    humidity: dict[str, float] = {}
+    for item in _data_list(payload.get("humidity")):
+        place = _text(item.get("place"))
+        value = _temp_value(item)
+        if place and value is not None:
+            humidity[place] = value
+
+    stations: list[StationReading] = []
+    seen: set[str] = set()
+    for item in _data_list(payload.get("temperature")):
+        place = _text(item.get("place"))
+        value = _temp_value(item)
+        if not place or value is None or place in seen:
+            continue
+        seen.add(place)
+        stations.append(StationReading(place, value, humidity.get(place)))
+    for place, value in humidity.items():
+        if place not in seen:
+            stations.append(StationReading(place, None, value))
+    if not stations:
+        raise WeatherError("station readings are missing from the report")
+    return StationReport(
+        update_time=_text(payload.get("updateTime")) or "unknown",
+        stations=tuple(stations),
+    )
+
+
+def format_stations(report: StationReport) -> str:
+    """Render station temperature and humidity as aligned lines."""
+    width = max(len("Place"), *(len(station.place) for station in report.stations))
+    lines = [
+        "Hong Kong station readings",
+        "Source: Hong Kong Observatory open data",
+        f"Updated: {report.update_time}",
+        "",
+        f"{'Place':<{width}}  Temp   Humidity",
+    ]
+    for station in report.stations:
+        temp = (
+            f"{_number(station.temperature_c)}°C"
+            if station.temperature_c is not None
+            else "n/a"
+        )
+        humid = (
+            f"{_number(station.humidity_percent)}%"
+            if station.humidity_percent is not None
+            else "n/a"
+        )
+        lines.append(f"{station.place:<{width}}  {temp:<5}  {humid}")
+    return "\n".join(lines) + "\n"
+
+
 def format_json(
-    report: CurrentWeather | LocalForecast | NineDayForecast | UvIndex | SpecialTips,
+    report: CurrentWeather | LocalForecast | NineDayForecast | UvIndex | SpecialTips | StationReport,
 ) -> str:
     """Render the same report as one JSON object."""
     return json.dumps(asdict(report), indent=2) + "\n"
