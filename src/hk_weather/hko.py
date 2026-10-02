@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import urllib.error
 import urllib.request
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 
 from hk_weather.icons import icon_label
 
@@ -97,6 +97,11 @@ def format_report(weather: CurrentWeather) -> str:
         lines.append("Warnings:")
         lines.extend(f"- {message}" for message in weather.warnings)
     return "\n".join(lines) + "\n"
+
+
+def format_json(weather: CurrentWeather) -> str:
+    """Render the same report as one JSON object."""
+    return json.dumps(asdict(weather), indent=2) + "\n"
 
 
 def _temperature(payload: dict) -> tuple[str, float]:

@@ -9,6 +9,7 @@ Data comes from the [Hong Kong Observatory Open Data API](https://www.hko.gov.hk
 ```bash
 pip install -e .
 hk-weather
+hk-weather --json
 ```
 
 Or without installing the script:

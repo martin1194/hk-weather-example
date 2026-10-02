@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 import sys
 
-from hk_weather.hko import WeatherError, fetch_current, format_report
+from hk_weather.hko import WeatherError, fetch_current, format_json, format_report
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -18,6 +18,11 @@ def build_parser() -> argparse.ArgumentParser:
         type=float,
         default=10,
         help="HTTP timeout in seconds (default: 10)",
+    )
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Print the report as one JSON object",
     )
     return parser
 
@@ -32,5 +37,8 @@ def main(argv: list[str] | None = None) -> int:
     except WeatherError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
-    sys.stdout.write(format_report(weather))
+    if args.json:
+        sys.stdout.write(format_json(weather))
+    else:
+        sys.stdout.write(format_report(weather))
     return 0
