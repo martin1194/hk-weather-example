@@ -79,6 +79,19 @@ class NineDayForecast:
 
 
 @dataclass(frozen=True)
+class PsrDay:
+    date: str
+    week: str
+    psr: str | None
+
+
+@dataclass(frozen=True)
+class PsrForecast:
+    update_time: str
+    days: tuple[PsrDay, ...]
+
+
+@dataclass(frozen=True)
 class TomorrowForecast:
     update_time: str
     date: str
@@ -209,6 +222,15 @@ def fetch_nine_day(
 ) -> NineDayForecast:
     """Download the 9-day forecast (`dataType=fnd`)."""
     return parse_nine_day(_fetch_json(_apply_lang(url, lang), timeout))
+
+
+def fetch_psr(url: str = NINE_DAY_URL, timeout: float = 10, lang: str = "en") -> PsrForecast:
+    """Download the chance of significant rain from the 9-day forecast."""
+    forecast = fetch_nine_day(url, timeout, lang)
+    return PsrForecast(
+        update_time=forecast.update_time,
+        days=tuple(PsrDay(day.date, day.week, day.rain_chance) for day in forecast.days),
+    )
 
 
 def fetch_tomorrow(
@@ -470,6 +492,17 @@ def format_nine_day(forecast: NineDayForecast) -> str:
         lines.append(f"{heading}  {'  '.join(details)}".rstrip())
         if day.weather:
             lines.append(day.weather)
+    return "\n".join(lines) + "\n"
+
+
+def format_psr(report: PsrForecast) -> str:
+    """Render the chance of significant rain, one day per line."""
+    lines = ["Hong Kong chance of significant rain"]
+    if report.update_time:
+        lines.append(f"Updated: {report.update_time}")
+    for day in report.days:
+        heading = " ".join(part for part in (day.date, day.week) if part)
+        lines.append(f"{heading}  {day.psr or 'n/a'}".strip())
     return "\n".join(lines) + "\n"
 
 
@@ -936,7 +969,8 @@ def format_json(
     | TempReport
     | WindForecast
     | QuakeReport
-    | TomorrowForecast,
+    | TomorrowForecast
+    | PsrForecast,
 ) -> str:
     """Render the same report as one JSON object."""
     return json.dumps(asdict(report), indent=2) + "\n"
