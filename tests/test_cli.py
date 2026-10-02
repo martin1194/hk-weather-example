@@ -786,6 +786,57 @@ def test_cli_rain_json_is_one_object(monkeypatch, capsys):
     }
 
 
+def test_cli_lightning_lists_active_places(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response(
+            {
+                "temperature": {
+                    "data": [{"place": "Hong Kong Observatory", "value": 28, "unit": "C"}]
+                },
+                "lightning": {
+                    "data": [
+                        {"place": "Lantau", "occur": "true"},
+                        {"place": "Sha Tin", "occur": "false"},
+                        {"place": "Tai Po", "occur": True},
+                    ]
+                },
+            }
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--lightning", "--lang", "sc"]) == 0
+    assert "dataType=rhrread" in seen["url"]
+    assert "lang=sc" in seen["url"]
+    out = capsys.readouterr().out
+    assert out == "Hong Kong lightning\nLantau\nTai Po\n"
+    assert "Sha Tin" not in out
+
+
+def test_cli_lightning_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {"lightning": {"data": [{"place": "Lantau", "occur": "true"}]}}
+        ),
+    )
+    assert main(["--lightning", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {"places": ["Lantau"]}
+
+
+def test_cli_lightning_when_none_reported(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {"lightning": {"data": [{"place": "Sha Tin", "occur": "false"}]}}
+        ),
+    )
+    assert main(["--lightning"]) == 0
+    assert capsys.readouterr().out == "No lightning is reported.\n"
+
+
 def test_cli_rain_when_no_readings(monkeypatch, capsys):
     monkeypatch.setattr(
         "hk_weather.hko.urllib.request.urlopen",

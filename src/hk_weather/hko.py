@@ -102,6 +102,11 @@ class RainReport:
 
 
 @dataclass(frozen=True)
+class LightningReport:
+    places: tuple[str, ...]
+
+
+@dataclass(frozen=True)
 class UvIndex:
     update_time: str
     place: str | None
@@ -152,6 +157,11 @@ def fetch_stations(url: str = DEFAULT_URL, timeout: float = 10, lang: str = "en"
 def fetch_rain(url: str = DEFAULT_URL, timeout: float = 10, lang: str = "en") -> RainReport:
     """Download district rainfall from the current report (`dataType=rhrread`)."""
     return parse_rain(_fetch_json(_apply_lang(url, lang), timeout))
+
+
+def fetch_lightning(url: str = DEFAULT_URL, timeout: float = 10, lang: str = "en") -> LightningReport:
+    """Download lightning locations from the current report (`dataType=rhrread`)."""
+    return parse_lightning(_fetch_json(_apply_lang(url, lang), timeout))
 
 
 def _apply_lang(url: str, lang: str) -> str:
@@ -544,6 +554,19 @@ def format_rain(report: RainReport) -> str:
     return "\n".join(lines) + "\n"
 
 
+def parse_lightning(payload: dict) -> LightningReport:
+    """Turn `rhrread` lightning data into places where lightning occurred."""
+    return LightningReport(_lightning(payload))
+
+
+def format_lightning(report: LightningReport) -> str:
+    """Render lightning locations, one place per line."""
+    if not report.places:
+        return "No lightning is reported.\n"
+    lines = ["Hong Kong lightning", *report.places]
+    return "\n".join(lines) + "\n"
+
+
 def format_json(
     report: CurrentWeather
     | LocalForecast
@@ -551,7 +574,8 @@ def format_json(
     | UvIndex
     | SpecialTips
     | StationReport
-    | RainReport,
+    | RainReport
+    | LightningReport,
 ) -> str:
     """Render the same report as one JSON object."""
     return json.dumps(asdict(report), indent=2) + "\n"
