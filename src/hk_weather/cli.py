@@ -10,11 +10,13 @@ from hk_weather.hko import (
     fetch_current,
     fetch_forecast,
     fetch_nine_day,
+    fetch_uv,
     fetch_warnings,
     format_forecast,
     format_json,
     format_nine_day,
     format_report,
+    format_uv,
     format_warnings,
 )
 
@@ -25,7 +27,8 @@ def build_parser() -> argparse.ArgumentParser:
         description=(
             "Print Hong Kong weather from Hong Kong Observatory open data. "
             "Current conditions by default; --forecast prints the local forecast; "
-            "--nine-day prints the 9-day forecast; --warnings lists active warnings."
+            "--nine-day prints the 9-day forecast; --warnings lists active warnings; "
+            "--uv prints the UV index."
         ),
     )
     parser.add_argument(
@@ -56,6 +59,12 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Print only active weather warnings",
     )
+    parser.add_argument(
+        "-u",
+        "--uv",
+        action="store_true",
+        help="Print the UV index from the current weather report",
+    )
     return parser
 
 
@@ -73,6 +82,9 @@ def main(argv: list[str] | None = None) -> int:
         elif args.nine_day:
             nine_day = fetch_nine_day(timeout=args.timeout)
             text = format_json(nine_day) if args.json else format_nine_day(nine_day)
+        elif args.uv:
+            uv = fetch_uv(timeout=args.timeout)
+            text = format_json(uv) if args.json else format_uv(uv)
         else:
             weather = fetch_current(timeout=args.timeout)
             text = format_json(weather) if args.json else format_report(weather)
