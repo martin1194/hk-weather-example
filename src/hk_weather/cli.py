@@ -9,9 +9,11 @@ from hk_weather.hko import (
     WeatherError,
     fetch_current,
     fetch_forecast,
+    fetch_warnings,
     format_forecast,
     format_json,
     format_report,
+    format_warnings,
 )
 
 
@@ -20,7 +22,8 @@ def build_parser() -> argparse.ArgumentParser:
         prog="hk-weather",
         description=(
             "Print Hong Kong weather from Hong Kong Observatory open data. "
-            "Current conditions by default; --forecast prints the local forecast."
+            "Current conditions by default; --forecast prints the local forecast; "
+            "--warnings lists active warnings."
         ),
     )
     parser.add_argument(
@@ -39,6 +42,12 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Print the local weather forecast instead of current conditions",
     )
+    parser.add_argument(
+        "-w",
+        "--warnings",
+        action="store_true",
+        help="Print only active weather warnings",
+    )
     return parser
 
 
@@ -48,7 +57,9 @@ def main(argv: list[str] | None = None) -> int:
         print("error: timeout must be greater than 0", file=sys.stderr)
         return 2
     try:
-        if args.forecast:
+        if args.warnings:
+            text = format_warnings(fetch_warnings(timeout=args.timeout))
+        elif args.forecast:
             forecast = fetch_forecast(timeout=args.timeout)
             text = format_json(forecast) if args.json else format_forecast(forecast)
         else:

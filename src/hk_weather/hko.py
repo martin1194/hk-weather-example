@@ -10,10 +10,12 @@ from dataclasses import asdict, dataclass
 from hk_weather.icons import icon_label
 
 # Hong Kong Observatory open data. No API key.
-# rhrread: current weather report. flw: local weather forecast.
+# rhrread: current weather. flw: local forecast. warnsum: warning summary.
 _API = "https://data.weather.gov.hk/weatherAPI/opendata/weather.php"
 DEFAULT_URL = f"{_API}?dataType=rhrread&lang=en"
 FORECAST_URL = f"{_API}?dataType=flw&lang=en"
+WARNINGS_URL = f"{_API}?dataType=warnsum&lang=en"
+_CANCELLED = {"CANCEL", "CANCELLED"}
 HKO_STATION = "Hong Kong Observatory"
 USER_AGENT = "hk-weather-demo/0.1 (+https://github.com)"
 
@@ -43,6 +45,12 @@ class LocalForecast:
     outlook: str
 
 
+@dataclass(frozen=True)
+class WeatherWarning:
+    code: str
+    description: str
+
+
 def fetch_current(url: str = DEFAULT_URL, timeout: float = 10) -> CurrentWeather:
     """Download the current weather report and return a summary."""
     return parse_current_report(_fetch_json(url, timeout))
@@ -51,6 +59,11 @@ def fetch_current(url: str = DEFAULT_URL, timeout: float = 10) -> CurrentWeather
 def fetch_forecast(url: str = FORECAST_URL, timeout: float = 10) -> LocalForecast:
     """Download the local weather forecast (`dataType=flw`)."""
     return parse_forecast(_fetch_json(url, timeout))
+
+
+def fetch_warnings(url: str = WARNINGS_URL, timeout: float = 10) -> tuple[WeatherWarning, ...]:
+    """Download active weather warnings (`dataType=warnsum`)."""
+    return parse_warnings(_fetch_json(url, timeout))
 
 
 def _fetch_json(url: str, timeout: float) -> dict:
@@ -140,6 +153,32 @@ def format_forecast(forecast: LocalForecast) -> str:
     ]
     if forecast.outlook:
         lines.append(f"Outlook: {forecast.outlook}")
+    return "\n".join(lines) + "\n"
+
+
+def parse_warnings(payload: dict) -> tuple[WeatherWarning, ...]:
+    """Turn a `warnsum` document into active warnings (code and name)."""
+    warnings: list[WeatherWarning] = []
+    for key, item in payload.items():
+        if not isinstance(item, dict):
+            continue
+        action = _text(item.get("actionCode")).upper()
+        if action in _CANCELLED:
+            continue
+        code = _text(item.get("code")) or _text(key)
+        description = _text(item.get("name"))
+        if not code or not description:
+            continue
+        warnings.append(WeatherWarning(code=code, description=description))
+    return tuple(warnings)
+
+
+def format_warnings(warnings: tuple[WeatherWarning, ...]) -> str:
+    """Render active warnings as a short list, or a note when none are in force."""
+    if not warnings:
+        return "No weather warnings are in force.\n"
+    lines = ["Hong Kong weather warnings"]
+    lines.extend(f"{warning.code}  {warning.description}" for warning in warnings)
     return "\n".join(lines) + "\n"
 
 

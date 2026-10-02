@@ -149,6 +149,45 @@ def test_cli_forecast_json_is_one_object(monkeypatch, capsys):
     }
 
 
+def test_cli_warnings_lists_active_codes(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response(
+            {
+                "WTS": {
+                    "name": "Thunderstorm Warning",
+                    "code": "WTS",
+                    "actionCode": "EXTEND",
+                },
+                "WHOT": {
+                    "name": "Very Hot Weather Warning",
+                    "code": "WHOT",
+                    "actionCode": "CANCEL",
+                },
+            }
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--warnings"]) == 0
+    out = capsys.readouterr().out
+    assert "dataType=warnsum" in seen["url"]
+    assert "WTS  Thunderstorm Warning" in out
+    assert "WHOT" not in out
+    assert "Very Hot" not in out
+    assert "Temperature:" not in out
+
+
+def test_cli_warnings_when_none_are_in_force(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({}),
+    )
+    assert main(["-w"]) == 0
+    assert capsys.readouterr().out == "No weather warnings are in force.\n"
+
+
 def test_cli_json_fetch_error_stays_on_stderr(monkeypatch, capsys):
     def boom(request, timeout):
         raise URLError("down")
