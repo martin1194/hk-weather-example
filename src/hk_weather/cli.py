@@ -14,6 +14,7 @@ from hk_weather.hko import (
     fetch_nine_day,
     fetch_rain,
     fetch_stations,
+    fetch_temps,
     fetch_tips,
     fetch_uv,
     fetch_warnings,
@@ -29,6 +30,7 @@ from hk_weather.hko import (
     format_short,
     format_report,
     format_stations,
+    format_temps,
     format_tips,
     format_uv,
     format_warnings,
@@ -52,7 +54,8 @@ def build_parser() -> argparse.ArgumentParser:
             "--uv prints the UV index; --tips prints special weather tips; "
             "--stations lists each station; --list-places lists their names; "
             "--place NAME filters those stations; --rain lists district rainfall; "
-            "--lightning lists lightning locations; --humidity lists humidity readings."
+            "--lightning lists lightning locations; --humidity lists humidity readings; "
+            "--temps lists temperatures by place."
         ),
     )
     parser.add_argument(
@@ -123,6 +126,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Print humidity readings from the current report",
     )
     parser.add_argument(
+        "--temps",
+        action="store_true",
+        help="Print temperatures by place from the current report",
+    )
+    parser.add_argument(
         "--stations",
         action="store_true",
         help="List temperature and humidity at each station",
@@ -178,6 +186,9 @@ def main(argv: list[str] | None = None) -> int:
         elif args.humidity:
             humidity = fetch_humidity(timeout=args.timeout, lang=args.lang)
             text = format_json(humidity) if args.json else format_humidity(humidity)
+        elif args.temps:
+            temps = fetch_temps(timeout=args.timeout, lang=args.lang)
+            text = format_json(temps) if args.json else format_temps(temps)
         elif args.stations:
             stations = fetch_stations(timeout=args.timeout, lang=args.lang)
             text = format_json(stations) if args.json else format_stations(stations)
