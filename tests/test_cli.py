@@ -273,6 +273,69 @@ def test_cli_nine_day_missing_forecast_is_an_error(monkeypatch, capsys):
     assert "9-day forecast is missing" in captured.err
 
 
+def test_cli_uv_prints_index(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response(
+            {
+                "updateTime": "2026-08-19T12:02:00+08:00",
+                "temperature": {
+                    "data": [{"place": "Hong Kong Observatory", "value": 31, "unit": "C"}]
+                },
+                "uvindex": {
+                    "data": [{"place": "King's Park", "value": 10, "desc": "very high"}],
+                    "recordDesc": "During the past hour",
+                },
+            }
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--uv"]) == 0
+    out = capsys.readouterr().out
+    assert "dataType=rhrread" in seen["url"]
+    assert "King's Park: 10 (very high)" in out
+    assert "During the past hour" in out
+    assert "Temperature:" not in out
+
+
+def test_cli_uv_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {
+                "updateTime": "2026-08-19T12:02:00+08:00",
+                "uvindex": {
+                    "data": [{"place": "King's Park", "value": 10, "desc": "very high"}],
+                    "recordDesc": "During the past hour",
+                },
+            }
+        ),
+    )
+    assert main(["-u", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "update_time": "2026-08-19T12:02:00+08:00",
+        "place": "King's Park",
+        "value": 10.0,
+        "description": "very high",
+        "record": "During the past hour",
+    }
+
+
+def test_cli_uv_when_unavailable(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {"updateTime": "2026-10-03T01:02:00+08:00", "uvindex": ""}
+        ),
+    )
+    assert main(["--uv"]) == 0
+    out = capsys.readouterr().out
+    assert "UV index is not available right now." in out
+    assert "Temperature:" not in out
+
+
 def test_cli_json_fetch_error_stays_on_stderr(monkeypatch, capsys):
     def boom(request, timeout):
         raise URLError("down")

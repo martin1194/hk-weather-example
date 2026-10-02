@@ -10,12 +10,15 @@ from dataclasses import asdict, dataclass
 from hk_weather.icons import icon_label
 
 # Hong Kong Observatory open data. No API key.
-# rhrread: current weather. flw: local forecast. fnd: 9-day. warnsum: warnings.
+# rhrread: current weather (and its uvindex field). flw: local forecast.
+# fnd: 9-day. warnsum: warnings. UV has no separate dataType; HKO
+# returns uvindex as "" when the reading is unavailable.
 _API = "https://data.weather.gov.hk/weatherAPI/opendata/weather.php"
 DEFAULT_URL = f"{_API}?dataType=rhrread&lang=en"
 FORECAST_URL = f"{_API}?dataType=flw&lang=en"
 NINE_DAY_URL = f"{_API}?dataType=fnd&lang=en"
 WARNINGS_URL = f"{_API}?dataType=warnsum&lang=en"
+UV_URL = DEFAULT_URL
 _CANCELLED = {"CANCEL", "CANCELLED"}
 HKO_STATION = "Hong Kong Observatory"
 USER_AGENT = "hk-weather-demo/0.1 (+https://github.com)"
@@ -68,6 +71,15 @@ class NineDayForecast:
     days: tuple[ForecastDay, ...]
 
 
+@dataclass(frozen=True)
+class UvIndex:
+    update_time: str
+    place: str | None
+    value: float | None
+    description: str | None
+    record: str | None
+
+
 def fetch_current(url: str = DEFAULT_URL, timeout: float = 10) -> CurrentWeather:
     """Download the current weather report and return a summary."""
     return parse_current_report(_fetch_json(url, timeout))
@@ -86,6 +98,11 @@ def fetch_warnings(url: str = WARNINGS_URL, timeout: float = 10) -> tuple[Weathe
 def fetch_nine_day(url: str = NINE_DAY_URL, timeout: float = 10) -> NineDayForecast:
     """Download the 9-day forecast (`dataType=fnd`)."""
     return parse_nine_day(_fetch_json(url, timeout))
+
+
+def fetch_uv(url: str = UV_URL, timeout: float = 10) -> UvIndex:
+    """Download the UV index from the current weather report (`dataType=rhrread`)."""
+    return parse_uv(_fetch_json(url, timeout))
 
 
 def _fetch_json(url: str, timeout: float) -> dict:
@@ -243,7 +260,56 @@ def format_nine_day(forecast: NineDayForecast) -> str:
     return "\n".join(lines) + "\n"
 
 
-def format_json(report: CurrentWeather | LocalForecast | NineDayForecast) -> str:
+def parse_uv(payload: dict) -> UvIndex:
+    """Turn the `uvindex` field of an `rhrread` document into a short report."""
+    update_time = _text(payload.get("updateTime")) or "unknown"
+    raw = payload.get("uvindex")
+    if not isinstance(raw, dict):
+        return UvIndex(update_time, None, None, None, None)
+
+    nested_update = _text(raw.get("updateTime"))
+    if nested_update:
+        update_time = nested_update
+    readings = raw.get("data")
+    reading = readings[0] if isinstance(readings, list) and readings and isinstance(readings[0], dict) else {}
+    value = _temp_value(reading)
+    if value is None:
+        return UvIndex(update_time, None, None, None, None)
+    return UvIndex(
+        update_time=update_time,
+        place=_text(reading.get("place")) or None,
+        value=value,
+        description=_text(reading.get("desc")) or None,
+        record=_text(raw.get("recordDesc")) or None,
+    )
+
+
+def format_uv(report: UvIndex) -> str:
+    """Render the UV index as plain text."""
+    lines = [
+        "Hong Kong UV index",
+        "Source: Hong Kong Observatory open data",
+        f"Updated: {report.update_time}",
+    ]
+    if report.value is None:
+        lines.append("UV index is not available right now.")
+        return "\n".join(lines) + "\n"
+
+    value = _number(report.value)
+    if report.place and report.description:
+        lines.append(f"{report.place}: {value} ({report.description})")
+    elif report.place:
+        lines.append(f"{report.place}: {value}")
+    elif report.description:
+        lines.append(f"UV index: {value} ({report.description})")
+    else:
+        lines.append(f"UV index: {value}")
+    if report.record:
+        lines.append(report.record)
+    return "\n".join(lines) + "\n"
+
+
+def format_json(report: CurrentWeather | LocalForecast | NineDayForecast | UvIndex) -> str:
     """Render the same report as one JSON object."""
     return json.dumps(asdict(report), indent=2) + "\n"
 
