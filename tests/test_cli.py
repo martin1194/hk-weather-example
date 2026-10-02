@@ -188,6 +188,91 @@ def test_cli_warnings_when_none_are_in_force(monkeypatch, capsys):
     assert capsys.readouterr().out == "No weather warnings are in force.\n"
 
 
+def test_cli_nine_day_prints_compact_summary(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response(
+            {
+                "updateTime": "2026-10-03T00:00:00+08:00",
+                "weatherForecast": [
+                    {
+                        "forecastDate": "20261003",
+                        "week": "Saturday",
+                        "forecastWeather": "Mainly cloudy with occasional showers.",
+                        "forecastMaxtemp": {"value": 31, "unit": "C"},
+                        "forecastMintemp": {"value": 27, "unit": "C"},
+                        "PSR": "Medium High",
+                    },
+                    {
+                        "forecastDate": "20261004",
+                        "week": "Sunday",
+                        "forecastWeather": "Sunny periods.",
+                        "forecastMaxtemp": {"value": 30, "unit": "C"},
+                        "forecastMintemp": {"value": 25, "unit": "C"},
+                    },
+                ],
+            }
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--nine-day"]) == 0
+    out = capsys.readouterr().out
+    assert "dataType=fnd" in seen["url"]
+    assert "2026-10-03 Saturday  high 31°C  low 27°C  rain Medium High" in out
+    assert "Mainly cloudy with occasional showers." in out
+    assert "2026-10-04 Sunday  high 30°C  low 25°C" in out
+    assert "Sunny periods." in out
+    assert "rain" not in out.split("2026-10-04", 1)[1]
+
+
+def test_cli_nine_day_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {
+                "updateTime": "2026-10-03T00:00:00+08:00",
+                "weatherForecast": [
+                    {
+                        "forecastDate": "20261003",
+                        "week": "Saturday",
+                        "forecastWeather": "Fine and dry.",
+                        "forecastMaxtemp": {"value": 29, "unit": "C"},
+                        "forecastMintemp": {"value": 24, "unit": "C"},
+                        "PSR": "Low",
+                    }
+                ],
+            }
+        ),
+    )
+    assert main(["-n", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "update_time": "2026-10-03T00:00:00+08:00",
+        "days": [
+            {
+                "date": "2026-10-03",
+                "week": "Saturday",
+                "weather": "Fine and dry.",
+                "temp_high_c": 29.0,
+                "temp_low_c": 24.0,
+                "rain_chance": "Low",
+            }
+        ],
+    }
+
+
+def test_cli_nine_day_missing_forecast_is_an_error(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"weatherForecast": []}),
+    )
+    assert main(["--nine-day"]) == 1
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "9-day forecast is missing" in captured.err
+
+
 def test_cli_json_fetch_error_stays_on_stderr(monkeypatch, capsys):
     def boom(request, timeout):
         raise URLError("down")

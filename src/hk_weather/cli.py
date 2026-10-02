@@ -9,9 +9,11 @@ from hk_weather.hko import (
     WeatherError,
     fetch_current,
     fetch_forecast,
+    fetch_nine_day,
     fetch_warnings,
     format_forecast,
     format_json,
+    format_nine_day,
     format_report,
     format_warnings,
 )
@@ -23,7 +25,7 @@ def build_parser() -> argparse.ArgumentParser:
         description=(
             "Print Hong Kong weather from Hong Kong Observatory open data. "
             "Current conditions by default; --forecast prints the local forecast; "
-            "--warnings lists active warnings."
+            "--nine-day prints the 9-day forecast; --warnings lists active warnings."
         ),
     )
     parser.add_argument(
@@ -41,6 +43,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--forecast",
         action="store_true",
         help="Print the local weather forecast instead of current conditions",
+    )
+    parser.add_argument(
+        "-n",
+        "--nine-day",
+        action="store_true",
+        help="Print the 9-day forecast",
     )
     parser.add_argument(
         "-w",
@@ -62,6 +70,9 @@ def main(argv: list[str] | None = None) -> int:
         elif args.forecast:
             forecast = fetch_forecast(timeout=args.timeout)
             text = format_json(forecast) if args.json else format_forecast(forecast)
+        elif args.nine_day:
+            nine_day = fetch_nine_day(timeout=args.timeout)
+            text = format_json(nine_day) if args.json else format_nine_day(nine_day)
         else:
             weather = fetch_current(timeout=args.timeout)
             text = format_json(weather) if args.json else format_report(weather)

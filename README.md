@@ -2,7 +2,7 @@
 
 Small Python CLI that prints the current weather in Hong Kong. This repository is a **Cursor cloud-agent demo**: an agent started from an almost empty public repo and added the package, tests, and CI.
 
-Data comes from the [Hong Kong Observatory Open Data API](https://www.hko.gov.hk/en/abouthko/opendata_intro.htm). The default is the current weather report (`dataType=rhrread`). `--forecast` prints the local weather forecast (`dataType=flw`). `--warnings` lists active warnings (`dataType=warnsum`). No API key or account is required.
+Data comes from the [Hong Kong Observatory Open Data API](https://www.hko.gov.hk/en/abouthko/opendata_intro.htm). The default is the current weather report (`dataType=rhrread`). `--forecast` prints the local weather forecast (`dataType=flw`). `--nine-day` prints the 9-day forecast (`dataType=fnd`). `--warnings` lists active warnings (`dataType=warnsum`). No API key or account is required.
 
 ## Run
 
@@ -12,6 +12,8 @@ hk-weather
 hk-weather --json
 hk-weather --forecast
 hk-weather --forecast --json
+hk-weather --nine-day
+hk-weather --nine-day --json
 hk-weather --warnings
 ```
 
@@ -40,6 +42,8 @@ Warnings:
 The temperature and humidity lines use the Hong Kong Observatory station when that reading is present.
 
 `hk-weather --forecast` prints the local forecast period, description, and outlook. With `--json`, that same forecast is one JSON object. Current conditions stay the default.
+
+`hk-weather --nine-day` (or `-n`) prints each day with the date, weather, high and low temperature, and chance of rain when the Observatory includes it. `--nine-day --json` prints that same forecast as one JSON object.
 
 `hk-weather --warnings` (or `-w`) prints each active warning as a code and description. If none are in force, it says so.
 
