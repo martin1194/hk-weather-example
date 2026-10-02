@@ -236,6 +236,89 @@ def test_cli_warnings_when_none_are_in_force(monkeypatch, capsys):
     assert capsys.readouterr().out == "No weather warnings are in force.\n"
 
 
+def test_cli_warning_info_prints_messages(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response(
+            {
+                "details": [
+                    {
+                        "contents": [
+                            "Thunderstorm Warning has been extended.",
+                            "  ",
+                            "Seek safe shelter if you are outdoors.",
+                        ],
+                        "warningStatementCode": "WTS",
+                        "updateTime": "2026-10-03T05:30:00+08:00",
+                    },
+                    {
+                        "contents": ["The Rainstorm Warning Signal is now Amber."],
+                        "subtype": "WRAINA",
+                        "warningStatementCode": "WRAIN",
+                        "updateTime": "2026-10-03T04:00:00+08:00",
+                    },
+                    {"contents": [], "warningStatementCode": "WHOT"},
+                ]
+            }
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["-W", "--lang", "tc"]) == 0
+    assert "dataType=warningInfo" in seen["url"]
+    assert "lang=tc" in seen["url"]
+    assert capsys.readouterr().out == (
+        "Hong Kong warning information\n"
+        "\n"
+        "WTS\n"
+        "Updated: 2026-10-03T05:30:00+08:00\n"
+        "- Thunderstorm Warning has been extended.\n"
+        "- Seek safe shelter if you are outdoors.\n"
+        "\n"
+        "WRAIN  WRAINA\n"
+        "Updated: 2026-10-03T04:00:00+08:00\n"
+        "- The Rainstorm Warning Signal is now Amber.\n"
+    )
+
+
+def test_cli_warning_info_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {
+                "details": [
+                    {
+                        "contents": ["Seek safe shelter."],
+                        "warningStatementCode": "WTS",
+                        "updateTime": "2026-10-03T05:30:00+08:00",
+                    }
+                ]
+            }
+        ),
+    )
+    assert main(["--warning-info", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "warnings": [
+            {
+                "code": "WTS",
+                "subtype": "",
+                "update_time": "2026-10-03T05:30:00+08:00",
+                "contents": ["Seek safe shelter."],
+            }
+        ]
+    }
+
+
+def test_cli_warning_info_when_none_present(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"details": []}),
+    )
+    assert main(["--warning-info"]) == 0
+    assert capsys.readouterr().out == "No detailed warning information is available.\n"
+
+
 def test_cli_nine_day_prints_compact_summary(monkeypatch, capsys):
     seen = {}
 

@@ -29,6 +29,7 @@ hk-weather --quake
 hk-weather --quake --json
 hk-weather --warnings
 hk-weather --warnings --json
+hk-weather --warning-info
 hk-weather --uv
 hk-weather --uv --json
 hk-weather --lang tc
@@ -92,6 +93,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --quake` lists the latest quick earthquake message from the Observatory earthquake feed (`earthquake.php`, `dataType=qem`), for example `2026-10-03T00:34:00+08:00  M6  off east coast of Kamchatka (51.79, 159.6)`. `--quake --json` prints that list as one JSON object. `--lang` applies. If none is reported, it says so.
 
 `hk-weather --warnings` (or `-w`) prints each active warning as a code and description. `--warnings --json` prints them as one JSON object. If none are in force, it says so.
+
+`hk-weather --warning-info` (or `-W`) prints each detailed warning message from `dataType=warningInfo`. `--json` and `--lang` apply. If none are present, it says so.
 
 `hk-weather --uv` (or `-u`) prints the Observatory UV index (place, value, and description). `--uv --json` prints that same reading as one JSON object. When the Observatory has no UV reading, it says so. Current conditions stay the default.
 

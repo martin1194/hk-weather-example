@@ -21,6 +21,7 @@ from hk_weather.hko import (
     fetch_tips,
     fetch_tomorrow,
     fetch_uv,
+    fetch_warning_info,
     fetch_warnings,
     fetch_wind,
     filter_stations,
@@ -43,6 +44,7 @@ from hk_weather.hko import (
     format_tomorrow,
     format_tomorrow_miss,
     format_uv,
+    format_warning_info,
     format_warnings,
     format_wind,
 )
@@ -80,7 +82,8 @@ def build_parser() -> argparse.ArgumentParser:
             "--temps lists temperatures by place; --wind lists the forecast wind; "
             "--quake lists the latest earthquake message; --tomorrow prints tomorrow; "
             "--day N prints forecast day N (1 is the first entry); "
-            "--psr lists the chance of significant rain."
+            "--psr lists the chance of significant rain; "
+            "--warning-info prints detailed warning messages."
         ),
     )
     parser.add_argument(
@@ -151,6 +154,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="Print only active weather warnings",
     )
     parser.add_argument(
+        "-W",
+        "--warning-info",
+        action="store_true",
+        help="Print detailed warning messages from the Observatory",
+    )
+    parser.add_argument(
         "-u",
         "--uv",
         action="store_true",
@@ -216,6 +225,11 @@ def main(argv: list[str] | None = None) -> int:
         if args.warnings:
             text = format_warnings(
                 fetch_warnings(timeout=args.timeout, lang=args.lang),
+                as_json=args.json,
+            )
+        elif args.warning_info:
+            text = format_warning_info(
+                fetch_warning_info(timeout=args.timeout, lang=args.lang),
                 as_json=args.json,
             )
         elif args.forecast:
