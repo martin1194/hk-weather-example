@@ -13,6 +13,7 @@ from hk_weather.hko import (
     fetch_humidity,
     fetch_lightning,
     fetch_nine_day,
+    fetch_psr,
     fetch_quakes,
     fetch_rain,
     fetch_stations,
@@ -31,6 +32,7 @@ from hk_weather.hko import (
     format_place_miss,
     format_nine_day,
     format_places,
+    format_psr,
     format_quakes,
     format_rain,
     format_short,
@@ -77,7 +79,8 @@ def build_parser() -> argparse.ArgumentParser:
             "--lightning lists lightning locations; --humidity lists humidity readings; "
             "--temps lists temperatures by place; --wind lists the forecast wind; "
             "--quake lists the latest earthquake message; --tomorrow prints tomorrow; "
-            "--day N prints forecast day N (1 is the first entry)."
+            "--day N prints forecast day N (1 is the first entry); "
+            "--psr lists the chance of significant rain."
         ),
     )
     parser.add_argument(
@@ -124,6 +127,12 @@ def build_parser() -> argparse.ArgumentParser:
         type=_day_number,
         metavar="N",
         help="Print day N of the 9-day forecast (1 is the first entry, not tomorrow)",
+    )
+    parser.add_argument(
+        "-P",
+        "--psr",
+        action="store_true",
+        help="Print the chance of significant rain (PSR) for each day of the 9-day forecast",
     )
     parser.add_argument(
         "--wind",
@@ -232,6 +241,9 @@ def main(argv: list[str] | None = None) -> int:
                     if args.json
                     else format_tomorrow(forecast_day, title=title)
                 )
+        elif args.psr:
+            psr = fetch_psr(timeout=args.timeout, lang=args.lang)
+            text = format_json(psr) if args.json else format_psr(psr)
         elif args.wind:
             wind = fetch_wind(timeout=args.timeout, lang=args.lang)
             text = format_json(wind) if args.json else format_wind(wind)
