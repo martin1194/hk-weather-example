@@ -11,13 +11,14 @@ from hk_weather.icons import icon_label
 
 # Hong Kong Observatory open data. No API key.
 # rhrread: current weather (and its uvindex field). flw: local forecast.
-# fnd: 9-day. warnsum: warnings. UV has no separate dataType; HKO
+# fnd: 9-day. warnsum: warnings. swt: special weather tips. UV has no separate dataType; HKO
 # returns uvindex as "" when the reading is unavailable.
 _API = "https://data.weather.gov.hk/weatherAPI/opendata/weather.php"
 DEFAULT_URL = f"{_API}?dataType=rhrread&lang=en"
 FORECAST_URL = f"{_API}?dataType=flw&lang=en"
 NINE_DAY_URL = f"{_API}?dataType=fnd&lang=en"
 WARNINGS_URL = f"{_API}?dataType=warnsum&lang=en"
+TIPS_URL = f"{_API}?dataType=swt&lang=en"
 UV_URL = DEFAULT_URL
 _CANCELLED = {"CANCEL", "CANCELLED"}
 HKO_STATION = "Hong Kong Observatory"
@@ -72,6 +73,11 @@ class NineDayForecast:
 
 
 @dataclass(frozen=True)
+class SpecialTips:
+    tips: tuple[str, ...]
+
+
+@dataclass(frozen=True)
 class UvIndex:
     update_time: str
     place: str | None
@@ -107,6 +113,11 @@ def fetch_nine_day(
 def fetch_uv(url: str = UV_URL, timeout: float = 10, lang: str = "en") -> UvIndex:
     """Download the UV index from the current weather report (`dataType=rhrread`)."""
     return parse_uv(_fetch_json(_apply_lang(url, lang), timeout))
+
+
+def fetch_tips(url: str = TIPS_URL, timeout: float = 10, lang: str = "en") -> SpecialTips:
+    """Download special weather tips (`dataType=swt`)."""
+    return parse_tips(_fetch_json(_apply_lang(url, lang), timeout))
 
 
 def _apply_lang(url: str, lang: str) -> str:
@@ -326,7 +337,38 @@ def format_uv(report: UvIndex) -> str:
     return "\n".join(lines) + "\n"
 
 
-def format_json(report: CurrentWeather | LocalForecast | NineDayForecast | UvIndex) -> str:
+def parse_tips(payload: dict) -> SpecialTips:
+    """Turn an `swt` document into a list of tip descriptions."""
+    raw = payload.get("swt", [])
+    if isinstance(raw, str):
+        raw = [raw] if raw.strip() else []
+    if not isinstance(raw, list):
+        raise WeatherError("special weather tips are missing from the report")
+    tips: list[str] = []
+    for item in raw:
+        if isinstance(item, str):
+            text = item.strip()
+        elif isinstance(item, dict):
+            text = _text(item.get("desc"))
+        else:
+            continue
+        if text:
+            tips.append(text)
+    return SpecialTips(tuple(tips))
+
+
+def format_tips(report: SpecialTips) -> str:
+    """Render special weather tips as a short list."""
+    if not report.tips:
+        return "No special weather tips are in force.\n"
+    lines = ["Hong Kong special weather tips"]
+    lines.extend(f"- {tip}" for tip in report.tips)
+    return "\n".join(lines) + "\n"
+
+
+def format_json(
+    report: CurrentWeather | LocalForecast | NineDayForecast | UvIndex | SpecialTips,
+) -> str:
     """Render the same report as one JSON object."""
     return json.dumps(asdict(report), indent=2) + "\n"
 
