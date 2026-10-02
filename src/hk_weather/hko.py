@@ -91,6 +91,17 @@ class StationReport:
 
 
 @dataclass(frozen=True)
+class RainReading:
+    place: str
+    rainfall_mm: float
+
+
+@dataclass(frozen=True)
+class RainReport:
+    readings: tuple[RainReading, ...]
+
+
+@dataclass(frozen=True)
 class UvIndex:
     update_time: str
     place: str | None
@@ -136,6 +147,11 @@ def fetch_tips(url: str = TIPS_URL, timeout: float = 10, lang: str = "en") -> Sp
 def fetch_stations(url: str = DEFAULT_URL, timeout: float = 10, lang: str = "en") -> StationReport:
     """Download per-station temperature and humidity from the current report."""
     return parse_stations(_fetch_json(_apply_lang(url, lang), timeout))
+
+
+def fetch_rain(url: str = DEFAULT_URL, timeout: float = 10, lang: str = "en") -> RainReport:
+    """Download district rainfall from the current report (`dataType=rhrread`)."""
+    return parse_rain(_fetch_json(_apply_lang(url, lang), timeout))
 
 
 def _apply_lang(url: str, lang: str) -> str:
@@ -501,8 +517,41 @@ def format_places(report: StationReport, *, as_json: bool = False) -> str:
     return "Hong Kong places\n" + "\n".join(names) + "\n"
 
 
+def parse_rain(payload: dict) -> RainReport:
+    """Turn `rhrread` rainfall data into one reading per place."""
+    readings: list[RainReading] = []
+    seen: set[str] = set()
+    for item in _data_list(payload.get("rainfall")):
+        place = _text(item.get("place"))
+        value = item.get("max")
+        if not place or place in seen:
+            continue
+        if not isinstance(value, (int, float)) or isinstance(value, bool):
+            continue
+        seen.add(place)
+        readings.append(RainReading(place, float(value)))
+    return RainReport(tuple(readings))
+
+
+def format_rain(report: RainReport) -> str:
+    """Render district rainfall, one line per place."""
+    if not report.readings:
+        return "No rainfall readings are available.\n"
+    lines = ["Hong Kong rainfall"]
+    lines.extend(
+        f"{reading.place}  {_number(reading.rainfall_mm)} mm" for reading in report.readings
+    )
+    return "\n".join(lines) + "\n"
+
+
 def format_json(
-    report: CurrentWeather | LocalForecast | NineDayForecast | UvIndex | SpecialTips | StationReport,
+    report: CurrentWeather
+    | LocalForecast
+    | NineDayForecast
+    | UvIndex
+    | SpecialTips
+    | StationReport
+    | RainReport,
 ) -> str:
     """Render the same report as one JSON object."""
     return json.dumps(asdict(report), indent=2) + "\n"

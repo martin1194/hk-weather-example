@@ -738,6 +738,63 @@ def test_cli_short_without_warning_or_humidity(monkeypatch, capsys):
     assert capsys.readouterr().out == "Sunny, 30°C, humidity n/a\n"
 
 
+def test_cli_rain_lists_districts(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response(
+            {
+                "temperature": {
+                    "data": [{"place": "Hong Kong Observatory", "value": 28, "unit": "C"}]
+                },
+                "rainfall": {
+                    "data": [
+                        {"unit": "mm", "place": "Wan Chai", "max": 0, "main": "FALSE"},
+                        {"unit": "mm", "place": "Sai Kung", "max": 2, "main": "FALSE"},
+                        {"unit": "mm", "place": "Sai Kung", "max": 9, "main": "FALSE"},
+                        {"unit": "mm", "place": "Islands District", "main": "FALSE"},
+                    ]
+                },
+            }
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--rain", "--lang", "tc"]) == 0
+    assert "dataType=rhrread" in seen["url"]
+    assert "lang=tc" in seen["url"]
+    out = capsys.readouterr().out
+    assert out == "Hong Kong rainfall\nWan Chai  0 mm\nSai Kung  2 mm\n"
+    assert "28°C" not in out
+    assert "Islands District" not in out
+
+
+def test_cli_rain_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {
+                "rainfall": {
+                    "data": [{"place": "Sai Kung", "max": 2, "unit": "mm"}]
+                }
+            }
+        ),
+    )
+    assert main(["-r", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "readings": [{"place": "Sai Kung", "rainfall_mm": 2.0}]
+    }
+
+
+def test_cli_rain_when_no_readings(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"rainfall": ""}),
+    )
+    assert main(["--rain"]) == 0
+    assert capsys.readouterr().out == "No rainfall readings are available.\n"
+
+
 def test_cli_rejects_unknown_lang():
     with pytest.raises(SystemExit) as exc:
         main(["--lang", "fr"])
