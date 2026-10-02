@@ -65,6 +65,12 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Print the UV index from the current weather report",
     )
+    parser.add_argument(
+        "--lang",
+        choices=("en", "tc", "sc"),
+        default="en",
+        help="Observatory response language: en, tc, or sc (default: en)",
+    )
     return parser
 
 
@@ -75,18 +81,18 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     try:
         if args.warnings:
-            text = format_warnings(fetch_warnings(timeout=args.timeout))
+            text = format_warnings(fetch_warnings(timeout=args.timeout, lang=args.lang))
         elif args.forecast:
-            forecast = fetch_forecast(timeout=args.timeout)
+            forecast = fetch_forecast(timeout=args.timeout, lang=args.lang)
             text = format_json(forecast) if args.json else format_forecast(forecast)
         elif args.nine_day:
-            nine_day = fetch_nine_day(timeout=args.timeout)
+            nine_day = fetch_nine_day(timeout=args.timeout, lang=args.lang)
             text = format_json(nine_day) if args.json else format_nine_day(nine_day)
         elif args.uv:
-            uv = fetch_uv(timeout=args.timeout)
+            uv = fetch_uv(timeout=args.timeout, lang=args.lang)
             text = format_json(uv) if args.json else format_uv(uv)
         else:
-            weather = fetch_current(timeout=args.timeout)
+            weather = fetch_current(timeout=args.timeout, lang=args.lang)
             text = format_json(weather) if args.json else format_report(weather)
     except WeatherError as exc:
         print(f"error: {exc}", file=sys.stderr)

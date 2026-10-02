@@ -80,29 +80,46 @@ class UvIndex:
     record: str | None
 
 
-def fetch_current(url: str = DEFAULT_URL, timeout: float = 10) -> CurrentWeather:
+def fetch_current(url: str = DEFAULT_URL, timeout: float = 10, lang: str = "en") -> CurrentWeather:
     """Download the current weather report and return a summary."""
-    return parse_current_report(_fetch_json(url, timeout))
+    return parse_current_report(_fetch_json(_apply_lang(url, lang), timeout))
 
 
-def fetch_forecast(url: str = FORECAST_URL, timeout: float = 10) -> LocalForecast:
+def fetch_forecast(url: str = FORECAST_URL, timeout: float = 10, lang: str = "en") -> LocalForecast:
     """Download the local weather forecast (`dataType=flw`)."""
-    return parse_forecast(_fetch_json(url, timeout))
+    return parse_forecast(_fetch_json(_apply_lang(url, lang), timeout))
 
 
-def fetch_warnings(url: str = WARNINGS_URL, timeout: float = 10) -> tuple[WeatherWarning, ...]:
+def fetch_warnings(
+    url: str = WARNINGS_URL, timeout: float = 10, lang: str = "en"
+) -> tuple[WeatherWarning, ...]:
     """Download active weather warnings (`dataType=warnsum`)."""
-    return parse_warnings(_fetch_json(url, timeout))
+    return parse_warnings(_fetch_json(_apply_lang(url, lang), timeout))
 
 
-def fetch_nine_day(url: str = NINE_DAY_URL, timeout: float = 10) -> NineDayForecast:
+def fetch_nine_day(
+    url: str = NINE_DAY_URL, timeout: float = 10, lang: str = "en"
+) -> NineDayForecast:
     """Download the 9-day forecast (`dataType=fnd`)."""
-    return parse_nine_day(_fetch_json(url, timeout))
+    return parse_nine_day(_fetch_json(_apply_lang(url, lang), timeout))
 
 
-def fetch_uv(url: str = UV_URL, timeout: float = 10) -> UvIndex:
+def fetch_uv(url: str = UV_URL, timeout: float = 10, lang: str = "en") -> UvIndex:
     """Download the UV index from the current weather report (`dataType=rhrread`)."""
-    return parse_uv(_fetch_json(url, timeout))
+    return parse_uv(_fetch_json(_apply_lang(url, lang), timeout))
+
+
+def _apply_lang(url: str, lang: str) -> str:
+    """Set the Observatory `lang` query parameter. Default URLs already use `en`."""
+    if lang == "en" and "lang=en" in url:
+        return url
+    prefix, sep, rest = url.partition("lang=")
+    if not sep:
+        joiner = "&" if "?" in url else "?"
+        return f"{url}{joiner}lang={lang}"
+    amp = rest.find("&")
+    tail = rest[amp:] if amp != -1 else ""
+    return f"{prefix}lang={lang}{tail}"
 
 
 def _fetch_json(url: str, timeout: float) -> dict:

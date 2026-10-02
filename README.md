@@ -17,6 +17,8 @@ hk-weather --nine-day --json
 hk-weather --warnings
 hk-weather --uv
 hk-weather --uv --json
+hk-weather --lang tc
+hk-weather --forecast --lang sc
 ```
 
 Or without installing the script:
@@ -50,6 +52,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --warnings` (or `-w`) prints each active warning as a code and description. If none are in force, it says so.
 
 `hk-weather --uv` (or `-u`) prints the Observatory UV index (place, value, and description). `--uv --json` prints that same reading as one JSON object. When the Observatory has no UV reading, it says so. Current conditions stay the default.
+
+`--lang` chooses the Observatory response language: `en` (default), `tc`, or `sc`. It is sent as the `lang` query parameter on every fetch.
 
 ## Test
 
