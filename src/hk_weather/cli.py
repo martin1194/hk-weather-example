@@ -63,6 +63,7 @@ from hk_weather.hko import (
     fetch_visibility,
     fetch_warning_info,
     fetch_warnings,
+    fetch_warning_time,
     fetch_weekend,
     fetch_wind,
     fetch_forecast_icon,
@@ -164,6 +165,8 @@ from hk_weather.hko import (
     format_wettest,
     format_wettest_miss,
     format_warnings,
+    format_warning_time,
+    format_warning_time_miss,
     format_weekend,
     format_weekend_miss,
     format_wind,
@@ -206,6 +209,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--soil-temp prints soil temperatures; "
             "--nine-situation prints the 9-day general situation; "
             "--warnings lists active warnings; "
+            "--warning-time prints when active warnings were issued; "
             "--uv prints the UV index; --icon-time prints when the weather icon changed; "
             "--icon prints the current weather icon; "
             "--tips prints special weather tips; "
@@ -452,6 +456,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Print only active weather warnings",
     )
     parser.add_argument(
+        "--warning-time",
+        action="store_true",
+        help="Print issue and expiry times for active weather warnings",
+    )
+    parser.add_argument(
         "-W",
         "--warning-info",
         action="store_true",
@@ -631,6 +640,16 @@ def main(argv: list[str] | None = None) -> int:
                 fetch_warnings(timeout=args.timeout, lang=args.lang),
                 as_json=args.json,
             )
+        elif args.warning_time:
+            warning_time = fetch_warning_time(timeout=args.timeout, lang=args.lang)
+            if not warning_time.warnings:
+                text = format_warning_time_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(warning_time)
+                    if args.json
+                    else format_warning_time(warning_time)
+                )
         elif args.warning_info:
             text = format_warning_info(
                 fetch_warning_info(timeout=args.timeout, lang=args.lang),

@@ -77,6 +77,8 @@ hk-weather --lunar
 hk-weather --lunar --json
 hk-weather --warnings
 hk-weather --warnings --json
+hk-weather --warning-time
+hk-weather --warning-time --json
 hk-weather --warning-info
 hk-weather --uv
 hk-weather --uv --json
@@ -227,6 +229,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --lunar` prints today's lunar date from the Observatory calendar, for example `丙午年，馬` and `八月廿三`. `--lunar --json` prints that date as one JSON object. `--lang` is sent on the request; the Observatory still returns the lunar labels in Chinese. If the date is missing, it says `No lunar date is available.`
 
 `hk-weather --warnings` (or `-w`) prints each active warning as a code and description. `--warnings --json` prints them as one JSON object. If none are in force, it says so.
+
+`hk-weather --warning-time` prints the issue, update, and expiry times for those active warnings (`issueTime`, `updateTime`, and `expireTime` on `dataType=warnsum`). `--warnings` still prints the codes and names. `--warning-time --json` prints those times as one JSON object. `--lang` applies. Cancelled warnings are omitted. If none are in force, it says `No weather warnings are in force.`
 
 `hk-weather --warning-info` (or `-W`) prints each detailed warning message from `dataType=warningInfo`. `--json` and `--lang` apply. If none are present, it says so.
 
