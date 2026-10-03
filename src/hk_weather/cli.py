@@ -18,6 +18,7 @@ from hk_weather.hko import (
     fetch_hottest,
     fetch_humidest,
     fetch_humidity,
+    fetch_icon_time,
     fetch_least_humid,
     fetch_lightning,
     fetch_moon,
@@ -65,6 +66,8 @@ from hk_weather.hko import (
     format_humidest,
     format_humidest_miss,
     format_humidity,
+    format_icon_time,
+    format_icon_time_miss,
     format_least_humid,
     format_least_humid_miss,
     format_json,
@@ -145,7 +148,8 @@ def build_parser() -> argparse.ArgumentParser:
             "--fire-danger prints the fire danger warning; "
             "--tc-info prints tropical cyclone information from the local forecast; "
             "--nine-day prints the 9-day forecast; --warnings lists active warnings; "
-            "--uv prints the UV index; --tips prints special weather tips; "
+            "--uv prints the UV index; --icon-time prints when the weather icon changed; "
+            "--tips prints special weather tips; "
             "--stations lists each station; --list-places lists their names; "
             "--place NAME filters those stations; --rain lists district rainfall; "
             "--lightning lists lightning locations; --humidity lists humidity readings; "
@@ -318,6 +322,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--uv",
         action="store_true",
         help="Print the UV index from the current weather report",
+    )
+    parser.add_argument(
+        "-i",
+        "--icon-time",
+        action="store_true",
+        help="Print when the current weather icon was last updated",
     )
     parser.add_argument(
         "-t",
@@ -551,6 +561,12 @@ def main(argv: list[str] | None = None) -> int:
         elif args.uv:
             uv = fetch_uv(timeout=args.timeout, lang=args.lang)
             text = format_json(uv) if args.json else format_uv(uv)
+        elif args.icon_time:
+            icon_time = fetch_icon_time(timeout=args.timeout, lang=args.lang)
+            if icon_time is None:
+                text = format_icon_time_miss(as_json=args.json)
+            else:
+                text = format_json(icon_time) if args.json else format_icon_time(icon_time)
         elif args.tips:
             tips = fetch_tips(timeout=args.timeout, lang=args.lang)
             text = format_json(tips) if args.json else format_tips(tips)

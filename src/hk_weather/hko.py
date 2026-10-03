@@ -401,6 +401,11 @@ class UvIndex:
     record: str | None
 
 
+@dataclass(frozen=True)
+class IconUpdate:
+    updated: str
+
+
 def fetch_current(url: str = DEFAULT_URL, timeout: float = 10, lang: str = "en") -> CurrentWeather:
     """Download the current weather report and return a summary."""
     return parse_current_report(_fetch_json(_apply_lang(url, lang), timeout))
@@ -584,6 +589,13 @@ def fetch_moon(timeout: float = 10, lang: str = "en") -> Moon | None:
 def fetch_uv(url: str = UV_URL, timeout: float = 10, lang: str = "en") -> UvIndex:
     """Download the UV index from the current weather report (`dataType=rhrread`)."""
     return parse_uv(_fetch_json(_apply_lang(url, lang), timeout))
+
+
+def fetch_icon_time(
+    url: str = DEFAULT_URL, timeout: float = 10, lang: str = "en"
+) -> IconUpdate | None:
+    """Download the weather-icon update time from the current report (`iconUpdateTime`)."""
+    return parse_icon_time(_fetch_json(_apply_lang(url, lang), timeout))
 
 
 def fetch_tips(url: str = TIPS_URL, timeout: float = 10, lang: str = "en") -> SpecialTips:
@@ -1579,6 +1591,24 @@ def format_uv(report: UvIndex) -> str:
     return "\n".join(lines) + "\n"
 
 
+def parse_icon_time(payload: dict) -> IconUpdate | None:
+    """Turn the `rhrread` icon update time into one timestamp."""
+    text = _text(payload.get("iconUpdateTime"))
+    if not text:
+        return None
+    return IconUpdate(text)
+
+
+def format_icon_time(report: IconUpdate) -> str:
+    """Render the weather-icon update time."""
+    return f"Hong Kong icon update\n{report.updated}\n"
+
+
+def format_icon_time_miss(*, as_json: bool = False) -> str:
+    """Say that the current report has no icon update time."""
+    return _unavailable("No icon update time is available.", as_json=as_json)
+
+
 def parse_tips(payload: dict) -> SpecialTips:
     """Turn an `swt` document into a list of tip descriptions."""
     raw = payload.get("swt", [])
@@ -2005,6 +2035,7 @@ def format_json(
     | TcInfo
     | NineDayForecast
     | UvIndex
+    | IconUpdate
     | SpecialTips
     | StationReport
     | RainReport
