@@ -12,6 +12,7 @@ from hk_weather.hko import (
     fetch_driest,
     fetch_forecast,
     fetch_forecast_day,
+    fetch_felt,
     fetch_fire_danger,
     fetch_coldest,
     fetch_cyclone,
@@ -55,6 +56,8 @@ from hk_weather.hko import (
     format_driest,
     format_driest_miss,
     format_forecast,
+    format_felt,
+    format_felt_miss,
     format_fire_danger,
     format_fire_danger_miss,
     format_coldest,
@@ -154,7 +157,8 @@ def build_parser() -> argparse.ArgumentParser:
             "--place NAME filters those stations; --rain lists district rainfall; "
             "--lightning lists lightning locations; --humidity lists humidity readings; "
             "--temps lists temperatures by place; --wind lists the forecast wind; "
-            "--quake lists the latest earthquake message; --today prints today; "
+            "--quake lists the latest earthquake message; "
+            "--felt prints the locally felt earth tremor; --today prints today; "
             "--tomorrow prints tomorrow; "
             "--day N prints forecast day N (1 is the first entry); "
             "--psr lists the chance of significant rain; "
@@ -274,6 +278,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--quake",
         action="store_true",
         help="List the latest Observatory quick earthquake message",
+    )
+    parser.add_argument(
+        "-q",
+        "--felt",
+        action="store_true",
+        help="Print the latest locally felt earth tremor",
     )
     parser.add_argument(
         "-V",
@@ -531,6 +541,12 @@ def main(argv: list[str] | None = None) -> int:
         elif args.quake:
             quakes = fetch_quakes(timeout=args.timeout, lang=args.lang)
             text = format_json(quakes) if args.json else format_quakes(quakes)
+        elif args.felt:
+            felt = fetch_felt(timeout=args.timeout, lang=args.lang)
+            if felt is None:
+                text = format_felt_miss(as_json=args.json)
+            else:
+                text = format_json(felt) if args.json else format_felt(felt)
         elif args.visibility:
             visibility = fetch_visibility(timeout=args.timeout, lang=args.lang)
             text = format_json(visibility) if args.json else format_visibility(visibility)
