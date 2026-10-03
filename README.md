@@ -184,6 +184,8 @@ hk-weather --temp-diff
 hk-weather --temp-diff --json
 hk-weather --heat-index
 hk-weather --heat-index --json
+hk-weather --wbgt
+hk-weather --wbgt --json
 hk-weather --hottest
 hk-weather --hottest --json
 hk-weather --coldest
@@ -401,6 +403,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --temp-diff` prints the past 24-hour air-temperature change at automatic stations, for example `Chek Lap Kok  -0.6°C` and `HK Observatory  +0.4°C`. `--minute-temp` still prints the latest 1-minute temperature. `--temp-diff --json` prints those stations as one JSON object. `--lang` selects the station names. Stations marked `N/A` are omitted. If none remain, it says `No 24-hour temperature changes are available.`
 
 `hk-weather --heat-index` prints the latest 10-minute mean Hong Kong Heat Index at automatic stations, for example `Happy Valley  25.8`. Earlier minutes in the file are omitted. `--heat-index --json` prints that minute as one JSON object. `--lang` selects the station names. Stations marked `N/A` are omitted. If none remain, it says `No heat index is available.`
+
+`hk-weather --wbgt` prints the latest 60-minute mean Wet Bulb Globe Temperature at automatic stations, for example `Happy Valley  25.8°C`. `--heat-index` still prints the Hong Kong Heat Index. Earlier minutes in the file are omitted. `--wbgt --json` prints that minute as one JSON object. `--lang` selects the station names. Stations marked `N/A` are omitted. If none remain, it says `No wet bulb globe temperature is available.`
 
 `hk-weather --hottest` (or `-H`) prints the warmest place from the current report, for example `King's Park  31°C`. `--hottest --json` prints that reading as one JSON object. `--lang` applies. If no readings are present, it says so.
 

@@ -5295,6 +5295,65 @@ def test_cli_heat_index_when_missing(monkeypatch, capsys):
     assert json.loads(capsys.readouterr().out) == {"message": "No heat index is available."}
 
 
+def test_cli_wbgt_prints_latest_minute(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _text_response(
+            "Date time,Automatic Weather Station,60-minute mean Wet Bulb Globe Temperature (WBGT)\n"
+            "202610040311,Beas River,23.9\n"
+            "202610040320,Happy Valley,  25.8  \n"
+            "202610040320,Sha Tin,N/A\n"
+            "202610040320,King's Park,25.3\n"
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--wbgt", "--lang", "tc"]) == 0
+    assert seen["url"].endswith("recent10_60min_wbgt_uc.csv")
+    assert capsys.readouterr().out == (
+        "Hong Kong wet bulb globe temperature\n"
+        "Recorded: 2026-10-04 03:20\n"
+        "Happy Valley  25.8°C\n"
+        "King's Park  25.3°C\n"
+    )
+
+
+def test_cli_wbgt_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Date time,Station,WBGT\n"
+            "202610040320,Happy Valley,25.8\n"
+        ),
+    )
+    assert main(["--wbgt", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "obs_time": "2026-10-04 03:20",
+        "stations": [{"place": "Happy Valley", "wbgt_c": 25.8}],
+    }
+
+
+def test_cli_wbgt_when_missing(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Date time,Station,WBGT\n"
+            "202610040320,Sha Tin,N/A\n"
+        ),
+    )
+    assert main(["--wbgt"]) == 0
+    assert capsys.readouterr().out == "No wet bulb globe temperature is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(""),
+    )
+    assert main(["--wbgt", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No wet bulb globe temperature is available."
+    }
+
+
 def test_cli_temp_time_prints_timestamp(monkeypatch, capsys):
     seen = {}
 
