@@ -34,6 +34,7 @@ from hk_weather.hko import (
     fetch_moon,
     fetch_month_rain,
     fetch_nine_day,
+    fetch_nine_situation,
     fetch_sea_temp,
     fetch_soil_temp,
     fetch_year_rain,
@@ -114,6 +115,8 @@ from hk_weather.hko import (
     format_year_rain_miss,
     format_place_miss,
     format_nine_day,
+    format_nine_situation,
+    format_nine_situation_miss,
     format_sea_temp,
     format_sea_temp_miss,
     format_soil_temp,
@@ -195,6 +198,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--tc-info prints tropical cyclone information from the local forecast; "
             "--nine-day prints the 9-day forecast; --sea-temp prints the sea temperature; "
             "--soil-temp prints soil temperatures; "
+            "--nine-situation prints the 9-day general situation; "
             "--warnings lists active warnings; "
             "--uv prints the UV index; --icon-time prints when the weather icon changed; "
             "--icon prints the current weather icon; "
@@ -306,6 +310,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--soil-temp",
         action="store_true",
         help="Print soil temperatures from the 9-day forecast",
+    )
+    parser.add_argument(
+        "--nine-situation",
+        action="store_true",
+        help="Print the general situation from the 9-day forecast",
     )
     parser.add_argument(
         "-Y",
@@ -645,6 +654,16 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_soil_temp_miss(as_json=args.json)
             else:
                 text = format_json(soil_temp) if args.json else format_soil_temp(soil_temp)
+        elif args.nine_situation:
+            nine_situation = fetch_nine_situation(timeout=args.timeout, lang=args.lang)
+            if nine_situation is None:
+                text = format_nine_situation_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(nine_situation)
+                    if args.json
+                    else format_nine_situation(nine_situation)
+                )
         elif args.today:
             today = fetch_today(timeout=args.timeout, lang=args.lang)
             if today is None:

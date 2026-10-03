@@ -631,6 +631,13 @@ def fetch_soil_temp(
     return parse_soil_temp(_fetch_json(_apply_lang(url, lang), timeout))
 
 
+def fetch_nine_situation(
+    url: str = NINE_DAY_URL, timeout: float = 10, lang: str = "en"
+) -> GeneralSituation | None:
+    """Download the general situation from the 9-day forecast (`dataType=fnd`)."""
+    return parse_situation(_fetch_json(_apply_lang(url, lang), timeout))
+
+
 def fetch_psr(url: str = NINE_DAY_URL, timeout: float = 10, lang: str = "en") -> PsrForecast:
     """Download the chance of significant rain from the 9-day forecast."""
     forecast = fetch_nine_day(url, timeout, lang)
@@ -1448,6 +1455,16 @@ def format_soil_temp(report: SoilReport) -> str:
 def format_soil_temp_miss(*, as_json: bool = False) -> str:
     """Say that the 9-day forecast has no soil temperature."""
     return _unavailable("No soil temperature is available.", as_json=as_json)
+
+
+def format_nine_situation(report: GeneralSituation) -> str:
+    """Render the general situation from the 9-day forecast."""
+    return f"Hong Kong 9-day situation\n{report.situation}\n"
+
+
+def format_nine_situation_miss(*, as_json: bool = False) -> str:
+    """Say that the 9-day forecast has no general situation."""
+    return _unavailable("No 9-day situation is available.", as_json=as_json)
 
 
 def format_psr(report: PsrForecast) -> str:
