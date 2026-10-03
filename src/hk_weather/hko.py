@@ -331,6 +331,14 @@ class HourWettest:
 
 
 @dataclass(frozen=True)
+class HourDriest:
+    obs_time: str
+    place: str
+    station_id: str
+    rainfall_mm: float
+
+
+@dataclass(frozen=True)
 class RainstormReminder:
     reminder: str
 
@@ -707,6 +715,17 @@ def fetch_hour_wettest(
         return None
     wettest = report.readings[0]
     return HourWettest(report.obs_time, wettest.place, wettest.station_id, wettest.rainfall_mm)
+
+
+def fetch_hour_driest(
+    url: str = HOURLY_RAIN_URL, timeout: float = 10, lang: str = "en"
+) -> HourDriest | None:
+    """Download the driest automatic station from the past hour."""
+    report = fetch_hour_rain(url, timeout, lang)
+    if not report.readings:
+        return None
+    driest = min(report.readings, key=lambda reading: reading.rainfall_mm)
+    return HourDriest(report.obs_time, driest.place, driest.station_id, driest.rainfall_mm)
 
 
 def fetch_wettest(
@@ -1974,6 +1993,15 @@ def format_hour_wettest(reading: HourWettest) -> str:
     return "\n".join(lines) + "\n"
 
 
+def format_hour_driest(reading: HourDriest) -> str:
+    """Render the driest automatic station from the past hour."""
+    lines = ["Hong Kong hourly driest"]
+    if reading.obs_time:
+        lines.append(f"Recorded: {reading.obs_time}")
+    lines.append(f"{reading.place}  {_number(reading.rainfall_mm)} mm")
+    return "\n".join(lines) + "\n"
+
+
 def _hour_mm(value: object) -> float | None:
     if isinstance(value, bool):
         return None
@@ -2325,6 +2353,7 @@ def format_json(
     | RainReport
     | HourRainReport
     | HourWettest
+    | HourDriest
     | LightningReport
     | LightningCountReport
     | HumidityReport

@@ -14,6 +14,7 @@ from hk_weather.hko import (
     fetch_forecast_day,
     fetch_hour_rain,
     fetch_hour_wettest,
+    fetch_hour_driest,
     fetch_felt,
     fetch_fire_danger,
     fetch_coldest,
@@ -76,6 +77,7 @@ from hk_weather.hko import (
     format_hour_rain,
     format_hour_rain_miss,
     format_hour_wettest,
+    format_hour_driest,
     format_icon_time,
     format_icon_time_miss,
     format_least_humid,
@@ -168,6 +170,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--place NAME filters those stations; --rain lists district rainfall; "
             "--hour-rain lists past-hour rainfall at automatic stations; "
             "--hour-wettest prints the wettest of those stations; "
+            "--hour-driest prints the driest of those stations; "
             "--lightning lists lightning locations; --strikes lists hourly lightning counts; "
             "--humidity lists humidity readings; "
             "--temps lists temperatures by place; --wind lists the forecast wind; "
@@ -380,6 +383,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--hour-wettest",
         action="store_true",
         help="Print the wettest automatic station from the past hour",
+    )
+    parser.add_argument(
+        "--hour-driest",
+        action="store_true",
+        help="Print the driest automatic station from the past hour",
     )
     parser.add_argument(
         "-R",
@@ -643,6 +651,12 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_hour_rain_miss(as_json=args.json)
             else:
                 text = format_json(hour_wettest) if args.json else format_hour_wettest(hour_wettest)
+        elif args.hour_driest:
+            hour_driest = fetch_hour_driest(timeout=args.timeout, lang=args.lang)
+            if hour_driest is None:
+                text = format_hour_rain_miss(as_json=args.json)
+            else:
+                text = format_json(hour_driest) if args.json else format_hour_driest(hour_driest)
         elif args.wettest:
             wettest = fetch_wettest(timeout=args.timeout, lang=args.lang)
             if wettest is None:
