@@ -12,6 +12,7 @@ from hk_weather.hko import (
     fetch_driest,
     fetch_forecast,
     fetch_outlook,
+    fetch_coastal,
     fetch_forecast_period,
     fetch_forecast_desc,
     fetch_forecast_updated,
@@ -120,6 +121,8 @@ from hk_weather.hko import (
     format_forecast,
     format_outlook,
     format_outlook_miss,
+    format_coastal,
+    format_coastal_miss,
     format_forecast_period,
     format_forecast_period_miss,
     format_forecast_desc,
@@ -332,6 +335,7 @@ def build_parser() -> argparse.ArgumentParser:
             "Current conditions by default; --summary prints a short briefing; "
             "--forecast prints the local forecast; "
             "--outlook prints the local-forecast outlook; "
+            "--coastal prints the South China coastal waters forecast; "
             "--forecast-period prints the forecast period; "
             "--forecast-desc prints the forecast description; "
             "--forecast-updated prints when the local forecast was updated; "
@@ -467,6 +471,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--outlook",
         action="store_true",
         help="Print the outlook from the local weather forecast",
+    )
+    parser.add_argument(
+        "--coastal",
+        action="store_true",
+        help="Print the South China coastal waters area forecast",
     )
     parser.add_argument(
         "--forecast-period",
@@ -1052,6 +1061,12 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_outlook_miss(as_json=args.json)
             else:
                 text = format_json(outlook) if args.json else format_outlook(outlook)
+        elif args.coastal:
+            coastal = fetch_coastal(timeout=args.timeout, lang=args.lang)
+            if not coastal.areas:
+                text = format_coastal_miss(as_json=args.json)
+            else:
+                text = format_json(coastal) if args.json else format_coastal(coastal)
         elif args.forecast_period:
             forecast_period = fetch_forecast_period(timeout=args.timeout, lang=args.lang)
             if forecast_period is None:

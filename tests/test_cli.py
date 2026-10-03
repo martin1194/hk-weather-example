@@ -219,6 +219,100 @@ def test_cli_outlook_when_missing(monkeypatch, capsys):
     assert json.loads(capsys.readouterr().out) == {"message": "No outlook is available."}
 
 
+def test_cli_coastal_prints_area_forecast(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response(
+            {
+                "updateTime": "  2026-10-04T05:30:00+08:00  ",
+                "weatherForecast": {
+                    "data": [
+                        {
+                            "locationName": "  Hong Kong Adjacent Waters  ",
+                            "windInfo": "  East force 4.  ",
+                            "weatherDescription": "  Scattered showers.  ",
+                            "seaSituation": "  Moderate seas.  ",
+                        },
+                        {
+                            "locationName": "Blank",
+                            "windInfo": "  ",
+                            "weatherDescription": "",
+                            "seaSituation": "",
+                        },
+                        {
+                            "locationName": "South of Hong Kong",
+                            "windInfo": "East force 4.",
+                            "weatherDescription": "Showers.",
+                            "seaSituation": "Moderate seas.",
+                        },
+                    ]
+                },
+            }
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--coastal", "--lang", "tc"]) == 0
+    assert seen["url"].endswith("sccw_json_datagov_uc.json")
+    assert capsys.readouterr().out == (
+        "Hong Kong coastal waters\n"
+        "Updated: 2026-10-04T05:30:00+08:00\n"
+        "Hong Kong Adjacent Waters  East force 4.  Scattered showers.  Moderate seas.\n"
+        "South of Hong Kong  East force 4.  Showers.  Moderate seas.\n"
+    )
+
+
+def test_cli_coastal_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {
+                "updateTime": "2026-10-04T05:30:00+08:00",
+                "weatherForecast": {
+                    "data": [
+                        {
+                            "locationName": "Hong Kong Adjacent Waters",
+                            "windInfo": "East force 4.",
+                            "weatherDescription": "Scattered showers.",
+                            "seaSituation": "Moderate seas.",
+                        }
+                    ]
+                },
+            }
+        ),
+    )
+    assert main(["--coastal", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "update_time": "2026-10-04T05:30:00+08:00",
+        "areas": [
+            {
+                "place": "Hong Kong Adjacent Waters",
+                "wind": "East force 4.",
+                "weather": "Scattered showers.",
+                "sea": "Moderate seas.",
+            }
+        ],
+    }
+
+
+def test_cli_coastal_when_missing(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"weatherForecast": {"data": []}}),
+    )
+    assert main(["--coastal"]) == 0
+    assert capsys.readouterr().out == "No coastal waters forecast is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({}),
+    )
+    assert main(["--coastal", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No coastal waters forecast is available."
+    }
+
+
 def test_cli_forecast_period_prints_the_line(monkeypatch, capsys):
     seen = {}
     period = "Weather forecast for tonight and tomorrow"
