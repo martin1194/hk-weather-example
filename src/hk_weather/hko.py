@@ -25,6 +25,11 @@ TIPS_URL = f"{_API}?dataType=swt&lang=en"
 # Quick earthquake messages live on earthquake.php. dataType=qem is the latest
 # magnitude 6+ event; dataType=eeq is not a valid Observatory parameter.
 QUAKE_URL = "https://data.weather.gov.hk/weatherAPI/opendata/earthquake.php?dataType=qem&lang=en"
+# Locally felt earth tremor report. An empty object means none is reported.
+FELT_URL = (
+    "https://data.weather.gov.hk/weatherAPI/opendata/earthquake.php"
+    "?dataType=feltearthquake&lang=en"
+)
 # Latest 10-minute mean visibility. weather.php rejects dataType=LTMV; this feed
 # is the open-data endpoint and needs rformat=json plus lang.
 VISIBILITY_URL = (
@@ -192,6 +197,18 @@ class Earthquake:
 @dataclass(frozen=True)
 class QuakeReport:
     quakes: tuple[Earthquake, ...]
+
+
+@dataclass(frozen=True)
+class FeltTremor:
+    time: str
+    update_time: str
+    region: str
+    magnitude: float | None
+    intensity: str
+    latitude: float | None
+    longitude: float | None
+    details: str
 
 
 @dataclass(frozen=True)
@@ -531,6 +548,11 @@ def fetch_wind(url: str = NINE_DAY_URL, timeout: float = 10, lang: str = "en") -
 def fetch_quakes(url: str = QUAKE_URL, timeout: float = 10, lang: str = "en") -> QuakeReport:
     """Download the latest quick earthquake message (`dataType=qem`)."""
     return parse_quakes(_fetch_json(_apply_lang(url, lang), timeout))
+
+
+def fetch_felt(url: str = FELT_URL, timeout: float = 10, lang: str = "en") -> FeltTremor | None:
+    """Download the locally felt earth tremor report (`dataType=feltearthquake`)."""
+    return parse_felt(_fetch_json(_apply_lang(url, lang), timeout))
 
 
 def fetch_visibility(
@@ -1315,6 +1337,53 @@ def format_quakes(report: QuakeReport) -> str:
     return "\n".join(lines) + "\n"
 
 
+def parse_felt(payload: dict) -> FeltTremor | None:
+    """Turn a locally felt tremor report into one event, or none."""
+    region = _text(payload.get("region"))
+    when = _text(payload.get("ptime"))
+    magnitude = _optional_number(payload.get("mag"))
+    intensity = _text(payload.get("intensity"))
+    details = _text(payload.get("details"))
+    if not region and not when and magnitude is None and not intensity and not details:
+        return None
+    return FeltTremor(
+        time=when,
+        update_time=_text(payload.get("updateTime")),
+        region=region,
+        magnitude=magnitude,
+        intensity=intensity,
+        latitude=_optional_number(payload.get("lat")),
+        longitude=_optional_number(payload.get("lon")),
+        details=details,
+    )
+
+
+def format_felt(report: FeltTremor) -> str:
+    """Render the locally felt earth tremor."""
+    lines = ["Hong Kong felt tremor"]
+    if report.update_time:
+        lines.append(f"Updated: {report.update_time}")
+    magnitude = f"M{_number(report.magnitude)}" if report.magnitude is not None else "M?"
+    region = report.region or "unknown region"
+    when = report.time or "unknown time"
+    if report.latitude is not None and report.longitude is not None:
+        place = f"{region} ({_number(report.latitude)}, {_number(report.longitude)})"
+    else:
+        place = region
+    line = f"{when}  {magnitude}  {place}"
+    if report.intensity:
+        line = f"{line}  intensity {report.intensity}"
+    lines.append(line)
+    if report.details:
+        lines.append(report.details)
+    return "\n".join(lines) + "\n"
+
+
+def format_felt_miss(*, as_json: bool = False) -> str:
+    """Say that no locally felt earth tremor is reported."""
+    return _unavailable("No locally felt earth tremor is reported.", as_json=as_json)
+
+
 def _quake(item: dict) -> Earthquake | None:
     region = _text(item.get("region"))
     when = _text(item.get("ptime"))
@@ -2044,6 +2113,7 @@ def format_json(
     | TempReport
     | WindForecast
     | QuakeReport
+    | FeltTremor
     | TomorrowForecast
     | PsrForecast
     | WeekendForecast

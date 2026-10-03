@@ -1228,6 +1228,78 @@ def test_cli_quake_when_none_reported(monkeypatch, capsys):
     assert capsys.readouterr().out == "No recent earthquake is reported.\n"
 
 
+def test_cli_felt_prints_tremor(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response(
+            {
+                "updateTime": "2020-09-01T08:30:00+08:00",
+                "ptime": "2020-09-01T08:19:00+08:00",
+                "mag": 2.1,
+                "region": "  near Cheung Chau  ",
+                "intensity": "III",
+                "lat": 22.2,
+                "lon": 114.1,
+                "details": "A minor tremor was felt locally.",
+            }
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--felt", "--lang", "tc"]) == 0
+    assert "dataType=feltearthquake" in seen["url"]
+    assert "lang=tc" in seen["url"]
+    assert capsys.readouterr().out == (
+        "Hong Kong felt tremor\n"
+        "Updated: 2020-09-01T08:30:00+08:00\n"
+        "2020-09-01T08:19:00+08:00  M2.1  near Cheung Chau (22.2, 114.1)  intensity III\n"
+        "A minor tremor was felt locally.\n"
+    )
+
+
+def test_cli_felt_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {
+                "updateTime": "2020-09-01T08:30:00+08:00",
+                "ptime": "2020-09-01T08:19:00+08:00",
+                "mag": 2,
+                "region": "near Cheung Chau",
+                "intensity": "III",
+                "lat": 22.2,
+                "lon": 114.1,
+                "details": "A minor tremor was felt locally.",
+            }
+        ),
+    )
+    assert main(["-q", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "time": "2020-09-01T08:19:00+08:00",
+        "update_time": "2020-09-01T08:30:00+08:00",
+        "region": "near Cheung Chau",
+        "magnitude": 2.0,
+        "intensity": "III",
+        "latitude": 22.2,
+        "longitude": 114.1,
+        "details": "A minor tremor was felt locally.",
+    }
+
+
+def test_cli_felt_when_none_reported(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({}),
+    )
+    assert main(["--felt"]) == 0
+    assert capsys.readouterr().out == "No locally felt earth tremor is reported.\n"
+    assert main(["--felt", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No locally felt earth tremor is reported."
+    }
+
+
 def test_cli_visibility_lists_stations(monkeypatch, capsys):
     seen = {}
 
