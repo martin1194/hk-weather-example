@@ -40,6 +40,8 @@ hk-weather --soil-temp
 hk-weather --soil-temp --json
 hk-weather --nine-situation
 hk-weather --nine-situation --json
+hk-weather --nine-updated
+hk-weather --nine-updated --json
 hk-weather --today
 hk-weather -Y --json
 hk-weather --yesterday
@@ -199,6 +201,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --soil-temp` prints soil temperatures from that forecast (`soilTemp`), one line per depth, for example `Hong Kong Observatory  0.5 m  30.6°C`. `--sea-temp` still prints the sea temperature. `--soil-temp --json` prints those readings as one JSON object. `--lang` applies. If none are present, it says `No soil temperature is available.`
 
 `hk-weather --nine-situation` prints the general situation from the 9-day forecast (`generalSituation` on `dataType=fnd`). `--situation` still prints the local-forecast paragraph. `--nine-situation --json` prints that paragraph as one JSON object. `--lang` applies. If the field is missing or blank, it says `No 9-day situation is available.`
+
+`hk-weather --nine-updated` prints when that 9-day forecast was last updated (`updateTime`). `--nine-day` still prints the daily forecast. `--forecast-updated` still prints the local-forecast time. `--nine-updated --json` prints that timestamp as one JSON object. `--lang` applies. If the field is missing or blank, it says `No 9-day update time is available.`
 
 `hk-weather --today` (or `-Y`) prints only today's day from that forecast, using the Hong Kong calendar date. It includes weather, high and low, humidity, chance of rain, and wind when the Observatory sends them. `--today --json` prints that day as one JSON object. `--lang` applies. For example: `2026-10-03 Saturday  high 31°C  low 27°C  humidity 75-95%  rain Medium High`. If that day is missing, it says so.
 
