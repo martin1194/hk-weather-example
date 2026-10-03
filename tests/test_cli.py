@@ -859,6 +859,61 @@ def test_cli_accum_rain_when_missing(monkeypatch, capsys):
     }
 
 
+def test_cli_avg_rain_prints_climatological_normal(monkeypatch, capsys):
+    seen = {}
+    monkeypatch.setattr("hk_weather.hko._hong_kong_yesterday", lambda now=None: "2026-10-02")
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response(
+            {
+                "HKOReadingsAvgRainfall": "2252.8",
+                "ReportTimeInfoDate": "20261002",
+            }
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--avg-rain", "--lang", "tc"]) == 0
+    assert "dataType=RYES" in seen["url"]
+    assert "station=HKO" in seen["url"]
+    assert "date=20261002" in seen["url"]
+    assert "lang=tc" in seen["url"]
+    assert capsys.readouterr().out == (
+        "Hong Kong average rainfall\n"
+        "2026-10-02\n"
+        "2252.8 mm\n"
+    )
+
+
+def test_cli_avg_rain_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_yesterday", lambda now=None: "2026-10-02")
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"HKOReadingsAvgRainfall": "2252.8"}),
+    )
+    assert main(["--avg-rain", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "date": "2026-10-02",
+        "rainfall_mm": 2252.8,
+    }
+
+
+def test_cli_avg_rain_when_missing(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_yesterday", lambda now=None: "2026-10-02")
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"HKOReadingsAccumRainfall": "2466.0"}),
+    )
+    assert main(["--avg-rain"]) == 0
+    assert capsys.readouterr().out == "No average rainfall is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({}),
+    )
+    assert main(["--avg-rain", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {"message": "No average rainfall is available."}
+
+
 def test_cli_tomorrow_prints_the_next_hong_kong_day(monkeypatch, capsys):
     seen = {}
     monkeypatch.setattr("hk_weather.hko._hong_kong_tomorrow", lambda now=None: "2026-10-04")
