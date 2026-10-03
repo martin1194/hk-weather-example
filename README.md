@@ -148,6 +148,8 @@ hk-weather --lang tc
 hk-weather --forecast --lang sc
 hk-weather --tips
 hk-weather --tips --json
+hk-weather --lamppost
+hk-weather --lamppost --json
 hk-weather --rain
 hk-weather --rain --json
 hk-weather --rain-period
@@ -391,6 +393,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `--lang` chooses the Observatory response language: `en` (default), `tc`, or `sc`. It is sent as the `lang` query parameter on every fetch.
 
 `hk-weather --tips` (or `-t`) prints each special weather tip. `--tips --json` prints them as one JSON object. `--lang` applies. Current conditions stay the default.
+
+`hk-weather --lamppost` prints the latest experimental reading from smart lamppost GF3637, for example `2026-10-04 06:50:27  27.1°C  humidity 86%  wind 4 km/h from 144°`. `--tips` still prints special weather tips. `--lamppost --json` prints that reading as one JSON object. A value marked `////` is omitted. If the lamppost has no numeric reading, it says `No smart lamppost reading is available.`
 
 `hk-weather --rain` (or `-r`) prints rainfall by district from the current report, one line per place. `--rain --json` prints that list as one JSON object. If no readings are present, it says so.
 
