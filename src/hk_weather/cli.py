@@ -75,6 +75,7 @@ from hk_weather.hko import (
     fetch_temps,
     fetch_temp_time,
     fetch_minute_temp,
+    fetch_since_midnight,
     fetch_tc_info,
     fetch_tide,
     fetch_tide_hour,
@@ -219,6 +220,8 @@ from hk_weather.hko import (
     format_temp_time_miss,
     format_minute_temp,
     format_minute_temp_miss,
+    format_since_midnight,
+    format_since_midnight_miss,
     format_tide,
     format_tide_miss,
     format_tide_hour,
@@ -314,6 +317,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--temps lists temperatures by place; "
             "--temp-time prints when those temperatures were recorded; "
             "--minute-temp prints the latest 1-minute mean temperature; "
+            "--since-midnight prints each station's high and low since midnight; "
             "--wind lists the forecast wind; "
             "--gust prints the latest 10-minute wind and gust; "
             "--forecast-icon prints each day's weather icon; "
@@ -803,6 +807,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--minute-temp",
         action="store_true",
         help="Print the latest 1-minute mean temperature at automatic stations",
+    )
+    parser.add_argument(
+        "--since-midnight",
+        action="store_true",
+        help="Print each station's maximum and minimum temperature since midnight",
     )
     parser.add_argument(
         "-H",
@@ -1361,6 +1370,16 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_minute_temp_miss(as_json=args.json)
             else:
                 text = format_json(minute_temp) if args.json else format_minute_temp(minute_temp)
+        elif args.since_midnight:
+            since_midnight = fetch_since_midnight(timeout=args.timeout, lang=args.lang)
+            if not since_midnight.stations:
+                text = format_since_midnight_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(since_midnight)
+                    if args.json
+                    else format_since_midnight(since_midnight)
+                )
         elif args.hottest:
             hottest = fetch_hottest(timeout=args.timeout, lang=args.lang)
             if hottest is None:

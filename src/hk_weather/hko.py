@@ -85,6 +85,21 @@ MINUTE_HUMIDITY_URLS = {
         "latest_1min_humidity_sc.csv"
     ),
 }
+# Maximum and minimum air temperature since midnight. CSV, one file per language.
+SINCE_MIDNIGHT_URLS = {
+    "en": (
+        "https://data.weather.gov.hk/weatherAPI/hko_data/regional-weather/"
+        "latest_since_midnight_maxmin.csv"
+    ),
+    "tc": (
+        "https://data.weather.gov.hk/weatherAPI/hko_data/regional-weather/"
+        "latest_since_midnight_maxmin_uc.csv"
+    ),
+    "sc": (
+        "https://data.weather.gov.hk/weatherAPI/hko_data/regional-weather/"
+        "latest_since_midnight_maxmin_sc.csv"
+    ),
+}
 # Hourly cloud-to-ground and cloud-to-cloud lightning counts. lang is accepted.
 STRIKES_URL = (
     "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php"
@@ -760,6 +775,19 @@ class MinuteHumidityReport:
 
 
 @dataclass(frozen=True)
+class SinceMidnightReading:
+    place: str
+    temp_high_c: float | None
+    temp_low_c: float | None
+
+
+@dataclass(frozen=True)
+class SinceMidnightReport:
+    obs_time: str
+    stations: tuple[SinceMidnightReading, ...]
+
+
+@dataclass(frozen=True)
 class HottestReading:
     record_time: str
     place: str
@@ -1264,6 +1292,22 @@ def fetch_minute_humidity(timeout: float = 10, lang: str = "en") -> MinuteHumidi
     except UnicodeDecodeError as exc:
         raise WeatherError("Hong Kong Observatory returned invalid text") from exc
     return parse_minute_humidity(text)
+
+
+def fetch_since_midnight(timeout: float = 10, lang: str = "en") -> SinceMidnightReport:
+    """Download each station's maximum and minimum temperature since midnight."""
+    url = SINCE_MIDNIGHT_URLS.get(lang, SINCE_MIDNIGHT_URLS["en"])
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            raw = response.read()
+    except (urllib.error.URLError, TimeoutError) as exc:
+        raise WeatherError(f"could not reach Hong Kong Observatory: {exc}") from exc
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise WeatherError("Hong Kong Observatory returned invalid text") from exc
+    return parse_since_midnight(text)
 
 
 def fetch_forecast_icon(
@@ -2997,6 +3041,47 @@ def format_minute_humidity_miss(*, as_json: bool = False) -> str:
     return _unavailable("No 1-minute humidity readings are available.", as_json=as_json)
 
 
+def parse_since_midnight(text: str) -> SinceMidnightReport:
+    """Turn the since-midnight temperature CSV into one row per station."""
+    stations: list[SinceMidnightReading] = []
+    obs_time = ""
+    rows = csv.reader(io.StringIO(text))
+    next(rows, None)
+    for row in rows:
+        if len(row) < 4:
+            continue
+        place = _text(row[1])
+        high = _hour_mm(row[2])
+        low = _hour_mm(row[3])
+        if not place or (high is None and low is None):
+            continue
+        clock = _text(row[0])
+        if not obs_time and len(clock) == 12 and clock.isdigit():
+            obs_time = f"{clock[:4]}-{clock[4:6]}-{clock[6:8]} {clock[8:10]}:{clock[10:12]}"
+        stations.append(SinceMidnightReading(place, high, low))
+    return SinceMidnightReport(obs_time, tuple(stations))
+
+
+def format_since_midnight(report: SinceMidnightReport) -> str:
+    """Render each station's high and low since midnight."""
+    lines = ["Hong Kong temperature since midnight"]
+    if report.obs_time:
+        lines.append(f"Recorded: {report.obs_time}")
+    for reading in report.stations:
+        parts = [reading.place]
+        if reading.temp_high_c is not None:
+            parts.append(f"high {_number(reading.temp_high_c)}°C")
+        if reading.temp_low_c is not None:
+            parts.append(f"low {_number(reading.temp_low_c)}°C")
+        lines.append("  ".join(parts))
+    return "\n".join(lines) + "\n"
+
+
+def format_since_midnight_miss(*, as_json: bool = False) -> str:
+    """Say that no temperatures since midnight are available."""
+    return _unavailable("No temperatures since midnight are available.", as_json=as_json)
+
+
 def format_forecast_icon(report: ForecastIcons) -> str:
     """Render each day's forecast icon."""
     lines = ["Hong Kong forecast icons"]
@@ -4240,6 +4325,7 @@ def format_json(
     | TempReport
     | TempTime
     | MinuteTempReport
+    | SinceMidnightReport
     | WindForecast
     | GustReport
     | ForecastIcons
