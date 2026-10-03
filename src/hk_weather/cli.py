@@ -37,6 +37,7 @@ from hk_weather.hko import (
     fetch_humidity,
     fetch_icon_time,
     fetch_icon,
+    fetch_current_updated,
     fetch_least_humid,
     fetch_lightning,
     fetch_lunar,
@@ -133,6 +134,8 @@ from hk_weather.hko import (
     format_icon_time_miss,
     format_icon,
     format_icon_miss,
+    format_current_updated,
+    format_current_updated_miss,
     format_least_humid,
     format_least_humid_miss,
     format_json,
@@ -253,6 +256,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--warning-time prints when active warnings were issued; "
             "--uv prints the UV index; --icon-time prints when the weather icon changed; "
             "--icon prints the current weather icon; "
+            "--current-updated prints when the current weather report was updated; "
             "--tips prints special weather tips; "
             "--stations lists each station; --list-places lists their names; "
             "--place NAME filters those stations; --rain lists district rainfall; "
@@ -581,6 +585,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--icon",
         action="store_true",
         help="Print the current weather icon number and label",
+    )
+    parser.add_argument(
+        "--current-updated",
+        action="store_true",
+        help="Print when the current weather report was last updated",
     )
     parser.add_argument(
         "-t",
@@ -1046,6 +1055,16 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_icon_miss(as_json=args.json)
             else:
                 text = format_json(icon) if args.json else format_icon(icon)
+        elif args.current_updated:
+            current_updated = fetch_current_updated(timeout=args.timeout, lang=args.lang)
+            if current_updated is None:
+                text = format_current_updated_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(current_updated)
+                    if args.json
+                    else format_current_updated(current_updated)
+                )
         elif args.tips:
             tips = fetch_tips(timeout=args.timeout, lang=args.lang)
             text = format_json(tips) if args.json else format_tips(tips)

@@ -3288,6 +3288,44 @@ def test_cli_icon_when_missing(monkeypatch, capsys):
     assert json.loads(capsys.readouterr().out) == {"message": "No weather icon is available."}
 
 
+def test_cli_current_updated_prints_timestamp(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response({"updateTime": "  2026-10-03T16:45:00+08:00  ", "icon": [52]})
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--current-updated", "--lang", "tc"]) == 0
+    assert "dataType=rhrread" in seen["url"]
+    assert "lang=tc" in seen["url"]
+    assert capsys.readouterr().out == "Hong Kong weather update\n2026-10-03T16:45:00+08:00\n"
+
+
+def test_cli_current_updated_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"updateTime": "2026-10-03T16:45:00+08:00"}),
+    )
+    assert main(["--current-updated", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {"updated": "2026-10-03T16:45:00+08:00"}
+
+
+def test_cli_current_updated_when_missing(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"icon": [52], "updateTime": "  "}),
+    )
+    assert main(["--current-updated"]) == 0
+    assert capsys.readouterr().out == "No weather update time is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({}),
+    )
+    assert main(["--current-updated", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {"message": "No weather update time is available."}
+
+
 @pytest.mark.parametrize(
     ("argv", "query", "payload"),
     [

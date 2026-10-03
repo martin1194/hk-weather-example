@@ -671,6 +671,11 @@ class IconReport:
     icons: tuple[IconReading, ...]
 
 
+@dataclass(frozen=True)
+class CurrentUpdated:
+    updated: str
+
+
 def fetch_current(url: str = DEFAULT_URL, timeout: float = 10, lang: str = "en") -> CurrentWeather:
     """Download the current weather report and return a summary."""
     return parse_current_report(_fetch_json(_apply_lang(url, lang), timeout))
@@ -1069,6 +1074,13 @@ def fetch_icon_time(
 def fetch_icon(url: str = DEFAULT_URL, timeout: float = 10, lang: str = "en") -> IconReport | None:
     """Download the current weather icon from the current report (`dataType=rhrread`)."""
     return parse_icon(_fetch_json(_apply_lang(url, lang), timeout))
+
+
+def fetch_current_updated(
+    url: str = DEFAULT_URL, timeout: float = 10, lang: str = "en"
+) -> CurrentUpdated | None:
+    """Download when the current weather report was updated (`dataType=rhrread`)."""
+    return parse_current_updated(_fetch_json(_apply_lang(url, lang), timeout))
 
 
 def fetch_tips(url: str = TIPS_URL, timeout: float = 10, lang: str = "en") -> SpecialTips:
@@ -2623,6 +2635,24 @@ def format_icon_miss(*, as_json: bool = False) -> str:
     return _unavailable("No weather icon is available.", as_json=as_json)
 
 
+def parse_current_updated(payload: dict) -> CurrentUpdated | None:
+    """Turn the `rhrread` update time into one timestamp."""
+    text = _text(payload.get("updateTime"))
+    if not text:
+        return None
+    return CurrentUpdated(text)
+
+
+def format_current_updated(report: CurrentUpdated) -> str:
+    """Render when the current weather report was updated."""
+    return f"Hong Kong weather update\n{report.updated}\n"
+
+
+def format_current_updated_miss(*, as_json: bool = False) -> str:
+    """Say that the current report has no update time."""
+    return _unavailable("No weather update time is available.", as_json=as_json)
+
+
 def parse_tips(payload: dict) -> SpecialTips:
     """Turn an `swt` document into a list of tip descriptions."""
     raw = payload.get("swt", [])
@@ -3433,6 +3463,7 @@ def format_json(
     | UvIndex
     | IconUpdate
     | IconReport
+    | CurrentUpdated
     | SpecialTips
     | StationReport
     | RainReport

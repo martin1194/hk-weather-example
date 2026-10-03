@@ -108,6 +108,8 @@ hk-weather --icon-time
 hk-weather --icon-time --json
 hk-weather --icon
 hk-weather --icon --json
+hk-weather --current-updated
+hk-weather --current-updated --json
 hk-weather --lang tc
 hk-weather --forecast --lang sc
 hk-weather --tips
@@ -283,6 +285,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --icon-time` (or `-i`) prints when the current weather icon was last updated (`iconUpdateTime`). `--icon-time --json` prints that timestamp as one JSON object. `--lang` applies. If the field is missing or blank, it says `No icon update time is available.`
 
 `hk-weather --icon` prints the current weather icon number and label from that report (`icon`), for example `52  Sunny Intervals`. `--icon-time` still prints when the icon changed. `--forecast-icon` still prints each day's forecast icon. `--icon --json` prints the current icons as one JSON object. `--lang` applies. If no icon is present, it says `No weather icon is available.`
+
+`hk-weather --current-updated` prints when that current report was last updated (`updateTime` on `dataType=rhrread`). The default report still prints current conditions. `--forecast-updated` still prints the local-forecast time. `--icon-time` still prints when the icon changed. `--current-updated --json` prints that timestamp as one JSON object. `--lang` applies. If the field is missing or blank, it says `No weather update time is available.`
 
 `--lang` chooses the Observatory response language: `en` (default), `tc`, or `sc`. It is sent as the `lang` query parameter on every fetch.
 
