@@ -21,6 +21,7 @@ from hk_weather.hko import (
     fetch_stations,
     fetch_wettest,
     fetch_temps,
+    fetch_tide,
     fetch_tips,
     fetch_today,
     fetch_tomorrow,
@@ -50,6 +51,8 @@ from hk_weather.hko import (
     format_report,
     format_stations,
     format_temps,
+    format_tide,
+    format_tide_miss,
     format_tips,
     format_today_miss,
     format_tomorrow,
@@ -105,7 +108,8 @@ def build_parser() -> argparse.ArgumentParser:
             "--visibility lists 10-minute mean visibility; "
             "--hottest prints the warmest place; "
             "--coldest prints the coolest place; "
-            "--wettest prints the wettest district."
+            "--wettest prints the wettest district; "
+            "--tide prints today's high and low tides."
         ),
     )
     parser.add_argument(
@@ -186,6 +190,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--visibility",
         action="store_true",
         help="Print the latest 10-minute mean visibility",
+    )
+    parser.add_argument(
+        "-I",
+        "--tide",
+        action="store_true",
+        help="Print today's high and low tides at Quarry Bay",
     )
     parser.add_argument(
         "-w",
@@ -341,6 +351,12 @@ def main(argv: list[str] | None = None) -> int:
         elif args.visibility:
             visibility = fetch_visibility(timeout=args.timeout, lang=args.lang)
             text = format_json(visibility) if args.json else format_visibility(visibility)
+        elif args.tide:
+            tide = fetch_tide(timeout=args.timeout, lang=args.lang)
+            if not tide.events:
+                text = format_tide_miss(as_json=args.json)
+            else:
+                text = format_json(tide) if args.json else format_tide(tide)
         elif args.uv:
             uv = fetch_uv(timeout=args.timeout, lang=args.lang)
             text = format_json(uv) if args.json else format_uv(uv)

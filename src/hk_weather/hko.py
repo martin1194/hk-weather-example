@@ -30,6 +30,10 @@ VISIBILITY_URL = (
     "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php"
     "?dataType=LTMV&rformat=json&lang=en"
 )
+# Astronomical high and low tides. opendata.php requires a station plus year,
+# month, and day; Quarry Bay is the default station. lang is accepted.
+TIDE_STATION = "QUB"
+TIDE_STATION_NAME = "Quarry Bay"
 UV_URL = DEFAULT_URL
 _CANCELLED = {"CANCEL", "CANCELLED"}
 HKO_STATION = "Hong Kong Observatory"
@@ -177,6 +181,19 @@ class VisibilityReading:
 @dataclass(frozen=True)
 class VisibilityReport:
     readings: tuple[VisibilityReading, ...]
+
+
+@dataclass(frozen=True)
+class TideEvent:
+    date: str
+    time: str
+    height_m: float
+
+
+@dataclass(frozen=True)
+class TideReport:
+    station: str
+    events: tuple[TideEvent, ...]
 
 
 @dataclass(frozen=True)
@@ -355,6 +372,20 @@ def fetch_visibility(
 ) -> VisibilityReport:
     """Download the latest 10-minute mean visibility (`dataType=LTMV`)."""
     return parse_visibility(_fetch_json(_apply_lang(url, lang), timeout))
+
+
+def fetch_tide(timeout: float = 10, lang: str = "en") -> TideReport:
+    """Download today's high and low tides at Quarry Bay (`dataType=HLT`)."""
+    today = _hong_kong_today()
+    year = int(today[:4])
+    month = int(today[5:7])
+    day = int(today[8:10])
+    url = (
+        "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php"
+        f"?dataType=HLT&rformat=json&station={TIDE_STATION}"
+        f"&year={year}&month={month}&day={day}&lang=en"
+    )
+    return parse_tide(_fetch_json(_apply_lang(url, lang), timeout), year)
 
 
 def fetch_uv(url: str = UV_URL, timeout: float = 10, lang: str = "en") -> UvIndex:
@@ -959,6 +990,49 @@ def format_visibility(report: VisibilityReport) -> str:
     return "\n".join(lines) + "\n"
 
 
+def parse_tide(payload: dict, year: int) -> TideReport:
+    """Turn an `HLT` document into high and low tide events."""
+    raw = payload.get("data")
+    events: list[TideEvent] = []
+    if isinstance(raw, list):
+        for item in raw:
+            if not isinstance(item, list) or len(item) < 4:
+                continue
+            month = _text(item[0]).zfill(2)
+            day = _text(item[1]).zfill(2)
+            if not month.isdigit() or not day.isdigit():
+                continue
+            date = f"{year:04d}-{month}-{day}"
+            pairs = item[2:]
+            for index in range(0, len(pairs) - 1, 2):
+                clock = _text(pairs[index])
+                height = _text(pairs[index + 1])
+                if len(clock) != 4 or not clock.isdigit():
+                    continue
+                try:
+                    metres = float(height)
+                except ValueError:
+                    continue
+                events.append(TideEvent(date, f"{clock[:2]}:{clock[2:]}", metres))
+    return TideReport(TIDE_STATION_NAME, tuple(events))
+
+
+def format_tide(report: TideReport) -> str:
+    """Render today's high and low tides."""
+    if not report.events:
+        return "No tide readings are available.\n"
+    lines = ["Hong Kong tide", f"Station: {report.station}"]
+    lines.extend(
+        f"{event.date}  {event.time}  {_number(event.height_m)} m" for event in report.events
+    )
+    return "\n".join(lines) + "\n"
+
+
+def format_tide_miss(*, as_json: bool = False) -> str:
+    """Say that no high or low tide readings are available."""
+    return _unavailable("No tide readings are available.", as_json=as_json)
+
+
 def _visibility_time(value: object) -> str:
     text = _text(value)
     if len(text) == 12 and text.isdigit():
@@ -1311,7 +1385,8 @@ def format_json(
     | VisibilityReport
     | HottestReading
     | ColdestReading
-    | WettestReading,
+    | WettestReading
+    | TideReport,
 ) -> str:
     """Render the same report as one JSON object."""
     return json.dumps(asdict(report), indent=2) + "\n"
