@@ -86,6 +86,7 @@ from hk_weather.hko import (
     fetch_warning_time,
     fetch_weekend,
     fetch_wind,
+    fetch_gust,
     fetch_forecast_icon,
     fetch_yesterday,
     fetch_mean_temp,
@@ -233,6 +234,8 @@ from hk_weather.hko import (
     format_weekend,
     format_weekend_miss,
     format_wind,
+    format_gust,
+    format_gust_miss,
     format_forecast_icon,
     format_forecast_icon_miss,
     format_yesterday,
@@ -304,6 +307,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--temps lists temperatures by place; "
             "--temp-time prints when those temperatures were recorded; "
             "--wind lists the forecast wind; "
+            "--gust prints the latest 10-minute wind and gust; "
             "--forecast-icon prints each day's weather icon; "
             "--quake lists the latest earthquake message; "
             "--felt prints the locally felt earth tremor; --today prints today; "
@@ -580,6 +584,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--wind",
         action="store_true",
         help="Print the forecast wind from the 9-day forecast",
+    )
+    parser.add_argument(
+        "--gust",
+        action="store_true",
+        help="Print the latest 10-minute wind and gust at automatic stations",
     )
     parser.add_argument(
         "--forecast-icon",
@@ -1130,6 +1139,12 @@ def main(argv: list[str] | None = None) -> int:
         elif args.wind:
             wind = fetch_wind(timeout=args.timeout, lang=args.lang)
             text = format_json(wind) if args.json else format_wind(wind)
+        elif args.gust:
+            gust = fetch_gust(timeout=args.timeout, lang=args.lang)
+            if not gust.stations:
+                text = format_gust_miss(as_json=args.json)
+            else:
+                text = format_json(gust) if args.json else format_gust(gust)
         elif args.forecast_icon:
             forecast_icon = fetch_forecast_icon(timeout=args.timeout, lang=args.lang)
             if not forecast_icon.days:
