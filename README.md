@@ -172,6 +172,8 @@ hk-weather --temp-time
 hk-weather --temp-time --json
 hk-weather --minute-temp
 hk-weather --minute-temp --json
+hk-weather --since-midnight
+hk-weather --since-midnight --json
 hk-weather --hottest
 hk-weather --hottest --json
 hk-weather --coldest
@@ -377,6 +379,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --temp-time` prints when those temperatures were recorded (`temperature.recordTime`). `--temps` still prints the readings. `--current-updated` still prints when the whole report was updated. `--temp-time --json` prints that timestamp as one JSON object. `--lang` applies. If the field is missing or blank, it says `No temperature time is available.`
 
 `hk-weather --minute-temp` prints the latest 1-minute mean air temperature at automatic stations, for example `Chek Lap Kok  27.9°C`. `--temps` still prints temperatures from the current weather report. `--minute-temp --json` prints those stations as one JSON object. `--lang` selects the English, Traditional Chinese, or Simplified Chinese station names. Stations marked `N/A` are omitted. If none remain, it says `No 1-minute temperatures are available.`
+
+`hk-weather --since-midnight` prints each automatic station's maximum and minimum air temperature since midnight, for example `Chek Lap Kok  high 28.2°C  low 27.8°C`. `--minute-temp` still prints the latest 1-minute temperature. `--max-temp` and `--min-temp` still print the Observatory daily climate series. `--since-midnight --json` prints those stations as one JSON object. `--lang` selects the station names. A station is omitted when both readings are missing. If none remain, it says `No temperatures since midnight are available.`
 
 `hk-weather --hottest` (or `-H`) prints the warmest place from the current report, for example `King's Park  31°C`. `--hottest --json` prints that reading as one JSON object. `--lang` applies. If no readings are present, it says so.
 

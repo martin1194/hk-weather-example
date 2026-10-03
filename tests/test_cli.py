@@ -4948,6 +4948,66 @@ def test_cli_minute_humidity_when_missing(monkeypatch, capsys):
     }
 
 
+def test_cli_since_midnight_prints_high_and_low(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _text_response(
+            "Date time,Station,Maximum,Minimum\n"
+            "202610040150,Chek Lap Kok,  28.2  ,27.8\n"
+            "202610040150,Clear Water Bay,N/A,N/A\n"
+            "202610040150,HK Observatory,27.9,27.6\n"
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--since-midnight", "--lang", "tc"]) == 0
+    assert seen["url"].endswith("latest_since_midnight_maxmin_uc.csv")
+    assert capsys.readouterr().out == (
+        "Hong Kong temperature since midnight\n"
+        "Recorded: 2026-10-04 01:50\n"
+        "Chek Lap Kok  high 28.2°C  low 27.8°C\n"
+        "HK Observatory  high 27.9°C  low 27.6°C\n"
+    )
+
+
+def test_cli_since_midnight_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Date time,Station,Maximum,Minimum\n"
+            "202610040150,Chek Lap Kok,28.2,27.8\n"
+        ),
+    )
+    assert main(["--since-midnight", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "obs_time": "2026-10-04 01:50",
+        "stations": [
+            {"place": "Chek Lap Kok", "temp_high_c": 28.2, "temp_low_c": 27.8}
+        ],
+    }
+
+
+def test_cli_since_midnight_when_missing(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Date time,Station,Maximum,Minimum\n"
+            "202610040150,Clear Water Bay,N/A,N/A\n"
+        ),
+    )
+    assert main(["--since-midnight"]) == 0
+    assert capsys.readouterr().out == "No temperatures since midnight are available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(""),
+    )
+    assert main(["--since-midnight", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No temperatures since midnight are available."
+    }
+
+
 def test_cli_temp_time_prints_timestamp(monkeypatch, capsys):
     seen = {}
 
