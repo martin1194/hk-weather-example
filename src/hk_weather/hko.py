@@ -199,6 +199,20 @@ class NineTemp:
 
 
 @dataclass(frozen=True)
+class NineHumidityDay:
+    date: str
+    week: str
+    humidity_high_percent: float | None
+    humidity_low_percent: float | None
+
+
+@dataclass(frozen=True)
+class NineHumidity:
+    update_time: str
+    days: tuple[NineHumidityDay, ...]
+
+
+@dataclass(frozen=True)
 class SeaTemperature:
     place: str
     temperature_c: float
@@ -782,6 +796,13 @@ def fetch_nine_weather(
 def fetch_nine_temp(url: str = NINE_DAY_URL, timeout: float = 10, lang: str = "en") -> NineTemp:
     """Download each day's high and low from the 9-day forecast (`dataType=fnd`)."""
     return parse_nine_temp(_fetch_json(_apply_lang(url, lang), timeout))
+
+
+def fetch_nine_humidity(
+    url: str = NINE_DAY_URL, timeout: float = 10, lang: str = "en"
+) -> NineHumidity:
+    """Download each day's humidity range from the 9-day forecast (`dataType=fnd`)."""
+    return parse_nine_humidity(_fetch_json(_apply_lang(url, lang), timeout))
 
 
 def fetch_psr(url: str = NINE_DAY_URL, timeout: float = 10, lang: str = "en") -> PsrForecast:
@@ -1884,6 +1905,49 @@ def format_nine_temp(report: NineTemp) -> str:
 def format_nine_temp_miss(*, as_json: bool = False) -> str:
     """Say that the 9-day forecast has no daily temperatures."""
     return _unavailable("No 9-day temperatures are available.", as_json=as_json)
+
+
+def parse_nine_humidity(payload: dict) -> NineHumidity:
+    """Turn `fnd` forecast humidity fields into one line per day."""
+    raw_days = payload.get("weatherForecast")
+    days: list[NineHumidityDay] = []
+    if isinstance(raw_days, list):
+        for item in raw_days:
+            if not isinstance(item, dict):
+                continue
+            high = _temp_value(item.get("forecastMaxrh"))
+            low = _temp_value(item.get("forecastMinrh"))
+            if high is None and low is None:
+                continue
+            days.append(
+                NineHumidityDay(
+                    date=_forecast_date(item.get("forecastDate")) or "unknown",
+                    week=_text(item.get("week")),
+                    humidity_high_percent=high,
+                    humidity_low_percent=low,
+                )
+            )
+    return NineHumidity(
+        update_time=_text(payload.get("updateTime")),
+        days=tuple(days),
+    )
+
+
+def format_nine_humidity(report: NineHumidity) -> str:
+    """Render each day's humidity range from the 9-day forecast."""
+    lines = ["Hong Kong 9-day humidity"]
+    if report.update_time:
+        lines.append(f"Updated: {report.update_time}")
+    for day in report.days:
+        heading = " ".join(part for part in (day.date, day.week) if part)
+        span = _humidity_span(day.humidity_low_percent, day.humidity_high_percent)
+        lines.append(f"{heading}  {span}".strip())
+    return "\n".join(lines) + "\n"
+
+
+def format_nine_humidity_miss(*, as_json: bool = False) -> str:
+    """Say that the 9-day forecast has no daily humidity."""
+    return _unavailable("No 9-day humidity is available.", as_json=as_json)
 
 
 def format_psr(report: PsrForecast) -> str:
@@ -3359,6 +3423,7 @@ def format_json(
     | NineUpdated
     | NineWeather
     | NineTemp
+    | NineHumidity
     | GeneralSituation
     | FireDanger
     | TcInfo
