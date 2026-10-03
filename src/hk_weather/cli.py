@@ -16,6 +16,7 @@ from hk_weather.hko import (
     fetch_hottest,
     fetch_humidest,
     fetch_humidity,
+    fetch_least_humid,
     fetch_lightning,
     fetch_moon,
     fetch_nine_day,
@@ -51,6 +52,8 @@ from hk_weather.hko import (
     format_humidest,
     format_humidest_miss,
     format_humidity,
+    format_least_humid,
+    format_least_humid_miss,
     format_json,
     format_lightning,
     format_moon,
@@ -133,7 +136,8 @@ def build_parser() -> argparse.ArgumentParser:
             "--sunrise prints today's sunrise and sunset; "
             "--moon prints today's moonrise and moonset; "
             "--rainstorm prints the rainstorm reminder; "
-            "--humidest prints the most humid place."
+            "--humidest prints the most humid place; "
+            "--least-humid prints the least humid place."
         ),
     )
     parser.add_argument(
@@ -300,6 +304,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--humidest",
         action="store_true",
         help="Print the most humid place from the current report",
+    )
+    parser.add_argument(
+        "--least-humid",
+        action="store_true",
+        help="Print the least humid place from the current report",
     )
     parser.add_argument(
         "--temps",
@@ -472,6 +481,12 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_humidest_miss(as_json=args.json)
             else:
                 text = format_json(humidest) if args.json else format_humidest(humidest)
+        elif args.least_humid:
+            least_humid = fetch_least_humid(timeout=args.timeout, lang=args.lang)
+            if least_humid is None:
+                text = format_least_humid_miss(as_json=args.json)
+            else:
+                text = format_json(least_humid) if args.json else format_least_humid(least_humid)
         elif args.temps:
             temps = fetch_temps(timeout=args.timeout, lang=args.lang)
             text = format_json(temps) if args.json else format_temps(temps)
