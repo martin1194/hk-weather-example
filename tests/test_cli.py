@@ -219,6 +219,54 @@ def test_cli_outlook_when_missing(monkeypatch, capsys):
     assert json.loads(capsys.readouterr().out) == {"message": "No outlook is available."}
 
 
+def test_cli_forecast_period_prints_the_line(monkeypatch, capsys):
+    seen = {}
+    period = "Weather forecast for tonight and tomorrow"
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response(
+            {
+                "forecastPeriod": f"  {period}  ",
+                "forecastDesc": "Mainly cloudy with a few showers.",
+            }
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--forecast-period", "--lang", "tc"]) == 0
+    assert "dataType=flw" in seen["url"]
+    assert "lang=tc" in seen["url"]
+    assert capsys.readouterr().out == f"Hong Kong forecast period\n{period}\n"
+
+
+def test_cli_forecast_period_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {"forecastPeriod": "Weather forecast for tonight and tomorrow"}
+        ),
+    )
+    assert main(["--forecast-period", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "period": "Weather forecast for tonight and tomorrow"
+    }
+
+
+def test_cli_forecast_period_when_missing(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"forecastDesc": "Fine and dry.", "forecastPeriod": "  "}),
+    )
+    assert main(["--forecast-period"]) == 0
+    assert capsys.readouterr().out == "No forecast period is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({}),
+    )
+    assert main(["--forecast-period", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {"message": "No forecast period is available."}
+
+
 def test_cli_situation_prints_paragraph(monkeypatch, capsys):
     seen = {}
     message = (
