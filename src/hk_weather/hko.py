@@ -227,6 +227,14 @@ class Sunrise:
 
 
 @dataclass(frozen=True)
+class Moon:
+    date: str
+    rise: str
+    transit: str
+    set: str
+
+
+@dataclass(frozen=True)
 class SpecialTips:
     tips: tuple[str, ...]
 
@@ -441,6 +449,19 @@ def fetch_sunrise(timeout: float = 10, lang: str = "en") -> Sunrise | None:
         f"?dataType=SRS&rformat=json&year={year}&month={month}&day={day}&lang=en"
     )
     return parse_sunrise(_fetch_json(_apply_lang(url, lang), timeout))
+
+
+def fetch_moon(timeout: float = 10, lang: str = "en") -> Moon | None:
+    """Download today's moonrise, moon transit, and moonset (`dataType=MRS`)."""
+    today = _hong_kong_today()
+    year = int(today[:4])
+    month = int(today[5:7])
+    day = int(today[8:10])
+    url = (
+        "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php"
+        f"?dataType=MRS&rformat=json&year={year}&month={month}&day={day}&lang=en"
+    )
+    return parse_moon(_fetch_json(_apply_lang(url, lang), timeout))
 
 
 def fetch_uv(url: str = UV_URL, timeout: float = 10, lang: str = "en") -> UvIndex:
@@ -1201,6 +1222,31 @@ def format_sunrise_miss(*, as_json: bool = False) -> str:
     return _unavailable("No sunrise times are available.", as_json=as_json)
 
 
+def parse_moon(payload: dict) -> Moon | None:
+    """Turn an `MRS` document into today's moonrise, transit, and moonset."""
+    reading = parse_sunrise(payload)
+    if reading is None:
+        return None
+    return Moon(reading.date, reading.rise, reading.transit, reading.set)
+
+
+def format_moon(reading: Moon) -> str:
+    """Render today's moonrise, moon transit, and moonset."""
+    lines = ["Hong Kong moon", reading.date]
+    if reading.rise:
+        lines.append(f"Rise: {reading.rise}")
+    if reading.transit:
+        lines.append(f"Transit: {reading.transit}")
+    if reading.set:
+        lines.append(f"Set: {reading.set}")
+    return "\n".join(lines) + "\n"
+
+
+def format_moon_miss(*, as_json: bool = False) -> str:
+    """Say that today's moon times are not available."""
+    return _unavailable("No moon times are available.", as_json=as_json)
+
+
 def _visibility_time(value: object) -> str:
     text = _text(value)
     if len(text) == 12 and text.isdigit():
@@ -1567,7 +1613,8 @@ def format_json(
     | DriestReading
     | TideReport
     | AqhiReport
-    | Sunrise,
+    | Sunrise
+    | Moon,
 ) -> str:
     """Render the same report as one JSON object."""
     return json.dumps(asdict(report), indent=2) + "\n"
