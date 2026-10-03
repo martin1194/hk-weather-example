@@ -267,6 +267,58 @@ def test_cli_forecast_period_when_missing(monkeypatch, capsys):
     assert json.loads(capsys.readouterr().out) == {"message": "No forecast period is available."}
 
 
+def test_cli_forecast_desc_prints_paragraph(monkeypatch, capsys):
+    seen = {}
+    description = "Mainly cloudy with a few showers and thunderstorms."
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response(
+            {
+                "forecastPeriod": "Weather forecast for tonight and tomorrow",
+                "forecastDesc": f"  {description}  ",
+            }
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--forecast-desc", "--lang", "tc"]) == 0
+    assert "dataType=flw" in seen["url"]
+    assert "lang=tc" in seen["url"]
+    assert capsys.readouterr().out == f"Hong Kong forecast description\n{description}\n"
+
+
+def test_cli_forecast_desc_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {"forecastDesc": "Mainly cloudy with a few showers."}
+        ),
+    )
+    assert main(["--forecast-desc", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "description": "Mainly cloudy with a few showers."
+    }
+
+
+def test_cli_forecast_desc_when_missing(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {"forecastPeriod": "Tonight", "forecastDesc": "  "}
+        ),
+    )
+    assert main(["--forecast-desc"]) == 0
+    assert capsys.readouterr().out == "No forecast description is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({}),
+    )
+    assert main(["--forecast-desc", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No forecast description is available."
+    }
+
+
 def test_cli_situation_prints_paragraph(monkeypatch, capsys):
     seen = {}
     message = (

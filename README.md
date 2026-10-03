@@ -22,6 +22,8 @@ hk-weather --outlook
 hk-weather --outlook --json
 hk-weather --forecast-period
 hk-weather --forecast-period --json
+hk-weather --forecast-desc
+hk-weather --forecast-desc --json
 hk-weather --situation
 hk-weather --situation --json
 hk-weather --fire-danger
@@ -177,6 +179,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --outlook` prints only the outlook paragraph from that forecast (`outlook`). `--forecast` still prints the full local forecast. `--outlook --json` prints that paragraph as one JSON object. `--lang` applies. If the field is missing or blank, it says `No outlook is available.`
 
 `hk-weather --forecast-period` prints the period that forecast covers (`forecastPeriod`), for example `Weather forecast for tonight and tomorrow`. `--forecast` still prints the full local forecast. `--forecast-period --json` prints that line as one JSON object. `--lang` applies. If the field is missing or blank, it says `No forecast period is available.`
+
+`hk-weather --forecast-desc` prints the description from that forecast (`forecastDesc`). `--forecast` still prints the full local forecast. `--forecast-desc --json` prints that paragraph as one JSON object. `--lang` applies. If the field is missing or blank, it says `No forecast description is available.`
 
 `hk-weather --situation` (or `-g`) prints the general situation from that forecast (`generalSituation`). `--situation --json` prints that paragraph as one JSON object. `--lang` applies. If the field is missing or blank, it says `No general situation is available.`
 
