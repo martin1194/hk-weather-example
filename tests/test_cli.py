@@ -622,6 +622,90 @@ def test_cli_sea_temp_when_missing(monkeypatch, capsys):
     assert json.loads(capsys.readouterr().out) == {"message": "No sea temperature is available."}
 
 
+def test_cli_soil_temp_prints_depths(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response(
+            {
+                "soilTemp": [
+                    {
+                        "place": "Hong Kong Observatory",
+                        "value": 30.6,
+                        "unit": "C",
+                        "recordTime": "2026-10-03T07:00:00+08:00",
+                        "depth": {"unit": "metre", "value": 0.5},
+                    },
+                    {
+                        "place": "Hong Kong Observatory",
+                        "value": 30.4,
+                        "unit": "C",
+                        "recordTime": "2026-10-03T07:00:00+08:00",
+                        "depth": {"unit": "metre", "value": 1},
+                    },
+                    {"place": "Hong Kong Observatory", "value": 29},
+                ]
+            }
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--soil-temp", "--lang", "tc"]) == 0
+    assert "dataType=fnd" in seen["url"]
+    assert "lang=tc" in seen["url"]
+    assert capsys.readouterr().out == (
+        "Hong Kong soil temperature\n"
+        "Hong Kong Observatory  0.5 m  30.6°C\n"
+        "Hong Kong Observatory  1 m  30.4°C\n"
+        "Recorded: 2026-10-03T07:00:00+08:00\n"
+    )
+
+
+def test_cli_soil_temp_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {
+                "soilTemp": [
+                    {
+                        "place": "Hong Kong Observatory",
+                        "value": 30.6,
+                        "unit": "C",
+                        "recordTime": "2026-10-03T07:00:00+08:00",
+                        "depth": {"unit": "metre", "value": 0.5},
+                    }
+                ]
+            }
+        ),
+    )
+    assert main(["--soil-temp", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "readings": [
+            {
+                "place": "Hong Kong Observatory",
+                "depth_m": 0.5,
+                "temperature_c": 30.6,
+                "recorded": "2026-10-03T07:00:00+08:00",
+            }
+        ]
+    }
+
+
+def test_cli_soil_temp_when_missing(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"soilTemp": []}),
+    )
+    assert main(["--soil-temp"]) == 0
+    assert capsys.readouterr().out == "No soil temperature is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({}),
+    )
+    assert main(["--soil-temp", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {"message": "No soil temperature is available."}
+
+
 def test_cli_today_prints_the_hong_kong_day(monkeypatch, capsys):
     seen = {}
     monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
