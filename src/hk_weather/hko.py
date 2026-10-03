@@ -160,6 +160,12 @@ HEAT_INDEX_URLS = {
         "recent10_10min_hkhi_sc.csv"
     ),
 }
+# Latest observed tide height. CSV, one file per language.
+LATEST_TIDE_URLS = {
+    "en": "https://data.weather.gov.hk/weatherAPI/hko_data/tide/ALL_en.csv",
+    "tc": "https://data.weather.gov.hk/weatherAPI/hko_data/tide/ALL_tc.csv",
+    "sc": "https://data.weather.gov.hk/weatherAPI/hko_data/tide/ALL_sc.csv",
+}
 # Hourly cloud-to-ground and cloud-to-cloud lightning counts. lang is accepted.
 STRIKES_URL = (
     "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php"
@@ -507,6 +513,18 @@ class HourlyTideReport:
     station: str
     date: str
     hours: tuple[HourlyTideReading, ...]
+
+
+@dataclass(frozen=True)
+class LatestTideReading:
+    place: str
+    height_m: float
+
+
+@dataclass(frozen=True)
+class LatestTideReport:
+    obs_time: str
+    stations: tuple[LatestTideReading, ...]
 
 
 @dataclass(frozen=True)
@@ -1532,6 +1550,22 @@ def fetch_tide_hour(timeout: float = 10, lang: str = "en") -> HourlyTideReport:
         f"&year={year}&month={month}&day={day}&lang=en"
     )
     return parse_tide_hour(_fetch_json(_apply_lang(url, lang), timeout), year)
+
+
+def fetch_tide_latest(timeout: float = 10, lang: str = "en") -> LatestTideReport:
+    """Download the latest observed tide height at each tide station."""
+    url = LATEST_TIDE_URLS.get(lang, LATEST_TIDE_URLS["en"])
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            raw = response.read()
+    except (urllib.error.URLError, TimeoutError) as exc:
+        raise WeatherError(f"could not reach Hong Kong Observatory: {exc}") from exc
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise WeatherError("Hong Kong Observatory returned invalid text") from exc
+    return parse_tide_latest(text)
 
 
 def fetch_aqhi(timeout: float = 10, lang: str = "en") -> AqhiReport:
@@ -2931,6 +2965,53 @@ def format_tide_hour(report: HourlyTideReport) -> str:
 def format_tide_hour_miss(*, as_json: bool = False) -> str:
     """Say that no hourly tide heights are available."""
     return _unavailable("No hourly tide heights are available.", as_json=as_json)
+
+
+def _tide_stamp(date: str, clock: str) -> str:
+    """Return `YYYY-MM-DD HH:MM` when both parts look like a tide timestamp."""
+    day = date.replace("-", "")
+    minute = clock.replace(":", "")
+    if len(date) == 10 and date[4] == "-" and date[7] == "-" and day.isdigit():
+        if len(clock) == 5 and clock[2] == ":" and minute.isdigit():
+            return f"{date} {clock}"
+    return ""
+
+
+def parse_tide_latest(text: str) -> LatestTideReport:
+    """Turn the latest-tide CSV into the newest time, one row per station."""
+    stations: list[LatestTideReading] = []
+    latest = ""
+    rows = csv.reader(io.StringIO(text))
+    next(rows, None)
+    for row in rows:
+        if len(row) < 4:
+            continue
+        place = _text(row[0]).lstrip("\ufeff")
+        stamp = _tide_stamp(_text(row[1]), _text(row[2]))
+        height = _hour_mm(row[3])
+        if not place or not stamp or height is None:
+            continue
+        if stamp > latest:
+            latest = stamp
+            stations = []
+        if stamp == latest:
+            stations.append(LatestTideReading(place, height))
+    return LatestTideReport(latest, tuple(stations))
+
+
+def format_tide_latest(report: LatestTideReport) -> str:
+    """Render the latest observed tide height, one station per line."""
+    lines = ["Hong Kong latest tide"]
+    if report.obs_time:
+        lines.append(f"Recorded: {report.obs_time}")
+    for reading in report.stations:
+        lines.append(f"{reading.place}  {_number(reading.height_m)} m")
+    return "\n".join(lines) + "\n"
+
+
+def format_tide_latest_miss(*, as_json: bool = False) -> str:
+    """Say that no latest tide heights are available."""
+    return _unavailable("No latest tide heights are available.", as_json=as_json)
 
 
 def _aqhi_description(text: str) -> tuple[str, str, str, str, str] | None:
@@ -4709,6 +4790,7 @@ def format_json(
     | CycloneMessage
     | TideReport
     | HourlyTideReport
+    | LatestTideReport
     | AqhiReport
     | Sunrise
     | Moon
