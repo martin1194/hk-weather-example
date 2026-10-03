@@ -22,6 +22,7 @@ from hk_weather.hko import (
     fetch_felt,
     fetch_fire_danger,
     fetch_grass,
+    fetch_sunshine,
     fetch_accum_rain,
     fetch_avg_rain,
     fetch_radiation,
@@ -104,6 +105,8 @@ from hk_weather.hko import (
     format_forecast_updated_miss,
     format_grass,
     format_grass_miss,
+    format_sunshine,
+    format_sunshine_miss,
     format_accum_rain,
     format_accum_rain_miss,
     format_avg_rain,
@@ -300,6 +303,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--max-temp prints the latest daily maximum temperature; "
             "--min-temp prints the latest daily minimum temperature; "
             "--grass prints yesterday's grass minimum; "
+            "--sunshine prints yesterday's sunshine duration; "
             "--accum-rain prints accumulated rainfall since 1 January; "
             "--avg-rain prints the climatological rainfall normal; "
             "--radiation prints yesterday's gamma radiation report; "
@@ -475,6 +479,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--grass",
         action="store_true",
         help="Print yesterday's grass minimum temperature at the Observatory",
+    )
+    parser.add_argument(
+        "--sunshine",
+        action="store_true",
+        help="Print yesterday's sunshine duration at King's Park",
     )
     parser.add_argument(
         "--accum-rain",
@@ -975,6 +984,12 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_grass_miss(as_json=args.json)
             else:
                 text = format_json(grass) if args.json else format_grass(grass)
+        elif args.sunshine:
+            sunshine = fetch_sunshine(timeout=args.timeout, lang=args.lang)
+            if sunshine is None:
+                text = format_sunshine_miss(as_json=args.json)
+            else:
+                text = format_json(sunshine) if args.json else format_sunshine(sunshine)
         elif args.accum_rain:
             accum_rain = fetch_accum_rain(timeout=args.timeout, lang=args.lang)
             if accum_rain is None:
