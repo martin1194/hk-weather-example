@@ -1822,6 +1822,163 @@ def test_cli_short_is_one_line(monkeypatch, capsys):
     assert "Hong Kong weather" not in out
 
 
+def test_cli_summary_prints_briefing(monkeypatch, capsys):
+    seen = []
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+
+    def fake_urlopen(request, timeout):
+        seen.append(request.full_url)
+        url = request.full_url
+        if "dataType=warnsum" in url:
+            return _json_response(
+                {
+                    "WTS": {
+                        "code": "WTS",
+                        "name": "Thunderstorm Warning",
+                        "actionCode": "ISSUE",
+                    },
+                    "WRAIN": {
+                        "code": "WRAIN",
+                        "name": "Rainstorm Warning Signal",
+                        "actionCode": "CANCEL",
+                    },
+                }
+            )
+        if "dataType=fnd" in url:
+            return _json_response(
+                {
+                    "updateTime": "2026-10-03T00:00:00+08:00",
+                    "weatherForecast": [
+                        {
+                            "forecastDate": "20261003",
+                            "week": "Saturday",
+                            "forecastWeather": "Rain.",
+                            "forecastMaxtemp": {"value": 30, "unit": "C"},
+                            "forecastMintemp": {"value": 26, "unit": "C"},
+                            "PSR": "Medium",
+                        }
+                    ],
+                }
+            )
+        return _json_response(
+            {
+                "icon": [63],
+                "temperature": {
+                    "data": [{"place": "Hong Kong Observatory", "value": 28, "unit": "C"}]
+                },
+                "humidity": {
+                    "data": [{"place": "Hong Kong Observatory", "value": 85, "unit": "percent"}]
+                },
+            }
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--summary", "--lang", "tc"]) == 0
+    assert any("dataType=rhrread" in url and "lang=tc" in url for url in seen)
+    assert any("dataType=warnsum" in url and "lang=tc" in url for url in seen)
+    assert any("dataType=fnd" in url and "lang=tc" in url for url in seen)
+    assert capsys.readouterr().out == (
+        "Hong Kong summary\n"
+        "🌧️ Rain, 28°C, humidity 85%\n"
+        "Warnings:\n"
+        "WTS  Thunderstorm Warning\n"
+        "Today: 2026-10-03  high 30°C  low 26°C  rain Medium\n"
+    )
+
+
+def test_cli_summary_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+
+    def fake_urlopen(request, timeout):
+        url = request.full_url
+        if "dataType=warnsum" in url:
+            return _json_response(
+                {"WTS": {"code": "WTS", "name": "Thunderstorm Warning", "actionCode": "ISSUE"}}
+            )
+        if "dataType=fnd" in url:
+            return _json_response(
+                {
+                    "weatherForecast": [
+                        {
+                            "forecastDate": "20261003",
+                            "week": "Saturday",
+                            "forecastWeather": "Rain.",
+                            "forecastMaxtemp": {"value": 30, "unit": "C"},
+                            "forecastMintemp": {"value": 26, "unit": "C"},
+                            "PSR": "Medium",
+                        }
+                    ]
+                }
+            )
+        return _json_response(
+            {
+                "icon": [63],
+                "temperature": {
+                    "data": [{"place": "Hong Kong Observatory", "value": 28, "unit": "C"}]
+                },
+                "humidity": {
+                    "data": [{"place": "Hong Kong Observatory", "value": 85, "unit": "percent"}]
+                },
+            }
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["-S", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "conditions": "Rain, 28°C, humidity 85%",
+        "warnings": [{"code": "WTS", "description": "Thunderstorm Warning"}],
+        "today": {
+            "date": "2026-10-03",
+            "high_c": 30.0,
+            "low_c": 26.0,
+            "rain_chance": "Medium",
+        },
+    }
+
+
+def test_cli_summary_when_warnings_and_today_are_missing(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-02")
+
+    def fake_urlopen(request, timeout):
+        url = request.full_url
+        if "dataType=warnsum" in url:
+            return _json_response({})
+        if "dataType=fnd" in url:
+            return _json_response(
+                {
+                    "weatherForecast": [
+                        {
+                            "forecastDate": "20261003",
+                            "week": "Saturday",
+                            "forecastWeather": "Sunny.",
+                        }
+                    ]
+                }
+            )
+        return _json_response(
+            {
+                "icon": [50],
+                "temperature": {"data": [{"place": "Chek Lap Kok", "value": 30, "unit": "C"}]},
+                "humidity": "",
+            }
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--summary"]) == 0
+    assert capsys.readouterr().out == (
+        "Hong Kong summary\n"
+        "☀️ Sunny, 30°C, humidity n/a\n"
+        "Warnings: none\n"
+        "Today: not available\n"
+    )
+    assert main(["--summary", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "conditions": "Sunny, 30°C, humidity n/a",
+        "warnings": [],
+        "today": None,
+    }
+
+
 def test_cli_short_without_warning_or_humidity(monkeypatch, capsys):
     monkeypatch.setattr(
         "hk_weather.hko.urllib.request.urlopen",

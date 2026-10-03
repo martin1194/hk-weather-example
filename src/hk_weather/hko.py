@@ -353,6 +353,21 @@ class NoonRainfall:
 
 
 @dataclass(frozen=True)
+class SummaryToday:
+    date: str
+    high_c: float | None
+    low_c: float | None
+    rain_chance: str | None
+
+
+@dataclass(frozen=True)
+class WeatherSummary:
+    conditions: str
+    warnings: tuple[WeatherWarning, ...]
+    today: SummaryToday | None
+
+
+@dataclass(frozen=True)
 class UvIndex:
     update_time: str
     place: str | None
@@ -419,6 +434,28 @@ def fetch_today(
         _fetch_json(_apply_lang(url, lang), timeout),
         _hong_kong_today(),
     )
+
+
+def fetch_summary(timeout: float = 10, lang: str = "en") -> WeatherSummary:
+    """Briefing from current conditions, active warnings, and today's forecast."""
+    weather = fetch_current(timeout=timeout, lang=lang)
+    warnings = fetch_warnings(timeout=timeout, lang=lang)
+    today = fetch_today(timeout=timeout, lang=lang)
+    humidity = (
+        f"{_number(weather.humidity_percent)}%"
+        if weather.humidity_percent is not None
+        else "n/a"
+    )
+    conditions = f"{weather.conditions}, {_number(weather.temperature_c)}°C, humidity {humidity}"
+    summary_today = None
+    if today is not None:
+        summary_today = SummaryToday(
+            date=today.date,
+            high_c=today.temp_high_c,
+            low_c=today.temp_low_c,
+            rain_chance=today.rain_chance,
+        )
+    return WeatherSummary(conditions, warnings, summary_today)
 
 
 def fetch_forecast_day(
@@ -713,6 +750,28 @@ def format_report(weather: CurrentWeather) -> str:
     if weather.warnings:
         lines.append("Warnings:")
         lines.extend(f"- {message}" for message in weather.warnings)
+    return "\n".join(lines) + "\n"
+
+
+def format_summary(report: WeatherSummary) -> str:
+    """Render a short briefing: conditions, warnings, and today's high and low."""
+    lines = ["Hong Kong summary", conditions_with_emoji(report.conditions)]
+    if report.warnings:
+        lines.append("Warnings:")
+        lines.extend(f"{warning.code}  {warning.description}" for warning in report.warnings)
+    else:
+        lines.append("Warnings: none")
+    if report.today is None:
+        lines.append("Today: not available")
+    else:
+        parts = [report.today.date] if report.today.date else []
+        if report.today.high_c is not None:
+            parts.append(f"high {_number(report.today.high_c)}°C")
+        if report.today.low_c is not None:
+            parts.append(f"low {_number(report.today.low_c)}°C")
+        if report.today.rain_chance:
+            parts.append(f"rain {report.today.rain_chance}")
+        lines.append("Today: " + "  ".join(parts))
     return "\n".join(lines) + "\n"
 
 
@@ -1809,6 +1868,7 @@ def format_json(
     | ColdestReading
     | OvernightMinimum
     | NoonRainfall
+    | WeatherSummary
     | HumidestReading
     | LeastHumidReading
     | WettestReading
