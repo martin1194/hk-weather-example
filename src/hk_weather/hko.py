@@ -298,6 +298,13 @@ class HumidityReport:
 
 
 @dataclass(frozen=True)
+class HumidestReading:
+    record_time: str
+    place: str
+    humidity_percent: float
+
+
+@dataclass(frozen=True)
 class TempReading:
     place: str
     temperature_c: float
@@ -526,6 +533,17 @@ def fetch_lightning(url: str = DEFAULT_URL, timeout: float = 10, lang: str = "en
 def fetch_humidity(url: str = DEFAULT_URL, timeout: float = 10, lang: str = "en") -> HumidityReport:
     """Download humidity readings from the current report (`dataType=rhrread`)."""
     return parse_humidity(_fetch_json(_apply_lang(url, lang), timeout))
+
+
+def fetch_humidest(
+    url: str = DEFAULT_URL, timeout: float = 10, lang: str = "en"
+) -> HumidestReading | None:
+    """Download the most humid place from the current report (`dataType=rhrread`)."""
+    report = fetch_humidity(url, timeout, lang)
+    if not report.readings:
+        return None
+    dampest = max(report.readings, key=lambda reading: reading.humidity_percent)
+    return HumidestReading(report.record_time, dampest.place, dampest.humidity_percent)
 
 
 def fetch_temps(url: str = DEFAULT_URL, timeout: float = 10, lang: str = "en") -> TempReport:
@@ -1561,6 +1579,20 @@ def format_humidity(report: HumidityReport) -> str:
     return "\n".join(lines) + "\n"
 
 
+def format_humidest(reading: HumidestReading) -> str:
+    """Render the most humid station from the current report."""
+    lines = ["Hong Kong humidest"]
+    if reading.record_time:
+        lines.append(f"Recorded: {reading.record_time}")
+    lines.append(f"{reading.place}  {_number(reading.humidity_percent)}%")
+    return "\n".join(lines) + "\n"
+
+
+def format_humidest_miss(*, as_json: bool = False) -> str:
+    """Say that the current report has no humidity readings."""
+    return _unavailable("No humidity reading is available.", as_json=as_json)
+
+
 def parse_temps(payload: dict) -> TempReport:
     """Turn `rhrread` temperature data into one reading per place."""
     section = payload.get("temperature")
@@ -1639,6 +1671,7 @@ def format_json(
     | VisibilityReport
     | HottestReading
     | ColdestReading
+    | HumidestReading
     | WettestReading
     | DriestReading
     | RainstormReminder
