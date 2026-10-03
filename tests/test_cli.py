@@ -4148,6 +4148,61 @@ def test_cli_rain_period_when_missing(monkeypatch, capsys):
     assert json.loads(capsys.readouterr().out) == {"message": "No rainfall period is available."}
 
 
+def test_cli_rain_maint_lists_flagged_districts(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response(
+            {
+                "rainfall": {
+                    "data": [
+                        {"place": "  Sai Kung  ", "max": 1, "main": " TRUE "},
+                        {"place": "Yuen Long", "max": 0, "main": "FALSE"},
+                        {"place": "Sai Kung", "max": 2, "main": True},
+                        {"place": "Islands", "max": 0, "main": "true"},
+                    ]
+                }
+            }
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--rain-maint", "--lang", "tc"]) == 0
+    assert "dataType=rhrread" in seen["url"]
+    assert "lang=tc" in seen["url"]
+    assert capsys.readouterr().out == "Hong Kong rainfall maintenance\nSai Kung\nIslands\n"
+
+
+def test_cli_rain_maint_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {"rainfall": {"data": [{"place": "Sai Kung", "main": "TRUE"}]}}
+        ),
+    )
+    assert main(["--rain-maint", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {"places": ["Sai Kung"]}
+
+
+def test_cli_rain_maint_when_none(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {"rainfall": {"data": [{"place": "Sai Kung", "max": 1, "main": "FALSE"}]}}
+        ),
+    )
+    assert main(["--rain-maint"]) == 0
+    assert capsys.readouterr().out == "No rainfall stations are under maintenance.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({}),
+    )
+    assert main(["--rain-maint", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No rainfall stations are under maintenance."
+    }
+
+
 def test_cli_lightning_lists_active_places(monkeypatch, capsys):
     seen = {}
 

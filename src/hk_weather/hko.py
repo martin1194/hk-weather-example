@@ -443,6 +443,11 @@ class RainPeriod:
 
 
 @dataclass(frozen=True)
+class RainMaintenance:
+    places: tuple[str, ...]
+
+
+@dataclass(frozen=True)
 class HourRainReading:
     place: str
     station_id: str
@@ -1156,6 +1161,13 @@ def fetch_rain_period(
 ) -> RainPeriod | None:
     """Download the district rainfall window from the current report (`dataType=rhrread`)."""
     return parse_rain_period(_fetch_json(_apply_lang(url, lang), timeout))
+
+
+def fetch_rain_maint(
+    url: str = DEFAULT_URL, timeout: float = 10, lang: str = "en"
+) -> RainMaintenance:
+    """Download districts whose rainfall gauge is under maintenance (`dataType=rhrread`)."""
+    return parse_rain_maint(_fetch_json(_apply_lang(url, lang), timeout))
 
 
 def fetch_hour_rain(
@@ -2925,6 +2937,37 @@ def format_rain_period_miss(*, as_json: bool = False) -> str:
     return _unavailable("No rainfall period is available.", as_json=as_json)
 
 
+def _under_maintenance(value: object) -> bool:
+    return value is True or (isinstance(value, str) and value.strip().upper() == "TRUE")
+
+
+def parse_rain_maint(payload: dict) -> RainMaintenance:
+    """List districts whose rainfall `main` flag says the gauge is under maintenance."""
+    places: list[str] = []
+    seen: set[str] = set()
+    for item in _data_list(payload.get("rainfall")):
+        if not _under_maintenance(item.get("main")):
+            continue
+        place = _text(item.get("place"))
+        if not place or place in seen:
+            continue
+        seen.add(place)
+        places.append(place)
+    return RainMaintenance(tuple(places))
+
+
+def format_rain_maint(report: RainMaintenance) -> str:
+    """Render districts whose rainfall gauge is under maintenance."""
+    lines = ["Hong Kong rainfall maintenance"]
+    lines.extend(report.places)
+    return "\n".join(lines) + "\n"
+
+
+def format_rain_maint_miss(*, as_json: bool = False) -> str:
+    """Say that no district rainfall gauge is under maintenance."""
+    return _unavailable("No rainfall stations are under maintenance.", as_json=as_json)
+
+
 def parse_hour_rain(payload: dict) -> HourRainReport:
     """Turn an hourly-rainfall document into station readings, wettest first."""
     raw = payload.get("hourlyRainfall")
@@ -3653,6 +3696,7 @@ def format_json(
     | StationReport
     | RainReport
     | RainPeriod
+    | RainMaintenance
     | HourRainReport
     | HourWettest
     | HourDriest

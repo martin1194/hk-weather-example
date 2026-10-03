@@ -59,6 +59,7 @@ from hk_weather.hko import (
     fetch_quakes,
     fetch_rain,
     fetch_rain_period,
+    fetch_rain_maint,
     fetch_rainstorm,
     fetch_stations,
     fetch_strikes,
@@ -180,6 +181,8 @@ from hk_weather.hko import (
     format_rain,
     format_rain_period,
     format_rain_period_miss,
+    format_rain_maint,
+    format_rain_maint_miss,
     format_rainstorm,
     format_rainstorm_miss,
     format_short,
@@ -273,6 +276,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--stations lists each station; --list-places lists their names; "
             "--place NAME filters those stations; --rain lists district rainfall; "
             "--rain-period prints the district rainfall window; "
+            "--rain-maint lists districts whose rainfall gauge is under maintenance; "
             "--hour-rain lists past-hour rainfall at automatic stations; "
             "--hour-wettest prints the wettest of those stations; "
             "--hour-driest prints the driest of those stations; "
@@ -634,6 +638,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--rain-period",
         action="store_true",
         help="Print the past-hour window for district rainfall",
+    )
+    parser.add_argument(
+        "--rain-maint",
+        action="store_true",
+        help="Print districts whose rainfall gauge is under maintenance",
     )
     parser.add_argument(
         "--hour-rain",
@@ -1126,6 +1135,12 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_rain_period_miss(as_json=args.json)
             else:
                 text = format_json(rain_period) if args.json else format_rain_period(rain_period)
+        elif args.rain_maint:
+            rain_maint = fetch_rain_maint(timeout=args.timeout, lang=args.lang)
+            if not rain_maint.places:
+                text = format_rain_maint_miss(as_json=args.json)
+            else:
+                text = format_json(rain_maint) if args.json else format_rain_maint(rain_maint)
         elif args.hour_rain:
             hour_rain = fetch_hour_rain(timeout=args.timeout, lang=args.lang)
             if not hour_rain.readings:
