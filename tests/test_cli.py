@@ -747,6 +747,61 @@ def test_cli_yesterday_when_missing(monkeypatch, capsys):
     }
 
 
+def test_cli_grass_prints_yesterday_minimum(monkeypatch, capsys):
+    seen = {}
+    monkeypatch.setattr("hk_weather.hko._hong_kong_yesterday", lambda now=None: "2026-10-02")
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response(
+            {
+                "HKOReadingsMinGrassTemp": "26.4",
+                "ReportTimeInfoDate": "20261002",
+            }
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--grass", "--lang", "tc"]) == 0
+    assert "dataType=RYES" in seen["url"]
+    assert "station=HKO" in seen["url"]
+    assert "date=20261002" in seen["url"]
+    assert "lang=tc" in seen["url"]
+    assert capsys.readouterr().out == (
+        "Hong Kong grass minimum\n"
+        "2026-10-02\n"
+        "26.4°C\n"
+    )
+
+
+def test_cli_grass_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_yesterday", lambda now=None: "2026-10-02")
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"HKOReadingsMinGrassTemp": "26.4"}),
+    )
+    assert main(["--grass", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "date": "2026-10-02",
+        "grass_min_c": 26.4,
+    }
+
+
+def test_cli_grass_when_missing(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_yesterday", lambda now=None: "2026-10-02")
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"HKOReadingsMaxTemp": "31.7"}),
+    )
+    assert main(["--grass"]) == 0
+    assert capsys.readouterr().out == "No grass minimum is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({}),
+    )
+    assert main(["--grass", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {"message": "No grass minimum is available."}
+
+
 def test_cli_tomorrow_prints_the_next_hong_kong_day(monkeypatch, capsys):
     seen = {}
     monkeypatch.setattr("hk_weather.hko._hong_kong_tomorrow", lambda now=None: "2026-10-04")

@@ -349,6 +349,12 @@ class YesterdayReport:
 
 
 @dataclass(frozen=True)
+class GrassMinimum:
+    date: str
+    grass_min_c: float
+
+
+@dataclass(frozen=True)
 class RainstormReminder:
     reminder: str
 
@@ -579,6 +585,16 @@ def fetch_yesterday(timeout: float = 10, lang: str = "en") -> YesterdayReport | 
         f"?dataType=RYES&rformat=json&date={day.replace('-', '')}&station=HKO&lang=en"
     )
     return parse_yesterday(_fetch_json(_apply_lang(url, lang), timeout), day)
+
+
+def fetch_grass(timeout: float = 10, lang: str = "en") -> GrassMinimum | None:
+    """Download yesterday's grass minimum (`dataType=RYES`, station HKO)."""
+    day = _hong_kong_yesterday()
+    url = (
+        "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php"
+        f"?dataType=RYES&rformat=json&date={day.replace('-', '')}&station=HKO&lang=en"
+    )
+    return parse_grass(_fetch_json(_apply_lang(url, lang), timeout), day)
 
 
 def fetch_summary(timeout: float = 10, lang: str = "en") -> WeatherSummary:
@@ -2063,6 +2079,31 @@ def format_yesterday_miss(*, as_json: bool = False) -> str:
     return _unavailable("Yesterday's Observatory summary is not available.", as_json=as_json)
 
 
+def parse_grass(payload: dict, date: str) -> GrassMinimum | None:
+    """Turn a `RYES` document into yesterday's grass minimum temperature."""
+    grass = _hour_mm(payload.get("HKOReadingsMinGrassTemp"))
+    if grass is None:
+        return None
+    reported = _text(payload.get("ReportTimeInfoDate"))
+    if len(reported) == 8 and reported.isdigit():
+        date = f"{reported[:4]}-{reported[4:6]}-{reported[6:8]}"
+    return GrassMinimum(date, grass)
+
+
+def format_grass(reading: GrassMinimum) -> str:
+    """Render yesterday's grass minimum at the Observatory."""
+    return (
+        "Hong Kong grass minimum\n"
+        f"{reading.date}\n"
+        f"{_number(reading.grass_min_c)}°C\n"
+    )
+
+
+def format_grass_miss(*, as_json: bool = False) -> str:
+    """Say that yesterday's grass minimum is not available."""
+    return _unavailable("No grass minimum is available.", as_json=as_json)
+
+
 def _hour_mm(value: object) -> float | None:
     if isinstance(value, bool):
         return None
@@ -2424,6 +2465,7 @@ def format_json(
     | FeltTremor
     | TomorrowForecast
     | YesterdayReport
+    | GrassMinimum
     | PsrForecast
     | WeekendForecast
     | VisibilityReport
