@@ -62,6 +62,8 @@ hk-weather --grass
 hk-weather --grass --json
 hk-weather --sunshine
 hk-weather --sunshine --json
+hk-weather --max-uv
+hk-weather --max-uv --json
 hk-weather --accum-rain
 hk-weather --accum-rain --json
 hk-weather --avg-rain
@@ -253,6 +255,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --grass` prints yesterday's grass minimum from that same summary (`HKOReadingsMinGrassTemp`). `--yesterday` still prints the air-temperature summary. `--grass --json` prints the grass minimum as one JSON object. `--lang` applies. If the reading is missing, it says `No grass minimum is available.`
 
 `hk-weather --sunshine` prints yesterday's sunshine duration at King's Park (`dataType=RYES`, station KP, `KingsParkReadingsSunShine`), for example `2026-10-02  4.7 hours`. `--grass` still prints yesterday's grass minimum. `--uv` still prints the current UV index. `--sunshine --json` prints that day as one JSON object. `--lang` applies. If the reading is missing, it says `No sunshine duration is available.`
+
+`hk-weather --max-uv` prints yesterday's maximum UV index at King's Park (`KingsParkReadingsMaxUVIndex` on that same report), for example `2026-10-02  6`. `--uv` still prints the current UV index. `--sunshine` still prints the sunshine duration. `--max-uv --json` prints that day as one JSON object. `--lang` applies. If the reading is missing, it says `No maximum UV index is available.`
 
 `hk-weather --accum-rain` prints accumulated rainfall at the Observatory from 1 January through yesterday (`HKOReadingsAccumRainfall` on that same summary). `--year-rain` still prints the January-to-last-month note. `--accum-rain --json` prints the total as one JSON object. `--lang` applies. If the reading is missing, it says `No accumulated rainfall is available.`
 
