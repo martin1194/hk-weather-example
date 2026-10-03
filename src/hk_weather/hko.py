@@ -140,6 +140,19 @@ class SeaTemperature:
 
 
 @dataclass(frozen=True)
+class SoilReading:
+    place: str
+    depth_m: float
+    temperature_c: float
+    recorded: str
+
+
+@dataclass(frozen=True)
+class SoilReport:
+    readings: tuple[SoilReading, ...]
+
+
+@dataclass(frozen=True)
 class PsrDay:
     date: str
     week: str
@@ -584,6 +597,13 @@ def fetch_sea_temp(
 ) -> SeaTemperature | None:
     """Download the sea temperature from the 9-day forecast (`dataType=fnd`)."""
     return parse_sea_temp(_fetch_json(_apply_lang(url, lang), timeout))
+
+
+def fetch_soil_temp(
+    url: str = NINE_DAY_URL, timeout: float = 10, lang: str = "en"
+) -> SoilReport | None:
+    """Download soil temperatures from the 9-day forecast (`dataType=fnd`)."""
+    return parse_soil_temp(_fetch_json(_apply_lang(url, lang), timeout))
 
 
 def fetch_psr(url: str = NINE_DAY_URL, timeout: float = 10, lang: str = "en") -> PsrForecast:
@@ -1342,6 +1362,55 @@ def format_sea_temp(reading: SeaTemperature) -> str:
 def format_sea_temp_miss(*, as_json: bool = False) -> str:
     """Say that the 9-day forecast has no sea temperature."""
     return _unavailable("No sea temperature is available.", as_json=as_json)
+
+
+def parse_soil_temp(payload: dict) -> SoilReport | None:
+    """Turn the `fnd` soil temperatures into one reading per depth."""
+    raw = payload.get("soilTemp")
+    if not isinstance(raw, list):
+        return None
+    readings: list[SoilReading] = []
+    for item in raw:
+        if not isinstance(item, dict):
+            continue
+        temperature = _temp_value(item)
+        depth = _temp_value(item.get("depth"))
+        if temperature is None or depth is None:
+            continue
+        readings.append(
+            SoilReading(
+                place=_text(item.get("place")) or "Hong Kong",
+                depth_m=depth,
+                temperature_c=temperature,
+                recorded=_text(item.get("recordTime")),
+            )
+        )
+    if not readings:
+        return None
+    return SoilReport(tuple(readings))
+
+
+def format_soil_temp(report: SoilReport) -> str:
+    """Render soil temperatures from the 9-day forecast."""
+    lines = ["Hong Kong soil temperature"]
+    recorded = {reading.recorded for reading in report.readings}
+    shared = next(iter(recorded)) if len(recorded) == 1 else ""
+    for reading in report.readings:
+        line = (
+            f"{reading.place}  {_number(reading.depth_m)} m  "
+            f"{_number(reading.temperature_c)}°C"
+        )
+        if reading.recorded and not shared:
+            line += f"  {reading.recorded}"
+        lines.append(line)
+    if shared:
+        lines.append(f"Recorded: {shared}")
+    return "\n".join(lines) + "\n"
+
+
+def format_soil_temp_miss(*, as_json: bool = False) -> str:
+    """Say that the 9-day forecast has no soil temperature."""
+    return _unavailable("No soil temperature is available.", as_json=as_json)
 
 
 def format_psr(report: PsrForecast) -> str:
@@ -2646,6 +2715,7 @@ def format_json(
     | TcInfo
     | NineDayForecast
     | SeaTemperature
+    | SoilReport
     | UvIndex
     | IconUpdate
     | SpecialTips

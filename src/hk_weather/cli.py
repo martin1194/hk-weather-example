@@ -34,6 +34,7 @@ from hk_weather.hko import (
     fetch_month_rain,
     fetch_nine_day,
     fetch_sea_temp,
+    fetch_soil_temp,
     fetch_year_rain,
     fetch_noon_rain,
     fetch_overnight,
@@ -111,6 +112,8 @@ from hk_weather.hko import (
     format_nine_day,
     format_sea_temp,
     format_sea_temp_miss,
+    format_soil_temp,
+    format_soil_temp_miss,
     format_noon_rain,
     format_noon_rain_miss,
     format_overnight,
@@ -185,6 +188,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--fire-danger prints the fire danger warning; "
             "--tc-info prints tropical cyclone information from the local forecast; "
             "--nine-day prints the 9-day forecast; --sea-temp prints the sea temperature; "
+            "--soil-temp prints soil temperatures; "
             "--warnings lists active warnings; "
             "--uv prints the UV index; --icon-time prints when the weather icon changed; "
             "--tips prints special weather tips; "
@@ -289,6 +293,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--sea-temp",
         action="store_true",
         help="Print the sea temperature from the 9-day forecast",
+    )
+    parser.add_argument(
+        "--soil-temp",
+        action="store_true",
+        help="Print soil temperatures from the 9-day forecast",
     )
     parser.add_argument(
         "-Y",
@@ -612,6 +621,12 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_sea_temp_miss(as_json=args.json)
             else:
                 text = format_json(sea_temp) if args.json else format_sea_temp(sea_temp)
+        elif args.soil_temp:
+            soil_temp = fetch_soil_temp(timeout=args.timeout, lang=args.lang)
+            if soil_temp is None:
+                text = format_soil_temp_miss(as_json=args.json)
+            else:
+                text = format_json(soil_temp) if args.json else format_soil_temp(soil_temp)
         elif args.today:
             today = fetch_today(timeout=args.timeout, lang=args.lang)
             if today is None:
