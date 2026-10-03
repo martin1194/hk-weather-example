@@ -82,6 +82,7 @@ from hk_weather.hko import (
     fetch_temp_diff,
     fetch_heat_index,
     fetch_wbgt,
+    fetch_solar,
     fetch_tc_info,
     fetch_tide,
     fetch_tide_hour,
@@ -242,6 +243,8 @@ from hk_weather.hko import (
     format_heat_index_miss,
     format_wbgt,
     format_wbgt_miss,
+    format_solar,
+    format_solar_miss,
     format_tide,
     format_tide_miss,
     format_tide_hour,
@@ -347,6 +350,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--temp-diff prints the past 24-hour temperature change; "
             "--heat-index prints the latest Hong Kong Heat Index; "
             "--wbgt prints the latest Wet Bulb Globe Temperature; "
+            "--solar prints the latest solar radiation; "
             "--wind lists the forecast wind; "
             "--gust prints the latest 10-minute wind and gust; "
             "--forecast-icon prints each day's weather icon; "
@@ -884,6 +888,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--wbgt",
         action="store_true",
         help="Print the latest 60-minute mean Wet Bulb Globe Temperature",
+    )
+    parser.add_argument(
+        "--solar",
+        action="store_true",
+        help="Print the latest 1-minute solar radiation at automatic stations",
     )
     parser.add_argument(
         "-H",
@@ -1500,6 +1509,12 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_wbgt_miss(as_json=args.json)
             else:
                 text = format_json(wbgt) if args.json else format_wbgt(wbgt)
+        elif args.solar:
+            solar = fetch_solar(timeout=args.timeout, lang=args.lang)
+            if not solar.stations:
+                text = format_solar_miss(as_json=args.json)
+            else:
+                text = format_json(solar) if args.json else format_solar(solar)
         elif args.hottest:
             hottest = fetch_hottest(timeout=args.timeout, lang=args.lang)
             if hottest is None:
