@@ -47,6 +47,7 @@ from hk_weather.hko import (
     fetch_nine_updated,
     fetch_nine_weather,
     fetch_nine_temp,
+    fetch_nine_humidity,
     fetch_sea_temp,
     fetch_soil_temp,
     fetch_year_rain,
@@ -154,6 +155,8 @@ from hk_weather.hko import (
     format_nine_weather_miss,
     format_nine_temp,
     format_nine_temp_miss,
+    format_nine_humidity,
+    format_nine_humidity_miss,
     format_sea_temp,
     format_sea_temp_miss,
     format_soil_temp,
@@ -245,6 +248,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--nine-updated prints when the 9-day forecast was updated; "
             "--nine-weather prints each day's weather from the 9-day forecast; "
             "--nine-temp prints each day's high and low from the 9-day forecast; "
+            "--nine-humidity prints each day's humidity from the 9-day forecast; "
             "--warnings lists active warnings; "
             "--warning-time prints when active warnings were issued; "
             "--uv prints the UV index; --icon-time prints when the weather icon changed; "
@@ -402,6 +406,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--nine-temp",
         action="store_true",
         help="Print each day's high and low from the 9-day forecast",
+    )
+    parser.add_argument(
+        "--nine-humidity",
+        action="store_true",
+        help="Print each day's humidity range from the 9-day forecast",
     )
     parser.add_argument(
         "-Y",
@@ -845,6 +854,14 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_nine_temp_miss(as_json=args.json)
             else:
                 text = format_json(nine_temp) if args.json else format_nine_temp(nine_temp)
+        elif args.nine_humidity:
+            nine_humidity = fetch_nine_humidity(timeout=args.timeout, lang=args.lang)
+            if not nine_humidity.days:
+                text = format_nine_humidity_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(nine_humidity) if args.json else format_nine_humidity(nine_humidity)
+                )
         elif args.today:
             today = fetch_today(timeout=args.timeout, lang=args.lang)
             if today is None:

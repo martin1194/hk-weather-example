@@ -1270,6 +1270,110 @@ def test_cli_nine_temp_when_missing(monkeypatch, capsys):
     assert json.loads(capsys.readouterr().out) == {"message": "No 9-day temperatures are available."}
 
 
+def test_cli_nine_humidity_lists_each_day(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response(
+            {
+                "updateTime": "  2026-10-03T16:45:00+08:00  ",
+                "weatherForecast": [
+                    {
+                        "forecastDate": "20261004",
+                        "week": "Sunday",
+                        "forecastMaxrh": {"value": 95, "unit": "percent"},
+                        "forecastMinrh": {"value": 65, "unit": "percent"},
+                    },
+                    {
+                        "forecastDate": "20261005",
+                        "week": "Monday",
+                        "forecastMaxtemp": {"value": 31, "unit": "C"},
+                    },
+                    {
+                        "forecastDate": "20261006",
+                        "week": "Tuesday",
+                        "forecastMaxrh": {"value": 90.5, "unit": "percent"},
+                    },
+                    {
+                        "forecastDate": "20261007",
+                        "week": "Wednesday",
+                        "forecastMinrh": {"value": 70, "unit": "percent"},
+                    },
+                ],
+            }
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--nine-humidity", "--lang", "tc"]) == 0
+    assert "dataType=fnd" in seen["url"]
+    assert "lang=tc" in seen["url"]
+    assert capsys.readouterr().out == (
+        "Hong Kong 9-day humidity\n"
+        "Updated: 2026-10-03T16:45:00+08:00\n"
+        "2026-10-04 Sunday  humidity 65-95%\n"
+        "2026-10-06 Tuesday  humidity 90.5%\n"
+        "2026-10-07 Wednesday  humidity 70%\n"
+    )
+
+
+def test_cli_nine_humidity_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {
+                "updateTime": "2026-10-03T16:45:00+08:00",
+                "weatherForecast": [
+                    {
+                        "forecastDate": "20261004",
+                        "week": "Sunday",
+                        "forecastMaxrh": {"value": 95, "unit": "percent"},
+                        "forecastMinrh": {"value": 65, "unit": "percent"},
+                    }
+                ],
+            }
+        ),
+    )
+    assert main(["--nine-humidity", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "update_time": "2026-10-03T16:45:00+08:00",
+        "days": [
+            {
+                "date": "2026-10-04",
+                "week": "Sunday",
+                "humidity_high_percent": 95.0,
+                "humidity_low_percent": 65.0,
+            }
+        ],
+    }
+
+
+def test_cli_nine_humidity_when_missing(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {
+                "weatherForecast": [
+                    {
+                        "forecastDate": "20261004",
+                        "week": "Sunday",
+                        "forecastWeather": "Sunny periods.",
+                        "forecastMaxrh": {"value": True, "unit": "percent"},
+                    }
+                ]
+            }
+        ),
+    )
+    assert main(["--nine-humidity"]) == 0
+    assert capsys.readouterr().out == "No 9-day humidity is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({}),
+    )
+    assert main(["--nine-humidity", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {"message": "No 9-day humidity is available."}
+
+
 def test_cli_today_prints_the_hong_kong_day(monkeypatch, capsys):
     seen = {}
     monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
