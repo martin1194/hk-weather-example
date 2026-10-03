@@ -476,6 +476,13 @@ class GustReport:
 
 
 @dataclass(frozen=True)
+class PrevailingWind:
+    station: str
+    date: str
+    direction_deg: float
+
+
+@dataclass(frozen=True)
 class WindForecast:
     update_time: str
     days: tuple[WindDay, ...]
@@ -1572,6 +1579,26 @@ def fetch_gust(timeout: float = 10, lang: str = "en") -> GustReport:
     except UnicodeDecodeError as exc:
         raise WeatherError("Hong Kong Observatory returned invalid text") from exc
     return parse_gust(text)
+
+
+def fetch_prevailing(timeout: float = 10, lang: str = "en") -> PrevailingWind | None:
+    """Download the latest daily prevailing wind direction at Waglan Island."""
+    year = _hong_kong_today()[:4]
+    url = (
+        "https://data.weather.gov.hk/weatherAPI/cis/csvfile/WGL/"
+        f"{year}/daily_WGL_PDIR_{year}.csv"
+    )
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            raw = response.read()
+    except (urllib.error.URLError, TimeoutError) as exc:
+        raise WeatherError(f"could not reach Hong Kong Observatory: {exc}") from exc
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise WeatherError("Hong Kong Observatory returned invalid text") from exc
+    return parse_prevailing(text, lang)
 
 
 def fetch_minute_temp(timeout: float = 10, lang: str = "en") -> MinuteTempReport:
@@ -3462,6 +3489,49 @@ def format_gust_miss(*, as_json: bool = False) -> str:
     return _unavailable("No wind gusts are available.", as_json=as_json)
 
 
+_PREVAILING_STATIONS = {
+    "en": "Waglan Island",
+    "tc": "橫瀾島",
+    "sc": "横澜岛",
+}
+
+
+def parse_prevailing(text: str, lang: str = "en") -> PrevailingWind | None:
+    """Turn the Waglan prevailing-wind CSV into the latest numeric day."""
+    station = _PREVAILING_STATIONS.get(lang, _PREVAILING_STATIONS["en"])
+    latest: PrevailingWind | None = None
+    rows = csv.reader(io.StringIO(text))
+    for row in rows:
+        if len(row) < 4:
+            continue
+        year = _text(row[0]).lstrip("\ufeff")
+        month = _text(row[1])
+        day = _text(row[2])
+        value = _hour_mm(row[3])
+        if not (year.isdigit() and month.isdigit() and day.isdigit()) or value is None:
+            continue
+        latest = PrevailingWind(
+            station,
+            f"{int(year):04d}-{int(month):02d}-{int(day):02d}",
+            value,
+        )
+    return latest
+
+
+def format_prevailing(reading: PrevailingWind) -> str:
+    """Render the latest daily prevailing wind direction at Waglan Island."""
+    return (
+        "Hong Kong prevailing wind\n"
+        f"Station: {reading.station}\n"
+        f"{reading.date}  {_number(reading.direction_deg)}°\n"
+    )
+
+
+def format_prevailing_miss(*, as_json: bool = False) -> str:
+    """Say that no prevailing wind direction is available."""
+    return _unavailable("No prevailing wind is available.", as_json=as_json)
+
+
 def parse_minute_temp(text: str) -> MinuteTempReport:
     """Turn the regional 1-minute temperature CSV into one row per station."""
     stations: list[MinuteTempReading] = []
@@ -5284,6 +5354,7 @@ def format_json(
     | SolarReport
     | WindForecast
     | GustReport
+    | PrevailingWind
     | ForecastIcons
     | QuakeReport
     | FeltTremor
