@@ -84,6 +84,11 @@ class FireDanger:
 
 
 @dataclass(frozen=True)
+class TcInfo:
+    info: str
+
+
+@dataclass(frozen=True)
 class WeatherWarning:
     code: str
     description: str
@@ -418,6 +423,13 @@ def fetch_fire_danger(
 ) -> FireDanger | None:
     """Download the fire danger warning from the local forecast (`dataType=flw`)."""
     return parse_fire_danger(_fetch_json(_apply_lang(url, lang), timeout))
+
+
+def fetch_tc_info(
+    url: str = FORECAST_URL, timeout: float = 10, lang: str = "en"
+) -> TcInfo | None:
+    """Download tropical cyclone information from the local forecast (`dataType=flw`)."""
+    return parse_tc_info(_fetch_json(_apply_lang(url, lang), timeout))
 
 
 def fetch_warnings(
@@ -909,6 +921,24 @@ def format_fire_danger(report: FireDanger) -> str:
 def format_fire_danger_miss(*, as_json: bool = False) -> str:
     """Say that the local forecast has no fire danger warning."""
     return _unavailable("No fire danger warning is available.", as_json=as_json)
+
+
+def parse_tc_info(payload: dict) -> TcInfo | None:
+    """Turn the `flw` tropical cyclone information into one paragraph."""
+    text = _text(payload.get("tcInfo"))
+    if not text:
+        return None
+    return TcInfo(text)
+
+
+def format_tc_info(report: TcInfo) -> str:
+    """Render the local-forecast tropical cyclone information."""
+    return f"Hong Kong tropical cyclone information\n{report.info}\n"
+
+
+def format_tc_info_miss(*, as_json: bool = False) -> str:
+    """Say that the local forecast has no tropical cyclone information."""
+    return _unavailable("No tropical cyclone information is available.", as_json=as_json)
 
 
 def parse_warnings(payload: dict) -> tuple[WeatherWarning, ...]:
@@ -1972,6 +2002,7 @@ def format_json(
     | LocalForecast
     | GeneralSituation
     | FireDanger
+    | TcInfo
     | NineDayForecast
     | UvIndex
     | SpecialTips

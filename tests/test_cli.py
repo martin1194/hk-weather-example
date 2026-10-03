@@ -267,6 +267,55 @@ def test_cli_fire_danger_when_blank_or_missing(monkeypatch, capsys):
     }
 
 
+def test_cli_tc_info_prints_paragraph(monkeypatch, capsys):
+    seen = {}
+    message = (
+        "At noon, Typhoon Mangkhut was centred about 510 kilometres southeast of Hong Kong."
+    )
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response({"tcInfo": f"  {message}  "})
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--tc-info", "--lang", "tc"]) == 0
+    assert "dataType=flw" in seen["url"]
+    assert "lang=tc" in seen["url"]
+    assert capsys.readouterr().out == (
+        f"Hong Kong tropical cyclone information\n{message}\n"
+    )
+
+
+def test_cli_tc_info_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {"tcInfo": "There is no tropical cyclone within 800 kilometres of Hong Kong."}
+        ),
+    )
+    assert main(["--tc-info", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "info": "There is no tropical cyclone within 800 kilometres of Hong Kong."
+    }
+
+
+def test_cli_tc_info_when_blank_or_missing(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"tcInfo": "   "}),
+    )
+    assert main(["--tc-info"]) == 0
+    assert capsys.readouterr().out == "No tropical cyclone information is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({}),
+    )
+    assert main(["--tc-info", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No tropical cyclone information is available."
+    }
+
+
 def test_cli_warnings_lists_active_codes(monkeypatch, capsys):
     seen = {}
 

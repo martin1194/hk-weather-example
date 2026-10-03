@@ -36,6 +36,7 @@ from hk_weather.hko import (
     fetch_sunrise,
     fetch_wettest,
     fetch_temps,
+    fetch_tc_info,
     fetch_tide,
     fetch_tips,
     fetch_today,
@@ -97,6 +98,8 @@ from hk_weather.hko import (
     format_temps,
     format_tide,
     format_tide_miss,
+    format_tc_info,
+    format_tc_info_miss,
     format_tips,
     format_today_miss,
     format_tomorrow,
@@ -140,6 +143,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--forecast prints the local forecast; "
             "--situation prints the general situation; "
             "--fire-danger prints the fire danger warning; "
+            "--tc-info prints tropical cyclone information from the local forecast; "
             "--nine-day prints the 9-day forecast; --warnings lists active warnings; "
             "--uv prints the UV index; --tips prints special weather tips; "
             "--stations lists each station; --list-places lists their names; "
@@ -215,6 +219,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--fire-danger",
         action="store_true",
         help="Print the fire danger warning from the local forecast",
+    )
+    parser.add_argument(
+        "--tc-info",
+        action="store_true",
+        help="Print tropical cyclone information from the local forecast",
     )
     parser.add_argument(
         "-n",
@@ -461,6 +470,12 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_fire_danger_miss(as_json=args.json)
             else:
                 text = format_json(fire_danger) if args.json else format_fire_danger(fire_danger)
+        elif args.tc_info:
+            tc_info = fetch_tc_info(timeout=args.timeout, lang=args.lang)
+            if tc_info is None:
+                text = format_tc_info_miss(as_json=args.json)
+            else:
+                text = format_json(tc_info) if args.json else format_tc_info(tc_info)
         elif args.nine_day:
             nine_day = fetch_nine_day(timeout=args.timeout, lang=args.lang)
             text = format_json(nine_day) if args.json else format_nine_day(nine_day)
