@@ -27,6 +27,7 @@ from hk_weather.hko import (
     fetch_radiation,
     fetch_bulletin,
     fetch_radiation_note,
+    fetch_radiation_weather,
     fetch_coldest,
     fetch_cyclone,
     fetch_hottest,
@@ -100,6 +101,8 @@ from hk_weather.hko import (
     format_bulletin_miss,
     format_radiation_note,
     format_radiation_note_miss,
+    format_radiation_weather,
+    format_radiation_weather_miss,
     format_felt,
     format_felt_miss,
     format_fire_danger,
@@ -252,6 +255,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--radiation prints yesterday's gamma radiation report; "
             "--bulletin prints when yesterday's bulletin was issued; "
             "--radiation-note prints the normal radiation range; "
+            "--radiation-weather prints how radiation varies with the weather; "
             "--tomorrow prints tomorrow; "
             "--day N prints forecast day N (1 is the first entry); "
             "--psr lists the chance of significant rain; "
@@ -413,6 +417,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--radiation-note",
         action="store_true",
         help="Print the note on the normal outdoor radiation range",
+    )
+    parser.add_argument(
+        "--radiation-weather",
+        action="store_true",
+        help="Print how outdoor radiation varies with the weather",
     )
     parser.add_argument(
         "-T",
@@ -843,6 +852,16 @@ def main(argv: list[str] | None = None) -> int:
                     format_json(radiation_note)
                     if args.json
                     else format_radiation_note(radiation_note)
+                )
+        elif args.radiation_weather:
+            radiation_weather = fetch_radiation_weather(timeout=args.timeout, lang=args.lang)
+            if radiation_weather is None:
+                text = format_radiation_weather_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(radiation_weather)
+                    if args.json
+                    else format_radiation_weather(radiation_weather)
                 )
         elif args.tomorrow:
             tomorrow = fetch_tomorrow(timeout=args.timeout, lang=args.lang)
