@@ -269,6 +269,11 @@ class RainstormReminder:
 
 
 @dataclass(frozen=True)
+class CycloneMessage:
+    messages: tuple[str, ...]
+
+
+@dataclass(frozen=True)
 class WettestReading:
     place: str
     rainfall_mm: float
@@ -530,6 +535,13 @@ def fetch_rainstorm(
 ) -> RainstormReminder | None:
     """Download the rainstorm reminder from the current report (`dataType=rhrread`)."""
     return parse_rainstorm(_fetch_json(_apply_lang(url, lang), timeout))
+
+
+def fetch_cyclone(
+    url: str = DEFAULT_URL, timeout: float = 10, lang: str = "en"
+) -> CycloneMessage | None:
+    """Download the tropical cyclone message from the current report (`dataType=rhrread`)."""
+    return parse_cyclone(_fetch_json(_apply_lang(url, lang), timeout))
 
 
 def fetch_lightning(url: str = DEFAULT_URL, timeout: float = 10, lang: str = "en") -> LightningReport:
@@ -1553,6 +1565,38 @@ def format_rainstorm_miss(*, as_json: bool = False) -> str:
     return _unavailable("No rainstorm reminder.", as_json=as_json)
 
 
+def parse_cyclone(payload: dict) -> CycloneMessage | None:
+    """Turn the `rhrread` tropical cyclone message into lines of text."""
+    raw = payload.get("tcmessage")
+    items = [raw] if isinstance(raw, str) else raw if isinstance(raw, list) else []
+    messages: list[str] = []
+    for item in items:
+        if isinstance(item, dict):
+            text = (
+                _text(item.get("desc"))
+                or _text(item.get("message"))
+                or _text(item.get("content"))
+            )
+        else:
+            text = _text(item)
+        if text:
+            messages.append(text)
+    if not messages:
+        return None
+    return CycloneMessage(tuple(messages))
+
+
+def format_cyclone(report: CycloneMessage) -> str:
+    """Render the tropical cyclone message."""
+    lines = ["Hong Kong tropical cyclone", *(f"- {message}" for message in report.messages)]
+    return "\n".join(lines) + "\n"
+
+
+def format_cyclone_miss(*, as_json: bool = False) -> str:
+    """Say that the current report has no tropical cyclone message."""
+    return _unavailable("No tropical cyclone message.", as_json=as_json)
+
+
 def parse_lightning(payload: dict) -> LightningReport:
     """Turn `rhrread` lightning data into places where lightning occurred."""
     return LightningReport(_lightning(payload))
@@ -1708,6 +1752,7 @@ def format_json(
     | WettestReading
     | DriestReading
     | RainstormReminder
+    | CycloneMessage
     | TideReport
     | AqhiReport
     | Sunrise
