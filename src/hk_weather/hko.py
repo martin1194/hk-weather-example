@@ -205,6 +205,12 @@ HOURLY_DOSE_URLS = {
         "latest_hourly_rmn_sc.csv"
     ),
 }
+# South China Coastal Waters bulletin. JSON, one file per language.
+COASTAL_URLS = {
+    "en": "https://data.weather.gov.hk/openData/json/sccw_json_datagov.json",
+    "tc": "https://data.weather.gov.hk/openData/json/sccw_json_datagov_uc.json",
+    "sc": "https://data.weather.gov.hk/openData/json/gb/sccw_json_datagov_uc.json",
+}
 # Latest observed tide height. CSV, one file per language.
 LATEST_TIDE_URLS = {
     "en": "https://data.weather.gov.hk/weatherAPI/hko_data/tide/ALL_en.csv",
@@ -264,6 +270,20 @@ class LocalForecast:
 @dataclass(frozen=True)
 class ForecastOutlook:
     outlook: str
+
+
+@dataclass(frozen=True)
+class CoastalArea:
+    place: str
+    wind: str
+    weather: str
+    sea: str
+
+
+@dataclass(frozen=True)
+class CoastalForecast:
+    update_time: str
+    areas: tuple[CoastalArea, ...]
 
 
 @dataclass(frozen=True)
@@ -1145,6 +1165,12 @@ def fetch_outlook(
 ) -> ForecastOutlook | None:
     """Download the outlook from the local forecast (`dataType=flw`)."""
     return parse_outlook(_fetch_json(_apply_lang(url, lang), timeout))
+
+
+def fetch_coastal(timeout: float = 10, lang: str = "en") -> CoastalForecast:
+    """Download the South China Coastal Waters area forecast."""
+    url = COASTAL_URLS.get(lang, COASTAL_URLS["en"])
+    return parse_coastal(_fetch_json(url, timeout))
 
 
 def fetch_forecast_period(
@@ -2358,6 +2384,41 @@ def format_outlook(report: ForecastOutlook) -> str:
 def format_outlook_miss(*, as_json: bool = False) -> str:
     """Say that the local forecast has no outlook."""
     return _unavailable("No outlook is available.", as_json=as_json)
+
+
+def parse_coastal(payload: dict) -> CoastalForecast:
+    """Turn the coastal-waters bulletin into one forecast line per area."""
+    forecast = payload.get("weatherForecast")
+    rows = forecast.get("data") if isinstance(forecast, dict) else None
+    areas: list[CoastalArea] = []
+    if isinstance(rows, list):
+        for item in rows:
+            if not isinstance(item, dict):
+                continue
+            place = _text(item.get("locationName"))
+            wind = _text(item.get("windInfo"))
+            weather = _text(item.get("weatherDescription"))
+            sea = _text(item.get("seaSituation"))
+            if not place or not (wind or weather or sea):
+                continue
+            areas.append(CoastalArea(place, wind, weather, sea))
+    return CoastalForecast(_text(payload.get("updateTime")), tuple(areas))
+
+
+def format_coastal(report: CoastalForecast) -> str:
+    """Render the South China Coastal Waters area forecast."""
+    lines = ["Hong Kong coastal waters"]
+    if report.update_time:
+        lines.append(f"Updated: {report.update_time}")
+    for area in report.areas:
+        detail = "  ".join(part for part in (area.wind, area.weather, area.sea) if part)
+        lines.append(f"{area.place}  {detail}")
+    return "\n".join(lines) + "\n"
+
+
+def format_coastal_miss(*, as_json: bool = False) -> str:
+    """Say that no coastal waters forecast is available."""
+    return _unavailable("No coastal waters forecast is available.", as_json=as_json)
 
 
 def parse_forecast_period(payload: dict) -> ForecastPeriod | None:
@@ -5522,6 +5583,7 @@ def format_json(
     report: CurrentWeather
     | LocalForecast
     | ForecastOutlook
+    | CoastalForecast
     | ForecastPeriod
     | ForecastDesc
     | ForecastUpdated
