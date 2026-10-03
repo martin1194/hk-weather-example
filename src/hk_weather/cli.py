@@ -11,6 +11,7 @@ from hk_weather.hko import (
     fetch_current,
     fetch_driest,
     fetch_forecast,
+    fetch_outlook,
     fetch_forecast_day,
     fetch_hour_rain,
     fetch_hour_wettest,
@@ -75,6 +76,8 @@ from hk_weather.hko import (
     format_driest,
     format_driest_miss,
     format_forecast,
+    format_outlook,
+    format_outlook_miss,
     format_grass,
     format_grass_miss,
     format_accum_rain,
@@ -202,6 +205,7 @@ def build_parser() -> argparse.ArgumentParser:
             "Print Hong Kong weather from Hong Kong Observatory open data. "
             "Current conditions by default; --summary prints a short briefing; "
             "--forecast prints the local forecast; "
+            "--outlook prints the local-forecast outlook; "
             "--situation prints the general situation; "
             "--fire-danger prints the fire danger warning; "
             "--tc-info prints tropical cyclone information from the local forecast; "
@@ -289,6 +293,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--forecast",
         action="store_true",
         help="Print the local weather forecast instead of current conditions",
+    )
+    parser.add_argument(
+        "--outlook",
+        action="store_true",
+        help="Print the outlook from the local weather forecast",
     )
     parser.add_argument(
         "-g",
@@ -658,6 +667,12 @@ def main(argv: list[str] | None = None) -> int:
         elif args.forecast:
             forecast = fetch_forecast(timeout=args.timeout, lang=args.lang)
             text = format_json(forecast) if args.json else format_forecast(forecast)
+        elif args.outlook:
+            outlook = fetch_outlook(timeout=args.timeout, lang=args.lang)
+            if outlook is None:
+                text = format_outlook_miss(as_json=args.json)
+            else:
+                text = format_json(outlook) if args.json else format_outlook(outlook)
         elif args.situation:
             situation = fetch_situation(timeout=args.timeout, lang=args.lang)
             if situation is None:

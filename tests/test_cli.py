@@ -175,6 +175,50 @@ def test_cli_forecast_json_is_one_object(monkeypatch, capsys):
     }
 
 
+def test_cli_outlook_prints_paragraph(monkeypatch, capsys):
+    seen = {}
+    message = "Still a few showers on Sunday."
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response(
+            {
+                "forecastDesc": "Mainly cloudy with occasional showers.",
+                "outlook": f"  {message}  ",
+            }
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--outlook", "--lang", "tc"]) == 0
+    assert "dataType=flw" in seen["url"]
+    assert "lang=tc" in seen["url"]
+    assert capsys.readouterr().out == f"Hong Kong outlook\n{message}\n"
+
+
+def test_cli_outlook_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"outlook": "Slightly cooler mornings."}),
+    )
+    assert main(["--outlook", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {"outlook": "Slightly cooler mornings."}
+
+
+def test_cli_outlook_when_missing(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"forecastDesc": "Fine and dry.", "outlook": "  "}),
+    )
+    assert main(["--outlook"]) == 0
+    assert capsys.readouterr().out == "No outlook is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({}),
+    )
+    assert main(["--outlook", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {"message": "No outlook is available."}
+
+
 def test_cli_situation_prints_paragraph(monkeypatch, capsys):
     seen = {}
     message = (

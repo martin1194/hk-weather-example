@@ -18,6 +18,8 @@ hk-weather --summary --json
 hk-weather --json
 hk-weather --forecast
 hk-weather --forecast --json
+hk-weather --outlook
+hk-weather --outlook --json
 hk-weather --situation
 hk-weather --situation --json
 hk-weather --fire-danger
@@ -169,6 +171,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --summary` (or `-S`) prints a short briefing: that same conditions line, active warnings (or `Warnings: none`), and today's high, low, and rain chance from the 9-day forecast. `--summary --json` prints the briefing as one JSON object. `--lang` applies. If today's forecast is missing, the today line says `not available`.
 
 `hk-weather --forecast` prints the local forecast period, description, and outlook. With `--json`, that same forecast is one JSON object. Current conditions stay the default.
+
+`hk-weather --outlook` prints only the outlook paragraph from that forecast (`outlook`). `--forecast` still prints the full local forecast. `--outlook --json` prints that paragraph as one JSON object. `--lang` applies. If the field is missing or blank, it says `No outlook is available.`
 
 `hk-weather --situation` (or `-g`) prints the general situation from that forecast (`generalSituation`). `--situation --json` prints that paragraph as one JSON object. `--lang` applies. If the field is missing or blank, it says `No general situation is available.`
 
