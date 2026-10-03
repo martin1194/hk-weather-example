@@ -4890,6 +4890,64 @@ def test_cli_minute_temp_when_missing(monkeypatch, capsys):
     }
 
 
+def test_cli_minute_humidity_prints_latest_stations(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _text_response(
+            "Date time,Automatic Weather Station,Relative Humidity(percent)\n"
+            "202610040140,Chek Lap Kok,  74  \n"
+            "202610040140,Clear Water Bay,N/A\n"
+            "202610040140,Cheung Chau,96\n"
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--minute-humidity", "--lang", "tc"]) == 0
+    assert seen["url"].endswith("latest_1min_humidity_uc.csv")
+    assert capsys.readouterr().out == (
+        "Hong Kong 1-minute humidity\n"
+        "Recorded: 2026-10-04 01:40\n"
+        "Chek Lap Kok  74%\n"
+        "Cheung Chau  96%\n"
+    )
+
+
+def test_cli_minute_humidity_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Date time,Station,Humidity\n"
+            "202610040140,Chek Lap Kok,74\n"
+        ),
+    )
+    assert main(["--minute-humidity", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "obs_time": "2026-10-04 01:40",
+        "stations": [{"place": "Chek Lap Kok", "humidity_percent": 74}],
+    }
+
+
+def test_cli_minute_humidity_when_missing(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Date time,Station,Humidity\n"
+            "202610040140,Clear Water Bay,N/A\n"
+        ),
+    )
+    assert main(["--minute-humidity"]) == 0
+    assert capsys.readouterr().out == "No 1-minute humidity readings are available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(""),
+    )
+    assert main(["--minute-humidity", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No 1-minute humidity readings are available."
+    }
+
+
 def test_cli_temp_time_prints_timestamp(monkeypatch, capsys):
     seen = {}
 
