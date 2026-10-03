@@ -10,6 +10,7 @@ from hk_weather.hko import (
     fetch_aqhi,
     fetch_current,
     fetch_driest,
+    fetch_nowcast,
     fetch_forecast,
     fetch_outlook,
     fetch_coastal,
@@ -118,6 +119,8 @@ from hk_weather.hko import (
     format_day_miss,
     format_driest,
     format_driest_miss,
+    format_nowcast,
+    format_nowcast_miss,
     format_forecast,
     format_outlook,
     format_outlook_miss,
@@ -421,6 +424,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--year-rain prints the January-to-last-month rainfall note; "
             "--wettest prints the wettest district; "
             "--driest prints the driest district; "
+            "--nowcast prints the heaviest rainfall-nowcast cell in each half-hour; "
             "--tide prints today's high and low tides; "
             "--tide-hour prints today's hourly tide heights; "
             "--tide-latest prints the latest observed tide height; "
@@ -853,6 +857,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--driest",
         action="store_true",
         help="Print the driest rainfall district from the current report",
+    )
+    parser.add_argument(
+        "--nowcast",
+        action="store_true",
+        help="Print the heaviest cell in each half-hour of the rainfall nowcast",
     )
     parser.add_argument(
         "--rainstorm",
@@ -1508,6 +1517,12 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_driest_miss(as_json=args.json)
             else:
                 text = format_json(driest) if args.json else format_driest(driest)
+        elif args.nowcast:
+            nowcast = fetch_nowcast(timeout=args.timeout, lang=args.lang)
+            if not nowcast.periods:
+                text = format_nowcast_miss(as_json=args.json)
+            else:
+                text = format_json(nowcast) if args.json else format_nowcast(nowcast)
         elif args.rainstorm:
             rainstorm = fetch_rainstorm(timeout=args.timeout, lang=args.lang)
             if rainstorm is None:
