@@ -96,6 +96,11 @@ class ForecastPeriod:
 
 
 @dataclass(frozen=True)
+class ForecastDesc:
+    description: str
+
+
+@dataclass(frozen=True)
 class GeneralSituation:
     situation: str
 
@@ -622,6 +627,13 @@ def fetch_forecast_period(
 ) -> ForecastPeriod | None:
     """Download the forecast period from the local forecast (`dataType=flw`)."""
     return parse_forecast_period(_fetch_json(_apply_lang(url, lang), timeout))
+
+
+def fetch_forecast_desc(
+    url: str = FORECAST_URL, timeout: float = 10, lang: str = "en"
+) -> ForecastDesc | None:
+    """Download the forecast description from the local forecast (`dataType=flw`)."""
+    return parse_forecast_desc(_fetch_json(_apply_lang(url, lang), timeout))
 
 
 def fetch_situation(
@@ -1306,6 +1318,24 @@ def format_forecast_period(report: ForecastPeriod) -> str:
 def format_forecast_period_miss(*, as_json: bool = False) -> str:
     """Say that the local forecast has no period."""
     return _unavailable("No forecast period is available.", as_json=as_json)
+
+
+def parse_forecast_desc(payload: dict) -> ForecastDesc | None:
+    """Turn the `flw` forecast description into one paragraph."""
+    text = _text(payload.get("forecastDesc"))
+    if not text:
+        return None
+    return ForecastDesc(text)
+
+
+def format_forecast_desc(report: ForecastDesc) -> str:
+    """Render the local-forecast description."""
+    return f"Hong Kong forecast description\n{report.description}\n"
+
+
+def format_forecast_desc_miss(*, as_json: bool = False) -> str:
+    """Say that the local forecast has no description."""
+    return _unavailable("No forecast description is available.", as_json=as_json)
 
 
 def parse_situation(payload: dict) -> GeneralSituation | None:
@@ -3037,6 +3067,7 @@ def format_json(
     | LocalForecast
     | ForecastOutlook
     | ForecastPeriod
+    | ForecastDesc
     | GeneralSituation
     | FireDanger
     | TcInfo
