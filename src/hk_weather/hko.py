@@ -413,6 +413,12 @@ class RadiationReport:
 
 
 @dataclass(frozen=True)
+class WeatherBulletin:
+    date: str
+    time: str
+
+
+@dataclass(frozen=True)
 class RainstormReminder:
     reminder: str
 
@@ -715,6 +721,16 @@ def fetch_radiation(timeout: float = 10, lang: str = "en") -> RadiationReport | 
         f"?dataType=RYES&rformat=json&date={day.replace('-', '')}&station=HKO&lang=en"
     )
     return parse_radiation(_fetch_json(_apply_lang(url, lang), timeout), day)
+
+
+def fetch_bulletin(timeout: float = 10, lang: str = "en") -> WeatherBulletin | None:
+    """Download the issue time of yesterday's bulletin (`dataType=RYES`, station HKO)."""
+    day = _hong_kong_yesterday()
+    url = (
+        "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php"
+        f"?dataType=RYES&rformat=json&date={day.replace('-', '')}&station=HKO&lang=en"
+    )
+    return parse_bulletin(_fetch_json(_apply_lang(url, lang), timeout))
 
 
 def fetch_summary(timeout: float = 10, lang: str = "en") -> WeatherSummary:
@@ -2493,6 +2509,34 @@ def format_radiation_miss(*, as_json: bool = False) -> str:
     return _unavailable("No radiation report is available.", as_json=as_json)
 
 
+def parse_bulletin(payload: dict) -> WeatherBulletin | None:
+    """Turn a `RYES` document into the bulletin issue date and time."""
+    raw_date = _text(payload.get("BulletinDate"))
+    raw_time = _text(payload.get("BulletinTime"))
+    if len(raw_date) == 8 and raw_date.isdigit():
+        date = f"{raw_date[:4]}-{raw_date[4:6]}-{raw_date[6:8]}"
+    else:
+        date = ""
+    if len(raw_time) == 4 and raw_time.isdigit():
+        clock = f"{raw_time[:2]}:{raw_time[2:]}"
+    else:
+        clock = raw_time
+    if not date and not clock:
+        return None
+    return WeatherBulletin(date, clock)
+
+
+def format_bulletin(bulletin: WeatherBulletin) -> str:
+    """Render when yesterday's Observatory bulletin was issued."""
+    issued = " ".join(part for part in (bulletin.date, bulletin.time) if part)
+    return f"Hong Kong weather bulletin\n{issued}\n"
+
+
+def format_bulletin_miss(*, as_json: bool = False) -> str:
+    """Say that the bulletin issue time is not available."""
+    return _unavailable("No weather bulletin time is available.", as_json=as_json)
+
+
 def _hour_mm(value: object) -> float | None:
     if isinstance(value, bool):
         return None
@@ -2863,6 +2907,7 @@ def format_json(
     | AccumulatedRainfall
     | AverageRainfall
     | RadiationReport
+    | WeatherBulletin
     | PsrForecast
     | WeekendForecast
     | VisibilityReport

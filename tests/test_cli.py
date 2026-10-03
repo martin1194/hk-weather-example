@@ -1166,6 +1166,51 @@ def test_cli_radiation_when_missing(monkeypatch, capsys):
     assert json.loads(capsys.readouterr().out) == {"message": "No radiation report is available."}
 
 
+def test_cli_bulletin_prints_issue_time(monkeypatch, capsys):
+    seen = {}
+    monkeypatch.setattr("hk_weather.hko._hong_kong_yesterday", lambda now=None: "2026-10-02")
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response({"BulletinDate": "20261003", "BulletinTime": "0015"})
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--bulletin", "--lang", "tc"]) == 0
+    assert "dataType=RYES" in seen["url"]
+    assert "station=HKO" in seen["url"]
+    assert "date=20261002" in seen["url"]
+    assert "lang=tc" in seen["url"]
+    assert capsys.readouterr().out == "Hong Kong weather bulletin\n2026-10-03 00:15\n"
+
+
+def test_cli_bulletin_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_yesterday", lambda now=None: "2026-10-02")
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"BulletinDate": "20261003", "BulletinTime": "0015"}),
+    )
+    assert main(["--bulletin", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {"date": "2026-10-03", "time": "00:15"}
+
+
+def test_cli_bulletin_when_missing(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_yesterday", lambda now=None: "2026-10-02")
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"HongKongDesc": "background radiation"}),
+    )
+    assert main(["--bulletin"]) == 0
+    assert capsys.readouterr().out == "No weather bulletin time is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({}),
+    )
+    assert main(["--bulletin", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No weather bulletin time is available."
+    }
+
+
 def test_cli_tomorrow_prints_the_next_hong_kong_day(monkeypatch, capsys):
     seen = {}
     monkeypatch.setattr("hk_weather.hko._hong_kong_tomorrow", lambda now=None: "2026-10-04")
