@@ -21,6 +21,7 @@ from hk_weather.hko import (
     fetch_lightning,
     fetch_moon,
     fetch_nine_day,
+    fetch_overnight,
     fetch_psr,
     fetch_quakes,
     fetch_rain,
@@ -63,6 +64,8 @@ from hk_weather.hko import (
     format_moon_miss,
     format_place_miss,
     format_nine_day,
+    format_overnight,
+    format_overnight_miss,
     format_places,
     format_psr,
     format_quakes,
@@ -132,6 +135,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--visibility lists 10-minute mean visibility; "
             "--hottest prints the warmest place; "
             "--coldest prints the coolest place; "
+            "--overnight prints the midnight-to-9am minimum; "
             "--wettest prints the wettest district; "
             "--driest prints the driest district; "
             "--tide prints today's high and low tides; "
@@ -338,6 +342,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="Print the coolest place from the current report",
     )
     parser.add_argument(
+        "-O",
+        "--overnight",
+        action="store_true",
+        help="Print the midnight-to-9am minimum temperature from the current report",
+    )
+    parser.add_argument(
         "--stations",
         action="store_true",
         help="List temperature and humidity at each station",
@@ -518,6 +528,12 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_coldest_miss(as_json=args.json)
             else:
                 text = format_json(coldest) if args.json else format_coldest(coldest)
+        elif args.overnight:
+            overnight = fetch_overnight(timeout=args.timeout, lang=args.lang)
+            if overnight is None:
+                text = format_overnight_miss(as_json=args.json)
+            else:
+                text = format_json(overnight) if args.json else format_overnight(overnight)
         elif args.stations:
             stations = fetch_stations(timeout=args.timeout, lang=args.lang)
             text = format_json(stations) if args.json else format_stations(stations)
