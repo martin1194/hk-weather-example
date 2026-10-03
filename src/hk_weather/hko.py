@@ -100,6 +100,21 @@ SINCE_MIDNIGHT_URLS = {
         "latest_since_midnight_maxmin_sc.csv"
     ),
 }
+# Latest 1-minute mean sea level pressure. CSV, one file per language.
+PRESSURE_URLS = {
+    "en": (
+        "https://data.weather.gov.hk/weatherAPI/hko_data/regional-weather/"
+        "latest_1min_pressure.csv"
+    ),
+    "tc": (
+        "https://data.weather.gov.hk/weatherAPI/hko_data/regional-weather/"
+        "latest_1min_pressure_uc.csv"
+    ),
+    "sc": (
+        "https://data.weather.gov.hk/weatherAPI/hko_data/regional-weather/"
+        "latest_1min_pressure_sc.csv"
+    ),
+}
 # Hourly cloud-to-ground and cloud-to-cloud lightning counts. lang is accepted.
 STRIKES_URL = (
     "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php"
@@ -788,6 +803,18 @@ class SinceMidnightReport:
 
 
 @dataclass(frozen=True)
+class PressureReading:
+    place: str
+    pressure_hpa: float
+
+
+@dataclass(frozen=True)
+class PressureReport:
+    obs_time: str
+    stations: tuple[PressureReading, ...]
+
+
+@dataclass(frozen=True)
 class HottestReading:
     record_time: str
     place: str
@@ -1308,6 +1335,22 @@ def fetch_since_midnight(timeout: float = 10, lang: str = "en") -> SinceMidnight
     except UnicodeDecodeError as exc:
         raise WeatherError("Hong Kong Observatory returned invalid text") from exc
     return parse_since_midnight(text)
+
+
+def fetch_pressure(timeout: float = 10, lang: str = "en") -> PressureReport:
+    """Download the latest 1-minute mean sea level pressure at automatic stations."""
+    url = PRESSURE_URLS.get(lang, PRESSURE_URLS["en"])
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            raw = response.read()
+    except (urllib.error.URLError, TimeoutError) as exc:
+        raise WeatherError(f"could not reach Hong Kong Observatory: {exc}") from exc
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise WeatherError("Hong Kong Observatory returned invalid text") from exc
+    return parse_pressure(text)
 
 
 def fetch_forecast_icon(
@@ -3082,6 +3125,41 @@ def format_since_midnight_miss(*, as_json: bool = False) -> str:
     return _unavailable("No temperatures since midnight are available.", as_json=as_json)
 
 
+def parse_pressure(text: str) -> PressureReport:
+    """Turn the regional sea-level pressure CSV into one row per station."""
+    stations: list[PressureReading] = []
+    obs_time = ""
+    rows = csv.reader(io.StringIO(text))
+    next(rows, None)
+    for row in rows:
+        if len(row) < 3:
+            continue
+        place = _text(row[1])
+        pressure = _hour_mm(row[2])
+        if not place or pressure is None:
+            continue
+        clock = _text(row[0])
+        if not obs_time and len(clock) == 12 and clock.isdigit():
+            obs_time = f"{clock[:4]}-{clock[4:6]}-{clock[6:8]} {clock[8:10]}:{clock[10:12]}"
+        stations.append(PressureReading(place, pressure))
+    return PressureReport(obs_time, tuple(stations))
+
+
+def format_pressure(report: PressureReport) -> str:
+    """Render the latest 1-minute mean sea level pressure, one station per line."""
+    lines = ["Hong Kong sea level pressure"]
+    if report.obs_time:
+        lines.append(f"Recorded: {report.obs_time}")
+    for reading in report.stations:
+        lines.append(f"{reading.place}  {_number(reading.pressure_hpa)} hPa")
+    return "\n".join(lines) + "\n"
+
+
+def format_pressure_miss(*, as_json: bool = False) -> str:
+    """Say that no sea level pressure is available."""
+    return _unavailable("No sea level pressure is available.", as_json=as_json)
+
+
 def format_forecast_icon(report: ForecastIcons) -> str:
     """Render each day's forecast icon."""
     lines = ["Hong Kong forecast icons"]
@@ -4326,6 +4404,7 @@ def format_json(
     | TempTime
     | MinuteTempReport
     | SinceMidnightReport
+    | PressureReport
     | WindForecast
     | GustReport
     | ForecastIcons

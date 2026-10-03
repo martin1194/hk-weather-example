@@ -5008,6 +5008,62 @@ def test_cli_since_midnight_when_missing(monkeypatch, capsys):
     }
 
 
+def test_cli_pressure_prints_latest_stations(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _text_response(
+            "Date time,Automatic Weather Station,Mean Sea Level Pressure(hPa)\n"
+            "202610040210,Chek Lap Kok,  1011.9  \n"
+            "202610040210,Peng Chau,N/A\n"
+            "202610040210,HK Observatory,1011.8\n"
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--pressure", "--lang", "tc"]) == 0
+    assert seen["url"].endswith("latest_1min_pressure_uc.csv")
+    assert capsys.readouterr().out == (
+        "Hong Kong sea level pressure\n"
+        "Recorded: 2026-10-04 02:10\n"
+        "Chek Lap Kok  1011.9 hPa\n"
+        "HK Observatory  1011.8 hPa\n"
+    )
+
+
+def test_cli_pressure_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Date time,Station,Pressure\n"
+            "202610040210,Chek Lap Kok,1011.9\n"
+        ),
+    )
+    assert main(["--pressure", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "obs_time": "2026-10-04 02:10",
+        "stations": [{"place": "Chek Lap Kok", "pressure_hpa": 1011.9}],
+    }
+
+
+def test_cli_pressure_when_missing(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Date time,Station,Pressure\n"
+            "202610040210,Peng Chau,N/A\n"
+        ),
+    )
+    assert main(["--pressure"]) == 0
+    assert capsys.readouterr().out == "No sea level pressure is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(""),
+    )
+    assert main(["--pressure", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {"message": "No sea level pressure is available."}
+
+
 def test_cli_temp_time_prints_timestamp(monkeypatch, capsys):
     seen = {}
 
