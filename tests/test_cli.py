@@ -4798,6 +4798,55 @@ def test_cli_humidity_when_no_reading(monkeypatch, capsys):
     assert capsys.readouterr().out == "No humidity reading is available.\n"
 
 
+def test_cli_humidity_time_prints_timestamp(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response(
+            {
+                "humidity": {
+                    "recordTime": "  2026-10-03T16:00:00+08:00  ",
+                    "data": [{"place": "Hong Kong Observatory", "value": 80, "unit": "percent"}],
+                }
+            }
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--humidity-time", "--lang", "tc"]) == 0
+    assert "dataType=rhrread" in seen["url"]
+    assert "lang=tc" in seen["url"]
+    assert capsys.readouterr().out == "Hong Kong humidity time\n2026-10-03T16:00:00+08:00\n"
+
+
+def test_cli_humidity_time_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {"humidity": {"recordTime": "2026-10-03T16:00:00+08:00", "data": []}}
+        ),
+    )
+    assert main(["--humidity-time", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {"recorded": "2026-10-03T16:00:00+08:00"}
+
+
+def test_cli_humidity_time_when_missing(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {"humidity": [{"place": "Hong Kong Observatory", "value": 80}]}
+        ),
+    )
+    assert main(["--humidity-time"]) == 0
+    assert capsys.readouterr().out == "No humidity time is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"humidity": {"recordTime": "  ", "data": []}}),
+    )
+    assert main(["--humidity-time", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {"message": "No humidity time is available."}
+
+
 def test_cli_wettest_prints_wettest_district(monkeypatch, capsys):
     seen = {}
 

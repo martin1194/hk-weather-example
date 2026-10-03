@@ -138,6 +138,8 @@ hk-weather --strikes
 hk-weather --strikes --json
 hk-weather --humidity
 hk-weather --humidity --json
+hk-weather --humidity-time
+hk-weather --humidity-time --json
 hk-weather --humidest
 hk-weather --humidest --json
 hk-weather --least-humid
@@ -317,6 +319,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --strikes` (or `-l`) prints hourly cloud-to-ground and cloud-to-cloud lightning counts by region (`dataType=LHL`). `--strikes --json` prints those counts as one JSON object. `--lang` applies. If none are available, it says `No lightning counts are available.`
 
 `hk-weather --humidity` prints humidity by place from the current report, with the record time when the Observatory includes it. `--humidity --json` prints that list as one JSON object. If no reading is present, it says so.
+
+`hk-weather --humidity-time` prints when those humidity readings were recorded (`humidity.recordTime`). `--humidity` still prints the readings. `--temp-time` still prints when the temperatures were recorded. `--humidity-time --json` prints that timestamp as one JSON object. `--lang` applies. If the field is missing or blank, it says `No humidity time is available.`
 
 `hk-weather --humidest` prints the most humid place from the current report, for example `Chek Lap Kok  95%`. `--humidest --json` prints that reading as one JSON object. `--lang` applies. If no reading is present, it says so.
 
