@@ -175,6 +175,21 @@ WBGT_URLS = {
         "recent10_60min_wbgt_sc.csv"
     ),
 }
+# Latest 1-minute solar radiation. CSV, one file per language.
+SOLAR_URLS = {
+    "en": (
+        "https://data.weather.gov.hk/weatherAPI/hko_data/regional-weather/"
+        "latest_1min_solar.csv"
+    ),
+    "tc": (
+        "https://data.weather.gov.hk/weatherAPI/hko_data/regional-weather/"
+        "latest_1min_solar_uc.csv"
+    ),
+    "sc": (
+        "https://data.weather.gov.hk/weatherAPI/hko_data/regional-weather/"
+        "latest_1min_solar_sc.csv"
+    ),
+}
 # Latest hourly mean ambient gamma dose rate. CSV, one file per language.
 HOURLY_DOSE_URLS = {
     "en": (
@@ -975,6 +990,20 @@ class WbgtReport:
 
 
 @dataclass(frozen=True)
+class SolarReading:
+    place: str
+    global_w_m2: float
+    direct_w_m2: float
+    diffuse_w_m2: float
+
+
+@dataclass(frozen=True)
+class SolarReport:
+    obs_time: str
+    stations: tuple[SolarReading, ...]
+
+
+@dataclass(frozen=True)
 class HottestReading:
     record_time: str
     place: str
@@ -1611,6 +1640,22 @@ def fetch_wbgt(timeout: float = 10, lang: str = "en") -> WbgtReport:
     except UnicodeDecodeError as exc:
         raise WeatherError("Hong Kong Observatory returned invalid text") from exc
     return parse_wbgt(text)
+
+
+def fetch_solar(timeout: float = 10, lang: str = "en") -> SolarReport:
+    """Download the latest 1-minute solar radiation at automatic stations."""
+    url = SOLAR_URLS.get(lang, SOLAR_URLS["en"])
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            raw = response.read()
+    except (urllib.error.URLError, TimeoutError) as exc:
+        raise WeatherError(f"could not reach Hong Kong Observatory: {exc}") from exc
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise WeatherError("Hong Kong Observatory returned invalid text") from exc
+    return parse_solar(text)
 
 
 def fetch_forecast_icon(
@@ -3653,6 +3698,59 @@ def format_wbgt_miss(*, as_json: bool = False) -> str:
     return _unavailable("No wet bulb globe temperature is available.", as_json=as_json)
 
 
+def parse_solar(text: str) -> SolarReport:
+    """Turn the solar CSV into the latest minute, one row per station."""
+    stations: list[SolarReading] = []
+    latest = ""
+    rows = csv.reader(io.StringIO(text))
+    next(rows, None)
+    for row in rows:
+        if len(row) < 5:
+            continue
+        place = _text(row[1])
+        global_w = _hour_mm(row[2])
+        direct_w = _hour_mm(row[3])
+        diffuse_w = _hour_mm(row[4])
+        clock = _text(row[0])
+        if (
+            not place
+            or global_w is None
+            or direct_w is None
+            or diffuse_w is None
+            or len(clock) != 12
+            or not clock.isdigit()
+        ):
+            continue
+        if clock > latest:
+            latest = clock
+            stations = []
+        if clock == latest:
+            stations.append(SolarReading(place, global_w, direct_w, diffuse_w))
+    obs_time = ""
+    if latest:
+        obs_time = f"{latest[:4]}-{latest[4:6]}-{latest[6:8]} {latest[8:10]}:{latest[10:12]}"
+    return SolarReport(obs_time, tuple(stations))
+
+
+def format_solar(report: SolarReport) -> str:
+    """Render the latest 1-minute solar radiation, one station per line."""
+    lines = ["Hong Kong solar radiation"]
+    if report.obs_time:
+        lines.append(f"Recorded: {report.obs_time}")
+    for reading in report.stations:
+        lines.append(
+            f"{reading.place}  global {_number(reading.global_w_m2)}"
+            f"  direct {_number(reading.direct_w_m2)}"
+            f"  diffuse {_number(reading.diffuse_w_m2)} W/m²"
+        )
+    return "\n".join(lines) + "\n"
+
+
+def format_solar_miss(*, as_json: bool = False) -> str:
+    """Say that no solar radiation is available."""
+    return _unavailable("No solar radiation is available.", as_json=as_json)
+
+
 def format_forecast_icon(report: ForecastIcons) -> str:
     """Render each day's forecast icon."""
     lines = ["Hong Kong forecast icons"]
@@ -4985,6 +5083,7 @@ def format_json(
     | TempDiffReport
     | HeatIndexReport
     | WbgtReport
+    | SolarReport
     | WindForecast
     | GustReport
     | ForecastIcons

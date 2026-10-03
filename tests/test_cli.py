@@ -5472,6 +5472,70 @@ def test_cli_wbgt_when_missing(monkeypatch, capsys):
     }
 
 
+def test_cli_solar_prints_latest_minute(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _text_response(
+            "Date time,Automatic Weather Station,Global,Direct,Diffuse\n"
+            "202610040400,Kau Sai Chau,0.0,0.0,0.0\n"
+            "202610040410,Kau Sai Chau,  1.0  ,0.0,1.0\n"
+            "202610040410,Sha Tin,N/A,N/A,N/A\n"
+            "202610040410,King's Park,0.0,0.0,0.0\n"
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--solar", "--lang", "tc"]) == 0
+    assert seen["url"].endswith("latest_1min_solar_uc.csv")
+    assert capsys.readouterr().out == (
+        "Hong Kong solar radiation\n"
+        "Recorded: 2026-10-04 04:10\n"
+        "Kau Sai Chau  global 1  direct 0  diffuse 1 W/m²\n"
+        "King's Park  global 0  direct 0  diffuse 0 W/m²\n"
+    )
+
+
+def test_cli_solar_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Date time,Station,Global,Direct,Diffuse\n"
+            "202610040410,Kau Sai Chau,1.0,0.0,1.0\n"
+        ),
+    )
+    assert main(["--solar", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "obs_time": "2026-10-04 04:10",
+        "stations": [
+            {
+                "place": "Kau Sai Chau",
+                "global_w_m2": 1.0,
+                "direct_w_m2": 0.0,
+                "diffuse_w_m2": 1.0,
+            }
+        ],
+    }
+
+
+def test_cli_solar_when_missing(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Date time,Station,Global,Direct,Diffuse\n"
+            "202610040410,Sha Tin,N/A,0.0,0.0\n"
+        ),
+    )
+    assert main(["--solar"]) == 0
+    assert capsys.readouterr().out == "No solar radiation is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(""),
+    )
+    assert main(["--solar", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {"message": "No solar radiation is available."}
+
+
 def test_cli_temp_time_prints_timestamp(monkeypatch, capsys):
     seen = {}
 
