@@ -44,6 +44,8 @@ hk-weather --nine-updated
 hk-weather --nine-updated --json
 hk-weather --nine-weather
 hk-weather --nine-weather --json
+hk-weather --nine-temp
+hk-weather --nine-temp --json
 hk-weather --today
 hk-weather -Y --json
 hk-weather --yesterday
@@ -213,6 +215,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --nine-updated` prints when that 9-day forecast was last updated (`updateTime`). `--nine-day` still prints the daily forecast. `--forecast-updated` still prints the local-forecast time. `--nine-updated --json` prints that timestamp as one JSON object. `--lang` applies. If the field is missing or blank, it says `No 9-day update time is available.`
 
 `hk-weather --nine-weather` prints each day's weather sentence from that forecast (`forecastWeather`), for example `2026-10-04 Sunday  Mainly cloudy with a few showers`. `--nine-day` still prints the full daily forecast. `--wind` still prints the wind. `--nine-weather --json` prints those days as one JSON object. `--lang` applies. If no weather text is present, it says `No 9-day weather is available.`
+
+`hk-weather --nine-temp` prints each day's high and low from that forecast (`forecastMaxtemp` and `forecastMintemp`), for example `2026-10-04 Sunday  high 31°C  low 26°C`. `--temps` still prints the current station temperatures. `--nine-temp --json` prints those days as one JSON object. `--lang` applies. If no temperature is present, it says `No 9-day temperatures are available.`
 
 `hk-weather --today` (or `-Y`) prints only today's day from that forecast, using the Hong Kong calendar date. It includes weather, high and low, humidity, chance of rain, and wind when the Observatory sends them. `--today --json` prints that day as one JSON object. `--lang` applies. For example: `2026-10-03 Saturday  high 31°C  low 27°C  humidity 75-95%  rain Medium High`. If that day is missing, it says so.
 
