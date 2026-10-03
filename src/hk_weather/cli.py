@@ -10,6 +10,7 @@ from hk_weather.hko import (
     fetch_current,
     fetch_forecast,
     fetch_forecast_day,
+    fetch_coldest,
     fetch_hottest,
     fetch_humidity,
     fetch_lightning,
@@ -31,6 +32,8 @@ from hk_weather.hko import (
     filter_stations,
     format_day_miss,
     format_forecast,
+    format_coldest,
+    format_coldest_miss,
     format_hottest,
     format_hottest_miss,
     format_humidity,
@@ -97,7 +100,8 @@ def build_parser() -> argparse.ArgumentParser:
             "--warning-info prints detailed warning messages; "
             "--weekend prints Saturday and Sunday; "
             "--visibility lists 10-minute mean visibility; "
-            "--hottest prints the warmest place."
+            "--hottest prints the warmest place; "
+            "--coldest prints the coolest place."
         ),
     )
     parser.add_argument(
@@ -231,6 +235,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="Print the warmest place from the current report",
     )
     parser.add_argument(
+        "-C",
+        "--coldest",
+        action="store_true",
+        help="Print the coolest place from the current report",
+    )
+    parser.add_argument(
         "--stations",
         action="store_true",
         help="List temperature and humidity at each station",
@@ -345,6 +355,12 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_hottest_miss(as_json=args.json)
             else:
                 text = format_json(hottest) if args.json else format_hottest(hottest)
+        elif args.coldest:
+            coldest = fetch_coldest(timeout=args.timeout, lang=args.lang)
+            if coldest is None:
+                text = format_coldest_miss(as_json=args.json)
+            else:
+                text = format_json(coldest) if args.json else format_coldest(coldest)
         elif args.stations:
             stations = fetch_stations(timeout=args.timeout, lang=args.lang)
             text = format_json(stations) if args.json else format_stations(stations)
