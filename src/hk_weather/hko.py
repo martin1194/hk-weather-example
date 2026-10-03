@@ -468,6 +468,11 @@ class RadiationWeather:
 
 
 @dataclass(frozen=True)
+class RadiationGround:
+    note: str
+
+
+@dataclass(frozen=True)
 class RainstormReminder:
     reminder: str
 
@@ -842,6 +847,16 @@ def fetch_radiation_weather(timeout: float = 10, lang: str = "en") -> RadiationW
         f"?dataType=RYES&rformat=json&date={day.replace('-', '')}&station=HKO&lang=en"
     )
     return parse_radiation_weather(_fetch_json(_apply_lang(url, lang), timeout))
+
+
+def fetch_radiation_ground(timeout: float = 10, lang: str = "en") -> RadiationGround | None:
+    """Download the ground-variation radiation note (`dataType=RYES`, station HKO)."""
+    day = _hong_kong_yesterday()
+    url = (
+        "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php"
+        f"?dataType=RYES&rformat=json&date={day.replace('-', '')}&station=HKO&lang=en"
+    )
+    return parse_radiation_ground(_fetch_json(_apply_lang(url, lang), timeout))
 
 
 def fetch_summary(timeout: float = 10, lang: str = "en") -> WeatherSummary:
@@ -2818,6 +2833,24 @@ def format_radiation_weather_miss(*, as_json: bool = False) -> str:
     return _unavailable("No radiation weather note is available.", as_json=as_json)
 
 
+def parse_radiation_ground(payload: dict) -> RadiationGround | None:
+    """Turn a `RYES` document into the ground-variation radiation note."""
+    note = _text(payload.get("NoteDesc2"))
+    if not note:
+        return None
+    return RadiationGround(note)
+
+
+def format_radiation_ground(reading: RadiationGround) -> str:
+    """Render how outdoor radiation varies with the ground."""
+    return f"Hong Kong radiation ground\n{reading.note}\n"
+
+
+def format_radiation_ground_miss(*, as_json: bool = False) -> str:
+    """Say that the ground-variation radiation note is not available."""
+    return _unavailable("No radiation ground note is available.", as_json=as_json)
+
+
 def _hour_mm(value: object) -> float | None:
     if isinstance(value, bool):
         return None
@@ -3196,6 +3229,7 @@ def format_json(
     | WeatherBulletin
     | RadiationNote
     | RadiationWeather
+    | RadiationGround
     | PsrForecast
     | WeekendForecast
     | VisibilityReport
