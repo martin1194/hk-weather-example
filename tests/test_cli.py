@@ -175,6 +175,53 @@ def test_cli_forecast_json_is_one_object(monkeypatch, capsys):
     }
 
 
+def test_cli_situation_prints_paragraph(monkeypatch, capsys):
+    seen = {}
+    message = (
+        "The northeast monsoon is affecting the coast of Guangdong."
+    )
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response({"generalSituation": f"  {message}  "})
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--situation", "--lang", "tc"]) == 0
+    assert "dataType=flw" in seen["url"]
+    assert "lang=tc" in seen["url"]
+    assert capsys.readouterr().out == f"Hong Kong general situation\n{message}\n"
+
+
+def test_cli_situation_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {"generalSituation": "A dry northeast monsoon is affecting the coast."}
+        ),
+    )
+    assert main(["-g", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "situation": "A dry northeast monsoon is affecting the coast."
+    }
+
+
+def test_cli_situation_when_blank_or_missing(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"generalSituation": "   "}),
+    )
+    assert main(["--situation"]) == 0
+    assert capsys.readouterr().out == "No general situation is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({}),
+    )
+    assert main(["--situation", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No general situation is available."
+    }
+
+
 def test_cli_warnings_lists_active_codes(monkeypatch, capsys):
     seen = {}
 

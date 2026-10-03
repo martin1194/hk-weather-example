@@ -74,6 +74,11 @@ class LocalForecast:
 
 
 @dataclass(frozen=True)
+class GeneralSituation:
+    situation: str
+
+
+@dataclass(frozen=True)
 class WeatherWarning:
     code: str
     description: str
@@ -394,6 +399,13 @@ def fetch_current(url: str = DEFAULT_URL, timeout: float = 10, lang: str = "en")
 def fetch_forecast(url: str = FORECAST_URL, timeout: float = 10, lang: str = "en") -> LocalForecast:
     """Download the local weather forecast (`dataType=flw`)."""
     return parse_forecast(_fetch_json(_apply_lang(url, lang), timeout))
+
+
+def fetch_situation(
+    url: str = FORECAST_URL, timeout: float = 10, lang: str = "en"
+) -> GeneralSituation | None:
+    """Download the general situation from the local forecast (`dataType=flw`)."""
+    return parse_situation(_fetch_json(_apply_lang(url, lang), timeout))
 
 
 def fetch_warnings(
@@ -849,6 +861,24 @@ def format_forecast(forecast: LocalForecast) -> str:
     if forecast.outlook:
         lines.append(f"Outlook: {forecast.outlook}")
     return "\n".join(lines) + "\n"
+
+
+def parse_situation(payload: dict) -> GeneralSituation | None:
+    """Turn the `flw` general situation into one paragraph."""
+    text = _text(payload.get("generalSituation"))
+    if not text:
+        return None
+    return GeneralSituation(text)
+
+
+def format_situation(report: GeneralSituation) -> str:
+    """Render the general situation."""
+    return f"Hong Kong general situation\n{report.situation}\n"
+
+
+def format_situation_miss(*, as_json: bool = False) -> str:
+    """Say that the local forecast has no general situation."""
+    return _unavailable("No general situation is available.", as_json=as_json)
 
 
 def parse_warnings(payload: dict) -> tuple[WeatherWarning, ...]:
@@ -1910,6 +1940,7 @@ def format_year_rain_miss(*, as_json: bool = False) -> str:
 def format_json(
     report: CurrentWeather
     | LocalForecast
+    | GeneralSituation
     | NineDayForecast
     | UvIndex
     | SpecialTips
