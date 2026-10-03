@@ -46,6 +46,8 @@ hk-weather --radiation
 hk-weather --radiation --json
 hk-weather --bulletin
 hk-weather --bulletin --json
+hk-weather --radiation-note
+hk-weather --radiation-note --json
 hk-weather --tomorrow
 hk-weather -T --json
 hk-weather --weekend
@@ -193,6 +195,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --radiation` prints yesterday's outdoor gamma radiation report from that same summary (`HongKongDesc`). `--radiation --json` prints that paragraph as one JSON object. `--lang` applies. If the report is missing, it says `No radiation report is available.`
 
 `hk-weather --bulletin` prints when that summary was issued (`BulletinDate` and `BulletinTime`), for example `2026-10-03 00:15`. `--yesterday` still prints the temperature and rainfall summary. `--bulletin --json` prints the issue time as one JSON object. `--lang` applies. If the time is missing, it says `No weather bulletin time is available.`
+
+`hk-weather --radiation-note` prints the note on the normal outdoor radiation range from that same summary (`NoteDesc`). `--radiation` still prints yesterday's dose-rate report. `--radiation-note --json` prints the note as one JSON object. `--lang` applies. If the note is missing, it says `No radiation note is available.`
 
 `hk-weather --tomorrow` (or `-T`) prints only tomorrow's day from that forecast, including wind when the Observatory sends it. `--tomorrow --json` prints that day as one JSON object. `--lang` applies. If that day is missing, it says so.
 

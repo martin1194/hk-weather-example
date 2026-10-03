@@ -22,6 +22,7 @@ from hk_weather.hko import (
     fetch_avg_rain,
     fetch_radiation,
     fetch_bulletin,
+    fetch_radiation_note,
     fetch_coldest,
     fetch_cyclone,
     fetch_hottest,
@@ -83,6 +84,8 @@ from hk_weather.hko import (
     format_radiation_miss,
     format_bulletin,
     format_bulletin_miss,
+    format_radiation_note,
+    format_radiation_note_miss,
     format_felt,
     format_felt_miss,
     format_fire_danger,
@@ -224,6 +227,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--avg-rain prints the climatological rainfall normal; "
             "--radiation prints yesterday's gamma radiation report; "
             "--bulletin prints when yesterday's bulletin was issued; "
+            "--radiation-note prints the normal radiation range; "
             "--tomorrow prints tomorrow; "
             "--day N prints forecast day N (1 is the first entry); "
             "--psr lists the chance of significant rain; "
@@ -355,6 +359,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--bulletin",
         action="store_true",
         help="Print when yesterday's Observatory weather bulletin was issued",
+    )
+    parser.add_argument(
+        "--radiation-note",
+        action="store_true",
+        help="Print the note on the normal outdoor radiation range",
     )
     parser.add_argument(
         "-T",
@@ -719,6 +728,16 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_bulletin_miss(as_json=args.json)
             else:
                 text = format_json(bulletin) if args.json else format_bulletin(bulletin)
+        elif args.radiation_note:
+            radiation_note = fetch_radiation_note(timeout=args.timeout, lang=args.lang)
+            if radiation_note is None:
+                text = format_radiation_note_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(radiation_note)
+                    if args.json
+                    else format_radiation_note(radiation_note)
+                )
         elif args.tomorrow:
             tomorrow = fetch_tomorrow(timeout=args.timeout, lang=args.lang)
             if tomorrow is None:
