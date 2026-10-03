@@ -1546,7 +1546,7 @@ def test_cli_short_is_one_line(monkeypatch, capsys):
     assert "dataType=rhrread" in seen["url"]
     out = capsys.readouterr().out
     assert out == (
-        "Rain, 28°C, humidity 85% — "
+        "🌧️ Rain, 28°C, humidity 85% — "
         "The Thunderstorm Warning has been issued (+1 more)\n"
     )
     assert "Hong Kong weather" not in out
@@ -1565,7 +1565,68 @@ def test_cli_short_without_warning_or_humidity(monkeypatch, capsys):
         ),
     )
     assert main(["--short"]) == 0
-    assert capsys.readouterr().out == "Sunny, 30°C, humidity n/a\n"
+    assert capsys.readouterr().out == "☀️ Sunny, 30°C, humidity n/a\n"
+
+
+def test_cli_report_prefixes_known_icon(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {
+                "updateTime": "2026-10-02T23:02:00+08:00",
+                "icon": [63, 65],
+                "temperature": {
+                    "data": [{"place": "Hong Kong Observatory", "value": 28, "unit": "C"}]
+                },
+                "humidity": {
+                    "data": [{"place": "Hong Kong Observatory", "value": 85, "unit": "percent"}]
+                },
+            }
+        ),
+    )
+    assert main([]) == 0
+    assert "Conditions: 🌧️ Rain, ⛈️ Thunderstorms" in capsys.readouterr().out
+    assert main(["--short"]) == 0
+    assert capsys.readouterr().out == "🌧️ Rain, ⛈️ Thunderstorms, 28°C, humidity 85%\n"
+
+
+def test_cli_unmapped_or_missing_icon_stays_plain(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {
+                "icon": [999],
+                "temperature": {
+                    "data": [{"place": "Hong Kong Observatory", "value": 28, "unit": "C"}]
+                },
+                "humidity": "",
+            }
+        ),
+    )
+    assert main([]) == 0
+    report = capsys.readouterr().out
+    assert "Conditions: Icon 999\n" in report
+    assert "🌧️" not in report
+    assert main(["--short"]) == 0
+    assert capsys.readouterr().out == "Icon 999, 28°C, humidity n/a\n"
+
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {
+                "temperature": {
+                    "data": [{"place": "Hong Kong Observatory", "value": 28, "unit": "C"}]
+                },
+                "humidity": "",
+            }
+        ),
+    )
+    assert main([]) == 0
+    report = capsys.readouterr().out
+    assert "Conditions: Unknown\n" in report
+    assert "☀️" not in report
+    assert main(["-s"]) == 0
+    assert capsys.readouterr().out == "Unknown, 28°C, humidity n/a\n"
 
 
 def test_cli_rain_lists_districts(monkeypatch, capsys):

@@ -4,6 +4,7 @@ from urllib.error import URLError
 
 import pytest
 
+from hk_weather.icons import ICON_EMOJI, WEATHER_ICONS, conditions_with_emoji
 from hk_weather.hko import (
     DEFAULT_URL,
     FORECAST_URL,
@@ -65,11 +66,18 @@ def test_format_report_plain_text():
     assert text.startswith("Hong Kong weather\n")
     assert "Temperature: 28°C (Hong Kong Observatory)" in text
     assert "Humidity: 85%" in text
-    assert "Conditions: Rain" in text
+    assert "Conditions: 🌧️ Rain" in text
     assert "Rainfall (past hour, highest district): 2 mm (Sai Kung)" in text
     assert "Lightning: Lantau" in text
     assert "- The Thunderstorm Warning has been issued." in text
     assert text.endswith("\n")
+
+
+def test_conditions_emoji_follows_known_icons_only():
+    assert set(ICON_EMOJI) == set(WEATHER_ICONS)
+    assert conditions_with_emoji("Rain") == "🌧️ Rain"
+    assert conditions_with_emoji("Icon 999") == "Icon 999"
+    assert conditions_with_emoji("Unknown") == "Unknown"
 
 
 def test_number_formats_int_and_float():
@@ -91,6 +99,7 @@ def test_missing_humidity_and_unknown_icon():
     assert weather.place == "Chek Lap Kok"
     assert weather.humidity_percent is None
     assert weather.conditions == "Icon 999"
+    assert "Conditions: Icon 999" in text
     assert "Humidity: n/a" in text
     assert "Warnings:" not in text
     assert "Rainfall" not in text

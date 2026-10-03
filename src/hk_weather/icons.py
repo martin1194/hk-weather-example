@@ -38,5 +38,60 @@ WEATHER_ICONS: dict[int, str] = {
 }
 
 
+# Same codes as WEATHER_ICONS. Unmapped codes get no emoji.
+ICON_EMOJI: dict[int, str] = {
+    50: "☀️",
+    51: "🌤️",
+    52: "⛅",
+    53: "🌦️",
+    54: "🌦️",
+    60: "☁️",
+    61: "☁️",
+    62: "🌦️",
+    63: "🌧️",
+    64: "🌧️",
+    65: "⛈️",
+    70: "🌙",
+    71: "🌙",
+    72: "🌙",
+    73: "🌙",
+    74: "🌙",
+    75: "🌙",
+    76: "☁️",
+    77: "🌤️",
+    80: "💨",
+    81: "🏜️",
+    82: "💧",
+    83: "🌫️",
+    84: "🌫️",
+    85: "🌫️",
+    90: "🥵",
+    91: "🌡️",
+    92: "🍃",
+    93: "🥶",
+}
+
+_LABEL_EMOJI: dict[str, str] = {}
+for _code, _label in WEATHER_ICONS.items():
+    _emoji = ICON_EMOJI.get(_code)
+    if _emoji and _label not in _LABEL_EMOJI:
+        _LABEL_EMOJI[_label] = _emoji
+
+
 def icon_label(code: int) -> str:
     return WEATHER_ICONS.get(code, f"Icon {code}")
+
+
+def conditions_with_emoji(conditions: str) -> str:
+    """Prefix known condition labels with their icon emoji.
+
+    Missing or unmapped text is returned unchanged.
+    """
+    parts = conditions.split(", ")
+    emojis = [_LABEL_EMOJI.get(part) for part in parts]
+    if not any(emojis):
+        return conditions
+    rendered = [
+        f"{emoji} {part}" if emoji else part for emoji, part in zip(emojis, parts)
+    ]
+    return ", ".join(rendered)

@@ -8,7 +8,7 @@ import urllib.request
 from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta, timezone
 
-from hk_weather.icons import icon_label
+from hk_weather.icons import conditions_with_emoji, icon_label
 
 # Hong Kong Observatory open data. No API key.
 # rhrread: current weather (and its uvindex field). flw: local forecast.
@@ -462,7 +462,7 @@ def format_report(weather: CurrentWeather) -> str:
         "Hong Kong weather",
         "Source: Hong Kong Observatory open data",
         f"Updated: {weather.update_time}",
-        f"Conditions: {weather.conditions}",
+        f"Conditions: {conditions_with_emoji(weather.conditions)}",
         f"Temperature: {_number(weather.temperature_c)}°C ({weather.place})",
         "Humidity: "
         + (
@@ -491,9 +491,8 @@ def format_short(weather: CurrentWeather) -> str:
         if weather.humidity_percent is not None
         else "n/a"
     )
-    line = (
-        f"{weather.conditions}, {_number(weather.temperature_c)}°C, humidity {humidity}"
-    )
+    conditions = conditions_with_emoji(weather.conditions)
+    line = f"{conditions}, {_number(weather.temperature_c)}°C, humidity {humidity}"
     if weather.warnings:
         note = _brief_warning(weather.warnings[0])
         extra = len(weather.warnings) - 1

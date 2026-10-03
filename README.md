@@ -75,7 +75,7 @@ Example:
 Hong Kong weather
 Source: Hong Kong Observatory open data
 Updated: 2026-10-02T23:02:00+08:00
-Conditions: Rain
+Conditions: 🌧️ Rain
 Temperature: 28°C (Hong Kong Observatory)
 Humidity: 85%
 Rainfall (past hour, highest district): 2 mm (Sai Kung)
@@ -86,7 +86,7 @@ Warnings:
 
 The temperature and humidity lines use the Hong Kong Observatory station when that reading is present.
 
-`hk-weather --short` (or `-s`) prints current conditions on one line, for example: `Rain, 28°C, humidity 85% — The Thunderstorm Warning has been issued`. The default multi-line report is unchanged.
+`hk-weather --short` (or `-s`) prints current conditions on one line, for example: `🌧️ Rain, 28°C, humidity 85% — The Thunderstorm Warning has been issued`. A known Observatory icon prefixes that line and the default report's conditions line. A missing or unmapped icon stays plain text.
 
 `hk-weather --forecast` prints the local forecast period, description, and outlook. With `--json`, that same forecast is one JSON object. Current conditions stay the default.
 
