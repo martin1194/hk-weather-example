@@ -54,6 +54,7 @@ from hk_weather.hko import (
     fetch_warnings,
     fetch_weekend,
     fetch_wind,
+    fetch_yesterday,
     filter_stations,
     format_aqhi,
     format_aqhi_miss,
@@ -132,6 +133,8 @@ from hk_weather.hko import (
     format_weekend,
     format_weekend_miss,
     format_wind,
+    format_yesterday,
+    format_yesterday_miss,
 )
 
 
@@ -176,6 +179,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--temps lists temperatures by place; --wind lists the forecast wind; "
             "--quake lists the latest earthquake message; "
             "--felt prints the locally felt earth tremor; --today prints today; "
+            "--yesterday prints yesterday's Observatory summary; "
             "--tomorrow prints tomorrow; "
             "--day N prints forecast day N (1 is the first entry); "
             "--psr lists the chance of significant rain; "
@@ -262,6 +266,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--today",
         action="store_true",
         help="Print today's day from the 9-day forecast (Hong Kong calendar date)",
+    )
+    parser.add_argument(
+        "--yesterday",
+        action="store_true",
+        help="Print yesterday's temperature, rainfall, and humidity at the Observatory",
     )
     parser.add_argument(
         "-T",
@@ -553,6 +562,12 @@ def main(argv: list[str] | None = None) -> int:
                     if args.json
                     else format_tomorrow(today, title="Hong Kong forecast for today")
                 )
+        elif args.yesterday:
+            yesterday = fetch_yesterday(timeout=args.timeout, lang=args.lang)
+            if yesterday is None:
+                text = format_yesterday_miss(as_json=args.json)
+            else:
+                text = format_json(yesterday) if args.json else format_yesterday(yesterday)
         elif args.tomorrow:
             tomorrow = fetch_tomorrow(timeout=args.timeout, lang=args.lang)
             if tomorrow is None:
