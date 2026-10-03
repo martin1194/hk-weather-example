@@ -86,6 +86,7 @@ from hk_weather.hko import (
     fetch_yesterday,
     fetch_mean_temp,
     fetch_max_temp,
+    fetch_min_temp,
     filter_stations,
     format_aqhi,
     format_aqhi_miss,
@@ -228,6 +229,8 @@ from hk_weather.hko import (
     format_mean_temp_miss,
     format_max_temp,
     format_max_temp_miss,
+    format_min_temp,
+    format_min_temp_miss,
 )
 
 
@@ -295,6 +298,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--yesterday prints yesterday's Observatory summary; "
             "--mean-temp prints the latest daily mean temperature; "
             "--max-temp prints the latest daily maximum temperature; "
+            "--min-temp prints the latest daily minimum temperature; "
             "--grass prints yesterday's grass minimum; "
             "--accum-rain prints accumulated rainfall since 1 January; "
             "--avg-rain prints the climatological rainfall normal; "
@@ -461,6 +465,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--max-temp",
         action="store_true",
         help="Print the latest daily maximum temperature at the Observatory",
+    )
+    parser.add_argument(
+        "--min-temp",
+        action="store_true",
+        help="Print the latest daily minimum temperature at the Observatory",
     )
     parser.add_argument(
         "--grass",
@@ -954,6 +963,12 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_max_temp_miss(as_json=args.json)
             else:
                 text = format_json(max_temp) if args.json else format_max_temp(max_temp)
+        elif args.min_temp:
+            min_temp = fetch_min_temp(timeout=args.timeout, lang=args.lang)
+            if min_temp is None:
+                text = format_min_temp_miss(as_json=args.json)
+            else:
+                text = format_json(min_temp) if args.json else format_min_temp(min_temp)
         elif args.grass:
             grass = fetch_grass(timeout=args.timeout, lang=args.lang)
             if grass is None:

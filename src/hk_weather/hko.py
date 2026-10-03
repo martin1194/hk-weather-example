@@ -499,6 +499,12 @@ class DailyMax:
 
 
 @dataclass(frozen=True)
+class DailyMin:
+    date: str
+    temperature_c: float
+
+
+@dataclass(frozen=True)
 class GrassMinimum:
     date: str
     grass_min_c: float
@@ -907,6 +913,16 @@ def fetch_max_temp(timeout: float = 10, lang: str = "en") -> DailyMax | None:
         f"?dataType=CLMMAXT&rformat=json&station=HKO&year={year}&lang=en"
     )
     return parse_max_temp(_fetch_json(_apply_lang(url, lang), timeout))
+
+
+def fetch_min_temp(timeout: float = 10, lang: str = "en") -> DailyMin | None:
+    """Download the latest daily minimum temperature (`dataType=CLMMINT`, station HKO)."""
+    year = _hong_kong_today()[:4]
+    url = (
+        "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php"
+        f"?dataType=CLMMINT&rformat=json&station=HKO&year={year}&lang=en"
+    )
+    return parse_min_temp(_fetch_json(_apply_lang(url, lang), timeout))
 
 
 def fetch_grass(timeout: float = 10, lang: str = "en") -> GrassMinimum | None:
@@ -3150,6 +3166,44 @@ def format_max_temp_miss(*, as_json: bool = False) -> str:
     return _unavailable("No daily maximum temperature is available.", as_json=as_json)
 
 
+def parse_min_temp(payload: dict) -> DailyMin | None:
+    """Turn a `CLMMINT` table into the latest numeric daily minimum."""
+    raw = payload.get("data")
+    if not isinstance(raw, list):
+        return None
+    latest: DailyMin | None = None
+    for row in raw:
+        if not isinstance(row, list) or len(row) < 4:
+            continue
+        year = _text(row[0])
+        month_text = _text(row[1])
+        day_text = _text(row[2])
+        value = _hour_mm(row[3])
+        if (
+            value is None
+            or len(year) != 4
+            or not year.isdigit()
+            or not month_text.isdigit()
+            or not day_text.isdigit()
+        ):
+            continue
+        latest = DailyMin(f"{year}-{month_text.zfill(2)}-{day_text.zfill(2)}", value)
+    return latest
+
+
+def format_min_temp(reading: DailyMin) -> str:
+    """Render the latest daily minimum temperature at the Observatory."""
+    return (
+        "Hong Kong daily minimum temperature\n"
+        f"{reading.date}  {_number(reading.temperature_c)}°C\n"
+    )
+
+
+def format_min_temp_miss(*, as_json: bool = False) -> str:
+    """Say that no daily minimum temperature is available."""
+    return _unavailable("No daily minimum temperature is available.", as_json=as_json)
+
+
 def parse_grass(payload: dict, date: str) -> GrassMinimum | None:
     """Turn a `RYES` document into yesterday's grass minimum temperature."""
     grass = _hour_mm(payload.get("HKOReadingsMinGrassTemp"))
@@ -3768,6 +3822,7 @@ def format_json(
     | YesterdayReport
     | DailyMean
     | DailyMax
+    | DailyMin
     | GrassMinimum
     | AccumulatedRainfall
     | AverageRainfall
