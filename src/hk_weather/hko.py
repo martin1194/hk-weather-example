@@ -175,6 +175,21 @@ WBGT_URLS = {
         "recent10_60min_wbgt_sc.csv"
     ),
 }
+# Latest hourly mean ambient gamma dose rate. CSV, one file per language.
+HOURLY_DOSE_URLS = {
+    "en": (
+        "https://data.weather.gov.hk/weatherAPI/hko_data/regional-weather/"
+        "latest_hourly_rmn.csv"
+    ),
+    "tc": (
+        "https://data.weather.gov.hk/weatherAPI/hko_data/regional-weather/"
+        "latest_hourly_rmn_uc.csv"
+    ),
+    "sc": (
+        "https://data.weather.gov.hk/weatherAPI/hko_data/regional-weather/"
+        "latest_hourly_rmn_sc.csv"
+    ),
+}
 # Latest observed tide height. CSV, one file per language.
 LATEST_TIDE_URLS = {
     "en": "https://data.weather.gov.hk/weatherAPI/hko_data/tide/ALL_en.csv",
@@ -708,6 +723,18 @@ class GammaDose:
     station: str
     date: str
     dose_usv_h: float
+
+
+@dataclass(frozen=True)
+class HourlyDoseReading:
+    place: str
+    dose_usv_h: float
+
+
+@dataclass(frozen=True)
+class HourlyDoseReport:
+    obs_time: str
+    stations: tuple[HourlyDoseReading, ...]
 
 
 @dataclass(frozen=True)
@@ -1274,6 +1301,22 @@ def fetch_dose(timeout: float = 10, lang: str = "en") -> GammaDose | None:
         f"&station={SUNSHINE_STATION}&lang=en"
     )
     return parse_dose(_fetch_json(_apply_lang(url, lang), timeout), day)
+
+
+def fetch_hourly_dose(timeout: float = 10, lang: str = "en") -> HourlyDoseReport:
+    """Download the latest hourly mean ambient gamma dose rate."""
+    url = HOURLY_DOSE_URLS.get(lang, HOURLY_DOSE_URLS["en"])
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            raw = response.read()
+    except (urllib.error.URLError, TimeoutError) as exc:
+        raise WeatherError(f"could not reach Hong Kong Observatory: {exc}") from exc
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise WeatherError("Hong Kong Observatory returned invalid text") from exc
+    return parse_hourly_dose(text)
 
 
 def fetch_accum_rain(timeout: float = 10, lang: str = "en") -> AccumulatedRainfall | None:
@@ -4239,6 +4282,46 @@ def format_dose_miss(*, as_json: bool = False) -> str:
     return _unavailable("No gamma dose rate is available.", as_json=as_json)
 
 
+def parse_hourly_dose(text: str) -> HourlyDoseReport:
+    """Turn the hourly dose CSV into the latest hour, one row per station."""
+    stations: list[HourlyDoseReading] = []
+    latest = ""
+    rows = csv.reader(io.StringIO(text))
+    next(rows, None)
+    for row in rows:
+        if len(row) < 3:
+            continue
+        place = _text(row[1])
+        value = _hour_mm(row[2])
+        clock = _text(row[0])
+        if not place or value is None or len(clock) != 10 or not clock.isdigit():
+            continue
+        if clock > latest:
+            latest = clock
+            stations = []
+        if clock == latest:
+            stations.append(HourlyDoseReading(place, value))
+    obs_time = ""
+    if latest:
+        obs_time = f"{latest[:4]}-{latest[4:6]}-{latest[6:8]} {latest[8:10]}:00"
+    return HourlyDoseReport(obs_time, tuple(stations))
+
+
+def format_hourly_dose(report: HourlyDoseReport) -> str:
+    """Render the latest hourly mean ambient gamma dose rate."""
+    lines = ["Hong Kong hourly gamma dose rate"]
+    if report.obs_time:
+        lines.append(f"Recorded: {report.obs_time}")
+    for reading in report.stations:
+        lines.append(f"{reading.place}  {_number(reading.dose_usv_h)} µSv/h")
+    return "\n".join(lines) + "\n"
+
+
+def format_hourly_dose_miss(*, as_json: bool = False) -> str:
+    """Say that no hourly gamma dose rate is available."""
+    return _unavailable("No hourly gamma dose rate is available.", as_json=as_json)
+
+
 def parse_accum_rain(payload: dict, date: str) -> AccumulatedRainfall | None:
     """Turn a `RYES` document into accumulated rainfall since 1 January."""
     rainfall = _hour_mm(payload.get("HKOReadingsAccumRainfall"))
@@ -4847,6 +4930,7 @@ def format_json(
     | MaxUv
     | MeanUv
     | GammaDose
+    | HourlyDoseReport
     | AccumulatedRainfall
     | AverageRainfall
     | RadiationReport

@@ -68,6 +68,8 @@ hk-weather --mean-uv
 hk-weather --mean-uv --json
 hk-weather --dose
 hk-weather --dose --json
+hk-weather --hourly-dose
+hk-weather --hourly-dose --json
 hk-weather --accum-rain
 hk-weather --accum-rain --json
 hk-weather --avg-rain
@@ -285,6 +287,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --mean-uv` prints yesterday's mean UV index at King's Park (`KingsParkReadingsMeanUVIndex` on that same report), for example `2026-10-02  2`. `--max-uv` still prints the maximum. `--uv` still prints the current UV index. `--mean-uv --json` prints that day as one JSON object. `--lang` applies. If the reading is missing, it says `No mean UV index is available.`
 
 `hk-weather --dose` prints yesterday's average ambient gamma dose rate at King's Park (`KingsParkMicrosieverts` on that same report), for example `2026-10-02  0.15 µSv/h`. `--radiation` still prints the outdoor radiation paragraph. `--dose --json` prints that day as one JSON object. `--lang` applies. If the reading is missing, it says `No gamma dose rate is available.`
+
+`hk-weather --hourly-dose` prints the latest hourly mean ambient gamma dose rate, for example `King's Park  0.14 µSv/h`. `--dose` still prints yesterday's King's Park average. Earlier hours in the file are omitted. `--hourly-dose --json` prints that hour as one JSON object. `--lang` selects the station names. Stations marked `N/A` are omitted. If none remain, it says `No hourly gamma dose rate is available.`
 
 `hk-weather --accum-rain` prints accumulated rainfall at the Observatory from 1 January through yesterday (`HKOReadingsAccumRainfall` on that same summary). `--year-rain` still prints the January-to-last-month note. `--accum-rain --json` prints the total as one JSON object. `--lang` applies. If the reading is missing, it says `No accumulated rainfall is available.`
 

@@ -1999,6 +1999,65 @@ def test_cli_dose_when_missing(monkeypatch, capsys):
     assert json.loads(capsys.readouterr().out) == {"message": "No gamma dose rate is available."}
 
 
+def test_cli_hourly_dose_prints_latest_hour(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _text_response(
+            "Date time,Station,Hourly mean ambient gamma radiation dose rate (microsievert per hour)\n"
+            "2026100402,Ping Chau,0.08\n"
+            "2026100403,King's Park,  0.14  \n"
+            "2026100403,Cape D'Aguilar,N/A\n"
+            "2026100403,Chek Lap Kok,0.15\n"
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--hourly-dose", "--lang", "tc"]) == 0
+    assert seen["url"].endswith("latest_hourly_rmn_uc.csv")
+    assert capsys.readouterr().out == (
+        "Hong Kong hourly gamma dose rate\n"
+        "Recorded: 2026-10-04 03:00\n"
+        "King's Park  0.14 µSv/h\n"
+        "Chek Lap Kok  0.15 µSv/h\n"
+    )
+
+
+def test_cli_hourly_dose_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Date time,Station,Dose\n"
+            "2026100403,King's Park,0.14\n"
+        ),
+    )
+    assert main(["--hourly-dose", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "obs_time": "2026-10-04 03:00",
+        "stations": [{"place": "King's Park", "dose_usv_h": 0.14}],
+    }
+
+
+def test_cli_hourly_dose_when_missing(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Date time,Station,Dose\n"
+            "2026100403,Ping Chau,N/A\n"
+        ),
+    )
+    assert main(["--hourly-dose"]) == 0
+    assert capsys.readouterr().out == "No hourly gamma dose rate is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(""),
+    )
+    assert main(["--hourly-dose", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No hourly gamma dose rate is available."
+    }
+
+
 def test_cli_accum_rain_prints_january_total(monkeypatch, capsys):
     seen = {}
     monkeypatch.setattr("hk_weather.hko._hong_kong_yesterday", lambda now=None: "2026-10-02")
