@@ -2416,6 +2416,51 @@ def test_cli_driest_when_no_readings(monkeypatch, capsys):
     }
 
 
+def test_cli_rainstorm_prints_reminder(monkeypatch, capsys):
+    seen = {}
+    message = (
+        "Though the rainstorm warning has been cancelled, showers are still expected."
+    )
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response({"rainstormReminder": f"  {message}  "})
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--rainstorm", "--lang", "tc"]) == 0
+    assert "dataType=rhrread" in seen["url"]
+    assert "lang=tc" in seen["url"]
+    assert capsys.readouterr().out == f"Hong Kong rainstorm reminder\n{message}\n"
+
+
+def test_cli_rainstorm_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {"rainstormReminder": "Showers may still be heavy."}
+        ),
+    )
+    assert main(["--rainstorm", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "reminder": "Showers may still be heavy."
+    }
+
+
+def test_cli_rainstorm_when_blank_or_missing(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"rainstormReminder": "   "}),
+    )
+    assert main(["--rainstorm"]) == 0
+    assert capsys.readouterr().out == "No rainstorm reminder.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({}),
+    )
+    assert main(["--rainstorm", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {"message": "No rainstorm reminder."}
+
+
 def test_cli_rain_when_no_readings(monkeypatch, capsys):
     monkeypatch.setattr(
         "hk_weather.hko.urllib.request.urlopen",

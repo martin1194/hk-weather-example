@@ -21,6 +21,7 @@ from hk_weather.hko import (
     fetch_psr,
     fetch_quakes,
     fetch_rain,
+    fetch_rainstorm,
     fetch_stations,
     fetch_sunrise,
     fetch_wettest,
@@ -57,6 +58,8 @@ from hk_weather.hko import (
     format_psr,
     format_quakes,
     format_rain,
+    format_rainstorm,
+    format_rainstorm_miss,
     format_short,
     format_report,
     format_stations,
@@ -125,7 +128,8 @@ def build_parser() -> argparse.ArgumentParser:
             "--tide prints today's high and low tides; "
             "--aqhi prints the air quality health index; "
             "--sunrise prints today's sunrise and sunset; "
-            "--moon prints today's moonrise and moonset."
+            "--moon prints today's moonrise and moonset; "
+            "--rainstorm prints the rainstorm reminder."
         ),
     )
     parser.add_argument(
@@ -272,6 +276,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--driest",
         action="store_true",
         help="Print the driest rainfall district from the current report",
+    )
+    parser.add_argument(
+        "--rainstorm",
+        action="store_true",
+        help="Print the rainstorm reminder from the current report",
     )
     parser.add_argument(
         "--lightning",
@@ -436,6 +445,12 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_driest_miss(as_json=args.json)
             else:
                 text = format_json(driest) if args.json else format_driest(driest)
+        elif args.rainstorm:
+            rainstorm = fetch_rainstorm(timeout=args.timeout, lang=args.lang)
+            if rainstorm is None:
+                text = format_rainstorm_miss(as_json=args.json)
+            else:
+                text = format_json(rainstorm) if args.json else format_rainstorm(rainstorm)
         elif args.lightning:
             lightning = fetch_lightning(timeout=args.timeout, lang=args.lang)
             text = format_json(lightning) if args.json else format_lightning(lightning)
