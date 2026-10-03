@@ -145,6 +145,21 @@ TEMP_DIFF_URLS = {
         "latest_past24_temperature_diff_sc.csv"
     ),
 }
+# Latest 10-minute mean Hong Kong Heat Index. CSV, one file per language.
+HEAT_INDEX_URLS = {
+    "en": (
+        "https://data.weather.gov.hk/weatherAPI/hko_data/regional-weather/"
+        "recent10_10min_hkhi.csv"
+    ),
+    "tc": (
+        "https://data.weather.gov.hk/weatherAPI/hko_data/regional-weather/"
+        "recent10_10min_hkhi_uc.csv"
+    ),
+    "sc": (
+        "https://data.weather.gov.hk/weatherAPI/hko_data/regional-weather/"
+        "recent10_10min_hkhi_sc.csv"
+    ),
+}
 # Hourly cloud-to-ground and cloud-to-cloud lightning counts. lang is accepted.
 STRIKES_URL = (
     "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php"
@@ -869,6 +884,18 @@ class TempDiffReport:
 
 
 @dataclass(frozen=True)
+class HeatIndexReading:
+    place: str
+    heat_index: float
+
+
+@dataclass(frozen=True)
+class HeatIndexReport:
+    obs_time: str
+    stations: tuple[HeatIndexReading, ...]
+
+
+@dataclass(frozen=True)
 class HottestReading:
     record_time: str
     place: str
@@ -1437,6 +1464,22 @@ def fetch_temp_diff(timeout: float = 10, lang: str = "en") -> TempDiffReport:
     except UnicodeDecodeError as exc:
         raise WeatherError("Hong Kong Observatory returned invalid text") from exc
     return parse_temp_diff(text)
+
+
+def fetch_heat_index(timeout: float = 10, lang: str = "en") -> HeatIndexReport:
+    """Download the latest 10-minute mean Hong Kong Heat Index."""
+    url = HEAT_INDEX_URLS.get(lang, HEAT_INDEX_URLS["en"])
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            raw = response.read()
+    except (urllib.error.URLError, TimeoutError) as exc:
+        raise WeatherError(f"could not reach Hong Kong Observatory: {exc}") from exc
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise WeatherError("Hong Kong Observatory returned invalid text") from exc
+    return parse_heat_index(text)
 
 
 def fetch_forecast_icon(
@@ -3336,6 +3379,46 @@ def format_temp_diff_miss(*, as_json: bool = False) -> str:
     return _unavailable("No 24-hour temperature changes are available.", as_json=as_json)
 
 
+def parse_heat_index(text: str) -> HeatIndexReport:
+    """Turn the heat-index CSV into the latest minute, one row per station."""
+    stations: list[HeatIndexReading] = []
+    latest = ""
+    rows = csv.reader(io.StringIO(text))
+    next(rows, None)
+    for row in rows:
+        if len(row) < 3:
+            continue
+        place = _text(row[1])
+        value = _hour_mm(row[2])
+        clock = _text(row[0])
+        if not place or value is None or len(clock) != 12 or not clock.isdigit():
+            continue
+        if clock > latest:
+            latest = clock
+            stations = []
+        if clock == latest:
+            stations.append(HeatIndexReading(place, value))
+    obs_time = ""
+    if latest:
+        obs_time = f"{latest[:4]}-{latest[4:6]}-{latest[6:8]} {latest[8:10]}:{latest[10:12]}"
+    return HeatIndexReport(obs_time, tuple(stations))
+
+
+def format_heat_index(report: HeatIndexReport) -> str:
+    """Render the latest 10-minute mean Hong Kong Heat Index."""
+    lines = ["Hong Kong heat index"]
+    if report.obs_time:
+        lines.append(f"Recorded: {report.obs_time}")
+    for reading in report.stations:
+        lines.append(f"{reading.place}  {_number(reading.heat_index)}")
+    return "\n".join(lines) + "\n"
+
+
+def format_heat_index_miss(*, as_json: bool = False) -> str:
+    """Say that no heat index is available."""
+    return _unavailable("No heat index is available.", as_json=as_json)
+
+
 def format_forecast_icon(report: ForecastIcons) -> str:
     """Render each day's forecast icon."""
     lines = ["Hong Kong forecast icons"]
@@ -4583,6 +4666,7 @@ def format_json(
     | PressureReport
     | MinuteGrassReport
     | TempDiffReport
+    | HeatIndexReport
     | WindForecast
     | GustReport
     | ForecastIcons
