@@ -212,6 +212,20 @@ class WindForecast:
 
 
 @dataclass(frozen=True)
+class ForecastIconDay:
+    date: str
+    week: str
+    icon: int
+    label: str
+
+
+@dataclass(frozen=True)
+class ForecastIcons:
+    update_time: str
+    days: tuple[ForecastIconDay, ...]
+
+
+@dataclass(frozen=True)
 class Earthquake:
     time: str
     region: str
@@ -724,6 +738,13 @@ def fetch_weekend(
 def fetch_wind(url: str = NINE_DAY_URL, timeout: float = 10, lang: str = "en") -> WindForecast:
     """Download forecast wind from the 9-day forecast (`dataType=fnd`)."""
     return parse_wind(_fetch_json(_apply_lang(url, lang), timeout))
+
+
+def fetch_forecast_icon(
+    url: str = NINE_DAY_URL, timeout: float = 10, lang: str = "en"
+) -> ForecastIcons:
+    """Download each day's weather icon from the 9-day forecast (`dataType=fnd`)."""
+    return parse_forecast_icon(_fetch_json(_apply_lang(url, lang), timeout))
 
 
 def fetch_quakes(url: str = QUAKE_URL, timeout: float = 10, lang: str = "en") -> QuakeReport:
@@ -1626,6 +1647,31 @@ def parse_wind(payload: dict) -> WindForecast:
     )
 
 
+def parse_forecast_icon(payload: dict) -> ForecastIcons:
+    """Turn `fnd` ForecastIcon fields into one icon per day."""
+    raw_days = payload.get("weatherForecast")
+    days: list[ForecastIconDay] = []
+    if isinstance(raw_days, list):
+        for item in raw_days:
+            if not isinstance(item, dict):
+                continue
+            code = item.get("ForecastIcon")
+            if isinstance(code, bool) or not isinstance(code, int):
+                continue
+            days.append(
+                ForecastIconDay(
+                    date=_forecast_date(item.get("forecastDate")) or "unknown",
+                    week=_text(item.get("week")),
+                    icon=code,
+                    label=icon_label(code),
+                )
+            )
+    return ForecastIcons(
+        update_time=_text(payload.get("updateTime")),
+        days=tuple(days),
+    )
+
+
 def parse_quakes(payload: dict) -> QuakeReport:
     """Turn a quick-earthquake message into a one-item list, or none."""
     quake = _quake(payload)
@@ -1948,6 +1994,22 @@ def format_wind(report: WindForecast) -> str:
         heading = " ".join(part for part in (day.date, day.week) if part)
         lines.append(f"{heading}  {day.wind}".strip())
     return "\n".join(lines) + "\n"
+
+
+def format_forecast_icon(report: ForecastIcons) -> str:
+    """Render each day's forecast icon."""
+    lines = ["Hong Kong forecast icons"]
+    if report.update_time:
+        lines.append(f"Updated: {report.update_time}")
+    for day in report.days:
+        heading = " ".join(part for part in (day.date, day.week) if part)
+        lines.append(f"{heading}  {day.icon}  {day.label}".strip())
+    return "\n".join(lines) + "\n"
+
+
+def format_forecast_icon_miss(*, as_json: bool = False) -> str:
+    """Say that the 9-day forecast has no weather icons."""
+    return _unavailable("No forecast icons are available.", as_json=as_json)
 
 
 def parse_uv(payload: dict) -> UvIndex:
@@ -2730,6 +2792,7 @@ def format_json(
     | HumidityReport
     | TempReport
     | WindForecast
+    | ForecastIcons
     | QuakeReport
     | FeltTremor
     | TomorrowForecast

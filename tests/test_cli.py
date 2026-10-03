@@ -1610,6 +1610,94 @@ def test_cli_wind_json_is_one_object(monkeypatch, capsys):
     }
 
 
+def test_cli_forecast_icon_lists_each_day(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response(
+            {
+                "updateTime": "2026-10-03T16:45:00+08:00",
+                "weatherForecast": [
+                    {
+                        "forecastDate": "20261004",
+                        "week": "Sunday",
+                        "ForecastIcon": 54,
+                        "forecastWind": "East force 4.",
+                    },
+                    {
+                        "forecastDate": "20261005",
+                        "week": "Monday",
+                        "forecastWeather": "Sunny periods.",
+                    },
+                    {
+                        "forecastDate": "20261006",
+                        "week": "Tuesday",
+                        "ForecastIcon": 52,
+                    },
+                ],
+            }
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--forecast-icon", "--lang", "tc"]) == 0
+    assert "dataType=fnd" in seen["url"]
+    assert "lang=tc" in seen["url"]
+    assert capsys.readouterr().out == (
+        "Hong Kong forecast icons\n"
+        "Updated: 2026-10-03T16:45:00+08:00\n"
+        "2026-10-04 Sunday  54  Sunny Intervals with Showers\n"
+        "2026-10-06 Tuesday  52  Sunny Intervals\n"
+    )
+
+
+def test_cli_forecast_icon_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {
+                "updateTime": "2026-10-03T16:45:00+08:00",
+                "weatherForecast": [
+                    {
+                        "forecastDate": "20261004",
+                        "week": "Sunday",
+                        "ForecastIcon": 54,
+                    }
+                ],
+            }
+        ),
+    )
+    assert main(["--forecast-icon", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "update_time": "2026-10-03T16:45:00+08:00",
+        "days": [
+            {
+                "date": "2026-10-04",
+                "week": "Sunday",
+                "icon": 54,
+                "label": "Sunny Intervals with Showers",
+            }
+        ],
+    }
+
+
+def test_cli_forecast_icon_when_missing(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {"weatherForecast": [{"forecastDate": "20261004", "week": "Sunday"}]}
+        ),
+    )
+    assert main(["--forecast-icon"]) == 0
+    assert capsys.readouterr().out == "No forecast icons are available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({}),
+    )
+    assert main(["--forecast-icon", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {"message": "No forecast icons are available."}
+
+
 def test_cli_quake_lists_latest_message(monkeypatch, capsys):
     seen = {}
 
