@@ -671,6 +671,82 @@ def test_cli_today_when_the_day_is_missing(monkeypatch, capsys):
     }
 
 
+def test_cli_yesterday_prints_observatory_summary(monkeypatch, capsys):
+    seen = {}
+    monkeypatch.setattr("hk_weather.hko._hong_kong_yesterday", lambda now=None: "2026-10-02")
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response(
+            {
+                "HKOReadingsMaxTemp": "31.7",
+                "HKOReadingsMinTemp": "27.0",
+                "HKOReadingsRainfall": "14.1",
+                "HKOReadingsMaxRH": "90",
+                "HKOReadingsMinRH": "69",
+                "ReportTimeInfoDate": "20261002",
+            }
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--yesterday", "--lang", "tc"]) == 0
+    assert "dataType=RYES" in seen["url"]
+    assert "station=HKO" in seen["url"]
+    assert "date=20261002" in seen["url"]
+    assert "lang=tc" in seen["url"]
+    assert capsys.readouterr().out == (
+        "Hong Kong yesterday\n"
+        "2026-10-02\n"
+        "High: 31.7°C\n"
+        "Low: 27°C\n"
+        "Rainfall: 14.1 mm\n"
+        "Humidity: 69-90%\n"
+    )
+
+
+def test_cli_yesterday_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_yesterday", lambda now=None: "2026-10-02")
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {
+                "HKOReadingsMaxTemp": "31.7",
+                "HKOReadingsMinTemp": "27",
+                "HKOReadingsRainfall": "14.1",
+                "HKOReadingsMaxRH": "90",
+                "HKOReadingsMinRH": "69",
+            }
+        ),
+    )
+    assert main(["--yesterday", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "date": "2026-10-02",
+        "temp_high_c": 31.7,
+        "temp_low_c": 27.0,
+        "rainfall_mm": 14.1,
+        "humidity_high_percent": 90.0,
+        "humidity_low_percent": 69.0,
+    }
+
+
+def test_cli_yesterday_when_missing(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_yesterday", lambda now=None: "2026-10-02")
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"HongKongDesc": "background radiation"}),
+    )
+    assert main(["--yesterday"]) == 0
+    assert capsys.readouterr().out == "Yesterday's Observatory summary is not available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({}),
+    )
+    assert main(["--yesterday", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "Yesterday's Observatory summary is not available."
+    }
+
+
 def test_cli_tomorrow_prints_the_next_hong_kong_day(monkeypatch, capsys):
     seen = {}
     monkeypatch.setattr("hk_weather.hko._hong_kong_tomorrow", lambda now=None: "2026-10-04")

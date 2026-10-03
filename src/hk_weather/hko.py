@@ -339,6 +339,16 @@ class HourDriest:
 
 
 @dataclass(frozen=True)
+class YesterdayReport:
+    date: str
+    temp_high_c: float | None
+    temp_low_c: float | None
+    rainfall_mm: float | None
+    humidity_high_percent: float | None
+    humidity_low_percent: float | None
+
+
+@dataclass(frozen=True)
 class RainstormReminder:
     reminder: str
 
@@ -559,6 +569,16 @@ def fetch_today(
         _fetch_json(_apply_lang(url, lang), timeout),
         _hong_kong_today(),
     )
+
+
+def fetch_yesterday(timeout: float = 10, lang: str = "en") -> YesterdayReport | None:
+    """Download yesterday's Observatory summary (`dataType=RYES`, station HKO)."""
+    day = _hong_kong_yesterday()
+    url = (
+        "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php"
+        f"?dataType=RYES&rformat=json&date={day.replace('-', '')}&station=HKO&lang=en"
+    )
+    return parse_yesterday(_fetch_json(_apply_lang(url, lang), timeout), day)
 
 
 def fetch_summary(timeout: float = 10, lang: str = "en") -> WeatherSummary:
@@ -1384,6 +1404,12 @@ def _hong_kong_tomorrow(now: datetime | None = None) -> str:
     return (moment.date() + timedelta(days=1)).isoformat()
 
 
+def _hong_kong_yesterday(now: datetime | None = None) -> str:
+    """Return yesterday's calendar date in Hong Kong (UTC+8), as YYYY-MM-DD."""
+    moment = now.astimezone(_HKT) if now is not None else datetime.now(_HKT)
+    return (moment.date() - timedelta(days=1)).isoformat()
+
+
 _HKT = timezone(timedelta(hours=8))
 
 
@@ -2002,6 +2028,41 @@ def format_hour_driest(reading: HourDriest) -> str:
     return "\n".join(lines) + "\n"
 
 
+def parse_yesterday(payload: dict, date: str) -> YesterdayReport | None:
+    """Turn a `RYES` document for the Observatory into yesterday's summary."""
+    high = _hour_mm(payload.get("HKOReadingsMaxTemp"))
+    low = _hour_mm(payload.get("HKOReadingsMinTemp"))
+    rainfall = _hour_mm(payload.get("HKOReadingsRainfall"))
+    humidity_high = _hour_mm(payload.get("HKOReadingsMaxRH"))
+    humidity_low = _hour_mm(payload.get("HKOReadingsMinRH"))
+    if high is None and low is None and rainfall is None and humidity_high is None and humidity_low is None:
+        return None
+    reported = _text(payload.get("ReportTimeInfoDate"))
+    if len(reported) == 8 and reported.isdigit():
+        date = f"{reported[:4]}-{reported[4:6]}-{reported[6:8]}"
+    return YesterdayReport(date, high, low, rainfall, humidity_high, humidity_low)
+
+
+def format_yesterday(report: YesterdayReport) -> str:
+    """Render yesterday's Observatory temperature, rainfall, and humidity."""
+    lines = ["Hong Kong yesterday", report.date]
+    if report.temp_high_c is not None:
+        lines.append(f"High: {_number(report.temp_high_c)}°C")
+    if report.temp_low_c is not None:
+        lines.append(f"Low: {_number(report.temp_low_c)}°C")
+    if report.rainfall_mm is not None:
+        lines.append(f"Rainfall: {_number(report.rainfall_mm)} mm")
+    humidity = _humidity_span(report.humidity_low_percent, report.humidity_high_percent)
+    if humidity:
+        lines.append("Humidity: " + humidity.removeprefix("humidity "))
+    return "\n".join(lines) + "\n"
+
+
+def format_yesterday_miss(*, as_json: bool = False) -> str:
+    """Say that yesterday's Observatory summary is not available."""
+    return _unavailable("Yesterday's Observatory summary is not available.", as_json=as_json)
+
+
 def _hour_mm(value: object) -> float | None:
     if isinstance(value, bool):
         return None
@@ -2362,6 +2423,7 @@ def format_json(
     | QuakeReport
     | FeltTremor
     | TomorrowForecast
+    | YesterdayReport
     | PsrForecast
     | WeekendForecast
     | VisibilityReport
