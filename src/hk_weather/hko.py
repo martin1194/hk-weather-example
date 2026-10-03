@@ -554,6 +554,17 @@ class IconUpdate:
     updated: str
 
 
+@dataclass(frozen=True)
+class IconReading:
+    code: int
+    label: str
+
+
+@dataclass(frozen=True)
+class IconReport:
+    icons: tuple[IconReading, ...]
+
+
 def fetch_current(url: str = DEFAULT_URL, timeout: float = 10, lang: str = "en") -> CurrentWeather:
     """Download the current weather report and return a summary."""
     return parse_current_report(_fetch_json(_apply_lang(url, lang), timeout))
@@ -827,6 +838,11 @@ def fetch_icon_time(
 ) -> IconUpdate | None:
     """Download the weather-icon update time from the current report (`iconUpdateTime`)."""
     return parse_icon_time(_fetch_json(_apply_lang(url, lang), timeout))
+
+
+def fetch_icon(url: str = DEFAULT_URL, timeout: float = 10, lang: str = "en") -> IconReport | None:
+    """Download the current weather icon from the current report (`dataType=rhrread`)."""
+    return parse_icon(_fetch_json(_apply_lang(url, lang), timeout))
 
 
 def fetch_tips(url: str = TIPS_URL, timeout: float = 10, lang: str = "en") -> SpecialTips:
@@ -2079,6 +2095,34 @@ def format_icon_time_miss(*, as_json: bool = False) -> str:
     return _unavailable("No icon update time is available.", as_json=as_json)
 
 
+def parse_icon(payload: dict) -> IconReport | None:
+    """Turn the `rhrread` icon field into icon numbers and labels."""
+    raw = payload.get("icon")
+    if isinstance(raw, bool):
+        codes: list[int] = []
+    elif isinstance(raw, int):
+        codes = [raw]
+    elif isinstance(raw, list):
+        codes = [code for code in raw if isinstance(code, int) and not isinstance(code, bool)]
+    else:
+        codes = []
+    if not codes:
+        return None
+    return IconReport(tuple(IconReading(code, icon_label(code)) for code in codes))
+
+
+def format_icon(report: IconReport) -> str:
+    """Render the current weather icon number and label."""
+    lines = ["Hong Kong weather icon"]
+    lines.extend(f"{icon.code}  {icon.label}" for icon in report.icons)
+    return "\n".join(lines) + "\n"
+
+
+def format_icon_miss(*, as_json: bool = False) -> str:
+    """Say that the current report has no weather icon."""
+    return _unavailable("No weather icon is available.", as_json=as_json)
+
+
 def parse_tips(payload: dict) -> SpecialTips:
     """Turn an `swt` document into a list of tip descriptions."""
     raw = payload.get("swt", [])
@@ -2780,6 +2824,7 @@ def format_json(
     | SoilReport
     | UvIndex
     | IconUpdate
+    | IconReport
     | SpecialTips
     | StationReport
     | RainReport
