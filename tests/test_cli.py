@@ -1585,6 +1585,56 @@ def test_cli_radiation_note_when_missing(monkeypatch, capsys):
     assert json.loads(capsys.readouterr().out) == {"message": "No radiation note is available."}
 
 
+def test_cli_radiation_weather_prints_the_note(monkeypatch, capsys):
+    seen = {}
+    monkeypatch.setattr("hk_weather.hko._hong_kong_yesterday", lambda now=None: "2026-10-02")
+    note = "The variation of the dose rate may be due to the effect of weather."
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response({"NoteDesc1": f"  {note}  "})
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--radiation-weather", "--lang", "tc"]) == 0
+    assert "dataType=RYES" in seen["url"]
+    assert "station=HKO" in seen["url"]
+    assert "date=20261002" in seen["url"]
+    assert "lang=tc" in seen["url"]
+    assert capsys.readouterr().out == f"Hong Kong radiation weather\n{note}\n"
+
+
+def test_cli_radiation_weather_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_yesterday", lambda now=None: "2026-10-02")
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {"NoteDesc1": "The variation of the dose rate may be due to the effect of weather."}
+        ),
+    )
+    assert main(["--radiation-weather", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "note": "The variation of the dose rate may be due to the effect of weather."
+    }
+
+
+def test_cli_radiation_weather_when_missing(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_yesterday", lambda now=None: "2026-10-02")
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"NoteDesc": "Dose rate may vary."}),
+    )
+    assert main(["--radiation-weather"]) == 0
+    assert capsys.readouterr().out == "No radiation weather note is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({}),
+    )
+    assert main(["--radiation-weather", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No radiation weather note is available."
+    }
+
+
 def test_cli_tomorrow_prints_the_next_hong_kong_day(monkeypatch, capsys):
     seen = {}
     monkeypatch.setattr("hk_weather.hko._hong_kong_tomorrow", lambda now=None: "2026-10-04")
