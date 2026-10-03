@@ -1775,6 +1775,62 @@ def test_cli_grass_when_missing(monkeypatch, capsys):
     assert json.loads(capsys.readouterr().out) == {"message": "No grass minimum is available."}
 
 
+def test_cli_sunshine_prints_yesterday_hours(monkeypatch, capsys):
+    seen = {}
+    monkeypatch.setattr("hk_weather.hko._hong_kong_yesterday", lambda now=None: "2026-10-02")
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response(
+            {
+                "KingsParkReadingsSunShine": "  4.7  ",
+                "ReportTimeInfoDate": "20261002",
+            }
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--sunshine", "--lang", "tc"]) == 0
+    assert "dataType=RYES" in seen["url"]
+    assert "station=KP" in seen["url"]
+    assert "date=20261002" in seen["url"]
+    assert "lang=tc" in seen["url"]
+    assert capsys.readouterr().out == (
+        "Hong Kong sunshine\n"
+        "Station: King's Park\n"
+        "2026-10-02  4.7 hours\n"
+    )
+
+
+def test_cli_sunshine_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_yesterday", lambda now=None: "2026-10-02")
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"KingsParkReadingsSunShine": "4.7"}),
+    )
+    assert main(["--sunshine", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "station": "King's Park",
+        "date": "2026-10-02",
+        "hours": 4.7,
+    }
+
+
+def test_cli_sunshine_when_missing(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_yesterday", lambda now=None: "2026-10-02")
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"KingsParkReadingsSunShine": "***"}),
+    )
+    assert main(["--sunshine"]) == 0
+    assert capsys.readouterr().out == "No sunshine duration is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({}),
+    )
+    assert main(["--sunshine", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {"message": "No sunshine duration is available."}
+
+
 def test_cli_accum_rain_prints_january_total(monkeypatch, capsys):
     seen = {}
     monkeypatch.setattr("hk_weather.hko._hong_kong_yesterday", lambda now=None: "2026-10-02")
