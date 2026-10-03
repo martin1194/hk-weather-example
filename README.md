@@ -20,6 +20,8 @@ hk-weather --forecast
 hk-weather --forecast --json
 hk-weather --situation
 hk-weather --situation --json
+hk-weather --fire-danger
+hk-weather --fire-danger --json
 hk-weather --nine-day
 hk-weather --nine-day --json
 hk-weather --today
@@ -125,6 +127,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --forecast` prints the local forecast period, description, and outlook. With `--json`, that same forecast is one JSON object. Current conditions stay the default.
 
 `hk-weather --situation` (or `-g`) prints the general situation from that forecast (`generalSituation`). `--situation --json` prints that paragraph as one JSON object. `--lang` applies. If the field is missing or blank, it says `No general situation is available.`
+
+`hk-weather --fire-danger` (or `-f`) prints the fire danger warning from that forecast (`fireDangerWarning`). `--fire-danger --json` prints that sentence as one JSON object. `--lang` applies. If the field is missing or blank, it says `No fire danger warning is available.`
 
 `hk-weather --nine-day` (or `-n`) prints each day with the date, weather, high and low temperature, humidity range, and chance of rain when the Observatory includes them. `--nine-day --json` prints that same forecast as one JSON object.
 
