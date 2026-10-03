@@ -18,6 +18,7 @@ from hk_weather.hko import (
     fetch_felt,
     fetch_fire_danger,
     fetch_grass,
+    fetch_accum_rain,
     fetch_coldest,
     fetch_cyclone,
     fetch_hottest,
@@ -65,6 +66,8 @@ from hk_weather.hko import (
     format_forecast,
     format_grass,
     format_grass_miss,
+    format_accum_rain,
+    format_accum_rain_miss,
     format_felt,
     format_felt_miss,
     format_fire_danger,
@@ -184,6 +187,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--felt prints the locally felt earth tremor; --today prints today; "
             "--yesterday prints yesterday's Observatory summary; "
             "--grass prints yesterday's grass minimum; "
+            "--accum-rain prints accumulated rainfall since 1 January; "
             "--tomorrow prints tomorrow; "
             "--day N prints forecast day N (1 is the first entry); "
             "--psr lists the chance of significant rain; "
@@ -280,6 +284,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--grass",
         action="store_true",
         help="Print yesterday's grass minimum temperature at the Observatory",
+    )
+    parser.add_argument(
+        "--accum-rain",
+        action="store_true",
+        help="Print accumulated rainfall from 1 January through yesterday at the Observatory",
     )
     parser.add_argument(
         "-T",
@@ -583,6 +592,12 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_grass_miss(as_json=args.json)
             else:
                 text = format_json(grass) if args.json else format_grass(grass)
+        elif args.accum_rain:
+            accum_rain = fetch_accum_rain(timeout=args.timeout, lang=args.lang)
+            if accum_rain is None:
+                text = format_accum_rain_miss(as_json=args.json)
+            else:
+                text = format_json(accum_rain) if args.json else format_accum_rain(accum_rain)
         elif args.tomorrow:
             tomorrow = fetch_tomorrow(timeout=args.timeout, lang=args.lang)
             if tomorrow is None:
