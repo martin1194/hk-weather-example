@@ -101,6 +101,11 @@ class ForecastDesc:
 
 
 @dataclass(frozen=True)
+class ForecastUpdated:
+    updated: str
+
+
+@dataclass(frozen=True)
 class GeneralSituation:
     situation: str
 
@@ -634,6 +639,13 @@ def fetch_forecast_desc(
 ) -> ForecastDesc | None:
     """Download the forecast description from the local forecast (`dataType=flw`)."""
     return parse_forecast_desc(_fetch_json(_apply_lang(url, lang), timeout))
+
+
+def fetch_forecast_updated(
+    url: str = FORECAST_URL, timeout: float = 10, lang: str = "en"
+) -> ForecastUpdated | None:
+    """Download when the local forecast was updated (`dataType=flw`)."""
+    return parse_forecast_updated(_fetch_json(_apply_lang(url, lang), timeout))
 
 
 def fetch_situation(
@@ -1336,6 +1348,24 @@ def format_forecast_desc(report: ForecastDesc) -> str:
 def format_forecast_desc_miss(*, as_json: bool = False) -> str:
     """Say that the local forecast has no description."""
     return _unavailable("No forecast description is available.", as_json=as_json)
+
+
+def parse_forecast_updated(payload: dict) -> ForecastUpdated | None:
+    """Turn the `flw` update time into one timestamp."""
+    text = _text(payload.get("updateTime"))
+    if not text:
+        return None
+    return ForecastUpdated(text)
+
+
+def format_forecast_updated(report: ForecastUpdated) -> str:
+    """Render when the local forecast was updated."""
+    return f"Hong Kong forecast update\n{report.updated}\n"
+
+
+def format_forecast_updated_miss(*, as_json: bool = False) -> str:
+    """Say that the local forecast has no update time."""
+    return _unavailable("No forecast update time is available.", as_json=as_json)
 
 
 def parse_situation(payload: dict) -> GeneralSituation | None:
@@ -3068,6 +3098,7 @@ def format_json(
     | ForecastOutlook
     | ForecastPeriod
     | ForecastDesc
+    | ForecastUpdated
     | GeneralSituation
     | FireDanger
     | TcInfo
