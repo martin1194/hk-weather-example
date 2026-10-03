@@ -2493,6 +2493,54 @@ def test_cli_noon_rain_when_blank_or_missing(monkeypatch, capsys):
     }
 
 
+def test_cli_month_rain_prints_note(monkeypatch, capsys):
+    seen = {}
+    message = (
+        "The rainfall recorded at the Hong Kong Observatory in September "
+        "was 245.8 millimetres, about 25 percent below the normal of 327.6 millimetres."
+    )
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response({"rainfallLastMonth": f"  {message}  "})
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--month-rain", "--lang", "tc"]) == 0
+    assert "dataType=rhrread" in seen["url"]
+    assert "lang=tc" in seen["url"]
+    assert capsys.readouterr().out == f"Hong Kong last month rainfall\n{message}\n"
+
+
+def test_cli_month_rain_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {"rainfallLastMonth": "September rainfall was 245.8 millimetres."}
+        ),
+    )
+    assert main(["-L", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "report": "September rainfall was 245.8 millimetres."
+    }
+
+
+def test_cli_month_rain_when_blank_or_missing(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"rainfallLastMonth": "   "}),
+    )
+    assert main(["--month-rain"]) == 0
+    assert capsys.readouterr().out == "No last-month rainfall note is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({}),
+    )
+    assert main(["--month-rain", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No last-month rainfall note is available."
+    }
+
+
 def test_cli_overnight_when_blank_or_missing(monkeypatch, capsys):
     monkeypatch.setattr(
         "hk_weather.hko.urllib.request.urlopen",

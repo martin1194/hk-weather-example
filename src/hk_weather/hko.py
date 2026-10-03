@@ -353,6 +353,11 @@ class NoonRainfall:
 
 
 @dataclass(frozen=True)
+class MonthRainfall:
+    report: str
+
+
+@dataclass(frozen=True)
 class SummaryToday:
     date: str
     high_c: float | None
@@ -662,6 +667,13 @@ def fetch_noon_rain(
 ) -> NoonRainfall | None:
     """Download the midnight-to-noon rainfall note (`rainfallFrom00To12` on `rhrread`)."""
     return parse_noon_rain(_fetch_json(_apply_lang(url, lang), timeout))
+
+
+def fetch_month_rain(
+    url: str = DEFAULT_URL, timeout: float = 10, lang: str = "en"
+) -> MonthRainfall | None:
+    """Download last month's rainfall note (`rainfallLastMonth` on `rhrread`)."""
+    return parse_month_rain(_fetch_json(_apply_lang(url, lang), timeout))
 
 
 def _apply_lang(url: str, lang: str) -> str:
@@ -1847,6 +1859,24 @@ def format_noon_rain_miss(*, as_json: bool = False) -> str:
     return _unavailable("No noon rainfall note is available.", as_json=as_json)
 
 
+def parse_month_rain(payload: dict) -> MonthRainfall | None:
+    """Turn the `rhrread` last-month rainfall note into one sentence."""
+    text = _text(payload.get("rainfallLastMonth"))
+    if not text:
+        return None
+    return MonthRainfall(text)
+
+
+def format_month_rain(reading: MonthRainfall) -> str:
+    """Render last month's rainfall note."""
+    return f"Hong Kong last month rainfall\n{reading.report}\n"
+
+
+def format_month_rain_miss(*, as_json: bool = False) -> str:
+    """Say that the current report has no last-month rainfall note."""
+    return _unavailable("No last-month rainfall note is available.", as_json=as_json)
+
+
 def format_json(
     report: CurrentWeather
     | LocalForecast
@@ -1868,6 +1898,7 @@ def format_json(
     | ColdestReading
     | OvernightMinimum
     | NoonRainfall
+    | MonthRainfall
     | WeatherSummary
     | HumidestReading
     | LeastHumidReading
