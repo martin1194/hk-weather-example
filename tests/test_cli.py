@@ -4478,6 +4478,86 @@ def test_cli_tips_when_none_are_in_force(monkeypatch, capsys):
     assert capsys.readouterr().out == "No special weather tips are in force.\n"
 
 
+def test_cli_lamppost_prints_experimental_reading(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response(
+            {
+                "PI": "GF3637",
+                "BODY": {
+                    "HKO": {
+                        "RH": "  86.0  ",
+                        "T0": "27.1",
+                        "TS": "20261004065027",
+                        "WS": "4",
+                        "WD": "144",
+                        "DH": "3",
+                    }
+                },
+            }
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--lamppost", "--lang", "tc"]) == 0
+    assert "pi=GF3637" in seen["url"]
+    assert "di=01" in seen["url"]
+    assert capsys.readouterr().out == (
+        "Hong Kong smart lamppost\n"
+        "Lamppost: GF3637\n"
+        "2026-10-04 06:50:27  27.1°C  humidity 86%  wind 4 km/h from 144°\n"
+    )
+
+
+def test_cli_lamppost_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {
+                "PI": "GF3637",
+                "BODY": {
+                    "HKO": {
+                        "RH": "////",
+                        "T0": "27.1",
+                        "TS": "20261004065027",
+                        "WS": "4",
+                        "WD": "144",
+                    }
+                },
+            }
+        ),
+    )
+    assert main(["--lamppost", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "lamppost": "GF3637",
+        "time": "2026-10-04 06:50:27",
+        "temperature_c": 27.1,
+        "humidity_percent": None,
+        "wind_km_h": 4.0,
+        "direction_deg": 144.0,
+    }
+
+
+def test_cli_lamppost_when_missing(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"message": "No record found"}),
+    )
+    assert main(["--lamppost"]) == 0
+    assert capsys.readouterr().out == "No smart lamppost reading is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {"PI": "GF3637", "BODY": {"HKO": {"T0": "////", "RH": "////", "WS": "////", "WD": "////"}}}
+        ),
+    )
+    assert main(["--lamppost", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No smart lamppost reading is available."
+    }
+
+
 def test_cli_stations_lists_temperature_and_humidity(monkeypatch, capsys):
     seen = {}
 

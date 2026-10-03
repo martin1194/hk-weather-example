@@ -93,6 +93,7 @@ from hk_weather.hko import (
     fetch_tide_hour,
     fetch_tide_latest,
     fetch_tips,
+    fetch_lamppost,
     fetch_today,
     fetch_tomorrow,
     fetch_uv,
@@ -273,6 +274,8 @@ from hk_weather.hko import (
     format_tc_info,
     format_tc_info_miss,
     format_tips,
+    format_lamppost,
+    format_lamppost_miss,
     format_today_miss,
     format_tomorrow,
     format_tomorrow_miss,
@@ -358,6 +361,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--icon prints the current weather icon; "
             "--current-updated prints when the current weather report was updated; "
             "--tips prints special weather tips; "
+            "--lamppost prints the experimental smart-lamppost reading; "
             "--stations lists each station; --list-places lists their names; "
             "--place NAME filters those stations; --rain lists district rainfall; "
             "--rain-period prints the district rainfall window; "
@@ -814,6 +818,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--tips",
         action="store_true",
         help="Print special weather tips",
+    )
+    parser.add_argument(
+        "--lamppost",
+        action="store_true",
+        help="Print the experimental reading from smart lamppost GF3637",
     )
     parser.add_argument(
         "-r",
@@ -1472,6 +1481,12 @@ def main(argv: list[str] | None = None) -> int:
         elif args.tips:
             tips = fetch_tips(timeout=args.timeout, lang=args.lang)
             text = format_json(tips) if args.json else format_tips(tips)
+        elif args.lamppost:
+            lamppost = fetch_lamppost(timeout=args.timeout, lang=args.lang)
+            if lamppost is None:
+                text = format_lamppost_miss(as_json=args.json)
+            else:
+                text = format_json(lamppost) if args.json else format_lamppost(lamppost)
         elif args.rain:
             rain = fetch_rain(timeout=args.timeout, lang=args.lang)
             text = format_json(rain) if args.json else format_rain(rain)

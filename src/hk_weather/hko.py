@@ -226,6 +226,11 @@ NOWCAST_URLS = {
         "Gridded_rainfall_nowcast_sc.csv"
     ),
 }
+# Experimental smart-lamppost reading. The Observatory's documented example post.
+LAMPPOST_URL = (
+    "https://data.weather.gov.hk/weatherAPI/smart-lamppost/"
+    "smart-lamppost.php?pi=GF3637&di=01"
+)
 # Latest observed tide height. CSV, one file per language.
 LATEST_TIDE_URLS = {
     "en": "https://data.weather.gov.hk/weatherAPI/hko_data/tide/ALL_en.csv",
@@ -654,6 +659,16 @@ class LunarDate:
 @dataclass(frozen=True)
 class SpecialTips:
     tips: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class LamppostReading:
+    lamppost: str
+    time: str
+    temperature_c: float | None
+    humidity_percent: float | None
+    wind_km_h: float | None
+    direction_deg: float | None
 
 
 @dataclass(frozen=True)
@@ -2017,6 +2032,12 @@ def fetch_current_updated(
 def fetch_tips(url: str = TIPS_URL, timeout: float = 10, lang: str = "en") -> SpecialTips:
     """Download special weather tips (`dataType=swt`)."""
     return parse_tips(_fetch_json(_apply_lang(url, lang), timeout))
+
+
+def fetch_lamppost(timeout: float = 10, lang: str = "en") -> LamppostReading | None:
+    """Download the latest experimental reading from lamppost GF3637."""
+    del lang
+    return parse_lamppost(_fetch_json(LAMPPOST_URL, timeout))
 
 
 def fetch_stations(url: str = DEFAULT_URL, timeout: float = 10, lang: str = "en") -> StationReport:
@@ -4334,6 +4355,69 @@ def format_tips(report: SpecialTips) -> str:
     return "\n".join(lines) + "\n"
 
 
+def _lamppost_time(value: object) -> str:
+    clock = _text(value)
+    if len(clock) != 14 or not clock.isdigit():
+        return ""
+    return (
+        f"{clock[:4]}-{clock[4:6]}-{clock[6:8]} "
+        f"{clock[8:10]}:{clock[10:12]}:{clock[12:14]}"
+    )
+
+
+def parse_lamppost(payload: dict) -> LamppostReading | None:
+    """Turn one smart-lamppost payload into temperature, humidity, and wind."""
+    if _text(payload.get("message")):
+        return None
+    body = payload.get("BODY")
+    reading = body.get("HKO") if isinstance(body, dict) else None
+    if not isinstance(reading, dict):
+        return None
+    temperature = _hour_mm(reading.get("T0"))
+    humidity = _hour_mm(reading.get("RH"))
+    wind = _hour_mm(reading.get("WS"))
+    direction = _hour_mm(reading.get("WD"))
+    if temperature is None and humidity is None and wind is None and direction is None:
+        return None
+    return LamppostReading(
+        _text(payload.get("PI")) or "GF3637",
+        _lamppost_time(reading.get("TS")),
+        temperature,
+        humidity,
+        wind,
+        direction,
+    )
+
+
+def format_lamppost(reading: LamppostReading) -> str:
+    """Render the experimental smart-lamppost reading."""
+    parts: list[str] = []
+    if reading.temperature_c is not None:
+        parts.append(f"{_number(reading.temperature_c)}°C")
+    if reading.humidity_percent is not None:
+        parts.append(f"humidity {_number(reading.humidity_percent)}%")
+    if reading.wind_km_h is not None and reading.direction_deg is not None:
+        parts.append(
+            f"wind {_number(reading.wind_km_h)} km/h from {_number(reading.direction_deg)}°"
+        )
+    elif reading.wind_km_h is not None:
+        parts.append(f"wind {_number(reading.wind_km_h)} km/h")
+    elif reading.direction_deg is not None:
+        parts.append(f"wind from {_number(reading.direction_deg)}°")
+    lines = ["Hong Kong smart lamppost", f"Lamppost: {reading.lamppost}"]
+    detail = "  ".join(parts)
+    if reading.time:
+        lines.append(f"{reading.time}  {detail}")
+    else:
+        lines.append(detail)
+    return "\n".join(lines) + "\n"
+
+
+def format_lamppost_miss(*, as_json: bool = False) -> str:
+    """Say that the smart lamppost has no reading."""
+    return _unavailable("No smart lamppost reading is available.", as_json=as_json)
+
+
 def parse_stations(payload: dict) -> StationReport:
     """List each place in an `rhrread` document, with humidity when that place has it."""
     humidity: dict[str, float] = {}
@@ -5708,6 +5792,7 @@ def format_json(
     | IconReport
     | CurrentUpdated
     | SpecialTips
+    | LamppostReading
     | StationReport
     | RainReport
     | RainPeriod
