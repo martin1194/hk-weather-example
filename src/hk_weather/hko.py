@@ -107,6 +107,20 @@ class WeatherWarning:
 
 
 @dataclass(frozen=True)
+class WarningTime:
+    code: str
+    description: str
+    issue_time: str
+    update_time: str
+    expire_time: str
+
+
+@dataclass(frozen=True)
+class WarningTimeReport:
+    warnings: tuple[WarningTime, ...]
+
+
+@dataclass(frozen=True)
 class WarningDetail:
     code: str
     subtype: str
@@ -612,6 +626,13 @@ def fetch_warnings(
 ) -> tuple[WeatherWarning, ...]:
     """Download active weather warnings (`dataType=warnsum`)."""
     return parse_warnings(_fetch_json(_apply_lang(url, lang), timeout))
+
+
+def fetch_warning_time(
+    url: str = WARNINGS_URL, timeout: float = 10, lang: str = "en"
+) -> WarningTimeReport:
+    """Download issue and expiry times for active warnings (`dataType=warnsum`)."""
+    return parse_warning_time(_fetch_json(_apply_lang(url, lang), timeout))
 
 
 def fetch_warning_info(
@@ -1308,6 +1329,50 @@ def format_warnings(warnings: tuple[WeatherWarning, ...], *, as_json: bool = Fal
     lines = ["Hong Kong weather warnings"]
     lines.extend(f"{warning.code}  {warning.description}" for warning in warnings)
     return "\n".join(lines) + "\n"
+
+
+def parse_warning_time(payload: dict) -> WarningTimeReport:
+    """Turn a `warnsum` document into issue and expiry times for active warnings."""
+    warnings: list[WarningTime] = []
+    for key, item in payload.items():
+        if not isinstance(item, dict):
+            continue
+        action = _text(item.get("actionCode")).upper()
+        if action in _CANCELLED:
+            continue
+        code = _text(item.get("code")) or _text(key)
+        description = _text(item.get("name"))
+        if not code or not description:
+            continue
+        warnings.append(
+            WarningTime(
+                code=code,
+                description=description,
+                issue_time=_text(item.get("issueTime")),
+                update_time=_text(item.get("updateTime")),
+                expire_time=_text(item.get("expireTime")),
+            )
+        )
+    return WarningTimeReport(tuple(warnings))
+
+
+def format_warning_time(report: WarningTimeReport) -> str:
+    """Render issue and expiry times for active warnings."""
+    lines = ["Hong Kong warning times"]
+    for warning in report.warnings:
+        lines.append(f"{warning.code}  {warning.description}")
+        if warning.issue_time:
+            lines.append(f"Issued: {warning.issue_time}")
+        if warning.update_time and warning.update_time != warning.issue_time:
+            lines.append(f"Updated: {warning.update_time}")
+        if warning.expire_time:
+            lines.append(f"Expires: {warning.expire_time}")
+    return "\n".join(lines) + "\n"
+
+
+def format_warning_time_miss(*, as_json: bool = False) -> str:
+    """Say that no weather warnings are in force."""
+    return _unavailable("No weather warnings are in force.", as_json=as_json)
 
 
 def parse_warning_info(payload: dict) -> tuple[WarningDetail, ...]:
@@ -2952,6 +3017,7 @@ def format_json(
     | MonthRainfall
     | YearRainfall
     | WeatherSummary
+    | WarningTimeReport
     | HumidestReading
     | LeastHumidReading
     | WettestReading

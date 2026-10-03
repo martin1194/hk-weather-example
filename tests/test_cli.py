@@ -370,6 +370,98 @@ def test_cli_warnings_json_is_one_object(monkeypatch, capsys):
     }
 
 
+def test_cli_warning_time_prints_issue_and_expiry(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response(
+            {
+                "WTS": {
+                    "name": "Thunderstorm Warning",
+                    "code": "WTS",
+                    "actionCode": "EXTEND",
+                    "issueTime": "2026-10-03T06:00:00+08:00",
+                    "updateTime": "2026-10-03T12:00:00+08:00",
+                    "expireTime": "2026-10-03T18:00:00+08:00",
+                },
+                "WHOT": {
+                    "name": "Very Hot Weather Warning",
+                    "code": "WHOT",
+                    "actionCode": "CANCEL",
+                    "issueTime": "2026-10-02T06:00:00+08:00",
+                },
+            }
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--warning-time", "--lang", "tc"]) == 0
+    assert "dataType=warnsum" in seen["url"]
+    assert "lang=tc" in seen["url"]
+    assert capsys.readouterr().out == (
+        "Hong Kong warning times\n"
+        "WTS  Thunderstorm Warning\n"
+        "Issued: 2026-10-03T06:00:00+08:00\n"
+        "Updated: 2026-10-03T12:00:00+08:00\n"
+        "Expires: 2026-10-03T18:00:00+08:00\n"
+    )
+
+
+def test_cli_warning_time_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {
+                "WTS": {
+                    "name": "Thunderstorm Warning",
+                    "code": "WTS",
+                    "actionCode": "ISSUE",
+                    "issueTime": "2026-10-03T06:00:00+08:00",
+                    "updateTime": "2026-10-03T06:00:00+08:00",
+                }
+            }
+        ),
+    )
+    assert main(["--warning-time", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "warnings": [
+            {
+                "code": "WTS",
+                "description": "Thunderstorm Warning",
+                "issue_time": "2026-10-03T06:00:00+08:00",
+                "update_time": "2026-10-03T06:00:00+08:00",
+                "expire_time": "",
+            }
+        ]
+    }
+
+
+def test_cli_warning_time_when_none_are_in_force(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {
+                "WHOT": {
+                    "name": "Very Hot Weather Warning",
+                    "code": "WHOT",
+                    "actionCode": "CANCEL",
+                    "issueTime": "2026-10-02T06:00:00+08:00",
+                }
+            }
+        ),
+    )
+    assert main(["--warning-time"]) == 0
+    assert capsys.readouterr().out == "No weather warnings are in force.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({}),
+    )
+    assert main(["--warning-time", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No weather warnings are in force."
+    }
+
+
 def test_cli_warnings_json_when_none_are_in_force(monkeypatch, capsys):
     seen = {}
 
