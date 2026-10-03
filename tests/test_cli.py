@@ -2323,6 +2323,50 @@ def test_cli_icon_time_when_blank_or_missing(monkeypatch, capsys):
     }
 
 
+def test_cli_icon_prints_code_and_label(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response({"icon": [52, True, "no", 65]})
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--icon", "--lang", "tc"]) == 0
+    assert "dataType=rhrread" in seen["url"]
+    assert "lang=tc" in seen["url"]
+    assert capsys.readouterr().out == (
+        "Hong Kong weather icon\n"
+        "52  Sunny Intervals\n"
+        "65  Thunderstorms\n"
+    )
+
+
+def test_cli_icon_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"icon": 52}),
+    )
+    assert main(["--icon", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "icons": [{"code": 52, "label": "Sunny Intervals"}]
+    }
+
+
+def test_cli_icon_when_missing(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"icon": []}),
+    )
+    assert main(["--icon"]) == 0
+    assert capsys.readouterr().out == "No weather icon is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({}),
+    )
+    assert main(["--icon", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {"message": "No weather icon is available."}
+
+
 @pytest.mark.parametrize(
     ("argv", "query", "payload"),
     [
