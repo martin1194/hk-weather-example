@@ -17,6 +17,8 @@ from hk_weather.icons import conditions_with_emoji, icon_label
 # returns uvindex as "" when the reading is unavailable.
 _API = "https://data.weather.gov.hk/weatherAPI/opendata/weather.php"
 DEFAULT_URL = f"{_API}?dataType=rhrread&lang=en"
+# Past-hour rainfall at automatic weather stations. lang is accepted.
+HOURLY_RAIN_URL = "https://data.weather.gov.hk/weatherAPI/opendata/hourlyRainfall.php?lang=en"
 FORECAST_URL = f"{_API}?dataType=flw&lang=en"
 NINE_DAY_URL = f"{_API}?dataType=fnd&lang=en"
 WARNINGS_URL = f"{_API}?dataType=warnsum&lang=en"
@@ -305,6 +307,19 @@ class RainReading:
 @dataclass(frozen=True)
 class RainReport:
     readings: tuple[RainReading, ...]
+
+
+@dataclass(frozen=True)
+class HourRainReading:
+    place: str
+    station_id: str
+    rainfall_mm: float
+
+
+@dataclass(frozen=True)
+class HourRainReport:
+    obs_time: str
+    readings: tuple[HourRainReading, ...]
 
 
 @dataclass(frozen=True)
@@ -666,6 +681,13 @@ def fetch_stations(url: str = DEFAULT_URL, timeout: float = 10, lang: str = "en"
 def fetch_rain(url: str = DEFAULT_URL, timeout: float = 10, lang: str = "en") -> RainReport:
     """Download district rainfall from the current report (`dataType=rhrread`)."""
     return parse_rain(_fetch_json(_apply_lang(url, lang), timeout))
+
+
+def fetch_hour_rain(
+    url: str = HOURLY_RAIN_URL, timeout: float = 10, lang: str = "en"
+) -> HourRainReport:
+    """Download past-hour rainfall from automatic stations (`hourlyRainfall.php`)."""
+    return parse_hour_rain(_fetch_json(_apply_lang(url, lang), timeout))
 
 
 def fetch_wettest(
@@ -1887,6 +1909,55 @@ def format_rain(report: RainReport) -> str:
     return "\n".join(lines) + "\n"
 
 
+def parse_hour_rain(payload: dict) -> HourRainReport:
+    """Turn an hourly-rainfall document into station readings, wettest first."""
+    raw = payload.get("hourlyRainfall")
+    readings: list[HourRainReading] = []
+    seen: set[str] = set()
+    if isinstance(raw, list):
+        for item in raw:
+            if not isinstance(item, dict):
+                continue
+            place = _text(item.get("automaticWeatherStation"))
+            amount = _hour_mm(item.get("value"))
+            if not place or place in seen or amount is None:
+                continue
+            seen.add(place)
+            readings.append(
+                HourRainReading(place, _text(item.get("automaticWeatherStationID")), amount)
+            )
+    readings.sort(key=lambda reading: reading.rainfall_mm, reverse=True)
+    return HourRainReport(_text(payload.get("obsTime")), tuple(readings))
+
+
+def format_hour_rain(report: HourRainReport) -> str:
+    """Render past-hour rainfall, one station per line."""
+    lines = ["Hong Kong hourly rainfall"]
+    if report.obs_time:
+        lines.append(f"Recorded: {report.obs_time}")
+    lines.extend(
+        f"{reading.place}  {_number(reading.rainfall_mm)} mm" for reading in report.readings
+    )
+    return "\n".join(lines) + "\n"
+
+
+def format_hour_rain_miss(*, as_json: bool = False) -> str:
+    """Say that no past-hour rainfall readings are available."""
+    return _unavailable("No hourly rainfall readings are available.", as_json=as_json)
+
+
+def _hour_mm(value: object) -> float | None:
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, (int, float)):
+        return float(value)
+    if isinstance(value, str):
+        text = value.strip()
+        if text.replace(".", "", 1).isdigit():
+            return float(text)
+    return None
+
+
 def format_wettest(reading: WettestReading) -> str:
     """Render the wettest district from the current report."""
     return f"Hong Kong wettest\n{reading.place}  {_number(reading.rainfall_mm)} mm\n"
@@ -2224,6 +2295,7 @@ def format_json(
     | SpecialTips
     | StationReport
     | RainReport
+    | HourRainReport
     | LightningReport
     | LightningCountReport
     | HumidityReport
