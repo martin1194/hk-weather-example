@@ -5064,6 +5064,64 @@ def test_cli_pressure_when_missing(monkeypatch, capsys):
     assert json.loads(capsys.readouterr().out) == {"message": "No sea level pressure is available."}
 
 
+def test_cli_minute_grass_prints_latest_stations(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _text_response(
+            "Date time,Automatic Weather Station,Grass Temperature(degree Celsius)\n"
+            "202610040230,King's Park,  25.9  \n"
+            "202610040230,Tai Mo Shan,N/A\n"
+            "202610040230,Ta Kwu Ling,26.0\n"
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--minute-grass", "--lang", "tc"]) == 0
+    assert seen["url"].endswith("latest_1min_grass_uc.csv")
+    assert capsys.readouterr().out == (
+        "Hong Kong 1-minute grass temperature\n"
+        "Recorded: 2026-10-04 02:30\n"
+        "King's Park  25.9°C\n"
+        "Ta Kwu Ling  26°C\n"
+    )
+
+
+def test_cli_minute_grass_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Date time,Station,Grass\n"
+            "202610040230,Tai Mo Shan,21.5\n"
+        ),
+    )
+    assert main(["--minute-grass", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "obs_time": "2026-10-04 02:30",
+        "stations": [{"place": "Tai Mo Shan", "grass_c": 21.5}],
+    }
+
+
+def test_cli_minute_grass_when_missing(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Date time,Station,Grass\n"
+            "202610040230,Tai Mo Shan,N/A\n"
+        ),
+    )
+    assert main(["--minute-grass"]) == 0
+    assert capsys.readouterr().out == "No 1-minute grass temperatures are available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(""),
+    )
+    assert main(["--minute-grass", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No 1-minute grass temperatures are available."
+    }
+
+
 def test_cli_temp_time_prints_timestamp(monkeypatch, capsys):
     seen = {}
 

@@ -77,6 +77,7 @@ from hk_weather.hko import (
     fetch_minute_temp,
     fetch_since_midnight,
     fetch_pressure,
+    fetch_minute_grass,
     fetch_tc_info,
     fetch_tide,
     fetch_tide_hour,
@@ -225,6 +226,8 @@ from hk_weather.hko import (
     format_since_midnight_miss,
     format_pressure,
     format_pressure_miss,
+    format_minute_grass,
+    format_minute_grass_miss,
     format_tide,
     format_tide_miss,
     format_tide_hour,
@@ -322,6 +325,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--minute-temp prints the latest 1-minute mean temperature; "
             "--since-midnight prints each station's high and low since midnight; "
             "--pressure prints the latest 1-minute sea level pressure; "
+            "--minute-grass prints the latest 1-minute grass temperature; "
             "--wind lists the forecast wind; "
             "--gust prints the latest 10-minute wind and gust; "
             "--forecast-icon prints each day's weather icon; "
@@ -821,6 +825,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--pressure",
         action="store_true",
         help="Print the latest 1-minute mean sea level pressure at automatic stations",
+    )
+    parser.add_argument(
+        "--minute-grass",
+        action="store_true",
+        help="Print the latest 1-minute mean grass temperature at automatic stations",
     )
     parser.add_argument(
         "-H",
@@ -1395,6 +1404,12 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_pressure_miss(as_json=args.json)
             else:
                 text = format_json(pressure) if args.json else format_pressure(pressure)
+        elif args.minute_grass:
+            minute_grass = fetch_minute_grass(timeout=args.timeout, lang=args.lang)
+            if not minute_grass.stations:
+                text = format_minute_grass_miss(as_json=args.json)
+            else:
+                text = format_json(minute_grass) if args.json else format_minute_grass(minute_grass)
         elif args.hottest:
             hottest = fetch_hottest(timeout=args.timeout, lang=args.lang)
             if hottest is None:

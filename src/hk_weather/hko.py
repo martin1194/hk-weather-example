@@ -115,6 +115,21 @@ PRESSURE_URLS = {
         "latest_1min_pressure_sc.csv"
     ),
 }
+# Latest 1-minute mean grass temperature. CSV, one file per language.
+MINUTE_GRASS_URLS = {
+    "en": (
+        "https://data.weather.gov.hk/weatherAPI/hko_data/regional-weather/"
+        "latest_1min_grass.csv"
+    ),
+    "tc": (
+        "https://data.weather.gov.hk/weatherAPI/hko_data/regional-weather/"
+        "latest_1min_grass_uc.csv"
+    ),
+    "sc": (
+        "https://data.weather.gov.hk/weatherAPI/hko_data/regional-weather/"
+        "latest_1min_grass_sc.csv"
+    ),
+}
 # Hourly cloud-to-ground and cloud-to-cloud lightning counts. lang is accepted.
 STRIKES_URL = (
     "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php"
@@ -815,6 +830,18 @@ class PressureReport:
 
 
 @dataclass(frozen=True)
+class MinuteGrassReading:
+    place: str
+    grass_c: float
+
+
+@dataclass(frozen=True)
+class MinuteGrassReport:
+    obs_time: str
+    stations: tuple[MinuteGrassReading, ...]
+
+
+@dataclass(frozen=True)
 class HottestReading:
     record_time: str
     place: str
@@ -1351,6 +1378,22 @@ def fetch_pressure(timeout: float = 10, lang: str = "en") -> PressureReport:
     except UnicodeDecodeError as exc:
         raise WeatherError("Hong Kong Observatory returned invalid text") from exc
     return parse_pressure(text)
+
+
+def fetch_minute_grass(timeout: float = 10, lang: str = "en") -> MinuteGrassReport:
+    """Download the latest 1-minute mean grass temperature at automatic stations."""
+    url = MINUTE_GRASS_URLS.get(lang, MINUTE_GRASS_URLS["en"])
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            raw = response.read()
+    except (urllib.error.URLError, TimeoutError) as exc:
+        raise WeatherError(f"could not reach Hong Kong Observatory: {exc}") from exc
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise WeatherError("Hong Kong Observatory returned invalid text") from exc
+    return parse_minute_grass(text)
 
 
 def fetch_forecast_icon(
@@ -3160,6 +3203,41 @@ def format_pressure_miss(*, as_json: bool = False) -> str:
     return _unavailable("No sea level pressure is available.", as_json=as_json)
 
 
+def parse_minute_grass(text: str) -> MinuteGrassReport:
+    """Turn the regional grass-temperature CSV into one row per station."""
+    stations: list[MinuteGrassReading] = []
+    obs_time = ""
+    rows = csv.reader(io.StringIO(text))
+    next(rows, None)
+    for row in rows:
+        if len(row) < 3:
+            continue
+        place = _text(row[1])
+        grass = _hour_mm(row[2])
+        if not place or grass is None:
+            continue
+        clock = _text(row[0])
+        if not obs_time and len(clock) == 12 and clock.isdigit():
+            obs_time = f"{clock[:4]}-{clock[4:6]}-{clock[6:8]} {clock[8:10]}:{clock[10:12]}"
+        stations.append(MinuteGrassReading(place, grass))
+    return MinuteGrassReport(obs_time, tuple(stations))
+
+
+def format_minute_grass(report: MinuteGrassReport) -> str:
+    """Render the latest 1-minute mean grass temperature, one station per line."""
+    lines = ["Hong Kong 1-minute grass temperature"]
+    if report.obs_time:
+        lines.append(f"Recorded: {report.obs_time}")
+    for reading in report.stations:
+        lines.append(f"{reading.place}  {_number(reading.grass_c)}°C")
+    return "\n".join(lines) + "\n"
+
+
+def format_minute_grass_miss(*, as_json: bool = False) -> str:
+    """Say that no 1-minute grass temperatures are available."""
+    return _unavailable("No 1-minute grass temperatures are available.", as_json=as_json)
+
+
 def format_forecast_icon(report: ForecastIcons) -> str:
     """Render each day's forecast icon."""
     lines = ["Hong Kong forecast icons"]
@@ -4405,6 +4483,7 @@ def format_json(
     | MinuteTempReport
     | SinceMidnightReport
     | PressureReport
+    | MinuteGrassReport
     | WindForecast
     | GustReport
     | ForecastIcons
