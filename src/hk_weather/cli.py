@@ -12,6 +12,7 @@ from hk_weather.hko import (
     fetch_driest,
     fetch_forecast,
     fetch_forecast_day,
+    fetch_fire_danger,
     fetch_coldest,
     fetch_cyclone,
     fetch_hottest,
@@ -52,6 +53,8 @@ from hk_weather.hko import (
     format_driest,
     format_driest_miss,
     format_forecast,
+    format_fire_danger,
+    format_fire_danger_miss,
     format_coldest,
     format_coldest_miss,
     format_cyclone,
@@ -136,6 +139,7 @@ def build_parser() -> argparse.ArgumentParser:
             "Current conditions by default; --summary prints a short briefing; "
             "--forecast prints the local forecast; "
             "--situation prints the general situation; "
+            "--fire-danger prints the fire danger warning; "
             "--nine-day prints the 9-day forecast; --warnings lists active warnings; "
             "--uv prints the UV index; --tips prints special weather tips; "
             "--stations lists each station; --list-places lists their names; "
@@ -205,6 +209,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--situation",
         action="store_true",
         help="Print the general situation from the local forecast",
+    )
+    parser.add_argument(
+        "-f",
+        "--fire-danger",
+        action="store_true",
+        help="Print the fire danger warning from the local forecast",
     )
     parser.add_argument(
         "-n",
@@ -445,6 +455,12 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_situation_miss(as_json=args.json)
             else:
                 text = format_json(situation) if args.json else format_situation(situation)
+        elif args.fire_danger:
+            fire_danger = fetch_fire_danger(timeout=args.timeout, lang=args.lang)
+            if fire_danger is None:
+                text = format_fire_danger_miss(as_json=args.json)
+            else:
+                text = format_json(fire_danger) if args.json else format_fire_danger(fire_danger)
         elif args.nine_day:
             nine_day = fetch_nine_day(timeout=args.timeout, lang=args.lang)
             text = format_json(nine_day) if args.json else format_nine_day(nine_day)

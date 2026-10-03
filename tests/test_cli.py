@@ -222,6 +222,51 @@ def test_cli_situation_when_blank_or_missing(monkeypatch, capsys):
     }
 
 
+def test_cli_fire_danger_prints_warning(monkeypatch, capsys):
+    seen = {}
+    message = "The Fire Danger Warning is Yellow."
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response({"fireDangerWarning": f"  {message}  "})
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--fire-danger", "--lang", "sc"]) == 0
+    assert "dataType=flw" in seen["url"]
+    assert "lang=sc" in seen["url"]
+    assert capsys.readouterr().out == f"Hong Kong fire danger\n{message}\n"
+
+
+def test_cli_fire_danger_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {"fireDangerWarning": "The Fire Danger Warning is Red."}
+        ),
+    )
+    assert main(["-f", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "warning": "The Fire Danger Warning is Red."
+    }
+
+
+def test_cli_fire_danger_when_blank_or_missing(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"fireDangerWarning": "   "}),
+    )
+    assert main(["--fire-danger"]) == 0
+    assert capsys.readouterr().out == "No fire danger warning is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({}),
+    )
+    assert main(["--fire-danger", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No fire danger warning is available."
+    }
+
+
 def test_cli_warnings_lists_active_codes(monkeypatch, capsys):
     seen = {}
 

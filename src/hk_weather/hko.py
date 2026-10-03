@@ -79,6 +79,11 @@ class GeneralSituation:
 
 
 @dataclass(frozen=True)
+class FireDanger:
+    warning: str
+
+
+@dataclass(frozen=True)
 class WeatherWarning:
     code: str
     description: str
@@ -406,6 +411,13 @@ def fetch_situation(
 ) -> GeneralSituation | None:
     """Download the general situation from the local forecast (`dataType=flw`)."""
     return parse_situation(_fetch_json(_apply_lang(url, lang), timeout))
+
+
+def fetch_fire_danger(
+    url: str = FORECAST_URL, timeout: float = 10, lang: str = "en"
+) -> FireDanger | None:
+    """Download the fire danger warning from the local forecast (`dataType=flw`)."""
+    return parse_fire_danger(_fetch_json(_apply_lang(url, lang), timeout))
 
 
 def fetch_warnings(
@@ -879,6 +891,24 @@ def format_situation(report: GeneralSituation) -> str:
 def format_situation_miss(*, as_json: bool = False) -> str:
     """Say that the local forecast has no general situation."""
     return _unavailable("No general situation is available.", as_json=as_json)
+
+
+def parse_fire_danger(payload: dict) -> FireDanger | None:
+    """Turn the `flw` fire danger warning into one sentence."""
+    text = _text(payload.get("fireDangerWarning"))
+    if not text:
+        return None
+    return FireDanger(text)
+
+
+def format_fire_danger(report: FireDanger) -> str:
+    """Render the fire danger warning."""
+    return f"Hong Kong fire danger\n{report.warning}\n"
+
+
+def format_fire_danger_miss(*, as_json: bool = False) -> str:
+    """Say that the local forecast has no fire danger warning."""
+    return _unavailable("No fire danger warning is available.", as_json=as_json)
 
 
 def parse_warnings(payload: dict) -> tuple[WeatherWarning, ...]:
@@ -1941,6 +1971,7 @@ def format_json(
     report: CurrentWeather
     | LocalForecast
     | GeneralSituation
+    | FireDanger
     | NineDayForecast
     | UvIndex
     | SpecialTips
