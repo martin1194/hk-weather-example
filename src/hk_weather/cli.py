@@ -24,6 +24,7 @@ from hk_weather.hko import (
     fetch_grass,
     fetch_sunshine,
     fetch_max_uv,
+    fetch_mean_uv,
     fetch_accum_rain,
     fetch_avg_rain,
     fetch_radiation,
@@ -110,6 +111,8 @@ from hk_weather.hko import (
     format_sunshine_miss,
     format_max_uv,
     format_max_uv_miss,
+    format_mean_uv,
+    format_mean_uv_miss,
     format_accum_rain,
     format_accum_rain_miss,
     format_avg_rain,
@@ -308,6 +311,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--grass prints yesterday's grass minimum; "
             "--sunshine prints yesterday's sunshine duration; "
             "--max-uv prints yesterday's maximum UV index; "
+            "--mean-uv prints yesterday's mean UV index; "
             "--accum-rain prints accumulated rainfall since 1 January; "
             "--avg-rain prints the climatological rainfall normal; "
             "--radiation prints yesterday's gamma radiation report; "
@@ -493,6 +497,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--max-uv",
         action="store_true",
         help="Print yesterday's maximum UV index at King's Park",
+    )
+    parser.add_argument(
+        "--mean-uv",
+        action="store_true",
+        help="Print yesterday's mean UV index at King's Park",
     )
     parser.add_argument(
         "--accum-rain",
@@ -1005,6 +1014,12 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_max_uv_miss(as_json=args.json)
             else:
                 text = format_json(max_uv) if args.json else format_max_uv(max_uv)
+        elif args.mean_uv:
+            mean_uv = fetch_mean_uv(timeout=args.timeout, lang=args.lang)
+            if mean_uv is None:
+                text = format_mean_uv_miss(as_json=args.json)
+            else:
+                text = format_json(mean_uv) if args.json else format_mean_uv(mean_uv)
         elif args.accum_rain:
             accum_rain = fetch_accum_rain(timeout=args.timeout, lang=args.lang)
             if accum_rain is None:
