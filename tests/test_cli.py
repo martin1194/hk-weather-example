@@ -2735,6 +2735,68 @@ def test_cli_rain_json_is_one_object(monkeypatch, capsys):
     }
 
 
+def test_cli_rain_period_prints_the_window(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response(
+            {
+                "rainfall": {
+                    "startTime": "2026-10-03T15:45:00+08:00",
+                    "endTime": "2026-10-03T16:45:00+08:00",
+                    "data": [{"place": "Sai Kung", "max": 2, "unit": "mm"}],
+                }
+            }
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--rain-period", "--lang", "tc"]) == 0
+    assert "dataType=rhrread" in seen["url"]
+    assert "lang=tc" in seen["url"]
+    assert capsys.readouterr().out == (
+        "Hong Kong rainfall period\n"
+        "From: 2026-10-03T15:45:00+08:00\n"
+        "To: 2026-10-03T16:45:00+08:00\n"
+    )
+
+
+def test_cli_rain_period_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {
+                "rainfall": {
+                    "startTime": "2026-10-03T15:45:00+08:00",
+                    "endTime": "2026-10-03T16:45:00+08:00",
+                }
+            }
+        ),
+    )
+    assert main(["--rain-period", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "start": "2026-10-03T15:45:00+08:00",
+        "end": "2026-10-03T16:45:00+08:00",
+    }
+
+
+def test_cli_rain_period_when_missing(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {"rainfall": {"data": [{"place": "Sai Kung", "max": 2, "unit": "mm"}]}}
+        ),
+    )
+    assert main(["--rain-period"]) == 0
+    assert capsys.readouterr().out == "No rainfall period is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({}),
+    )
+    assert main(["--rain-period", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {"message": "No rainfall period is available."}
+
+
 def test_cli_lightning_lists_active_places(monkeypatch, capsys):
     seen = {}
 
