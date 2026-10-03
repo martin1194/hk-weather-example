@@ -211,6 +211,21 @@ COASTAL_URLS = {
     "tc": "https://data.weather.gov.hk/openData/json/sccw_json_datagov_uc.json",
     "sc": "https://data.weather.gov.hk/openData/json/gb/sccw_json_datagov_uc.json",
 }
+# Gridded half-hourly rainfall nowcast. CSV, one file per language.
+NOWCAST_URLS = {
+    "en": (
+        "https://data.weather.gov.hk/weatherAPI/hko_data/F3/"
+        "Gridded_rainfall_nowcast.csv"
+    ),
+    "tc": (
+        "https://data.weather.gov.hk/weatherAPI/hko_data/F3/"
+        "Gridded_rainfall_nowcast_tc.csv"
+    ),
+    "sc": (
+        "https://data.weather.gov.hk/weatherAPI/hko_data/F3/"
+        "Gridded_rainfall_nowcast_sc.csv"
+    ),
+}
 # Latest observed tide height. CSV, one file per language.
 LATEST_TIDE_URLS = {
     "en": "https://data.weather.gov.hk/weatherAPI/hko_data/tide/ALL_en.csv",
@@ -871,6 +886,20 @@ class WettestReading:
 class DriestReading:
     place: str
     rainfall_mm: float
+
+
+@dataclass(frozen=True)
+class NowcastPeak:
+    ending: str
+    latitude: float
+    longitude: float
+    rainfall_mm: float
+
+
+@dataclass(frozen=True)
+class NowcastReport:
+    updated: str
+    periods: tuple[NowcastPeak, ...]
 
 
 @dataclass(frozen=True)
@@ -2063,6 +2092,22 @@ def fetch_driest(
         return None
     driest = min(report.readings, key=lambda reading: reading.rainfall_mm)
     return DriestReading(driest.place, driest.rainfall_mm)
+
+
+def fetch_nowcast(timeout: float = 10, lang: str = "en") -> NowcastReport:
+    """Download the gridded half-hourly rainfall nowcast."""
+    url = NOWCAST_URLS.get(lang, NOWCAST_URLS["en"])
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            raw = response.read()
+    except (urllib.error.URLError, TimeoutError) as exc:
+        raise WeatherError(f"could not reach Hong Kong Observatory: {exc}") from exc
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise WeatherError("Hong Kong Observatory returned invalid text") from exc
+    return parse_nowcast(text)
 
 
 def fetch_rainstorm(
@@ -5201,6 +5246,67 @@ def format_driest_miss(*, as_json: bool = False) -> str:
     return _unavailable("No rainfall readings are available.", as_json=as_json)
 
 
+def _nowcast_clock(value: str) -> str:
+    clock = _text(value)
+    if len(clock) != 12 or not clock.isdigit():
+        return ""
+    return f"{clock[:4]}-{clock[4:6]}-{clock[6:8]} {clock[8:10]}:{clock[10:12]}"
+
+
+def parse_nowcast(text: str) -> NowcastReport:
+    """Turn the nowcast grid into the heaviest cell of each half-hour."""
+    updated_raw = ""
+    updated = ""
+    peaks: dict[str, NowcastPeak] = {}
+    rows = csv.reader(io.StringIO(text))
+    next(rows, None)
+    for row in rows:
+        if len(row) < 5:
+            continue
+        raw_updated = _text(row[0])
+        ending = _nowcast_clock(row[1])
+        latitude = _hour_mm(row[2])
+        longitude = _hour_mm(row[3])
+        rainfall = _hour_mm(row[4])
+        if (
+            not ending
+            or latitude is None
+            or longitude is None
+            or rainfall is None
+            or len(raw_updated) != 12
+            or not raw_updated.isdigit()
+        ):
+            continue
+        if raw_updated > updated_raw:
+            updated_raw = raw_updated
+            updated = _nowcast_clock(raw_updated)
+            peaks = {}
+        current = peaks.get(ending)
+        if current is None or rainfall > current.rainfall_mm:
+            peaks[ending] = NowcastPeak(ending, latitude, longitude, rainfall)
+    periods = tuple(peaks[key] for key in sorted(peaks))
+    return NowcastReport(updated, periods)
+
+
+def format_nowcast(report: NowcastReport) -> str:
+    """Render the heaviest nowcast cell in each half-hour."""
+    lines = ["Hong Kong rainfall nowcast"]
+    if report.updated:
+        lines.append(f"Updated: {report.updated}")
+    for period in report.periods:
+        lines.append(
+            f"{period.ending}  {_number(period.latitude)}°N"
+            f"  {_number(period.longitude)}°E"
+            f"  {_number(period.rainfall_mm)} mm"
+        )
+    return "\n".join(lines) + "\n"
+
+
+def format_nowcast_miss(*, as_json: bool = False) -> str:
+    """Say that no rainfall nowcast is available."""
+    return _unavailable("No rainfall nowcast is available.", as_json=as_json)
+
+
 def parse_rainstorm(payload: dict) -> RainstormReminder | None:
     """Turn the `rhrread` rainstorm reminder into one message."""
     text = _text(payload.get("rainstormReminder"))
@@ -5671,6 +5777,7 @@ def format_json(
     | LeastHumidReading
     | WettestReading
     | DriestReading
+    | NowcastReport
     | RainstormReminder
     | CycloneMessage
     | TideReport

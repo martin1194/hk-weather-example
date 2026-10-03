@@ -164,6 +164,8 @@ hk-weather --wettest
 hk-weather --wettest --json
 hk-weather --driest
 hk-weather --driest --json
+hk-weather --nowcast
+hk-weather --nowcast --json
 hk-weather --rainstorm
 hk-weather --rainstorm --json
 hk-weather --cyclone
@@ -409,6 +411,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --wettest` (or `-R`) prints the wettest district from that list, for example `Sai Kung  12 mm`. `--wettest --json` prints that reading as one JSON object. `--lang` applies. If no readings are present, it says so.
 
 `hk-weather --driest` (or `-D`) prints the driest district from that list, for example `Central & Western  0 mm`. `--driest --json` prints that reading as one JSON object. `--lang` applies. If no readings are present, it says so.
+
+`hk-weather --nowcast` prints the heaviest grid cell in each half-hour of the rainfall nowcast, for example `2026-10-04 08:24  22.178°N  115.272°E  80.44 mm`. `--rain` still prints observed district rainfall. `--nowcast --json` prints those half-hours as one JSON object. `--lang` selects the bulletin language. A cell is omitted when its rainfall is not numeric. If none remain, it says `No rainfall nowcast is available.`
 
 `hk-weather --lightning` lists places where the current report shows lightning. `--lightning --json` prints those places as one JSON object. If none are reported, it says so.
 
