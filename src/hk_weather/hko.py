@@ -528,6 +528,13 @@ class MaxUv:
 
 
 @dataclass(frozen=True)
+class MeanUv:
+    station: str
+    date: str
+    uv_index: float
+
+
+@dataclass(frozen=True)
 class AccumulatedRainfall:
     date: str
     rainfall_mm: float
@@ -972,6 +979,17 @@ def fetch_max_uv(timeout: float = 10, lang: str = "en") -> MaxUv | None:
         f"&station={SUNSHINE_STATION}&lang=en"
     )
     return parse_max_uv(_fetch_json(_apply_lang(url, lang), timeout), day)
+
+
+def fetch_mean_uv(timeout: float = 10, lang: str = "en") -> MeanUv | None:
+    """Download yesterday's mean UV index (`dataType=RYES`, station KP)."""
+    day = _hong_kong_yesterday()
+    url = (
+        "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php"
+        f"?dataType=RYES&rformat=json&date={day.replace('-', '')}"
+        f"&station={SUNSHINE_STATION}&lang=en"
+    )
+    return parse_mean_uv(_fetch_json(_apply_lang(url, lang), timeout), day)
 
 
 def fetch_accum_rain(timeout: float = 10, lang: str = "en") -> AccumulatedRainfall | None:
@@ -3318,6 +3336,31 @@ def format_max_uv_miss(*, as_json: bool = False) -> str:
     return _unavailable("No maximum UV index is available.", as_json=as_json)
 
 
+def parse_mean_uv(payload: dict, date: str) -> MeanUv | None:
+    """Turn a `RYES` document into yesterday's mean UV index at King's Park."""
+    index = _hour_mm(payload.get("KingsParkReadingsMeanUVIndex"))
+    if index is None:
+        return None
+    reported = _text(payload.get("ReportTimeInfoDate"))
+    if len(reported) == 8 and reported.isdigit():
+        date = f"{reported[:4]}-{reported[4:6]}-{reported[6:8]}"
+    return MeanUv(SUNSHINE_STATION_NAME, date, index)
+
+
+def format_mean_uv(reading: MeanUv) -> str:
+    """Render yesterday's mean UV index at King's Park."""
+    return (
+        "Hong Kong mean UV index\n"
+        f"Station: {reading.station}\n"
+        f"{reading.date}  {_number(reading.uv_index)}\n"
+    )
+
+
+def format_mean_uv_miss(*, as_json: bool = False) -> str:
+    """Say that yesterday's mean UV index is not available."""
+    return _unavailable("No mean UV index is available.", as_json=as_json)
+
+
 def parse_accum_rain(payload: dict, date: str) -> AccumulatedRainfall | None:
     """Turn a `RYES` document into accumulated rainfall since 1 January."""
     rainfall = _hour_mm(payload.get("HKOReadingsAccumRainfall"))
@@ -3915,6 +3958,7 @@ def format_json(
     | GrassMinimum
     | Sunshine
     | MaxUv
+    | MeanUv
     | AccumulatedRainfall
     | AverageRainfall
     | RadiationReport

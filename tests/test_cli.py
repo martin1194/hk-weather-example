@@ -1887,6 +1887,62 @@ def test_cli_max_uv_when_missing(monkeypatch, capsys):
     assert json.loads(capsys.readouterr().out) == {"message": "No maximum UV index is available."}
 
 
+def test_cli_mean_uv_prints_yesterday_index(monkeypatch, capsys):
+    seen = {}
+    monkeypatch.setattr("hk_weather.hko._hong_kong_yesterday", lambda now=None: "2026-10-02")
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response(
+            {
+                "KingsParkReadingsMeanUVIndex": "  2  ",
+                "ReportTimeInfoDate": "20261002",
+            }
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--mean-uv", "--lang", "tc"]) == 0
+    assert "dataType=RYES" in seen["url"]
+    assert "station=KP" in seen["url"]
+    assert "date=20261002" in seen["url"]
+    assert "lang=tc" in seen["url"]
+    assert capsys.readouterr().out == (
+        "Hong Kong mean UV index\n"
+        "Station: King's Park\n"
+        "2026-10-02  2\n"
+    )
+
+
+def test_cli_mean_uv_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_yesterday", lambda now=None: "2026-10-02")
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"KingsParkReadingsMeanUVIndex": "2"}),
+    )
+    assert main(["--mean-uv", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "station": "King's Park",
+        "date": "2026-10-02",
+        "uv_index": 2,
+    }
+
+
+def test_cli_mean_uv_when_missing(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_yesterday", lambda now=None: "2026-10-02")
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"KingsParkReadingsMeanUVIndex": "***"}),
+    )
+    assert main(["--mean-uv"]) == 0
+    assert capsys.readouterr().out == "No mean UV index is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({}),
+    )
+    assert main(["--mean-uv", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {"message": "No mean UV index is available."}
+
+
 def test_cli_accum_rain_prints_january_total(monkeypatch, capsys):
     seen = {}
     monkeypatch.setattr("hk_weather.hko._hong_kong_yesterday", lambda now=None: "2026-10-02")
