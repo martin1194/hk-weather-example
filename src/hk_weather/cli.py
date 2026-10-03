@@ -14,6 +14,7 @@ from hk_weather.hko import (
     fetch_outlook,
     fetch_forecast_period,
     fetch_forecast_desc,
+    fetch_forecast_updated,
     fetch_forecast_day,
     fetch_hour_rain,
     fetch_hour_wettest,
@@ -84,6 +85,8 @@ from hk_weather.hko import (
     format_forecast_period_miss,
     format_forecast_desc,
     format_forecast_desc_miss,
+    format_forecast_updated,
+    format_forecast_updated_miss,
     format_grass,
     format_grass_miss,
     format_accum_rain,
@@ -214,6 +217,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--outlook prints the local-forecast outlook; "
             "--forecast-period prints the forecast period; "
             "--forecast-desc prints the forecast description; "
+            "--forecast-updated prints when the local forecast was updated; "
             "--situation prints the general situation; "
             "--fire-danger prints the fire danger warning; "
             "--tc-info prints tropical cyclone information from the local forecast; "
@@ -316,6 +320,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--forecast-desc",
         action="store_true",
         help="Print the description from the local weather forecast",
+    )
+    parser.add_argument(
+        "--forecast-updated",
+        action="store_true",
+        help="Print when the local weather forecast was last updated",
     )
     parser.add_argument(
         "-g",
@@ -710,6 +719,16 @@ def main(argv: list[str] | None = None) -> int:
                     format_json(forecast_desc)
                     if args.json
                     else format_forecast_desc(forecast_desc)
+                )
+        elif args.forecast_updated:
+            forecast_updated = fetch_forecast_updated(timeout=args.timeout, lang=args.lang)
+            if forecast_updated is None:
+                text = format_forecast_updated_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(forecast_updated)
+                    if args.json
+                    else format_forecast_updated(forecast_updated)
                 )
         elif args.situation:
             situation = fetch_situation(timeout=args.timeout, lang=args.lang)
