@@ -160,6 +160,21 @@ HEAT_INDEX_URLS = {
         "recent10_10min_hkhi_sc.csv"
     ),
 }
+# Latest 60-minute mean Wet Bulb Globe Temperature. CSV, one file per language.
+WBGT_URLS = {
+    "en": (
+        "https://data.weather.gov.hk/weatherAPI/hko_data/regional-weather/"
+        "recent10_60min_wbgt.csv"
+    ),
+    "tc": (
+        "https://data.weather.gov.hk/weatherAPI/hko_data/regional-weather/"
+        "recent10_60min_wbgt_uc.csv"
+    ),
+    "sc": (
+        "https://data.weather.gov.hk/weatherAPI/hko_data/regional-weather/"
+        "recent10_60min_wbgt_sc.csv"
+    ),
+}
 # Latest observed tide height. CSV, one file per language.
 LATEST_TIDE_URLS = {
     "en": "https://data.weather.gov.hk/weatherAPI/hko_data/tide/ALL_en.csv",
@@ -914,6 +929,18 @@ class HeatIndexReport:
 
 
 @dataclass(frozen=True)
+class WbgtReading:
+    place: str
+    wbgt_c: float
+
+
+@dataclass(frozen=True)
+class WbgtReport:
+    obs_time: str
+    stations: tuple[WbgtReading, ...]
+
+
+@dataclass(frozen=True)
 class HottestReading:
     record_time: str
     place: str
@@ -1498,6 +1525,22 @@ def fetch_heat_index(timeout: float = 10, lang: str = "en") -> HeatIndexReport:
     except UnicodeDecodeError as exc:
         raise WeatherError("Hong Kong Observatory returned invalid text") from exc
     return parse_heat_index(text)
+
+
+def fetch_wbgt(timeout: float = 10, lang: str = "en") -> WbgtReport:
+    """Download the latest 60-minute mean Wet Bulb Globe Temperature."""
+    url = WBGT_URLS.get(lang, WBGT_URLS["en"])
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            raw = response.read()
+    except (urllib.error.URLError, TimeoutError) as exc:
+        raise WeatherError(f"could not reach Hong Kong Observatory: {exc}") from exc
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise WeatherError("Hong Kong Observatory returned invalid text") from exc
+    return parse_wbgt(text)
 
 
 def fetch_forecast_icon(
@@ -3500,6 +3543,46 @@ def format_heat_index_miss(*, as_json: bool = False) -> str:
     return _unavailable("No heat index is available.", as_json=as_json)
 
 
+def parse_wbgt(text: str) -> WbgtReport:
+    """Turn the WBGT CSV into the latest minute, one row per station."""
+    stations: list[WbgtReading] = []
+    latest = ""
+    rows = csv.reader(io.StringIO(text))
+    next(rows, None)
+    for row in rows:
+        if len(row) < 3:
+            continue
+        place = _text(row[1])
+        value = _hour_mm(row[2])
+        clock = _text(row[0])
+        if not place or value is None or len(clock) != 12 or not clock.isdigit():
+            continue
+        if clock > latest:
+            latest = clock
+            stations = []
+        if clock == latest:
+            stations.append(WbgtReading(place, value))
+    obs_time = ""
+    if latest:
+        obs_time = f"{latest[:4]}-{latest[4:6]}-{latest[6:8]} {latest[8:10]}:{latest[10:12]}"
+    return WbgtReport(obs_time, tuple(stations))
+
+
+def format_wbgt(report: WbgtReport) -> str:
+    """Render the latest 60-minute mean Wet Bulb Globe Temperature."""
+    lines = ["Hong Kong wet bulb globe temperature"]
+    if report.obs_time:
+        lines.append(f"Recorded: {report.obs_time}")
+    for reading in report.stations:
+        lines.append(f"{reading.place}  {_number(reading.wbgt_c)}°C")
+    return "\n".join(lines) + "\n"
+
+
+def format_wbgt_miss(*, as_json: bool = False) -> str:
+    """Say that no wet bulb globe temperature is available."""
+    return _unavailable("No wet bulb globe temperature is available.", as_json=as_json)
+
+
 def format_forecast_icon(report: ForecastIcons) -> str:
     """Render each day's forecast icon."""
     lines = ["Hong Kong forecast icons"]
@@ -4748,6 +4831,7 @@ def format_json(
     | MinuteGrassReport
     | TempDiffReport
     | HeatIndexReport
+    | WbgtReport
     | WindForecast
     | GustReport
     | ForecastIcons
