@@ -358,6 +358,11 @@ class MonthRainfall:
 
 
 @dataclass(frozen=True)
+class YearRainfall:
+    report: str
+
+
+@dataclass(frozen=True)
 class SummaryToday:
     date: str
     high_c: float | None
@@ -674,6 +679,13 @@ def fetch_month_rain(
 ) -> MonthRainfall | None:
     """Download last month's rainfall note (`rainfallLastMonth` on `rhrread`)."""
     return parse_month_rain(_fetch_json(_apply_lang(url, lang), timeout))
+
+
+def fetch_year_rain(
+    url: str = DEFAULT_URL, timeout: float = 10, lang: str = "en"
+) -> YearRainfall | None:
+    """Download the January-to-last-month rainfall note (`rainfallJanuaryToLastMonth`)."""
+    return parse_year_rain(_fetch_json(_apply_lang(url, lang), timeout))
 
 
 def _apply_lang(url: str, lang: str) -> str:
@@ -1877,6 +1889,24 @@ def format_month_rain_miss(*, as_json: bool = False) -> str:
     return _unavailable("No last-month rainfall note is available.", as_json=as_json)
 
 
+def parse_year_rain(payload: dict) -> YearRainfall | None:
+    """Turn the `rhrread` January-to-last-month rainfall note into one sentence."""
+    text = _text(payload.get("rainfallJanuaryToLastMonth"))
+    if not text:
+        return None
+    return YearRainfall(text)
+
+
+def format_year_rain(reading: YearRainfall) -> str:
+    """Render the January-to-last-month rainfall note."""
+    return f"Hong Kong year-to-date rainfall\n{reading.report}\n"
+
+
+def format_year_rain_miss(*, as_json: bool = False) -> str:
+    """Say that the current report has no year-to-date rainfall note."""
+    return _unavailable("No year-to-date rainfall note is available.", as_json=as_json)
+
+
 def format_json(
     report: CurrentWeather
     | LocalForecast
@@ -1899,6 +1929,7 @@ def format_json(
     | OvernightMinimum
     | NoonRainfall
     | MonthRainfall
+    | YearRainfall
     | WeatherSummary
     | HumidestReading
     | LeastHumidReading

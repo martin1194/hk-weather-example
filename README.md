@@ -82,6 +82,8 @@ hk-weather --noon-rain
 hk-weather --noon-rain --json
 hk-weather --month-rain
 hk-weather --month-rain --json
+hk-weather --year-rain
+hk-weather --year-rain --json
 hk-weather --stations
 hk-weather --list-places
 hk-weather --place "King's Park"
@@ -185,6 +187,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --noon-rain` (or `-N`) prints the Observatory's midnight-to-noon rainfall note (`rainfallFrom00To12`). `--noon-rain --json` prints that sentence as one JSON object. `--lang` applies. If the field is missing or blank, it says `No noon rainfall note is available.`
 
 `hk-weather --month-rain` (or `-L`) prints the Observatory's last-month rainfall note (`rainfallLastMonth`). `--month-rain --json` prints that sentence as one JSON object. `--lang` applies. If the field is missing or blank, it says `No last-month rainfall note is available.`
+
+`hk-weather --year-rain` (or `-y`) prints the Observatory's January-to-last-month rainfall note (`rainfallJanuaryToLastMonth`). `--year-rain --json` prints that sentence as one JSON object. `--lang` applies. If the field is missing or blank, it says `No year-to-date rainfall note is available.`
 
 `hk-weather --stations` lists each place in the current report with its temperature and, when the Observatory includes it, humidity.
 

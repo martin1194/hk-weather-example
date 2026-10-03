@@ -2541,6 +2541,54 @@ def test_cli_month_rain_when_blank_or_missing(monkeypatch, capsys):
     }
 
 
+def test_cli_year_rain_prints_note(monkeypatch, capsys):
+    seen = {}
+    message = (
+        "The accumulated rainfall recorded at the Hong Kong Observatory from January "
+        "to September was 1864.3 millimetres, about 25 percent below the normal."
+    )
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response({"rainfallJanuaryToLastMonth": f"  {message}  "})
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--year-rain", "--lang", "sc"]) == 0
+    assert "dataType=rhrread" in seen["url"]
+    assert "lang=sc" in seen["url"]
+    assert capsys.readouterr().out == f"Hong Kong year-to-date rainfall\n{message}\n"
+
+
+def test_cli_year_rain_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {"rainfallJanuaryToLastMonth": "January to September rainfall was 1864.3 millimetres."}
+        ),
+    )
+    assert main(["-y", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "report": "January to September rainfall was 1864.3 millimetres."
+    }
+
+
+def test_cli_year_rain_when_blank_or_missing(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"rainfallJanuaryToLastMonth": "   "}),
+    )
+    assert main(["--year-rain"]) == 0
+    assert capsys.readouterr().out == "No year-to-date rainfall note is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({}),
+    )
+    assert main(["--year-rain", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No year-to-date rainfall note is available."
+    }
+
+
 def test_cli_overnight_when_blank_or_missing(monkeypatch, capsys):
     monkeypatch.setattr(
         "hk_weather.hko.urllib.request.urlopen",
