@@ -113,6 +113,22 @@ def _json_response(payload: dict):
     return Response()
 
 
+def _text_response(body: str):
+    encoded = body.encode()
+
+    class Response:
+        def read(self):
+            return encoded
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+    return Response()
+
+
 def test_cli_forecast_prints_plain_text(monkeypatch, capsys):
     seen = {}
 
@@ -1189,6 +1205,71 @@ def test_cli_tide_when_no_readings(monkeypatch, capsys):
     assert capsys.readouterr().out == "No tide readings are available.\n"
     assert main(["--tide", "--json"]) == 0
     assert json.loads(capsys.readouterr().out) == {"message": "No tide readings are available."}
+
+
+_AQHI_XML = """<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"><channel>
+<item><title>Central/Western</title><description><![CDATA[Central/Western - General Stations: 3 Low - Sat, 03 Oct 2026 08:30]]></description></item>
+<item><title>Causeway Bay</title><description><![CDATA[Causeway Bay - Roadside Stations: 10+ Serious - Sat, 03 Oct 2026 08:30]]></description></item>
+<item><title>Skip</title><description><![CDATA[not a reading]]></description></item>
+</channel></rss>
+"""
+
+
+def test_cli_aqhi_lists_stations(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _text_response(_AQHI_XML)
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["-A", "--lang", "tc"]) == 0
+    assert seen["url"].endswith("aqhi_ind_rss_ChT.xml")
+    assert capsys.readouterr().out == (
+        "Hong Kong AQHI\n"
+        "Updated: Sat, 03 Oct 2026 08:30\n"
+        "Central/Western  General Stations  3  Low\n"
+        "Causeway Bay  Roadside Stations  10+  Serious\n"
+    )
+
+
+def test_cli_aqhi_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(_AQHI_XML),
+    )
+    assert main(["--aqhi", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "updated": "Sat, 03 Oct 2026 08:30",
+        "readings": [
+            {
+                "station": "Central/Western",
+                "area": "General Stations",
+                "aqhi": "3",
+                "health_risk": "Low",
+            },
+            {
+                "station": "Causeway Bay",
+                "area": "Roadside Stations",
+                "aqhi": "10+",
+                "health_risk": "Serious",
+            },
+        ],
+    }
+
+
+def test_cli_aqhi_when_no_readings(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            '<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel></channel></rss>'
+        ),
+    )
+    assert main(["--aqhi"]) == 0
+    assert capsys.readouterr().out == "No AQHI readings are available.\n"
+    assert main(["--aqhi", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {"message": "No AQHI readings are available."}
 
 
 def test_cli_visibility_when_none_available(monkeypatch, capsys):
