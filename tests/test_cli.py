@@ -706,6 +706,53 @@ def test_cli_soil_temp_when_missing(monkeypatch, capsys):
     assert json.loads(capsys.readouterr().out) == {"message": "No soil temperature is available."}
 
 
+def test_cli_nine_situation_prints_paragraph(monkeypatch, capsys):
+    seen = {}
+    message = (
+        "A replenishment of the northeast monsoon will reach the coast of Guangdong."
+    )
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response({"generalSituation": f"  {message}  "})
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--nine-situation", "--lang", "tc"]) == 0
+    assert "dataType=fnd" in seen["url"]
+    assert "lang=tc" in seen["url"]
+    assert capsys.readouterr().out == f"Hong Kong 9-day situation\n{message}\n"
+
+
+def test_cli_nine_situation_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {"generalSituation": "Showers will lessen early next week."}
+        ),
+    )
+    assert main(["--nine-situation", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "situation": "Showers will lessen early next week."
+    }
+
+
+def test_cli_nine_situation_when_blank_or_missing(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"generalSituation": "   "}),
+    )
+    assert main(["--nine-situation"]) == 0
+    assert capsys.readouterr().out == "No 9-day situation is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({}),
+    )
+    assert main(["--nine-situation", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No 9-day situation is available."
+    }
+
+
 def test_cli_today_prints_the_hong_kong_day(monkeypatch, capsys):
     seen = {}
     monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
