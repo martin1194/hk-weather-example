@@ -5122,6 +5122,64 @@ def test_cli_minute_grass_when_missing(monkeypatch, capsys):
     }
 
 
+def test_cli_temp_diff_prints_signed_changes(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _text_response(
+            "Date time,Station,Past 24-hour Temperature Difference(degree Celsius)\n"
+            "202610040240,Chek Lap Kok,  -0.6  \n"
+            "202610040240,Clear Water Bay,N/A\n"
+            "202610040240,HK Observatory,+0.4\n"
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--temp-diff", "--lang", "tc"]) == 0
+    assert seen["url"].endswith("latest_past24_temperature_diff_uc.csv")
+    assert capsys.readouterr().out == (
+        "Hong Kong 24-hour temperature change\n"
+        "Recorded: 2026-10-04 02:40\n"
+        "Chek Lap Kok  -0.6°C\n"
+        "HK Observatory  +0.4°C\n"
+    )
+
+
+def test_cli_temp_diff_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Date time,Station,Difference\n"
+            "202610040240,Chek Lap Kok,-0.6\n"
+        ),
+    )
+    assert main(["--temp-diff", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "obs_time": "2026-10-04 02:40",
+        "stations": [{"place": "Chek Lap Kok", "change_c": -0.6}],
+    }
+
+
+def test_cli_temp_diff_when_missing(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Date time,Station,Difference\n"
+            "202610040240,Clear Water Bay,N/A\n"
+        ),
+    )
+    assert main(["--temp-diff"]) == 0
+    assert capsys.readouterr().out == "No 24-hour temperature changes are available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(""),
+    )
+    assert main(["--temp-diff", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No 24-hour temperature changes are available."
+    }
+
+
 def test_cli_temp_time_prints_timestamp(monkeypatch, capsys):
     seen = {}
 
