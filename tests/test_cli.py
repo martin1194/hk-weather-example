@@ -2438,6 +2438,72 @@ def test_cli_lightning_when_none_reported(monkeypatch, capsys):
     assert capsys.readouterr().out == "No lightning is reported.\n"
 
 
+def test_cli_strikes_prints_counts(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response(
+            {
+                "fields": ["DateTime", "Type", "Region", "lightning count"],
+                "data": [
+                    ["202610031200-202610031259", "Cloud-to-ground", "New Territories West", "3"],
+                    ["202610031200-202610031259", "  ", "Skip", "1"],
+                    ["202610031200-202610031259", "Cloud-to-cloud", "Hong Kong territory", "12"],
+                    ["short"],
+                ],
+            }
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--strikes", "--lang", "tc"]) == 0
+    assert "dataType=LHL" in seen["url"]
+    assert "lang=tc" in seen["url"]
+    assert capsys.readouterr().out == (
+        "Hong Kong lightning count\n"
+        "2026-10-03 12:00-12:59  Cloud-to-ground  New Territories West  3\n"
+        "2026-10-03 12:00-12:59  Cloud-to-cloud  Hong Kong territory  12\n"
+    )
+
+
+def test_cli_strikes_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {
+                "data": [
+                    ["202610031200-202610031259", "Cloud-to-ground", "Lantau", "0"],
+                ]
+            }
+        ),
+    )
+    assert main(["-l", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "counts": [
+            {
+                "start": "2026-10-03 12:00",
+                "end": "2026-10-03 12:59",
+                "kind": "Cloud-to-ground",
+                "region": "Lantau",
+                "count": 0,
+            }
+        ]
+    }
+
+
+def test_cli_strikes_when_none_available(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"data": []}),
+    )
+    assert main(["--strikes"]) == 0
+    assert capsys.readouterr().out == "No lightning counts are available.\n"
+    assert main(["--strikes", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No lightning counts are available."
+    }
+
+
 def test_cli_humidity_lists_places(monkeypatch, capsys):
     seen = {}
 
