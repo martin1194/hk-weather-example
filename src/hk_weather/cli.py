@@ -22,6 +22,7 @@ from hk_weather.hko import (
     fetch_moon,
     fetch_month_rain,
     fetch_nine_day,
+    fetch_year_rain,
     fetch_noon_rain,
     fetch_overnight,
     fetch_psr,
@@ -67,6 +68,8 @@ from hk_weather.hko import (
     format_moon_miss,
     format_month_rain,
     format_month_rain_miss,
+    format_year_rain,
+    format_year_rain_miss,
     format_place_miss,
     format_nine_day,
     format_noon_rain,
@@ -147,6 +150,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--overnight prints the midnight-to-9am minimum; "
             "--noon-rain prints the midnight-to-noon rainfall note; "
             "--month-rain prints last month's rainfall note; "
+            "--year-rain prints the January-to-last-month rainfall note; "
             "--wettest prints the wettest district; "
             "--driest prints the driest district; "
             "--tide prints today's high and low tides; "
@@ -377,6 +381,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="Print last month's rainfall note from the current report",
     )
     parser.add_argument(
+        "-y",
+        "--year-rain",
+        action="store_true",
+        help="Print the January-to-last-month rainfall note from the current report",
+    )
+    parser.add_argument(
         "--stations",
         action="store_true",
         help="List temperature and humidity at each station",
@@ -575,6 +585,12 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_month_rain_miss(as_json=args.json)
             else:
                 text = format_json(month_rain) if args.json else format_month_rain(month_rain)
+        elif args.year_rain:
+            year_rain = fetch_year_rain(timeout=args.timeout, lang=args.lang)
+            if year_rain is None:
+                text = format_year_rain_miss(as_json=args.json)
+            else:
+                text = format_json(year_rain) if args.json else format_year_rain(year_rain)
         elif args.stations:
             stations = fetch_stations(timeout=args.timeout, lang=args.lang)
             text = format_json(stations) if args.json else format_stations(stations)
