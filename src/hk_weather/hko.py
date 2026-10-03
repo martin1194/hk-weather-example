@@ -367,6 +367,12 @@ class AverageRainfall:
 
 
 @dataclass(frozen=True)
+class RadiationReport:
+    date: str
+    report: str
+
+
+@dataclass(frozen=True)
 class RainstormReminder:
     reminder: str
 
@@ -627,6 +633,16 @@ def fetch_avg_rain(timeout: float = 10, lang: str = "en") -> AverageRainfall | N
         f"?dataType=RYES&rformat=json&date={day.replace('-', '')}&station=HKO&lang=en"
     )
     return parse_avg_rain(_fetch_json(_apply_lang(url, lang), timeout), day)
+
+
+def fetch_radiation(timeout: float = 10, lang: str = "en") -> RadiationReport | None:
+    """Download yesterday's gamma radiation report (`dataType=RYES`, station HKO)."""
+    day = _hong_kong_yesterday()
+    url = (
+        "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php"
+        f"?dataType=RYES&rformat=json&date={day.replace('-', '')}&station=HKO&lang=en"
+    )
+    return parse_radiation(_fetch_json(_apply_lang(url, lang), timeout), day)
 
 
 def fetch_summary(timeout: float = 10, lang: str = "en") -> WeatherSummary:
@@ -2186,6 +2202,27 @@ def format_avg_rain_miss(*, as_json: bool = False) -> str:
     return _unavailable("No average rainfall is available.", as_json=as_json)
 
 
+def parse_radiation(payload: dict, date: str) -> RadiationReport | None:
+    """Turn a `RYES` document into yesterday's outdoor radiation report."""
+    report = _text(payload.get("HongKongDesc"))
+    if not report:
+        return None
+    reported = _text(payload.get("ReportTimeInfoDate"))
+    if len(reported) == 8 and reported.isdigit():
+        date = f"{reported[:4]}-{reported[4:6]}-{reported[6:8]}"
+    return RadiationReport(date, report)
+
+
+def format_radiation(reading: RadiationReport) -> str:
+    """Render yesterday's outdoor gamma radiation report."""
+    return f"Hong Kong radiation\n{reading.date}\n{reading.report}\n"
+
+
+def format_radiation_miss(*, as_json: bool = False) -> str:
+    """Say that yesterday's radiation report is not available."""
+    return _unavailable("No radiation report is available.", as_json=as_json)
+
+
 def _hour_mm(value: object) -> float | None:
     if isinstance(value, bool):
         return None
@@ -2550,6 +2587,7 @@ def format_json(
     | GrassMinimum
     | AccumulatedRainfall
     | AverageRainfall
+    | RadiationReport
     | PsrForecast
     | WeekendForecast
     | VisibilityReport
