@@ -76,6 +76,8 @@ hk-weather --coldest
 hk-weather --coldest --json
 hk-weather --overnight
 hk-weather --overnight --json
+hk-weather --noon-rain
+hk-weather --noon-rain --json
 hk-weather --stations
 hk-weather --list-places
 hk-weather --place "King's Park"
@@ -173,6 +175,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --coldest` (or `-C`) prints the coolest place from the current report, for example `Tai Mo Shan  18°C`. `--coldest --json` prints that reading as one JSON object. `--lang` applies. If no readings are present, it says so.
 
 `hk-weather --overnight` (or `-O`) prints the Observatory's midnight-to-9am minimum temperature note (`mintempFrom00To09`). `--overnight --json` prints that sentence as one JSON object. `--lang` applies. If the field is missing or blank, it says `No overnight minimum is available.`
+
+`hk-weather --noon-rain` (or `-N`) prints the Observatory's midnight-to-noon rainfall note (`rainfallFrom00To12`). `--noon-rain --json` prints that sentence as one JSON object. `--lang` applies. If the field is missing or blank, it says `No noon rainfall note is available.`
 
 `hk-weather --stations` lists each place in the current report with its temperature and, when the Observatory includes it, humidity.
 

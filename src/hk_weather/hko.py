@@ -348,6 +348,11 @@ class OvernightMinimum:
 
 
 @dataclass(frozen=True)
+class NoonRainfall:
+    report: str
+
+
+@dataclass(frozen=True)
 class UvIndex:
     update_time: str
     place: str | None
@@ -613,6 +618,13 @@ def fetch_overnight(
 ) -> OvernightMinimum | None:
     """Download the midnight-to-9am minimum (`mintempFrom00To09` on `rhrread`)."""
     return parse_overnight(_fetch_json(_apply_lang(url, lang), timeout))
+
+
+def fetch_noon_rain(
+    url: str = DEFAULT_URL, timeout: float = 10, lang: str = "en"
+) -> NoonRainfall | None:
+    """Download the midnight-to-noon rainfall note (`rainfallFrom00To12` on `rhrread`)."""
+    return parse_noon_rain(_fetch_json(_apply_lang(url, lang), timeout))
 
 
 def _apply_lang(url: str, lang: str) -> str:
@@ -1758,6 +1770,24 @@ def format_overnight_miss(*, as_json: bool = False) -> str:
     return _unavailable("No overnight minimum is available.", as_json=as_json)
 
 
+def parse_noon_rain(payload: dict) -> NoonRainfall | None:
+    """Turn the `rhrread` midnight-to-noon rainfall note into one sentence."""
+    text = _text(payload.get("rainfallFrom00To12"))
+    if not text:
+        return None
+    return NoonRainfall(text)
+
+
+def format_noon_rain(reading: NoonRainfall) -> str:
+    """Render the midnight-to-noon rainfall note."""
+    return f"Hong Kong noon rainfall\n{reading.report}\n"
+
+
+def format_noon_rain_miss(*, as_json: bool = False) -> str:
+    """Say that the current report has no noon rainfall note."""
+    return _unavailable("No noon rainfall note is available.", as_json=as_json)
+
+
 def format_json(
     report: CurrentWeather
     | LocalForecast
@@ -1778,6 +1808,7 @@ def format_json(
     | HottestReading
     | ColdestReading
     | OvernightMinimum
+    | NoonRainfall
     | HumidestReading
     | LeastHumidReading
     | WettestReading

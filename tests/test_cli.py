@@ -2288,6 +2288,54 @@ def test_cli_overnight_json_is_one_object(monkeypatch, capsys):
     }
 
 
+def test_cli_noon_rain_prints_note(monkeypatch, capsys):
+    seen = {}
+    message = (
+        "The rainfall recorded at the Hong Kong Observatory between midnight "
+        "and noon today was less than 0.5 millimetres."
+    )
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response({"rainfallFrom00To12": f"  {message}  "})
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--noon-rain", "--lang", "sc"]) == 0
+    assert "dataType=rhrread" in seen["url"]
+    assert "lang=sc" in seen["url"]
+    assert capsys.readouterr().out == f"Hong Kong noon rainfall\n{message}\n"
+
+
+def test_cli_noon_rain_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {"rainfallFrom00To12": "Rainfall between midnight and noon was 12.4 millimetres."}
+        ),
+    )
+    assert main(["-N", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "report": "Rainfall between midnight and noon was 12.4 millimetres."
+    }
+
+
+def test_cli_noon_rain_when_blank_or_missing(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"rainfallFrom00To12": "   "}),
+    )
+    assert main(["--noon-rain"]) == 0
+    assert capsys.readouterr().out == "No noon rainfall note is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({}),
+    )
+    assert main(["--noon-rain", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No noon rainfall note is available."
+    }
+
+
 def test_cli_overnight_when_blank_or_missing(monkeypatch, capsys):
     monkeypatch.setattr(
         "hk_weather.hko.urllib.request.urlopen",
