@@ -34,6 +34,8 @@ hk-weather --grass
 hk-weather --grass --json
 hk-weather --accum-rain
 hk-weather --accum-rain --json
+hk-weather --avg-rain
+hk-weather --avg-rain --json
 hk-weather --tomorrow
 hk-weather -T --json
 hk-weather --weekend
@@ -163,6 +165,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --grass` prints yesterday's grass minimum from that same summary (`HKOReadingsMinGrassTemp`). `--yesterday` still prints the air-temperature summary. `--grass --json` prints the grass minimum as one JSON object. `--lang` applies. If the reading is missing, it says `No grass minimum is available.`
 
 `hk-weather --accum-rain` prints accumulated rainfall at the Observatory from 1 January through yesterday (`HKOReadingsAccumRainfall` on that same summary). `--year-rain` still prints the January-to-last-month note. `--accum-rain --json` prints the total as one JSON object. `--lang` applies. If the reading is missing, it says `No accumulated rainfall is available.`
+
+`hk-weather --avg-rain` prints the climatological normal of that accumulated total (`HKOReadingsAvgRainfall`). `--accum-rain` still prints the recorded total. `--avg-rain --json` prints the normal as one JSON object. `--lang` applies. If the reading is missing, it says `No average rainfall is available.`
 
 `hk-weather --tomorrow` (or `-T`) prints only tomorrow's day from that forecast, including wind when the Observatory sends it. `--tomorrow --json` prints that day as one JSON object. `--lang` applies. If that day is missing, it says so.
 

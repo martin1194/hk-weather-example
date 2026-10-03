@@ -19,6 +19,7 @@ from hk_weather.hko import (
     fetch_fire_danger,
     fetch_grass,
     fetch_accum_rain,
+    fetch_avg_rain,
     fetch_coldest,
     fetch_cyclone,
     fetch_hottest,
@@ -68,6 +69,8 @@ from hk_weather.hko import (
     format_grass_miss,
     format_accum_rain,
     format_accum_rain_miss,
+    format_avg_rain,
+    format_avg_rain_miss,
     format_felt,
     format_felt_miss,
     format_fire_danger,
@@ -188,6 +191,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--yesterday prints yesterday's Observatory summary; "
             "--grass prints yesterday's grass minimum; "
             "--accum-rain prints accumulated rainfall since 1 January; "
+            "--avg-rain prints the climatological rainfall normal; "
             "--tomorrow prints tomorrow; "
             "--day N prints forecast day N (1 is the first entry); "
             "--psr lists the chance of significant rain; "
@@ -289,6 +293,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--accum-rain",
         action="store_true",
         help="Print accumulated rainfall from 1 January through yesterday at the Observatory",
+    )
+    parser.add_argument(
+        "--avg-rain",
+        action="store_true",
+        help="Print the climatological normal of accumulated rainfall through yesterday",
     )
     parser.add_argument(
         "-T",
@@ -598,6 +607,12 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_accum_rain_miss(as_json=args.json)
             else:
                 text = format_json(accum_rain) if args.json else format_accum_rain(accum_rain)
+        elif args.avg_rain:
+            avg_rain = fetch_avg_rain(timeout=args.timeout, lang=args.lang)
+            if avg_rain is None:
+                text = format_avg_rain_miss(as_json=args.json)
+            else:
+                text = format_json(avg_rain) if args.json else format_avg_rain(avg_rain)
         elif args.tomorrow:
             tomorrow = fetch_tomorrow(timeout=args.timeout, lang=args.lang)
             if tomorrow is None:

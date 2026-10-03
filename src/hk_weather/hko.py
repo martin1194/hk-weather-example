@@ -361,6 +361,12 @@ class AccumulatedRainfall:
 
 
 @dataclass(frozen=True)
+class AverageRainfall:
+    date: str
+    rainfall_mm: float
+
+
+@dataclass(frozen=True)
 class RainstormReminder:
     reminder: str
 
@@ -611,6 +617,16 @@ def fetch_accum_rain(timeout: float = 10, lang: str = "en") -> AccumulatedRainfa
         f"?dataType=RYES&rformat=json&date={day.replace('-', '')}&station=HKO&lang=en"
     )
     return parse_accum_rain(_fetch_json(_apply_lang(url, lang), timeout), day)
+
+
+def fetch_avg_rain(timeout: float = 10, lang: str = "en") -> AverageRainfall | None:
+    """Download the climatological rainfall normal (`dataType=RYES`, station HKO)."""
+    day = _hong_kong_yesterday()
+    url = (
+        "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php"
+        f"?dataType=RYES&rformat=json&date={day.replace('-', '')}&station=HKO&lang=en"
+    )
+    return parse_avg_rain(_fetch_json(_apply_lang(url, lang), timeout), day)
 
 
 def fetch_summary(timeout: float = 10, lang: str = "en") -> WeatherSummary:
@@ -2145,6 +2161,31 @@ def format_accum_rain_miss(*, as_json: bool = False) -> str:
     return _unavailable("No accumulated rainfall is available.", as_json=as_json)
 
 
+def parse_avg_rain(payload: dict, date: str) -> AverageRainfall | None:
+    """Turn a `RYES` document into the climatological rainfall normal."""
+    rainfall = _hour_mm(payload.get("HKOReadingsAvgRainfall"))
+    if rainfall is None:
+        return None
+    reported = _text(payload.get("ReportTimeInfoDate"))
+    if len(reported) == 8 and reported.isdigit():
+        date = f"{reported[:4]}-{reported[4:6]}-{reported[6:8]}"
+    return AverageRainfall(date, rainfall)
+
+
+def format_avg_rain(reading: AverageRainfall) -> str:
+    """Render the climatological rainfall normal through yesterday."""
+    return (
+        "Hong Kong average rainfall\n"
+        f"{reading.date}\n"
+        f"{_number(reading.rainfall_mm)} mm\n"
+    )
+
+
+def format_avg_rain_miss(*, as_json: bool = False) -> str:
+    """Say that the climatological rainfall normal is not available."""
+    return _unavailable("No average rainfall is available.", as_json=as_json)
+
+
 def _hour_mm(value: object) -> float | None:
     if isinstance(value, bool):
         return None
@@ -2508,6 +2549,7 @@ def format_json(
     | YesterdayReport
     | GrassMinimum
     | AccumulatedRainfall
+    | AverageRainfall
     | PsrForecast
     | WeekendForecast
     | VisibilityReport
