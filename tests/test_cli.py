@@ -1667,6 +1667,59 @@ def test_cli_max_temp_when_missing(monkeypatch, capsys):
     }
 
 
+def test_cli_min_temp_prints_latest_day(monkeypatch, capsys):
+    seen = {}
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response(
+            {
+                "data": [
+                    ["2026", "1", "1", "16.2", "C"],
+                    ["2026", "8", "30", "***", ""],
+                    ["2026", "8", "31", "  26.2  ", "C"],
+                ]
+            }
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--min-temp", "--lang", "tc"]) == 0
+    assert "dataType=CLMMINT" in seen["url"]
+    assert "station=HKO" in seen["url"]
+    assert "year=2026" in seen["url"]
+    assert "lang=tc" in seen["url"]
+    assert capsys.readouterr().out == "Hong Kong daily minimum temperature\n2026-08-31  26.2°C\n"
+
+
+def test_cli_min_temp_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"data": [["2026", "8", "31", "26.2", "C"]]}),
+    )
+    assert main(["--min-temp", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {"date": "2026-08-31", "temperature_c": 26.2}
+
+
+def test_cli_min_temp_when_missing(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"data": [["2026", "8", "31", "***", ""]]}),
+    )
+    assert main(["--min-temp"]) == 0
+    assert capsys.readouterr().out == "No daily minimum temperature is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"data": []}),
+    )
+    assert main(["--min-temp", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No daily minimum temperature is available."
+    }
+
+
 def test_cli_grass_prints_yesterday_minimum(monkeypatch, capsys):
     seen = {}
     monkeypatch.setattr("hk_weather.hko._hong_kong_yesterday", lambda now=None: "2026-10-02")

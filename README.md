@@ -56,6 +56,8 @@ hk-weather --mean-temp
 hk-weather --mean-temp --json
 hk-weather --max-temp
 hk-weather --max-temp --json
+hk-weather --min-temp
+hk-weather --min-temp --json
 hk-weather --grass
 hk-weather --grass --json
 hk-weather --accum-rain
@@ -243,6 +245,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --mean-temp` prints the latest daily mean temperature at the Observatory for the current Hong Kong year (`dataType=CLMTEMP`, station HKO), for example `2026-08-31  27.7°C`. `--yesterday` still prints yesterday's high and low. `--mean-temp --json` prints that day as one JSON object. `--lang` applies. If no numeric day is present, it says `No daily mean temperature is available.`
 
 `hk-weather --max-temp` prints the latest daily maximum temperature at the Observatory for that same year (`dataType=CLMMAXT`, station HKO), for example `2026-08-31  29.5°C`. `--mean-temp` still prints the daily mean. `--hottest` still prints the current warmest place. `--max-temp --json` prints that day as one JSON object. `--lang` applies. If no numeric day is present, it says `No daily maximum temperature is available.`
+
+`hk-weather --min-temp` prints the latest daily minimum temperature at the Observatory for that same year (`dataType=CLMMINT`, station HKO), for example `2026-08-31  26.2°C`. `--max-temp` still prints the daily maximum. `--coldest` still prints the current coolest place. `--min-temp --json` prints that day as one JSON object. `--lang` applies. If no numeric day is present, it says `No daily minimum temperature is available.`
 
 `hk-weather --grass` prints yesterday's grass minimum from that same summary (`HKOReadingsMinGrassTemp`). `--yesterday` still prints the air-temperature summary. `--grass --json` prints the grass minimum as one JSON object. `--lang` applies. If the reading is missing, it says `No grass minimum is available.`
 
