@@ -358,6 +358,19 @@ class TideReport:
 
 
 @dataclass(frozen=True)
+class HourlyTideReading:
+    hour: str
+    height_m: float
+
+
+@dataclass(frozen=True)
+class HourlyTideReport:
+    station: str
+    date: str
+    hours: tuple[HourlyTideReading, ...]
+
+
+@dataclass(frozen=True)
 class AqhiReading:
     station: str
     area: str
@@ -1044,6 +1057,20 @@ def fetch_tide(timeout: float = 10, lang: str = "en") -> TideReport:
         f"&year={year}&month={month}&day={day}&lang=en"
     )
     return parse_tide(_fetch_json(_apply_lang(url, lang), timeout), year)
+
+
+def fetch_tide_hour(timeout: float = 10, lang: str = "en") -> HourlyTideReport:
+    """Download today's hourly tide heights at Quarry Bay (`dataType=HHOT`)."""
+    today = _hong_kong_today()
+    year = int(today[:4])
+    month = int(today[5:7])
+    day = int(today[8:10])
+    url = (
+        "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php"
+        f"?dataType=HHOT&rformat=json&station={TIDE_STATION}"
+        f"&year={year}&month={month}&day={day}&lang=en"
+    )
+    return parse_tide_hour(_fetch_json(_apply_lang(url, lang), timeout), year)
 
 
 def fetch_aqhi(timeout: float = 10, lang: str = "en") -> AqhiReport:
@@ -2398,6 +2425,46 @@ def format_tide_miss(*, as_json: bool = False) -> str:
     return _unavailable("No tide readings are available.", as_json=as_json)
 
 
+def parse_tide_hour(payload: dict, year: int) -> HourlyTideReport:
+    """Turn an `HHOT` document into one height per hour."""
+    fields = payload.get("fields")
+    labels = [_text(field) for field in fields] if isinstance(fields, list) else []
+    raw = payload.get("data")
+    hours: list[HourlyTideReading] = []
+    date = ""
+    if isinstance(raw, list):
+        for item in raw:
+            if not isinstance(item, list) or len(item) < 3:
+                continue
+            month = _text(item[0])
+            day = _text(item[1])
+            if not month.isdigit() or not day.isdigit():
+                continue
+            date = f"{year:04d}-{month.zfill(2)}-{day.zfill(2)}"
+            for index, raw_height in enumerate(item[2:], start=1):
+                height = _hour_mm(raw_height)
+                if height is None:
+                    continue
+                label = labels[index + 1] if index + 1 < len(labels) else ""
+                hour = label if label.isdigit() else f"{index:02d}"
+                hours.append(HourlyTideReading(f"{hour.zfill(2)}:00", height))
+            break
+    return HourlyTideReport(TIDE_STATION_NAME, date, tuple(hours))
+
+
+def format_tide_hour(report: HourlyTideReport) -> str:
+    """Render today's hourly tide heights."""
+    lines = ["Hong Kong hourly tide", f"Station: {report.station}"]
+    for reading in report.hours:
+        lines.append(f"{report.date}  {reading.hour}  {_number(reading.height_m)} m")
+    return "\n".join(lines) + "\n"
+
+
+def format_tide_hour_miss(*, as_json: bool = False) -> str:
+    """Say that no hourly tide heights are available."""
+    return _unavailable("No hourly tide heights are available.", as_json=as_json)
+
+
 def _aqhi_description(text: str) -> tuple[str, str, str, str, str] | None:
     """Split `Station - Area: 3 Low - updated` into its fields."""
     parts = [part.strip() for part in text.split(" - ")]
@@ -3629,6 +3696,7 @@ def format_json(
     | RainstormReminder
     | CycloneMessage
     | TideReport
+    | HourlyTideReport
     | AqhiReport
     | Sunrise
     | Moon

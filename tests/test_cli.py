@@ -2928,6 +2928,67 @@ def test_cli_tide_when_no_readings(monkeypatch, capsys):
     assert json.loads(capsys.readouterr().out) == {"message": "No tide readings are available."}
 
 
+def test_cli_tide_hour_lists_heights(monkeypatch, capsys):
+    seen = {}
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response(
+            {
+                "fields": ["MM", "DD", "01", "02", "03"],
+                "data": [["10", "3", "  2.44  ", "M", "2.29"]],
+            }
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--tide-hour", "--lang", "tc"]) == 0
+    assert "dataType=HHOT" in seen["url"]
+    assert "station=QUB" in seen["url"]
+    assert "year=2026" in seen["url"]
+    assert "month=10" in seen["url"]
+    assert "day=3" in seen["url"]
+    assert "lang=tc" in seen["url"]
+    assert capsys.readouterr().out == (
+        "Hong Kong hourly tide\n"
+        "Station: Quarry Bay\n"
+        "2026-10-03  01:00  2.44 m\n"
+        "2026-10-03  03:00  2.29 m\n"
+    )
+
+
+def test_cli_tide_hour_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {"fields": ["MM", "DD", "01"], "data": [["10", "03", "2.44"]]}
+        ),
+    )
+    assert main(["--tide-hour", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "station": "Quarry Bay",
+        "date": "2026-10-03",
+        "hours": [{"hour": "01:00", "height_m": 2.44}],
+    }
+
+
+def test_cli_tide_hour_when_missing(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"fields": ["MM", "DD", "01"], "data": [["10", "03", "***"]]}),
+    )
+    assert main(["--tide-hour"]) == 0
+    assert capsys.readouterr().out == "No hourly tide heights are available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"data": []}),
+    )
+    assert main(["--tide-hour", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {"message": "No hourly tide heights are available."}
+
+
 _AQHI_XML = """<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0"><channel>
 <item><title>Central/Western</title><description><![CDATA[Central/Western - General Stations: 3 Low - Sat, 03 Oct 2026 08:30]]></description></item>
