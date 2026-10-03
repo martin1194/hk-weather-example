@@ -323,6 +323,14 @@ class HourRainReport:
 
 
 @dataclass(frozen=True)
+class HourWettest:
+    obs_time: str
+    place: str
+    station_id: str
+    rainfall_mm: float
+
+
+@dataclass(frozen=True)
 class RainstormReminder:
     reminder: str
 
@@ -688,6 +696,17 @@ def fetch_hour_rain(
 ) -> HourRainReport:
     """Download past-hour rainfall from automatic stations (`hourlyRainfall.php`)."""
     return parse_hour_rain(_fetch_json(_apply_lang(url, lang), timeout))
+
+
+def fetch_hour_wettest(
+    url: str = HOURLY_RAIN_URL, timeout: float = 10, lang: str = "en"
+) -> HourWettest | None:
+    """Download the wettest automatic station from the past hour."""
+    report = fetch_hour_rain(url, timeout, lang)
+    if not report.readings:
+        return None
+    wettest = report.readings[0]
+    return HourWettest(report.obs_time, wettest.place, wettest.station_id, wettest.rainfall_mm)
 
 
 def fetch_wettest(
@@ -1946,6 +1965,15 @@ def format_hour_rain_miss(*, as_json: bool = False) -> str:
     return _unavailable("No hourly rainfall readings are available.", as_json=as_json)
 
 
+def format_hour_wettest(reading: HourWettest) -> str:
+    """Render the wettest automatic station from the past hour."""
+    lines = ["Hong Kong hourly wettest"]
+    if reading.obs_time:
+        lines.append(f"Recorded: {reading.obs_time}")
+    lines.append(f"{reading.place}  {_number(reading.rainfall_mm)} mm")
+    return "\n".join(lines) + "\n"
+
+
 def _hour_mm(value: object) -> float | None:
     if isinstance(value, bool):
         return None
@@ -2296,6 +2324,7 @@ def format_json(
     | StationReport
     | RainReport
     | HourRainReport
+    | HourWettest
     | LightningReport
     | LightningCountReport
     | HumidityReport
