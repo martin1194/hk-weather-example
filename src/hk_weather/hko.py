@@ -355,6 +355,12 @@ class GrassMinimum:
 
 
 @dataclass(frozen=True)
+class AccumulatedRainfall:
+    date: str
+    rainfall_mm: float
+
+
+@dataclass(frozen=True)
 class RainstormReminder:
     reminder: str
 
@@ -595,6 +601,16 @@ def fetch_grass(timeout: float = 10, lang: str = "en") -> GrassMinimum | None:
         f"?dataType=RYES&rformat=json&date={day.replace('-', '')}&station=HKO&lang=en"
     )
     return parse_grass(_fetch_json(_apply_lang(url, lang), timeout), day)
+
+
+def fetch_accum_rain(timeout: float = 10, lang: str = "en") -> AccumulatedRainfall | None:
+    """Download accumulated rainfall since 1 January (`dataType=RYES`, station HKO)."""
+    day = _hong_kong_yesterday()
+    url = (
+        "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php"
+        f"?dataType=RYES&rformat=json&date={day.replace('-', '')}&station=HKO&lang=en"
+    )
+    return parse_accum_rain(_fetch_json(_apply_lang(url, lang), timeout), day)
 
 
 def fetch_summary(timeout: float = 10, lang: str = "en") -> WeatherSummary:
@@ -2104,6 +2120,31 @@ def format_grass_miss(*, as_json: bool = False) -> str:
     return _unavailable("No grass minimum is available.", as_json=as_json)
 
 
+def parse_accum_rain(payload: dict, date: str) -> AccumulatedRainfall | None:
+    """Turn a `RYES` document into accumulated rainfall since 1 January."""
+    rainfall = _hour_mm(payload.get("HKOReadingsAccumRainfall"))
+    if rainfall is None:
+        return None
+    reported = _text(payload.get("ReportTimeInfoDate"))
+    if len(reported) == 8 and reported.isdigit():
+        date = f"{reported[:4]}-{reported[4:6]}-{reported[6:8]}"
+    return AccumulatedRainfall(date, rainfall)
+
+
+def format_accum_rain(reading: AccumulatedRainfall) -> str:
+    """Render accumulated rainfall at the Observatory through yesterday."""
+    return (
+        "Hong Kong accumulated rainfall\n"
+        f"{reading.date}\n"
+        f"{_number(reading.rainfall_mm)} mm\n"
+    )
+
+
+def format_accum_rain_miss(*, as_json: bool = False) -> str:
+    """Say that accumulated rainfall since 1 January is not available."""
+    return _unavailable("No accumulated rainfall is available.", as_json=as_json)
+
+
 def _hour_mm(value: object) -> float | None:
     if isinstance(value, bool):
         return None
@@ -2466,6 +2507,7 @@ def format_json(
     | TomorrowForecast
     | YesterdayReport
     | GrassMinimum
+    | AccumulatedRainfall
     | PsrForecast
     | WeekendForecast
     | VisibilityReport
