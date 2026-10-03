@@ -14,6 +14,7 @@ from hk_weather.hko import (
     fetch_forecast,
     fetch_outlook,
     fetch_coastal,
+    fetch_coast_report,
     fetch_forecast_period,
     fetch_forecast_desc,
     fetch_forecast_updated,
@@ -127,6 +128,8 @@ from hk_weather.hko import (
     format_outlook_miss,
     format_coastal,
     format_coastal_miss,
+    format_coast_report,
+    format_coast_report_miss,
     format_forecast_period,
     format_forecast_period_miss,
     format_forecast_desc,
@@ -342,6 +345,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--forecast prints the local forecast; "
             "--outlook prints the local-forecast outlook; "
             "--coastal prints the South China coastal waters forecast; "
+            "--coast-report prints the latest coastal station reports; "
             "--forecast-period prints the forecast period; "
             "--forecast-desc prints the forecast description; "
             "--forecast-updated prints when the local forecast was updated; "
@@ -484,6 +488,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--coastal",
         action="store_true",
         help="Print the South China coastal waters area forecast",
+    )
+    parser.add_argument(
+        "--coast-report",
+        action="store_true",
+        help="Print the latest reports from South China coastal stations",
     )
     parser.add_argument(
         "--forecast-period",
@@ -1085,6 +1094,12 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_coastal_miss(as_json=args.json)
             else:
                 text = format_json(coastal) if args.json else format_coastal(coastal)
+        elif args.coast_report:
+            coast_report = fetch_coast_report(timeout=args.timeout, lang=args.lang)
+            if not coast_report.stations:
+                text = format_coast_report_miss(as_json=args.json)
+            else:
+                text = format_json(coast_report) if args.json else format_coast_report(coast_report)
         elif args.forecast_period:
             forecast_period = fetch_forecast_period(timeout=args.timeout, lang=args.lang)
             if forecast_period is None:

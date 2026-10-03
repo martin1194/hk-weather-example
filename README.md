@@ -22,6 +22,8 @@ hk-weather --outlook
 hk-weather --outlook --json
 hk-weather --coastal
 hk-weather --coastal --json
+hk-weather --coast-report
+hk-weather --coast-report --json
 hk-weather --forecast-period
 hk-weather --forecast-period --json
 hk-weather --forecast-desc
@@ -265,6 +267,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --outlook` prints only the outlook paragraph from that forecast (`outlook`). `--forecast` still prints the full local forecast. `--outlook --json` prints that paragraph as one JSON object. `--lang` applies. If the field is missing or blank, it says `No outlook is available.`
 
 `hk-weather --coastal` prints the South China coastal waters area forecast, for example `Hong Kong Adjacent Waters  East force 4, becoming north force 5 later.  Scattered showers and squally thunderstorms.  Moderate seas.` `--outlook` still prints the local-forecast outlook. `--coastal --json` prints those areas as one JSON object. `--lang` selects the bulletin language. An area is omitted when its name or all of its details are blank. If none remain, it says `No coastal waters forecast is available.`
+
+`hk-weather --coast-report` prints the latest observations from South China coastal stations, for example `Waglan Island  Wind east force 1  visibility 44 km`. `--coastal` still prints the area forecast. `--coast-report --json` prints those stations as one JSON object. `--lang` selects the bulletin language. A station is omitted when its name is blank or it has no wind, weather, or visibility. If none remain, it says `No coastal station reports are available.`
 
 `hk-weather --forecast-period` prints the period that forecast covers (`forecastPeriod`), for example `Weather forecast for tonight and tomorrow`. `--forecast` still prints the full local forecast. `--forecast-period --json` prints that line as one JSON object. `--lang` applies. If the field is missing or blank, it says `No forecast period is available.`
 
