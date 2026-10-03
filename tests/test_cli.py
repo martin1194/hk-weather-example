@@ -2257,6 +2257,54 @@ def test_cli_coldest_json_is_one_object(monkeypatch, capsys):
     }
 
 
+def test_cli_overnight_prints_minimum(monkeypatch, capsys):
+    seen = {}
+    message = (
+        "The minimum temperature recorded at the Hong Kong Observatory "
+        "between midnight and 9 am today was 25.3 degrees."
+    )
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response({"mintempFrom00To09": f"  {message}  "})
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--overnight", "--lang", "tc"]) == 0
+    assert "dataType=rhrread" in seen["url"]
+    assert "lang=tc" in seen["url"]
+    assert capsys.readouterr().out == f"Hong Kong overnight minimum\n{message}\n"
+
+
+def test_cli_overnight_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {"mintempFrom00To09": "The minimum temperature was 24 degrees."}
+        ),
+    )
+    assert main(["-O", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "report": "The minimum temperature was 24 degrees."
+    }
+
+
+def test_cli_overnight_when_blank_or_missing(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"mintempFrom00To09": "   "}),
+    )
+    assert main(["--overnight"]) == 0
+    assert capsys.readouterr().out == "No overnight minimum is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({}),
+    )
+    assert main(["--overnight", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No overnight minimum is available."
+    }
+
+
 def test_cli_coldest_when_no_readings(monkeypatch, capsys):
     monkeypatch.setattr(
         "hk_weather.hko.urllib.request.urlopen",
