@@ -598,6 +598,11 @@ class TempReport:
 
 
 @dataclass(frozen=True)
+class TempTime:
+    recorded: str
+
+
+@dataclass(frozen=True)
 class HottestReading:
     record_time: str
     place: str
@@ -1212,6 +1217,11 @@ def fetch_least_humid(
 def fetch_temps(url: str = DEFAULT_URL, timeout: float = 10, lang: str = "en") -> TempReport:
     """Download temperature readings from the current report (`dataType=rhrread`)."""
     return parse_temps(_fetch_json(_apply_lang(url, lang), timeout))
+
+
+def fetch_temp_time(url: str = DEFAULT_URL, timeout: float = 10, lang: str = "en") -> TempTime | None:
+    """Download when the current temperatures were recorded (`dataType=rhrread`)."""
+    return parse_temp_time(_fetch_json(_apply_lang(url, lang), timeout))
 
 
 def fetch_hottest(
@@ -3343,6 +3353,27 @@ def format_temps(report: TempReport) -> str:
     return "\n".join(lines) + "\n"
 
 
+def parse_temp_time(payload: dict) -> TempTime | None:
+    """Turn the `rhrread` temperature record time into one timestamp."""
+    section = payload.get("temperature")
+    if not isinstance(section, dict):
+        return None
+    text = _text(section.get("recordTime"))
+    if not text:
+        return None
+    return TempTime(text)
+
+
+def format_temp_time(report: TempTime) -> str:
+    """Render when the current temperatures were recorded."""
+    return f"Hong Kong temperature time\n{report.recorded}\n"
+
+
+def format_temp_time_miss(*, as_json: bool = False) -> str:
+    """Say that the current report has no temperature record time."""
+    return _unavailable("No temperature time is available.", as_json=as_json)
+
+
 def format_hottest(reading: HottestReading) -> str:
     """Render the warmest station from the current report."""
     lines = ["Hong Kong hottest"]
@@ -3475,6 +3506,7 @@ def format_json(
     | LightningCountReport
     | HumidityReport
     | TempReport
+    | TempTime
     | WindForecast
     | ForecastIcons
     | QuakeReport
