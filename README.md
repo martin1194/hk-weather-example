@@ -198,6 +198,8 @@ hk-weather --heat-index
 hk-weather --heat-index --json
 hk-weather --wbgt
 hk-weather --wbgt --json
+hk-weather --wet-bulb
+hk-weather --wet-bulb --json
 hk-weather --solar
 hk-weather --solar --json
 hk-weather --hottest
@@ -431,6 +433,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --heat-index` prints the latest 10-minute mean Hong Kong Heat Index at automatic stations, for example `Happy Valley  25.8`. Earlier minutes in the file are omitted. `--heat-index --json` prints that minute as one JSON object. `--lang` selects the station names. Stations marked `N/A` are omitted. If none remain, it says `No heat index is available.`
 
 `hk-weather --wbgt` prints the latest 60-minute mean Wet Bulb Globe Temperature at automatic stations, for example `Happy Valley  25.8°C`. `--heat-index` still prints the Hong Kong Heat Index. Earlier minutes in the file are omitted. `--wbgt --json` prints that minute as one JSON object. `--lang` selects the station names. Stations marked `N/A` are omitted. If none remain, it says `No wet bulb globe temperature is available.`
+
+`hk-weather --wet-bulb` prints the latest daily mean wet-bulb temperature at the Observatory, for example `2026-08-31  25.8°C`. `--wbgt` still prints the current Wet Bulb Globe Temperature. `--dew-point` still prints the dew point. `--wet-bulb --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No wet bulb temperature is available.`
 
 `hk-weather --solar` prints the latest 1-minute global, direct, and diffuse solar radiation, for example `Kau Sai Chau  global 1  direct 0  diffuse 1 W/m²`. Earlier minutes in the file are omitted. `--solar --json` prints that minute as one JSON object. `--lang` selects the station names. A station is omitted when any component is `N/A`. If none remain, it says `No solar radiation is available.`
 
