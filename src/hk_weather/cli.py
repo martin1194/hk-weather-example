@@ -105,6 +105,7 @@ from hk_weather.hko import (
     fetch_min_temp,
     fetch_dew_point,
     fetch_cloud,
+    fetch_evaporation,
     filter_stations,
     format_aqhi,
     format_aqhi_miss,
@@ -285,6 +286,8 @@ from hk_weather.hko import (
     format_dew_point_miss,
     format_cloud,
     format_cloud_miss,
+    format_evaporation,
+    format_evaporation_miss,
 )
 
 
@@ -365,6 +368,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--min-temp prints the latest daily minimum temperature; "
             "--dew-point prints the latest daily mean dew point; "
             "--cloud prints the latest daily mean cloud amount; "
+            "--evaporation prints the latest daily evaporation; "
             "--grass prints yesterday's grass minimum; "
             "--sunshine prints yesterday's sunshine duration; "
             "--max-uv prints yesterday's maximum UV index; "
@@ -552,6 +556,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--cloud",
         action="store_true",
         help="Print the latest daily mean cloud amount at the Observatory",
+    )
+    parser.add_argument(
+        "--evaporation",
+        action="store_true",
+        help="Print the latest daily total evaporation at King's Park",
     )
     parser.add_argument(
         "--grass",
@@ -1143,6 +1152,12 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_cloud_miss(as_json=args.json)
             else:
                 text = format_json(cloud) if args.json else format_cloud(cloud)
+        elif args.evaporation:
+            evaporation = fetch_evaporation(timeout=args.timeout, lang=args.lang)
+            if evaporation is None:
+                text = format_evaporation_miss(as_json=args.json)
+            else:
+                text = format_json(evaporation) if args.json else format_evaporation(evaporation)
         elif args.grass:
             grass = fetch_grass(timeout=args.timeout, lang=args.lang)
             if grass is None:

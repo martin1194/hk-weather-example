@@ -62,6 +62,8 @@ hk-weather --dew-point
 hk-weather --dew-point --json
 hk-weather --cloud
 hk-weather --cloud --json
+hk-weather --evaporation
+hk-weather --evaporation --json
 hk-weather --grass
 hk-weather --grass --json
 hk-weather --sunshine
@@ -287,6 +289,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --dew-point` prints the latest daily mean dew point at the Observatory for the current Hong Kong year, for example `2026-08-31  25°C`. `--mean-temp` still prints the daily mean air temperature. `--dew-point --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No dew point is available.`
 
 `hk-weather --cloud` prints the latest daily mean cloud amount at the Observatory for the current Hong Kong year, for example `2026-08-31  88%`. `--dew-point` still prints the dew point. `--cloud --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No cloud amount is available.`
+
+`hk-weather --evaporation` prints the latest daily total evaporation at King's Park for the current Hong Kong year, for example `2026-08-31  2.5 mm`. `--cloud` still prints the cloud amount. `--evaporation --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No evaporation is available.`
 
 `hk-weather --grass` prints yesterday's grass minimum from that same summary (`HKOReadingsMinGrassTemp`). `--yesterday` still prints the air-temperature summary. `--grass --json` prints the grass minimum as one JSON object. `--lang` applies. If the reading is missing, it says `No grass minimum is available.`
 
