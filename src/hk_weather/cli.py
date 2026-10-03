@@ -12,6 +12,7 @@ from hk_weather.hko import (
     fetch_driest,
     fetch_forecast,
     fetch_forecast_day,
+    fetch_hour_rain,
     fetch_felt,
     fetch_fire_danger,
     fetch_coldest,
@@ -71,6 +72,8 @@ from hk_weather.hko import (
     format_humidest,
     format_humidest_miss,
     format_humidity,
+    format_hour_rain,
+    format_hour_rain_miss,
     format_icon_time,
     format_icon_time_miss,
     format_least_humid,
@@ -161,6 +164,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--tips prints special weather tips; "
             "--stations lists each station; --list-places lists their names; "
             "--place NAME filters those stations; --rain lists district rainfall; "
+            "--hour-rain lists past-hour rainfall at automatic stations; "
             "--lightning lists lightning locations; --strikes lists hourly lightning counts; "
             "--humidity lists humidity readings; "
             "--temps lists temperatures by place; --wind lists the forecast wind; "
@@ -363,6 +367,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--rain",
         action="store_true",
         help="Print rainfall by district from the current report",
+    )
+    parser.add_argument(
+        "--hour-rain",
+        action="store_true",
+        help="Print past-hour rainfall from automatic weather stations",
     )
     parser.add_argument(
         "-R",
@@ -614,6 +623,12 @@ def main(argv: list[str] | None = None) -> int:
         elif args.rain:
             rain = fetch_rain(timeout=args.timeout, lang=args.lang)
             text = format_json(rain) if args.json else format_rain(rain)
+        elif args.hour_rain:
+            hour_rain = fetch_hour_rain(timeout=args.timeout, lang=args.lang)
+            if not hour_rain.readings:
+                text = format_hour_rain_miss(as_json=args.json)
+            else:
+                text = format_json(hour_rain) if args.json else format_hour_rain(hour_rain)
         elif args.wettest:
             wettest = fetch_wettest(timeout=args.timeout, lang=args.lang)
             if wettest is None:

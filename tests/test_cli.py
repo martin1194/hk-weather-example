@@ -3365,6 +3365,110 @@ def test_cli_rainstorm_when_blank_or_missing(monkeypatch, capsys):
     assert json.loads(capsys.readouterr().out) == {"message": "No rainstorm reminder."}
 
 
+def test_cli_hour_rain_prints_stations(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response(
+            {
+                "obsTime": "2026-10-03T15:00:00+08:00",
+                "hourlyRainfall": [
+                    {
+                        "automaticWeatherStation": "Lau Fau Shan",
+                        "automaticWeatherStationID": "RF001",
+                        "value": "0",
+                        "unit": "mm",
+                    },
+                    {
+                        "automaticWeatherStation": "Wetland Park",
+                        "automaticWeatherStationID": "RF002",
+                        "value": "2",
+                        "unit": "mm",
+                    },
+                    {
+                        "automaticWeatherStation": "Wetland Park",
+                        "automaticWeatherStationID": "DUP",
+                        "value": "9",
+                        "unit": "mm",
+                    },
+                    {
+                        "automaticWeatherStation": "Shek Kong",
+                        "automaticWeatherStationID": "RF003",
+                        "value": "M",
+                        "unit": "mm",
+                    },
+                ],
+            }
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--hour-rain", "--lang", "sc"]) == 0
+    assert "hourlyRainfall.php" in seen["url"]
+    assert "lang=sc" in seen["url"]
+    assert capsys.readouterr().out == (
+        "Hong Kong hourly rainfall\n"
+        "Recorded: 2026-10-03T15:00:00+08:00\n"
+        "Wetland Park  2 mm\n"
+        "Lau Fau Shan  0 mm\n"
+    )
+
+
+def test_cli_hour_rain_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {
+                "obsTime": "2026-10-03T15:00:00+08:00",
+                "hourlyRainfall": [
+                    {
+                        "automaticWeatherStation": "Sai Kung",
+                        "automaticWeatherStationID": "N15",
+                        "value": "1.5",
+                        "unit": "mm",
+                    }
+                ],
+            }
+        ),
+    )
+    assert main(["--hour-rain", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "obs_time": "2026-10-03T15:00:00+08:00",
+        "readings": [
+            {"place": "Sai Kung", "station_id": "N15", "rainfall_mm": 1.5},
+        ],
+    }
+
+
+def test_cli_hour_rain_when_none_available(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {
+                "obsTime": "2026-10-03T15:00:00+08:00",
+                "hourlyRainfall": [
+                    {
+                        "automaticWeatherStation": "Shek Kong",
+                        "automaticWeatherStationID": "RF003",
+                        "value": "M",
+                        "unit": "mm",
+                    }
+                ],
+            }
+        ),
+    )
+    assert main(["--hour-rain"]) == 0
+    assert capsys.readouterr().out == "No hourly rainfall readings are available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({}),
+    )
+    assert main(["--hour-rain", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No hourly rainfall readings are available."
+    }
+
+
 def test_cli_rain_when_no_readings(monkeypatch, capsys):
     monkeypatch.setattr(
         "hk_weather.hko.urllib.request.urlopen",
