@@ -166,6 +166,8 @@ hk-weather --lightning
 hk-weather --lightning --json
 hk-weather --strikes
 hk-weather --strikes --json
+hk-weather --daily-strikes
+hk-weather --daily-strikes --json
 hk-weather --humidity
 hk-weather --humidity --json
 hk-weather --humidity-time
@@ -395,6 +397,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --lightning` lists places where the current report shows lightning. `--lightning --json` prints those places as one JSON object. If none are reported, it says so.
 
 `hk-weather --strikes` (or `-l`) prints hourly cloud-to-ground and cloud-to-cloud lightning counts by region (`dataType=LHL`). `--strikes --json` prints those counts as one JSON object. `--lang` applies. If none are available, it says `No lightning counts are available.`
+
+`hk-weather --daily-strikes` prints the latest daily cloud-to-ground lightning count over Hong Kong, for example `2026-08-31  42`. `--strikes` still prints the hourly counts. A count of zero is kept. `--daily-strikes --json` prints that day as one JSON object. Days marked `***` are omitted. If none remain, it says `No daily lightning count is available.`
 
 `hk-weather --humidity` prints humidity by place from the current report, with the record time when the Observatory includes it. `--humidity --json` prints that list as one JSON object. If no reading is present, it says so.
 
