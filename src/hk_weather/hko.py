@@ -305,6 +305,13 @@ class HumidestReading:
 
 
 @dataclass(frozen=True)
+class LeastHumidReading:
+    record_time: str
+    place: str
+    humidity_percent: float
+
+
+@dataclass(frozen=True)
 class TempReading:
     place: str
     temperature_c: float
@@ -544,6 +551,17 @@ def fetch_humidest(
         return None
     dampest = max(report.readings, key=lambda reading: reading.humidity_percent)
     return HumidestReading(report.record_time, dampest.place, dampest.humidity_percent)
+
+
+def fetch_least_humid(
+    url: str = DEFAULT_URL, timeout: float = 10, lang: str = "en"
+) -> LeastHumidReading | None:
+    """Download the least humid place from the current report (`dataType=rhrread`)."""
+    report = fetch_humidity(url, timeout, lang)
+    if not report.readings:
+        return None
+    driest = min(report.readings, key=lambda reading: reading.humidity_percent)
+    return LeastHumidReading(report.record_time, driest.place, driest.humidity_percent)
 
 
 def fetch_temps(url: str = DEFAULT_URL, timeout: float = 10, lang: str = "en") -> TempReport:
@@ -1593,6 +1611,20 @@ def format_humidest_miss(*, as_json: bool = False) -> str:
     return _unavailable("No humidity reading is available.", as_json=as_json)
 
 
+def format_least_humid(reading: LeastHumidReading) -> str:
+    """Render the least humid station from the current report."""
+    lines = ["Hong Kong least humid"]
+    if reading.record_time:
+        lines.append(f"Recorded: {reading.record_time}")
+    lines.append(f"{reading.place}  {_number(reading.humidity_percent)}%")
+    return "\n".join(lines) + "\n"
+
+
+def format_least_humid_miss(*, as_json: bool = False) -> str:
+    """Say that the current report has no humidity readings."""
+    return _unavailable("No humidity reading is available.", as_json=as_json)
+
+
 def parse_temps(payload: dict) -> TempReport:
     """Turn `rhrread` temperature data into one reading per place."""
     section = payload.get("temperature")
@@ -1672,6 +1704,7 @@ def format_json(
     | HottestReading
     | ColdestReading
     | HumidestReading
+    | LeastHumidReading
     | WettestReading
     | DriestReading
     | RainstormReminder

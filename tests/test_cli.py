@@ -2352,6 +2352,75 @@ def test_cli_humidest_when_no_reading(monkeypatch, capsys):
     }
 
 
+def test_cli_least_humid_prints_driest_place(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response(
+            {
+                "humidity": {
+                    "recordTime": "2026-10-03T02:00:00+08:00",
+                    "data": [
+                        {"place": "Chek Lap Kok", "value": 95, "unit": "percent"},
+                        {"place": "King's Park", "value": 80, "unit": "percent"},
+                        {"place": "Sha Tin", "value": 80, "unit": "percent"},
+                        {"place": "Tai Po", "unit": "percent"},
+                    ],
+                }
+            }
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--least-humid", "--lang", "sc"]) == 0
+    assert "dataType=rhrread" in seen["url"]
+    assert "lang=sc" in seen["url"]
+    out = capsys.readouterr().out
+    assert out == (
+        "Hong Kong least humid\n"
+        "Recorded: 2026-10-03T02:00:00+08:00\n"
+        "King's Park  80%\n"
+    )
+    assert "Sha Tin" not in out
+    assert "95%" not in out
+
+
+def test_cli_least_humid_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {
+                "humidity": {
+                    "recordTime": "2026-10-03T02:00:00+08:00",
+                    "data": [
+                        {"place": "Chek Lap Kok", "value": 95, "unit": "percent"},
+                        {"place": "King's Park", "value": 80, "unit": "percent"},
+                    ],
+                }
+            }
+        ),
+    )
+    assert main(["--least-humid", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "record_time": "2026-10-03T02:00:00+08:00",
+        "place": "King's Park",
+        "humidity_percent": 80.0,
+    }
+
+
+def test_cli_least_humid_when_no_reading(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"humidity": ""}),
+    )
+    assert main(["--least-humid"]) == 0
+    assert capsys.readouterr().out == "No humidity reading is available.\n"
+    assert main(["--least-humid", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No humidity reading is available."
+    }
+
+
 def test_cli_humidity_when_no_reading(monkeypatch, capsys):
     monkeypatch.setattr(
         "hk_weather.hko.urllib.request.urlopen",
