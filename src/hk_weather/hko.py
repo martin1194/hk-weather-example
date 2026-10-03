@@ -473,6 +473,11 @@ class RadiationGround:
 
 
 @dataclass(frozen=True)
+class RadiationProvisional:
+    note: str
+
+
+@dataclass(frozen=True)
 class RainstormReminder:
     reminder: str
 
@@ -857,6 +862,18 @@ def fetch_radiation_ground(timeout: float = 10, lang: str = "en") -> RadiationGr
         f"?dataType=RYES&rformat=json&date={day.replace('-', '')}&station=HKO&lang=en"
     )
     return parse_radiation_ground(_fetch_json(_apply_lang(url, lang), timeout))
+
+
+def fetch_radiation_provisional(
+    timeout: float = 10, lang: str = "en"
+) -> RadiationProvisional | None:
+    """Download the provisional radiation note (`dataType=RYES`, station HKO)."""
+    day = _hong_kong_yesterday()
+    url = (
+        "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php"
+        f"?dataType=RYES&rformat=json&date={day.replace('-', '')}&station=HKO&lang=en"
+    )
+    return parse_radiation_provisional(_fetch_json(_apply_lang(url, lang), timeout))
 
 
 def fetch_summary(timeout: float = 10, lang: str = "en") -> WeatherSummary:
@@ -2851,6 +2868,24 @@ def format_radiation_ground_miss(*, as_json: bool = False) -> str:
     return _unavailable("No radiation ground note is available.", as_json=as_json)
 
 
+def parse_radiation_provisional(payload: dict) -> RadiationProvisional | None:
+    """Turn a `RYES` document into the provisional radiation note."""
+    note = _text(payload.get("NoteDesc3"))
+    if not note:
+        return None
+    return RadiationProvisional(note)
+
+
+def format_radiation_provisional(reading: RadiationProvisional) -> str:
+    """Render the provisional-data note on the radiation report."""
+    return f"Hong Kong radiation provisional\n{reading.note}\n"
+
+
+def format_radiation_provisional_miss(*, as_json: bool = False) -> str:
+    """Say that the provisional radiation note is not available."""
+    return _unavailable("No radiation provisional note is available.", as_json=as_json)
+
+
 def _hour_mm(value: object) -> float | None:
     if isinstance(value, bool):
         return None
@@ -3230,6 +3265,7 @@ def format_json(
     | RadiationNote
     | RadiationWeather
     | RadiationGround
+    | RadiationProvisional
     | PsrForecast
     | WeekendForecast
     | VisibilityReport

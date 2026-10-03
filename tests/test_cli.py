@@ -1692,6 +1692,56 @@ def test_cli_radiation_ground_when_missing(monkeypatch, capsys):
     }
 
 
+def test_cli_radiation_provisional_prints_the_note(monkeypatch, capsys):
+    seen = {}
+    monkeypatch.setattr("hk_weather.hko._hong_kong_yesterday", lambda now=None: "2026-10-02")
+    note = "The data displayed is provisional and subject to revision."
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response({"NoteDesc3": f"  {note}  "})
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--radiation-provisional", "--lang", "tc"]) == 0
+    assert "dataType=RYES" in seen["url"]
+    assert "station=HKO" in seen["url"]
+    assert "date=20261002" in seen["url"]
+    assert "lang=tc" in seen["url"]
+    assert capsys.readouterr().out == f"Hong Kong radiation provisional\n{note}\n"
+
+
+def test_cli_radiation_provisional_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_yesterday", lambda now=None: "2026-10-02")
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {"NoteDesc3": "The data displayed is provisional and subject to revision."}
+        ),
+    )
+    assert main(["--radiation-provisional", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "note": "The data displayed is provisional and subject to revision."
+    }
+
+
+def test_cli_radiation_provisional_when_missing(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_yesterday", lambda now=None: "2026-10-02")
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"NoteDesc2": "Varies with the ground."}),
+    )
+    assert main(["--radiation-provisional"]) == 0
+    assert capsys.readouterr().out == "No radiation provisional note is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({}),
+    )
+    assert main(["--radiation-provisional", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No radiation provisional note is available."
+    }
+
+
 def test_cli_tomorrow_prints_the_next_hong_kong_day(monkeypatch, capsys):
     seen = {}
     monkeypatch.setattr("hk_weather.hko._hong_kong_tomorrow", lambda now=None: "2026-10-04")

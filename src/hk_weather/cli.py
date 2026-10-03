@@ -29,6 +29,7 @@ from hk_weather.hko import (
     fetch_radiation_note,
     fetch_radiation_weather,
     fetch_radiation_ground,
+    fetch_radiation_provisional,
     fetch_coldest,
     fetch_cyclone,
     fetch_hottest,
@@ -106,6 +107,8 @@ from hk_weather.hko import (
     format_radiation_weather_miss,
     format_radiation_ground,
     format_radiation_ground_miss,
+    format_radiation_provisional,
+    format_radiation_provisional_miss,
     format_felt,
     format_felt_miss,
     format_fire_danger,
@@ -260,6 +263,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--radiation-note prints the normal radiation range; "
             "--radiation-weather prints how radiation varies with the weather; "
             "--radiation-ground prints how radiation varies with the ground; "
+            "--radiation-provisional prints the provisional radiation note; "
             "--tomorrow prints tomorrow; "
             "--day N prints forecast day N (1 is the first entry); "
             "--psr lists the chance of significant rain; "
@@ -431,6 +435,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--radiation-ground",
         action="store_true",
         help="Print how outdoor radiation varies with the ground",
+    )
+    parser.add_argument(
+        "--radiation-provisional",
+        action="store_true",
+        help="Print the provisional-data note on the radiation report",
     )
     parser.add_argument(
         "-T",
@@ -881,6 +890,18 @@ def main(argv: list[str] | None = None) -> int:
                     format_json(radiation_ground)
                     if args.json
                     else format_radiation_ground(radiation_ground)
+                )
+        elif args.radiation_provisional:
+            radiation_provisional = fetch_radiation_provisional(
+                timeout=args.timeout, lang=args.lang
+            )
+            if radiation_provisional is None:
+                text = format_radiation_provisional_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(radiation_provisional)
+                    if args.json
+                    else format_radiation_provisional(radiation_provisional)
                 )
         elif args.tomorrow:
             tomorrow = fetch_tomorrow(timeout=args.timeout, lang=args.lang)
