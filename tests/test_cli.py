@@ -558,6 +558,70 @@ def test_cli_nine_day_json_is_one_object(monkeypatch, capsys):
     }
 
 
+def test_cli_sea_temp_prints_the_reading(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response(
+            {
+                "seaTemp": {
+                    "place": "North Point",
+                    "value": 29,
+                    "unit": "C",
+                    "recordTime": "2026-10-03T14:00:00+08:00",
+                }
+            }
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--sea-temp", "--lang", "tc"]) == 0
+    assert "dataType=fnd" in seen["url"]
+    assert "lang=tc" in seen["url"]
+    assert capsys.readouterr().out == (
+        "Hong Kong sea temperature\n"
+        "North Point  29°C\n"
+        "Recorded: 2026-10-03T14:00:00+08:00\n"
+    )
+
+
+def test_cli_sea_temp_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {
+                "seaTemp": {
+                    "place": "North Point",
+                    "value": 29,
+                    "unit": "C",
+                    "recordTime": "2026-10-03T14:00:00+08:00",
+                }
+            }
+        ),
+    )
+    assert main(["--sea-temp", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "place": "North Point",
+        "temperature_c": 29.0,
+        "recorded": "2026-10-03T14:00:00+08:00",
+    }
+
+
+def test_cli_sea_temp_when_missing(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"seaTemp": {"place": "North Point"}}),
+    )
+    assert main(["--sea-temp"]) == 0
+    assert capsys.readouterr().out == "No sea temperature is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({}),
+    )
+    assert main(["--sea-temp", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {"message": "No sea temperature is available."}
+
+
 def test_cli_today_prints_the_hong_kong_day(monkeypatch, capsys):
     seen = {}
     monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")

@@ -33,6 +33,7 @@ from hk_weather.hko import (
     fetch_moon,
     fetch_month_rain,
     fetch_nine_day,
+    fetch_sea_temp,
     fetch_year_rain,
     fetch_noon_rain,
     fetch_overnight,
@@ -108,6 +109,8 @@ from hk_weather.hko import (
     format_year_rain_miss,
     format_place_miss,
     format_nine_day,
+    format_sea_temp,
+    format_sea_temp_miss,
     format_noon_rain,
     format_noon_rain_miss,
     format_overnight,
@@ -181,7 +184,8 @@ def build_parser() -> argparse.ArgumentParser:
             "--situation prints the general situation; "
             "--fire-danger prints the fire danger warning; "
             "--tc-info prints tropical cyclone information from the local forecast; "
-            "--nine-day prints the 9-day forecast; --warnings lists active warnings; "
+            "--nine-day prints the 9-day forecast; --sea-temp prints the sea temperature; "
+            "--warnings lists active warnings; "
             "--uv prints the UV index; --icon-time prints when the weather icon changed; "
             "--tips prints special weather tips; "
             "--stations lists each station; --list-places lists their names; "
@@ -280,6 +284,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--nine-day",
         action="store_true",
         help="Print the 9-day forecast",
+    )
+    parser.add_argument(
+        "--sea-temp",
+        action="store_true",
+        help="Print the sea temperature from the 9-day forecast",
     )
     parser.add_argument(
         "-Y",
@@ -597,6 +606,12 @@ def main(argv: list[str] | None = None) -> int:
         elif args.nine_day:
             nine_day = fetch_nine_day(timeout=args.timeout, lang=args.lang)
             text = format_json(nine_day) if args.json else format_nine_day(nine_day)
+        elif args.sea_temp:
+            sea_temp = fetch_sea_temp(timeout=args.timeout, lang=args.lang)
+            if sea_temp is None:
+                text = format_sea_temp_miss(as_json=args.json)
+            else:
+                text = format_json(sea_temp) if args.json else format_sea_temp(sea_temp)
         elif args.today:
             today = fetch_today(timeout=args.timeout, lang=args.lang)
             if today is None:

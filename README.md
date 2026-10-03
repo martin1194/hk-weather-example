@@ -26,6 +26,8 @@ hk-weather --tc-info
 hk-weather --tc-info --json
 hk-weather --nine-day
 hk-weather --nine-day --json
+hk-weather --sea-temp
+hk-weather --sea-temp --json
 hk-weather --today
 hk-weather -Y --json
 hk-weather --yesterday
@@ -161,6 +163,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --tc-info` prints tropical cyclone information from that forecast (`tcInfo`). `--tc-info --json` prints that paragraph as one JSON object. `--lang` applies. If the field is missing or blank, it says `No tropical cyclone information is available.`
 
 `hk-weather --nine-day` (or `-n`) prints each day with the date, weather, high and low temperature, humidity range, and chance of rain when the Observatory includes them. `--nine-day --json` prints that same forecast as one JSON object.
+
+`hk-weather --sea-temp` prints the sea temperature from that forecast (`seaTemp`), for example `North Point  29°C`. `--nine-day` still prints the daily forecast. `--sea-temp --json` prints the reading as one JSON object. `--lang` applies. If the reading is missing, it says `No sea temperature is available.`
 
 `hk-weather --today` (or `-Y`) prints only today's day from that forecast, using the Hong Kong calendar date. It includes weather, high and low, humidity, chance of rain, and wind when the Observatory sends them. `--today --json` prints that day as one JSON object. `--lang` applies. For example: `2026-10-03 Saturday  high 31°C  low 27°C  humidity 75-95%  rain Medium High`. If that day is missing, it says so.
 
