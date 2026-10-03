@@ -2022,6 +2022,68 @@ def test_cli_humidity_when_no_reading(monkeypatch, capsys):
     assert capsys.readouterr().out == "No humidity reading is available.\n"
 
 
+def test_cli_wettest_prints_wettest_district(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response(
+            {
+                "rainfall": {
+                    "data": [
+                        {"place": "Wan Chai", "max": 2, "unit": "mm"},
+                        {"place": "Sai Kung", "max": 12, "unit": "mm"},
+                        {"place": "North District", "max": 12, "unit": "mm"},
+                        {"place": "Islands District", "unit": "mm"},
+                    ]
+                }
+            }
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["-R", "--lang", "tc"]) == 0
+    assert "dataType=rhrread" in seen["url"]
+    assert "lang=tc" in seen["url"]
+    out = capsys.readouterr().out
+    assert out == "Hong Kong wettest\nSai Kung  12 mm\n"
+    assert "North District" not in out
+    assert "Wan Chai" not in out
+
+
+def test_cli_wettest_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {
+                "rainfall": {
+                    "data": [
+                        {"place": "Wan Chai", "max": 2, "unit": "mm"},
+                        {"place": "Sai Kung", "max": 12, "unit": "mm"},
+                    ]
+                }
+            }
+        ),
+    )
+    assert main(["--wettest", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "place": "Sai Kung",
+        "rainfall_mm": 12.0,
+    }
+
+
+def test_cli_wettest_when_no_readings(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"rainfall": ""}),
+    )
+    assert main(["--wettest"]) == 0
+    assert capsys.readouterr().out == "No rainfall readings are available.\n"
+    assert main(["--wettest", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No rainfall readings are available."
+    }
+
+
 def test_cli_rain_when_no_readings(monkeypatch, capsys):
     monkeypatch.setattr(
         "hk_weather.hko.urllib.request.urlopen",

@@ -19,6 +19,7 @@ from hk_weather.hko import (
     fetch_quakes,
     fetch_rain,
     fetch_stations,
+    fetch_wettest,
     fetch_temps,
     fetch_tips,
     fetch_today,
@@ -56,6 +57,8 @@ from hk_weather.hko import (
     format_uv,
     format_visibility,
     format_warning_info,
+    format_wettest,
+    format_wettest_miss,
     format_warnings,
     format_weekend,
     format_weekend_miss,
@@ -101,7 +104,8 @@ def build_parser() -> argparse.ArgumentParser:
             "--weekend prints Saturday and Sunday; "
             "--visibility lists 10-minute mean visibility; "
             "--hottest prints the warmest place; "
-            "--coldest prints the coolest place."
+            "--coldest prints the coolest place; "
+            "--wettest prints the wettest district."
         ),
     )
     parser.add_argument(
@@ -212,6 +216,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--rain",
         action="store_true",
         help="Print rainfall by district from the current report",
+    )
+    parser.add_argument(
+        "-R",
+        "--wettest",
+        action="store_true",
+        help="Print the wettest rainfall district from the current report",
     )
     parser.add_argument(
         "--lightning",
@@ -340,6 +350,12 @@ def main(argv: list[str] | None = None) -> int:
         elif args.rain:
             rain = fetch_rain(timeout=args.timeout, lang=args.lang)
             text = format_json(rain) if args.json else format_rain(rain)
+        elif args.wettest:
+            wettest = fetch_wettest(timeout=args.timeout, lang=args.lang)
+            if wettest is None:
+                text = format_wettest_miss(as_json=args.json)
+            else:
+                text = format_json(wettest) if args.json else format_wettest(wettest)
         elif args.lightning:
             lightning = fetch_lightning(timeout=args.timeout, lang=args.lang)
             text = format_json(lightning) if args.json else format_lightning(lightning)

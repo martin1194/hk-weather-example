@@ -44,6 +44,8 @@ hk-weather --tips
 hk-weather --tips --json
 hk-weather --rain
 hk-weather --rain --json
+hk-weather --wettest
+hk-weather --wettest --json
 hk-weather --lightning
 hk-weather --lightning --json
 hk-weather --humidity
@@ -119,6 +121,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --tips` (or `-t`) prints each special weather tip. `--tips --json` prints them as one JSON object. `--lang` applies. Current conditions stay the default.
 
 `hk-weather --rain` (or `-r`) prints rainfall by district from the current report, one line per place. `--rain --json` prints that list as one JSON object. If no readings are present, it says so.
+
+`hk-weather --wettest` (or `-R`) prints the wettest district from that list, for example `Sai Kung  12 mm`. `--wettest --json` prints that reading as one JSON object. `--lang` applies. If no readings are present, it says so.
 
 `hk-weather --lightning` lists places where the current report shows lightning. `--lightning --json` prints those places as one JSON object. If none are reported, it says so.
 
