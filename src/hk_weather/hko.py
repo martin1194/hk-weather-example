@@ -167,6 +167,11 @@ class NineDayForecast:
 
 
 @dataclass(frozen=True)
+class NineUpdated:
+    updated: str
+
+
+@dataclass(frozen=True)
 class SeaTemperature:
     place: str
     temperature_c: float
@@ -716,6 +721,13 @@ def fetch_nine_situation(
 ) -> GeneralSituation | None:
     """Download the general situation from the 9-day forecast (`dataType=fnd`)."""
     return parse_situation(_fetch_json(_apply_lang(url, lang), timeout))
+
+
+def fetch_nine_updated(
+    url: str = NINE_DAY_URL, timeout: float = 10, lang: str = "en"
+) -> NineUpdated | None:
+    """Download when the 9-day forecast was updated (`dataType=fnd`)."""
+    return parse_nine_updated(_fetch_json(_apply_lang(url, lang), timeout))
 
 
 def fetch_psr(url: str = NINE_DAY_URL, timeout: float = 10, lang: str = "en") -> PsrForecast:
@@ -1681,6 +1693,24 @@ def format_nine_situation(report: GeneralSituation) -> str:
 def format_nine_situation_miss(*, as_json: bool = False) -> str:
     """Say that the 9-day forecast has no general situation."""
     return _unavailable("No 9-day situation is available.", as_json=as_json)
+
+
+def parse_nine_updated(payload: dict) -> NineUpdated | None:
+    """Turn the `fnd` update time into one timestamp."""
+    text = _text(payload.get("updateTime"))
+    if not text:
+        return None
+    return NineUpdated(text)
+
+
+def format_nine_updated(report: NineUpdated) -> str:
+    """Render when the 9-day forecast was updated."""
+    return f"Hong Kong 9-day update\n{report.updated}\n"
+
+
+def format_nine_updated_miss(*, as_json: bool = False) -> str:
+    """Say that the 9-day forecast has no update time."""
+    return _unavailable("No 9-day update time is available.", as_json=as_json)
 
 
 def format_psr(report: PsrForecast) -> str:
@@ -3099,6 +3129,7 @@ def format_json(
     | ForecastPeriod
     | ForecastDesc
     | ForecastUpdated
+    | NineUpdated
     | GeneralSituation
     | FireDanger
     | TcInfo

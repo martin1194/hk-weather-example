@@ -1036,6 +1036,46 @@ def test_cli_nine_situation_when_blank_or_missing(monkeypatch, capsys):
     }
 
 
+def test_cli_nine_updated_prints_timestamp(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response({"updateTime": "  2026-10-03T16:45:00+08:00  "})
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--nine-updated", "--lang", "tc"]) == 0
+    assert "dataType=fnd" in seen["url"]
+    assert "lang=tc" in seen["url"]
+    assert capsys.readouterr().out == "Hong Kong 9-day update\n2026-10-03T16:45:00+08:00\n"
+
+
+def test_cli_nine_updated_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"updateTime": "2026-10-03T16:45:00+08:00"}),
+    )
+    assert main(["--nine-updated", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {"updated": "2026-10-03T16:45:00+08:00"}
+
+
+def test_cli_nine_updated_when_missing(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"generalSituation": "Fine.", "updateTime": "  "}),
+    )
+    assert main(["--nine-updated"]) == 0
+    assert capsys.readouterr().out == "No 9-day update time is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({}),
+    )
+    assert main(["--nine-updated", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No 9-day update time is available."
+    }
+
+
 def test_cli_today_prints_the_hong_kong_day(monkeypatch, capsys):
     seen = {}
     monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
