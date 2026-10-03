@@ -310,6 +310,12 @@ class RainReport:
 
 
 @dataclass(frozen=True)
+class RainPeriod:
+    start: str
+    end: str
+
+
+@dataclass(frozen=True)
 class HourRainReading:
     place: str
     station_id: str
@@ -781,6 +787,13 @@ def fetch_stations(url: str = DEFAULT_URL, timeout: float = 10, lang: str = "en"
 def fetch_rain(url: str = DEFAULT_URL, timeout: float = 10, lang: str = "en") -> RainReport:
     """Download district rainfall from the current report (`dataType=rhrread`)."""
     return parse_rain(_fetch_json(_apply_lang(url, lang), timeout))
+
+
+def fetch_rain_period(
+    url: str = DEFAULT_URL, timeout: float = 10, lang: str = "en"
+) -> RainPeriod | None:
+    """Download the district rainfall window from the current report (`dataType=rhrread`)."""
+    return parse_rain_period(_fetch_json(_apply_lang(url, lang), timeout))
 
 
 def fetch_hour_rain(
@@ -2037,6 +2050,28 @@ def format_rain(report: RainReport) -> str:
     return "\n".join(lines) + "\n"
 
 
+def parse_rain_period(payload: dict) -> RainPeriod | None:
+    """Turn the `rhrread` rainfall window into a start and end time."""
+    section = payload.get("rainfall")
+    if not isinstance(section, dict):
+        return None
+    start = _text(section.get("startTime"))
+    end = _text(section.get("endTime"))
+    if not start or not end:
+        return None
+    return RainPeriod(start, end)
+
+
+def format_rain_period(period: RainPeriod) -> str:
+    """Render the district rainfall observation window."""
+    return f"Hong Kong rainfall period\nFrom: {period.start}\nTo: {period.end}\n"
+
+
+def format_rain_period_miss(*, as_json: bool = False) -> str:
+    """Say that the current report has no district rainfall window."""
+    return _unavailable("No rainfall period is available.", as_json=as_json)
+
+
 def parse_hour_rain(payload: dict) -> HourRainReport:
     """Turn an hourly-rainfall document into station readings, wettest first."""
     raw = payload.get("hourlyRainfall")
@@ -2572,6 +2607,7 @@ def format_json(
     | SpecialTips
     | StationReport
     | RainReport
+    | RainPeriod
     | HourRainReport
     | HourWettest
     | HourDriest

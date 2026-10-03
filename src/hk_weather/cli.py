@@ -39,6 +39,7 @@ from hk_weather.hko import (
     fetch_psr,
     fetch_quakes,
     fetch_rain,
+    fetch_rain_period,
     fetch_rainstorm,
     fetch_stations,
     fetch_strikes,
@@ -115,6 +116,8 @@ from hk_weather.hko import (
     format_psr,
     format_quakes,
     format_rain,
+    format_rain_period,
+    format_rain_period_miss,
     format_rainstorm,
     format_rainstorm_miss,
     format_short,
@@ -183,6 +186,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--tips prints special weather tips; "
             "--stations lists each station; --list-places lists their names; "
             "--place NAME filters those stations; --rain lists district rainfall; "
+            "--rain-period prints the district rainfall window; "
             "--hour-rain lists past-hour rainfall at automatic stations; "
             "--hour-wettest prints the wettest of those stations; "
             "--hour-driest prints the driest of those stations; "
@@ -418,6 +422,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--rain",
         action="store_true",
         help="Print rainfall by district from the current report",
+    )
+    parser.add_argument(
+        "--rain-period",
+        action="store_true",
+        help="Print the past-hour window for district rainfall",
     )
     parser.add_argument(
         "--hour-rain",
@@ -714,6 +723,12 @@ def main(argv: list[str] | None = None) -> int:
         elif args.rain:
             rain = fetch_rain(timeout=args.timeout, lang=args.lang)
             text = format_json(rain) if args.json else format_rain(rain)
+        elif args.rain_period:
+            rain_period = fetch_rain_period(timeout=args.timeout, lang=args.lang)
+            if rain_period is None:
+                text = format_rain_period_miss(as_json=args.json)
+            else:
+                text = format_json(rain_period) if args.json else format_rain_period(rain_period)
         elif args.hour_rain:
             hour_rain = fetch_hour_rain(timeout=args.timeout, lang=args.lang)
             if not hour_rain.readings:
