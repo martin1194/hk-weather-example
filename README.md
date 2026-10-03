@@ -202,6 +202,8 @@ hk-weather --wet-bulb
 hk-weather --wet-bulb --json
 hk-weather --solar
 hk-weather --solar --json
+hk-weather --global-solar
+hk-weather --global-solar --json
 hk-weather --hottest
 hk-weather --hottest --json
 hk-weather --coldest
@@ -437,6 +439,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --wet-bulb` prints the latest daily mean wet-bulb temperature at the Observatory, for example `2026-08-31  25.8°C`. `--wbgt` still prints the current Wet Bulb Globe Temperature. `--dew-point` still prints the dew point. `--wet-bulb --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No wet bulb temperature is available.`
 
 `hk-weather --solar` prints the latest 1-minute global, direct, and diffuse solar radiation, for example `Kau Sai Chau  global 1  direct 0  diffuse 1 W/m²`. Earlier minutes in the file are omitted. `--solar --json` prints that minute as one JSON object. `--lang` selects the station names. A station is omitted when any component is `N/A`. If none remain, it says `No solar radiation is available.`
+
+`hk-weather --global-solar` prints the latest daily global solar radiation at King's Park, for example `2026-08-31  8.95 MJ/m²`. `--solar` still prints the latest 1-minute readings. `--global-solar --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No global solar radiation is available.`
 
 `hk-weather --hottest` (or `-H`) prints the warmest place from the current report, for example `King's Park  31°C`. `--hottest --json` prints that reading as one JSON object. `--lang` applies. If no readings are present, it says so.
 

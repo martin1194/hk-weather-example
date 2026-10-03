@@ -85,6 +85,7 @@ from hk_weather.hko import (
     fetch_wbgt,
     fetch_wet_bulb,
     fetch_solar,
+    fetch_global_solar,
     fetch_tc_info,
     fetch_tide,
     fetch_tide_hour,
@@ -254,6 +255,8 @@ from hk_weather.hko import (
     format_wet_bulb_miss,
     format_solar,
     format_solar_miss,
+    format_global_solar,
+    format_global_solar_miss,
     format_tide,
     format_tide_miss,
     format_tide_hour,
@@ -368,6 +371,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--wbgt prints the latest Wet Bulb Globe Temperature; "
             "--wet-bulb prints the latest daily wet-bulb temperature; "
             "--solar prints the latest solar radiation; "
+            "--global-solar prints the latest daily global solar radiation; "
             "--wind lists the forecast wind; "
             "--gust prints the latest 10-minute wind and gust; "
             "--prevailing prints the latest prevailing wind direction; "
@@ -938,6 +942,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--solar",
         action="store_true",
         help="Print the latest 1-minute solar radiation at automatic stations",
+    )
+    parser.add_argument(
+        "--global-solar",
+        action="store_true",
+        help="Print the latest daily global solar radiation at King's Park",
     )
     parser.add_argument(
         "-H",
@@ -1592,6 +1601,12 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_solar_miss(as_json=args.json)
             else:
                 text = format_json(solar) if args.json else format_solar(solar)
+        elif args.global_solar:
+            global_solar = fetch_global_solar(timeout=args.timeout, lang=args.lang)
+            if global_solar is None:
+                text = format_global_solar_miss(as_json=args.json)
+            else:
+                text = format_json(global_solar) if args.json else format_global_solar(global_solar)
         elif args.hottest:
             hottest = fetch_hottest(timeout=args.timeout, lang=args.lang)
             if hottest is None:
