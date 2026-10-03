@@ -82,6 +82,7 @@ from hk_weather.hko import (
     fetch_wind,
     fetch_forecast_icon,
     fetch_yesterday,
+    fetch_mean_temp,
     filter_stations,
     format_aqhi,
     format_aqhi_miss,
@@ -216,6 +217,8 @@ from hk_weather.hko import (
     format_forecast_icon_miss,
     format_yesterday,
     format_yesterday_miss,
+    format_mean_temp,
+    format_mean_temp_miss,
 )
 
 
@@ -280,6 +283,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--quake lists the latest earthquake message; "
             "--felt prints the locally felt earth tremor; --today prints today; "
             "--yesterday prints yesterday's Observatory summary; "
+            "--mean-temp prints the latest daily mean temperature; "
             "--grass prints yesterday's grass minimum; "
             "--accum-rain prints accumulated rainfall since 1 January; "
             "--avg-rain prints the climatological rainfall normal; "
@@ -435,6 +439,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--yesterday",
         action="store_true",
         help="Print yesterday's temperature, rainfall, and humidity at the Observatory",
+    )
+    parser.add_argument(
+        "--mean-temp",
+        action="store_true",
+        help="Print the latest daily mean temperature at the Observatory",
     )
     parser.add_argument(
         "--grass",
@@ -906,6 +915,12 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_yesterday_miss(as_json=args.json)
             else:
                 text = format_json(yesterday) if args.json else format_yesterday(yesterday)
+        elif args.mean_temp:
+            mean_temp = fetch_mean_temp(timeout=args.timeout, lang=args.lang)
+            if mean_temp is None:
+                text = format_mean_temp_miss(as_json=args.json)
+            else:
+                text = format_json(mean_temp) if args.json else format_mean_temp(mean_temp)
         elif args.grass:
             grass = fetch_grass(timeout=args.timeout, lang=args.lang)
             if grass is None:
