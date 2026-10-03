@@ -313,6 +313,101 @@ def test_cli_coastal_when_missing(monkeypatch, capsys):
     }
 
 
+def test_cli_coast_report_prints_station_observations(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response(
+            {
+                "updateTime": "  2026-10-04T05:30:00+08:00  ",
+                "weatherReport": {
+                    "data": [
+                        {
+                            "locationName": "  Waglan Island  ",
+                            "windInfo": "  Wind east force 1  ",
+                            "weatherDescription": "",
+                            "visibilityInfo": {"value": 44, "unit": "kilometre"},
+                        },
+                        {
+                            "locationName": "Blank",
+                            "windInfo": "",
+                            "weatherDescription": "  ",
+                            "visibilityInfo": {"value": "", "unit": ""},
+                        },
+                        {
+                            "locationName": "Macau",
+                            "windInfo": "Wind east-southeast force 2",
+                            "weatherDescription": "Mist",
+                            "visibilityInfo": {"value": 35.0, "unit": "km"},
+                        },
+                    ]
+                },
+            }
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--coast-report", "--lang", "tc"]) == 0
+    assert seen["url"].endswith("sccw_json_datagov_uc.json")
+    assert capsys.readouterr().out == (
+        "Hong Kong coastal reports\n"
+        "Updated: 2026-10-04T05:30:00+08:00\n"
+        "Waglan Island  Wind east force 1  visibility 44 km\n"
+        "Macau  Wind east-southeast force 2  Mist  visibility 35 km\n"
+    )
+
+
+def test_cli_coast_report_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {
+                "updateTime": "2026-10-04T05:30:00+08:00",
+                "weatherReport": {
+                    "data": [
+                        {
+                            "locationName": "Waglan Island",
+                            "windInfo": "Wind east force 1",
+                            "weatherDescription": "",
+                            "visibilityInfo": {"value": 44, "unit": "kilometre"},
+                        }
+                    ]
+                },
+            }
+        ),
+    )
+    assert main(["--coast-report", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "update_time": "2026-10-04T05:30:00+08:00",
+        "stations": [
+            {
+                "place": "Waglan Island",
+                "wind": "Wind east force 1",
+                "weather": "",
+                "visibility": 44.0,
+                "visibility_unit": "km",
+            }
+        ],
+    }
+
+
+def test_cli_coast_report_when_missing(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"weatherReport": {"data": []}}),
+    )
+    assert main(["--coast-report"]) == 0
+    assert capsys.readouterr().out == "No coastal station reports are available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({}),
+    )
+    assert main(["--coast-report", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No coastal station reports are available."
+    }
+
+
 def test_cli_forecast_period_prints_the_line(monkeypatch, capsys):
     seen = {}
     period = "Weather forecast for tonight and tomorrow"

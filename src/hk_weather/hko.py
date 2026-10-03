@@ -307,6 +307,21 @@ class CoastalForecast:
 
 
 @dataclass(frozen=True)
+class CoastStation:
+    place: str
+    wind: str
+    weather: str
+    visibility: float | None
+    visibility_unit: str
+
+
+@dataclass(frozen=True)
+class CoastReport:
+    update_time: str
+    stations: tuple[CoastStation, ...]
+
+
+@dataclass(frozen=True)
 class ForecastPeriod:
     period: str
 
@@ -1215,6 +1230,12 @@ def fetch_coastal(timeout: float = 10, lang: str = "en") -> CoastalForecast:
     """Download the South China Coastal Waters area forecast."""
     url = COASTAL_URLS.get(lang, COASTAL_URLS["en"])
     return parse_coastal(_fetch_json(url, timeout))
+
+
+def fetch_coast_report(timeout: float = 10, lang: str = "en") -> CoastReport:
+    """Download the latest South China coastal station reports."""
+    url = COASTAL_URLS.get(lang, COASTAL_URLS["en"])
+    return parse_coast_report(_fetch_json(url, timeout))
 
 
 def fetch_forecast_period(
@@ -2485,6 +2506,57 @@ def format_coastal(report: CoastalForecast) -> str:
 def format_coastal_miss(*, as_json: bool = False) -> str:
     """Say that no coastal waters forecast is available."""
     return _unavailable("No coastal waters forecast is available.", as_json=as_json)
+
+
+def _visibility_unit(unit: str) -> str:
+    if unit.lower() in {"kilometre", "kilometer", "km"}:
+        return "km"
+    return unit
+
+
+def parse_coast_report(payload: dict) -> CoastReport:
+    """Turn the coastal bulletin into the latest station reports."""
+    report = payload.get("weatherReport")
+    rows = report.get("data") if isinstance(report, dict) else None
+    stations: list[CoastStation] = []
+    if isinstance(rows, list):
+        for item in rows:
+            if not isinstance(item, dict):
+                continue
+            place = _text(item.get("locationName"))
+            wind = _text(item.get("windInfo"))
+            weather = _text(item.get("weatherDescription"))
+            info = item.get("visibilityInfo")
+            visibility = None
+            unit = ""
+            if isinstance(info, dict):
+                visibility = _hour_mm(info.get("value"))
+                unit = _visibility_unit(_text(info.get("unit"))) if visibility is not None else ""
+            if not place or not (wind or weather or visibility is not None):
+                continue
+            stations.append(CoastStation(place, wind, weather, visibility, unit))
+    return CoastReport(_text(payload.get("updateTime")), tuple(stations))
+
+
+def format_coast_report(report: CoastReport) -> str:
+    """Render the latest coastal station reports."""
+    lines = ["Hong Kong coastal reports"]
+    if report.update_time:
+        lines.append(f"Updated: {report.update_time}")
+    for station in report.stations:
+        parts = [part for part in (station.wind, station.weather) if part]
+        if station.visibility is not None:
+            visibility = f"visibility {_number(station.visibility)}"
+            if station.visibility_unit:
+                visibility = f"{visibility} {station.visibility_unit}"
+            parts.append(visibility)
+        lines.append(f"{station.place}  {'  '.join(parts)}")
+    return "\n".join(lines) + "\n"
+
+
+def format_coast_report_miss(*, as_json: bool = False) -> str:
+    """Say that no coastal station reports are available."""
+    return _unavailable("No coastal station reports are available.", as_json=as_json)
 
 
 def parse_forecast_period(payload: dict) -> ForecastPeriod | None:
@@ -5774,6 +5846,7 @@ def format_json(
     | LocalForecast
     | ForecastOutlook
     | CoastalForecast
+    | CoastReport
     | ForecastPeriod
     | ForecastDesc
     | ForecastUpdated
