@@ -1838,6 +1838,65 @@ def test_cli_cloud_when_missing(monkeypatch, capsys):
     assert json.loads(capsys.readouterr().out) == {"message": "No cloud amount is available."}
 
 
+def test_cli_evaporation_prints_latest_day(monkeypatch, capsys):
+    seen = {}
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _text_response(
+            "年/Year,月/Month,日/Day,數值/Value,數據完整性/data Completeness\n"
+            "2026,1,1,3.4,C\n"
+            "2026,8,30,***,\n"
+            "2026,8,31,  2.5  ,C\n"
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--evaporation", "--lang", "tc"]) == 0
+    assert seen["url"].endswith("daily_KP_EVAP_2026.csv")
+    assert capsys.readouterr().out == (
+        "Hong Kong evaporation\n"
+        "Station: 京士柏\n"
+        "2026-08-31  2.5 mm\n"
+    )
+
+
+def test_cli_evaporation_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Year,Month,Day,Value,Completeness\n"
+            "2026,8,31,2.5,C\n"
+        ),
+    )
+    assert main(["--evaporation", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "station": "King's Park",
+        "date": "2026-08-31",
+        "evaporation_mm": 2.5,
+    }
+
+
+def test_cli_evaporation_when_missing(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Year,Month,Day,Value,Completeness\n"
+            "2026,8,31,***,\n"
+        ),
+    )
+    assert main(["--evaporation"]) == 0
+    assert capsys.readouterr().out == "No evaporation is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(""),
+    )
+    assert main(["--evaporation", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {"message": "No evaporation is available."}
+
+
 def test_cli_grass_prints_yesterday_minimum(monkeypatch, capsys):
     seen = {}
     monkeypatch.setattr("hk_weather.hko._hong_kong_yesterday", lambda now=None: "2026-10-02")
