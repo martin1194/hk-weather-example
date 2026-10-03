@@ -735,6 +735,13 @@ class Evaporation:
 
 
 @dataclass(frozen=True)
+class Evapotranspiration:
+    station: str
+    month: str
+    evapotranspiration_mm: float
+
+
+@dataclass(frozen=True)
 class GrassMinimum:
     date: str
     grass_min_c: float
@@ -1384,6 +1391,28 @@ def fetch_evaporation(timeout: float = 10, lang: str = "en") -> Evaporation | No
     except UnicodeDecodeError as exc:
         raise WeatherError("Hong Kong Observatory returned invalid text") from exc
     return parse_evaporation(text, lang)
+
+
+def fetch_evapotranspiration(
+    timeout: float = 10, lang: str = "en"
+) -> Evapotranspiration | None:
+    """Download the latest monthly potential evapotranspiration at King's Park."""
+    year = _hong_kong_today()[:4]
+    url = (
+        "https://data.weather.gov.hk/weatherAPI/cis/csvfile/KP/"
+        f"{year}/monthly_KP_EVAPTRAN_{year}.csv"
+    )
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            raw = response.read()
+    except (urllib.error.URLError, TimeoutError) as exc:
+        raise WeatherError(f"could not reach Hong Kong Observatory: {exc}") from exc
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise WeatherError("Hong Kong Observatory returned invalid text") from exc
+    return parse_evapotranspiration(text, lang)
 
 
 def fetch_grass(timeout: float = 10, lang: str = "en") -> GrassMinimum | None:
@@ -4701,6 +4730,48 @@ def format_evaporation_miss(*, as_json: bool = False) -> str:
     return _unavailable("No evaporation is available.", as_json=as_json)
 
 
+_EVAPOTRANSPIRATION_STATIONS = {
+    "en": "King's Park",
+    "tc": "京士柏",
+    "sc": "京士柏",
+}
+
+
+def parse_evapotranspiration(text: str, lang: str = "en") -> Evapotranspiration | None:
+    """Turn the King's Park monthly evapotranspiration CSV into the latest month."""
+    station = _EVAPOTRANSPIRATION_STATIONS.get(lang, _EVAPOTRANSPIRATION_STATIONS["en"])
+    latest: Evapotranspiration | None = None
+    rows = csv.reader(io.StringIO(text))
+    for row in rows:
+        if len(row) < 4:
+            continue
+        year = _text(row[0]).lstrip("\ufeff")
+        month = _text(row[1])
+        value = _hour_mm(row[3])
+        if not (year.isdigit() and month.isdigit()) or value is None:
+            continue
+        latest = Evapotranspiration(
+            station,
+            f"{int(year):04d}-{int(month):02d}",
+            value,
+        )
+    return latest
+
+
+def format_evapotranspiration(reading: Evapotranspiration) -> str:
+    """Render the latest monthly potential evapotranspiration at King's Park."""
+    return (
+        "Hong Kong potential evapotranspiration\n"
+        f"Station: {reading.station}\n"
+        f"{reading.month}  {_number(reading.evapotranspiration_mm)} mm\n"
+    )
+
+
+def format_evapotranspiration_miss(*, as_json: bool = False) -> str:
+    """Say that no potential evapotranspiration is available."""
+    return _unavailable("No potential evapotranspiration is available.", as_json=as_json)
+
+
 def parse_grass(payload: dict, date: str) -> GrassMinimum | None:
     """Turn a `RYES` document into yesterday's grass minimum temperature."""
     grass = _hour_mm(payload.get("HKOReadingsMinGrassTemp"))
@@ -5508,6 +5579,7 @@ def format_json(
     | DewPoint
     | CloudAmount
     | Evaporation
+    | Evapotranspiration
     | GrassMinimum
     | Sunshine
     | MaxUv

@@ -110,6 +110,7 @@ from hk_weather.hko import (
     fetch_dew_point,
     fetch_cloud,
     fetch_evaporation,
+    fetch_evapotranspiration,
     filter_stations,
     format_aqhi,
     format_aqhi_miss,
@@ -300,6 +301,8 @@ from hk_weather.hko import (
     format_cloud_miss,
     format_evaporation,
     format_evaporation_miss,
+    format_evapotranspiration,
+    format_evapotranspiration_miss,
 )
 
 
@@ -385,6 +388,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--dew-point prints the latest daily mean dew point; "
             "--cloud prints the latest daily mean cloud amount; "
             "--evaporation prints the latest daily evaporation; "
+            "--evapotranspiration prints the latest monthly potential evapotranspiration; "
             "--grass prints yesterday's grass minimum; "
             "--sunshine prints yesterday's sunshine duration; "
             "--max-uv prints yesterday's maximum UV index; "
@@ -577,6 +581,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--evaporation",
         action="store_true",
         help="Print the latest daily total evaporation at King's Park",
+    )
+    parser.add_argument(
+        "--evapotranspiration",
+        action="store_true",
+        help="Print the latest monthly potential evapotranspiration at King's Park",
     )
     parser.add_argument(
         "--grass",
@@ -1194,6 +1203,16 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_evaporation_miss(as_json=args.json)
             else:
                 text = format_json(evaporation) if args.json else format_evaporation(evaporation)
+        elif args.evapotranspiration:
+            evapotranspiration = fetch_evapotranspiration(timeout=args.timeout, lang=args.lang)
+            if evapotranspiration is None:
+                text = format_evapotranspiration_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(evapotranspiration)
+                    if args.json
+                    else format_evapotranspiration(evapotranspiration)
+                )
         elif args.grass:
             grass = fetch_grass(timeout=args.timeout, lang=args.lang)
             if grass is None:
