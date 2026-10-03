@@ -1603,6 +1603,54 @@ def test_cli_moon_when_no_times(monkeypatch, capsys):
     assert json.loads(capsys.readouterr().out) == {"message": "No moon times are available."}
 
 
+def test_cli_lunar_prints_today(monkeypatch, capsys):
+    seen = {}
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response({"LunarYear": "  丙午年，馬  ", "LunarDate": "八月廿三"})
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--lunar", "--lang", "tc"]) == 0
+    assert "lunardate.php" in seen["url"]
+    assert "date=2026-10-03" in seen["url"]
+    assert "lang=tc" in seen["url"]
+    assert capsys.readouterr().out == "Hong Kong lunar date\n2026-10-03\n丙午年，馬\n八月廿三\n"
+
+
+def test_cli_lunar_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {"LunarYear": "丙午年，馬", "LunarDate": "八月廿三"}
+        ),
+    )
+    assert main(["--lunar", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "date": "2026-10-03",
+        "lunar_year": "丙午年，馬",
+        "lunar_date": "八月廿三",
+    }
+
+
+def test_cli_lunar_when_missing(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"LunarYear": "  ", "LunarDate": ""}),
+    )
+    assert main(["--lunar"]) == 0
+    assert capsys.readouterr().out == "No lunar date is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({}),
+    )
+    assert main(["--lunar", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {"message": "No lunar date is available."}
+
+
 def test_cli_visibility_when_none_available(monkeypatch, capsys):
     monkeypatch.setattr(
         "hk_weather.hko.urllib.request.urlopen",

@@ -22,6 +22,7 @@ from hk_weather.hko import (
     fetch_icon_time,
     fetch_least_humid,
     fetch_lightning,
+    fetch_lunar,
     fetch_moon,
     fetch_month_rain,
     fetch_nine_day,
@@ -76,6 +77,8 @@ from hk_weather.hko import (
     format_least_humid_miss,
     format_json,
     format_lightning,
+    format_lunar,
+    format_lunar_miss,
     format_moon,
     format_moon_miss,
     format_month_rain,
@@ -181,6 +184,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--aqhi prints the air quality health index; "
             "--sunrise prints today's sunrise and sunset; "
             "--moon prints today's moonrise and moonset; "
+            "--lunar prints today's lunar date; "
             "--rainstorm prints the rainstorm reminder; "
             "--cyclone prints the tropical cyclone message; "
             "--humidest prints the most humid place; "
@@ -318,6 +322,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--moon",
         action="store_true",
         help="Print today's moonrise, moon transit, and moonset",
+    )
+    parser.add_argument(
+        "--lunar",
+        action="store_true",
+        help="Print today's lunar date from the Observatory calendar",
     )
     parser.add_argument(
         "-w",
@@ -584,6 +593,12 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_moon_miss(as_json=args.json)
             else:
                 text = format_json(moon) if args.json else format_moon(moon)
+        elif args.lunar:
+            lunar = fetch_lunar(timeout=args.timeout, lang=args.lang)
+            if lunar is None:
+                text = format_lunar_miss(as_json=args.json)
+            else:
+                text = format_json(lunar) if args.json else format_lunar(lunar)
         elif args.uv:
             uv = fetch_uv(timeout=args.timeout, lang=args.lang)
             text = format_json(uv) if args.json else format_uv(uv)

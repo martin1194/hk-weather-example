@@ -51,6 +51,8 @@ hk-weather --sunrise
 hk-weather --sunrise --json
 hk-weather --moon
 hk-weather --moon --json
+hk-weather --lunar
+hk-weather --lunar --json
 hk-weather --warnings
 hk-weather --warnings --json
 hk-weather --warning-info
@@ -167,6 +169,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --sunrise` (or `-U`) prints today's sunrise, sun transit, and sunset (`opendata.php`, `dataType=SRS`), for example `Rise: 06:15` and `Set: 18:09`. `--sunrise --json` prints that day as one JSON object. `--lang` applies. If the times are missing, it says so.
 
 `hk-weather --moon` (or `-M`) prints today's moonrise, moon transit, and moonset (`opendata.php`, `dataType=MRS`), for example `Rise: 23:39` and `Set: 12:48`. `--moon --json` prints that day as one JSON object. `--lang` applies. If the times are missing, it says so.
+
+`hk-weather --lunar` prints today's lunar date from the Observatory calendar, for example `丙午年，馬` and `八月廿三`. `--lunar --json` prints that date as one JSON object. `--lang` is sent on the request; the Observatory still returns the lunar labels in Chinese. If the date is missing, it says `No lunar date is available.`
 
 `hk-weather --warnings` (or `-w`) prints each active warning as a code and description. `--warnings --json` prints them as one JSON object. If none are in force, it says so.
 
