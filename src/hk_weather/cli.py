@@ -99,6 +99,7 @@ from hk_weather.hko import (
     fetch_weekend,
     fetch_wind,
     fetch_gust,
+    fetch_prevailing,
     fetch_forecast_icon,
     fetch_yesterday,
     fetch_mean_temp,
@@ -275,6 +276,8 @@ from hk_weather.hko import (
     format_wind,
     format_gust,
     format_gust_miss,
+    format_prevailing,
+    format_prevailing_miss,
     format_forecast_icon,
     format_forecast_icon_miss,
     format_yesterday,
@@ -363,6 +366,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--solar prints the latest solar radiation; "
             "--wind lists the forecast wind; "
             "--gust prints the latest 10-minute wind and gust; "
+            "--prevailing prints the latest prevailing wind direction; "
             "--forecast-icon prints each day's weather icon; "
             "--quake lists the latest earthquake message; "
             "--felt prints the locally felt earth tremor; --today prints today; "
@@ -669,6 +673,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--gust",
         action="store_true",
         help="Print the latest 10-minute wind and gust at automatic stations",
+    )
+    parser.add_argument(
+        "--prevailing",
+        action="store_true",
+        help="Print the latest daily prevailing wind direction at Waglan Island",
     )
     parser.add_argument(
         "--forecast-icon",
@@ -1304,6 +1313,12 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_gust_miss(as_json=args.json)
             else:
                 text = format_json(gust) if args.json else format_gust(gust)
+        elif args.prevailing:
+            prevailing = fetch_prevailing(timeout=args.timeout, lang=args.lang)
+            if prevailing is None:
+                text = format_prevailing_miss(as_json=args.json)
+            else:
+                text = format_json(prevailing) if args.json else format_prevailing(prevailing)
         elif args.forecast_icon:
             forecast_icon = fetch_forecast_icon(timeout=args.timeout, lang=args.lang)
             if not forecast_icon.days:
