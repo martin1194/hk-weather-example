@@ -160,6 +160,8 @@ hk-weather --humidity
 hk-weather --humidity --json
 hk-weather --humidity-time
 hk-weather --humidity-time --json
+hk-weather --minute-humidity
+hk-weather --minute-humidity --json
 hk-weather --humidest
 hk-weather --humidest --json
 hk-weather --least-humid
@@ -363,6 +365,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --humidity` prints humidity by place from the current report, with the record time when the Observatory includes it. `--humidity --json` prints that list as one JSON object. If no reading is present, it says so.
 
 `hk-weather --humidity-time` prints when those humidity readings were recorded (`humidity.recordTime`). `--humidity` still prints the readings. `--temp-time` still prints when the temperatures were recorded. `--humidity-time --json` prints that timestamp as one JSON object. `--lang` applies. If the field is missing or blank, it says `No humidity time is available.`
+
+`hk-weather --minute-humidity` prints the latest 1-minute mean relative humidity at automatic stations, for example `Chek Lap Kok  74%`. `--humidity` still prints humidity from the current weather report. `--minute-humidity --json` prints those stations as one JSON object. `--lang` selects the English, Traditional Chinese, or Simplified Chinese station names. Stations marked `N/A` are omitted. If none remain, it says `No 1-minute humidity readings are available.`
 
 `hk-weather --humidest` prints the most humid place from the current report, for example `Chek Lap Kok  95%`. `--humidest --json` prints that reading as one JSON object. `--lang` applies. If no reading is present, it says so.
 

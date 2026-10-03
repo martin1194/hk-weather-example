@@ -40,6 +40,7 @@ from hk_weather.hko import (
     fetch_humidest,
     fetch_humidity,
     fetch_humidity_time,
+    fetch_minute_humidity,
     fetch_icon_time,
     fetch_icon,
     fetch_current_updated,
@@ -149,6 +150,8 @@ from hk_weather.hko import (
     format_humidity,
     format_humidity_time,
     format_humidity_time_miss,
+    format_minute_humidity,
+    format_minute_humidity_miss,
     format_hour_rain,
     format_hour_rain_miss,
     format_hour_wettest,
@@ -307,6 +310,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--lightning lists lightning locations; --strikes lists hourly lightning counts; "
             "--humidity lists humidity readings; "
             "--humidity-time prints when those readings were recorded; "
+            "--minute-humidity prints the latest 1-minute mean humidity; "
             "--temps lists temperatures by place; "
             "--temp-time prints when those temperatures were recorded; "
             "--minute-temp prints the latest 1-minute mean temperature; "
@@ -769,6 +773,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--humidity-time",
         action="store_true",
         help="Print when the current humidity readings were recorded",
+    )
+    parser.add_argument(
+        "--minute-humidity",
+        action="store_true",
+        help="Print the latest 1-minute mean humidity at automatic stations",
     )
     parser.add_argument(
         "--humidest",
@@ -1315,6 +1324,16 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_humidity_time_miss(as_json=args.json)
             else:
                 text = format_json(humidity_time) if args.json else format_humidity_time(humidity_time)
+        elif args.minute_humidity:
+            minute_humidity = fetch_minute_humidity(timeout=args.timeout, lang=args.lang)
+            if not minute_humidity.stations:
+                text = format_minute_humidity_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(minute_humidity)
+                    if args.json
+                    else format_minute_humidity(minute_humidity)
+                )
         elif args.humidest:
             humidest = fetch_humidest(timeout=args.timeout, lang=args.lang)
             if humidest is None:
