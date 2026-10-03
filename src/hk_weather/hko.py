@@ -272,6 +272,13 @@ class Moon:
 
 
 @dataclass(frozen=True)
+class LunarDate:
+    date: str
+    lunar_year: str
+    lunar_date: str
+
+
+@dataclass(frozen=True)
 class SpecialTips:
     tips: tuple[str, ...]
 
@@ -625,6 +632,13 @@ def fetch_moon(timeout: float = 10, lang: str = "en") -> Moon | None:
         f"?dataType=MRS&rformat=json&year={year}&month={month}&day={day}&lang=en"
     )
     return parse_moon(_fetch_json(_apply_lang(url, lang), timeout))
+
+
+def fetch_lunar(timeout: float = 10, lang: str = "en") -> LunarDate | None:
+    """Download today's lunar date (`lunardate.php`)."""
+    today = _hong_kong_today()
+    url = f"https://data.weather.gov.hk/weatherAPI/opendata/lunardate.php?date={today}&lang=en"
+    return parse_lunar(_fetch_json(_apply_lang(url, lang), timeout), today)
 
 
 def fetch_uv(url: str = UV_URL, timeout: float = 10, lang: str = "en") -> UvIndex:
@@ -1611,6 +1625,30 @@ def format_moon_miss(*, as_json: bool = False) -> str:
     return _unavailable("No moon times are available.", as_json=as_json)
 
 
+def parse_lunar(payload: dict, date: str) -> LunarDate | None:
+    """Turn a lunar-date document into today's Gregorian and lunar labels."""
+    lunar_year = _text(payload.get("LunarYear"))
+    lunar_date = _text(payload.get("LunarDate"))
+    if not lunar_year and not lunar_date:
+        return None
+    return LunarDate(date, lunar_year, lunar_date)
+
+
+def format_lunar(reading: LunarDate) -> str:
+    """Render today's lunar date."""
+    lines = ["Hong Kong lunar date", reading.date]
+    if reading.lunar_year:
+        lines.append(reading.lunar_year)
+    if reading.lunar_date:
+        lines.append(reading.lunar_date)
+    return "\n".join(lines) + "\n"
+
+
+def format_lunar_miss(*, as_json: bool = False) -> str:
+    """Say that today's lunar date is not available."""
+    return _unavailable("No lunar date is available.", as_json=as_json)
+
+
 def _visibility_time(value: object) -> str:
     text = _text(value)
     if len(text) == 12 and text.isdigit():
@@ -2213,7 +2251,8 @@ def format_json(
     | TideReport
     | AqhiReport
     | Sunrise
-    | Moon,
+    | Moon
+    | LunarDate,
 ) -> str:
     """Render the same report as one JSON object."""
     return json.dumps(asdict(report), indent=2) + "\n"
