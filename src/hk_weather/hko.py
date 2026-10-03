@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import urllib.error
 import urllib.request
+import xml.etree.ElementTree as ET
 from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta, timezone
 
@@ -34,6 +35,13 @@ VISIBILITY_URL = (
 # month, and day; Quarry Bay is the default station. lang is accepted.
 TIDE_STATION = "QUB"
 TIDE_STATION_NAME = "Quarry Bay"
+# Current AQHI by station. weather.php has no AQHI dataType; these are the
+# Environmental Protection Department RSS feeds, one file per language.
+AQHI_URLS = {
+    "en": "https://www.aqhi.gov.hk/epd/ddata/html/out/aqhi_ind_rss_Eng.xml",
+    "tc": "https://www.aqhi.gov.hk/epd/ddata/html/out/aqhi_ind_rss_ChT.xml",
+    "sc": "https://www.aqhi.gov.hk/epd/ddata/html/out/aqhi_ind_rss_ChS.xml",
+}
 UV_URL = DEFAULT_URL
 _CANCELLED = {"CANCEL", "CANCELLED"}
 HKO_STATION = "Hong Kong Observatory"
@@ -194,6 +202,20 @@ class TideEvent:
 class TideReport:
     station: str
     events: tuple[TideEvent, ...]
+
+
+@dataclass(frozen=True)
+class AqhiReading:
+    station: str
+    area: str
+    aqhi: str
+    health_risk: str
+
+
+@dataclass(frozen=True)
+class AqhiReport:
+    updated: str
+    readings: tuple[AqhiReading, ...]
 
 
 @dataclass(frozen=True)
@@ -388,6 +410,12 @@ def fetch_tide(timeout: float = 10, lang: str = "en") -> TideReport:
     return parse_tide(_fetch_json(_apply_lang(url, lang), timeout), year)
 
 
+def fetch_aqhi(timeout: float = 10, lang: str = "en") -> AqhiReport:
+    """Download the current Air Quality Health Index (EPD station RSS)."""
+    url = AQHI_URLS.get(lang, AQHI_URLS["en"])
+    return parse_aqhi(_fetch_text(url, timeout))
+
+
 def fetch_uv(url: str = UV_URL, timeout: float = 10, lang: str = "en") -> UvIndex:
     """Download the UV index from the current weather report (`dataType=rhrread`)."""
     return parse_uv(_fetch_json(_apply_lang(url, lang), timeout))
@@ -485,6 +513,19 @@ def _fetch_json(url: str, timeout: float) -> dict:
     if not isinstance(payload, dict):
         raise WeatherError("Hong Kong Observatory returned an unexpected payload")
     return payload
+
+
+def _fetch_text(url: str, timeout: float) -> str:
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            raw = response.read()
+    except (urllib.error.URLError, TimeoutError) as exc:
+        raise WeatherError(f"could not reach the AQHI feed: {exc}") from exc
+    try:
+        return raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise WeatherError("the AQHI feed returned invalid text") from exc
 
 
 def parse_current_report(payload: dict) -> CurrentWeather:
@@ -1033,6 +1074,61 @@ def format_tide_miss(*, as_json: bool = False) -> str:
     return _unavailable("No tide readings are available.", as_json=as_json)
 
 
+def _aqhi_description(text: str) -> tuple[str, str, str, str, str] | None:
+    """Split `Station - Area: 3 Low - updated` into its fields."""
+    parts = [part.strip() for part in text.split(" - ")]
+    if len(parts) < 2 or not parts[0]:
+        return None
+    area, sep, values = parts[1].partition(":")
+    tokens = values.split()
+    if not sep or not area.strip() or not tokens:
+        return None
+    aqhi = tokens[0]
+    if not aqhi.rstrip("+").isdigit() or aqhi.count("+") > 1:
+        return None
+    updated = " - ".join(parts[2:]).strip()
+    return parts[0], area.strip(), aqhi, " ".join(tokens[1:]), updated
+
+
+def parse_aqhi(raw: str) -> AqhiReport:
+    """Turn an AQHI station RSS document into one reading per station."""
+    try:
+        root = ET.fromstring(raw)
+    except ET.ParseError as exc:
+        raise WeatherError("the AQHI feed returned invalid XML") from exc
+    readings: list[AqhiReading] = []
+    updated = ""
+    for item in root.iter("item"):
+        parsed = _aqhi_description(_text(item.findtext("description")))
+        if parsed is None:
+            continue
+        station, area, aqhi, risk, when = parsed
+        if not updated and when:
+            updated = when
+        readings.append(AqhiReading(station, area, aqhi, risk))
+    return AqhiReport(updated, tuple(readings))
+
+
+def format_aqhi(report: AqhiReport) -> str:
+    """Render the current AQHI, one station per line."""
+    if not report.readings:
+        return "No AQHI readings are available.\n"
+    lines = ["Hong Kong AQHI"]
+    if report.updated:
+        lines.append(f"Updated: {report.updated}")
+    for reading in report.readings:
+        line = f"{reading.station}  {reading.area}  {reading.aqhi}"
+        if reading.health_risk:
+            line = f"{line}  {reading.health_risk}"
+        lines.append(line)
+    return "\n".join(lines) + "\n"
+
+
+def format_aqhi_miss(*, as_json: bool = False) -> str:
+    """Say that no AQHI station readings are available."""
+    return _unavailable("No AQHI readings are available.", as_json=as_json)
+
+
 def _visibility_time(value: object) -> str:
     text = _text(value)
     if len(text) == 12 and text.isdigit():
@@ -1386,7 +1482,8 @@ def format_json(
     | HottestReading
     | ColdestReading
     | WettestReading
-    | TideReport,
+    | TideReport
+    | AqhiReport,
 ) -> str:
     """Render the same report as one JSON object."""
     return json.dumps(asdict(report), indent=2) + "\n"

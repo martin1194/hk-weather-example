@@ -7,6 +7,7 @@ import sys
 
 from hk_weather.hko import (
     WeatherError,
+    fetch_aqhi,
     fetch_current,
     fetch_forecast,
     fetch_forecast_day,
@@ -32,6 +33,8 @@ from hk_weather.hko import (
     fetch_weekend,
     fetch_wind,
     filter_stations,
+    format_aqhi,
+    format_aqhi_miss,
     format_day_miss,
     format_forecast,
     format_coldest,
@@ -109,7 +112,8 @@ def build_parser() -> argparse.ArgumentParser:
             "--hottest prints the warmest place; "
             "--coldest prints the coolest place; "
             "--wettest prints the wettest district; "
-            "--tide prints today's high and low tides."
+            "--tide prints today's high and low tides; "
+            "--aqhi prints the air quality health index."
         ),
     )
     parser.add_argument(
@@ -196,6 +200,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--tide",
         action="store_true",
         help="Print today's high and low tides at Quarry Bay",
+    )
+    parser.add_argument(
+        "-A",
+        "--aqhi",
+        action="store_true",
+        help="Print the current Air Quality Health Index by station",
     )
     parser.add_argument(
         "-w",
@@ -357,6 +367,12 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_tide_miss(as_json=args.json)
             else:
                 text = format_json(tide) if args.json else format_tide(tide)
+        elif args.aqhi:
+            aqhi = fetch_aqhi(timeout=args.timeout, lang=args.lang)
+            if not aqhi.readings:
+                text = format_aqhi_miss(as_json=args.json)
+            else:
+                text = format_json(aqhi) if args.json else format_aqhi(aqhi)
         elif args.uv:
             uv = fetch_uv(timeout=args.timeout, lang=args.lang)
             text = format_json(uv) if args.json else format_uv(uv)
