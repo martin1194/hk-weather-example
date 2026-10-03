@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import csv
+import io
 import json
 import urllib.error
 import urllib.request
@@ -38,6 +40,21 @@ VISIBILITY_URL = (
     "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php"
     "?dataType=LTMV&rformat=json&lang=en"
 )
+# Latest 10-minute mean wind and gust. These regional files are CSV, one per language.
+GUST_URLS = {
+    "en": (
+        "https://data.weather.gov.hk/weatherAPI/hko_data/regional-weather/"
+        "latest_10min_wind.csv"
+    ),
+    "tc": (
+        "https://data.weather.gov.hk/weatherAPI/hko_data/regional-weather/"
+        "latest_10min_wind_uc.csv"
+    ),
+    "sc": (
+        "https://data.weather.gov.hk/weatherAPI/hko_data/regional-weather/"
+        "latest_10min_wind_sc.csv"
+    ),
+}
 # Hourly cloud-to-ground and cloud-to-cloud lightning counts. lang is accepted.
 STRIKES_URL = (
     "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php"
@@ -286,6 +303,20 @@ class WindDay:
     date: str
     week: str
     wind: str
+
+
+@dataclass(frozen=True)
+class GustReading:
+    place: str
+    direction: str
+    speed_kmh: float | None
+    gust_kmh: float | None
+
+
+@dataclass(frozen=True)
+class GustReport:
+    obs_time: str
+    stations: tuple[GustReading, ...]
 
 
 @dataclass(frozen=True)
@@ -1131,6 +1162,22 @@ def fetch_weekend(
 def fetch_wind(url: str = NINE_DAY_URL, timeout: float = 10, lang: str = "en") -> WindForecast:
     """Download forecast wind from the 9-day forecast (`dataType=fnd`)."""
     return parse_wind(_fetch_json(_apply_lang(url, lang), timeout))
+
+
+def fetch_gust(timeout: float = 10, lang: str = "en") -> GustReport:
+    """Download the latest 10-minute wind and gust at automatic stations."""
+    url = GUST_URLS.get(lang, GUST_URLS["en"])
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            raw = response.read()
+    except (urllib.error.URLError, TimeoutError) as exc:
+        raise WeatherError(f"could not reach Hong Kong Observatory: {exc}") from exc
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise WeatherError("Hong Kong Observatory returned invalid text") from exc
+    return parse_gust(text)
 
 
 def fetch_forecast_icon(
@@ -2748,6 +2795,52 @@ def format_wind(report: WindForecast) -> str:
     return "\n".join(lines) + "\n"
 
 
+def parse_gust(text: str) -> GustReport:
+    """Turn the regional 10-minute wind CSV into one row per station."""
+    stations: list[GustReading] = []
+    obs_time = ""
+    rows = csv.reader(io.StringIO(text))
+    next(rows, None)
+    for row in rows:
+        if len(row) < 5:
+            continue
+        place = _text(row[1])
+        direction = _text(row[2])
+        if direction.upper() == "N/A":
+            direction = ""
+        speed = _hour_mm(row[3])
+        gust = _hour_mm(row[4])
+        if not place or (speed is None and gust is None):
+            continue
+        clock = _text(row[0])
+        if not obs_time and len(clock) == 12 and clock.isdigit():
+            obs_time = f"{clock[:4]}-{clock[4:6]}-{clock[6:8]} {clock[8:10]}:{clock[10:12]}"
+        stations.append(GustReading(place, direction, speed, gust))
+    return GustReport(obs_time, tuple(stations))
+
+
+def format_gust(report: GustReport) -> str:
+    """Render the latest 10-minute wind and gust, one station per line."""
+    lines = ["Hong Kong wind gusts"]
+    if report.obs_time:
+        lines.append(f"Recorded: {report.obs_time}")
+    for reading in report.stations:
+        parts = [reading.place]
+        if reading.direction:
+            parts.append(reading.direction)
+        if reading.speed_kmh is not None:
+            parts.append(f"{_number(reading.speed_kmh)} km/h")
+        if reading.gust_kmh is not None:
+            parts.append(f"gust {_number(reading.gust_kmh)} km/h")
+        lines.append("  ".join(parts))
+    return "\n".join(lines) + "\n"
+
+
+def format_gust_miss(*, as_json: bool = False) -> str:
+    """Say that no 10-minute wind gusts are available."""
+    return _unavailable("No wind gusts are available.", as_json=as_json)
+
+
 def format_forecast_icon(report: ForecastIcons) -> str:
     """Render each day's forecast icon."""
     lines = ["Hong Kong forecast icons"]
@@ -3990,6 +4083,7 @@ def format_json(
     | TempReport
     | TempTime
     | WindForecast
+    | GustReport
     | ForecastIcons
     | QuakeReport
     | FeltTremor

@@ -2912,6 +2912,69 @@ def test_cli_wind_json_is_one_object(monkeypatch, capsys):
     }
 
 
+def test_cli_gust_prints_latest_stations(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _text_response(
+            "Date time,Automatic Weather Station,Direction,Speed,Gust\n"
+            "202610040110,Central Pier,East,  5  ,9\n"
+            "202610040110,Cheung Chau,N/A,N/A,N/A\n"
+            "202610040110,Kai Tak,Southeast,3,4\n"
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--gust", "--lang", "tc"]) == 0
+    assert seen["url"].endswith("latest_10min_wind_uc.csv")
+    assert capsys.readouterr().out == (
+        "Hong Kong wind gusts\n"
+        "Recorded: 2026-10-04 01:10\n"
+        "Central Pier  East  5 km/h  gust 9 km/h\n"
+        "Kai Tak  Southeast  3 km/h  gust 4 km/h\n"
+    )
+
+
+def test_cli_gust_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Date time,Station,Direction,Speed,Gust\n"
+            "202610040110,Central Pier,East,5,9\n"
+        ),
+    )
+    assert main(["--gust", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "obs_time": "2026-10-04 01:10",
+        "stations": [
+            {
+                "place": "Central Pier",
+                "direction": "East",
+                "speed_kmh": 5,
+                "gust_kmh": 9,
+            }
+        ],
+    }
+
+
+def test_cli_gust_when_missing(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Date time,Station,Direction,Speed,Gust\n"
+            "202610040110,Central Pier,N/A,N/A,N/A\n"
+        ),
+    )
+    assert main(["--gust"]) == 0
+    assert capsys.readouterr().out == "No wind gusts are available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(""),
+    )
+    assert main(["--gust", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {"message": "No wind gusts are available."}
+
+
 def test_cli_forecast_icon_lists_each_day(monkeypatch, capsys):
     seen = {}
 
