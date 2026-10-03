@@ -16,6 +16,7 @@ from hk_weather.hko import (
     fetch_hottest,
     fetch_humidity,
     fetch_lightning,
+    fetch_moon,
     fetch_nine_day,
     fetch_psr,
     fetch_quakes,
@@ -48,6 +49,8 @@ from hk_weather.hko import (
     format_humidity,
     format_json,
     format_lightning,
+    format_moon,
+    format_moon_miss,
     format_place_miss,
     format_nine_day,
     format_places,
@@ -121,7 +124,8 @@ def build_parser() -> argparse.ArgumentParser:
             "--driest prints the driest district; "
             "--tide prints today's high and low tides; "
             "--aqhi prints the air quality health index; "
-            "--sunrise prints today's sunrise and sunset."
+            "--sunrise prints today's sunrise and sunset; "
+            "--moon prints today's moonrise and moonset."
         ),
     )
     parser.add_argument(
@@ -220,6 +224,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--sunrise",
         action="store_true",
         help="Print today's sunrise, sun transit, and sunset",
+    )
+    parser.add_argument(
+        "-M",
+        "--moon",
+        action="store_true",
+        help="Print today's moonrise, moon transit, and moonset",
     )
     parser.add_argument(
         "-w",
@@ -399,6 +409,12 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_sunrise_miss(as_json=args.json)
             else:
                 text = format_json(sunrise) if args.json else format_sunrise(sunrise)
+        elif args.moon:
+            moon = fetch_moon(timeout=args.timeout, lang=args.lang)
+            if moon is None:
+                text = format_moon_miss(as_json=args.json)
+            else:
+                text = format_json(moon) if args.json else format_moon(moon)
         elif args.uv:
             uv = fetch_uv(timeout=args.timeout, lang=args.lang)
             text = format_json(uv) if args.json else format_uv(uv)
