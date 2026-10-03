@@ -254,6 +254,12 @@ class WettestReading:
 
 
 @dataclass(frozen=True)
+class DriestReading:
+    place: str
+    rainfall_mm: float
+
+
+@dataclass(frozen=True)
 class LightningReport:
     places: tuple[str, ...]
 
@@ -445,6 +451,17 @@ def fetch_wettest(
         return None
     wettest = report.readings[0]
     return WettestReading(wettest.place, wettest.rainfall_mm)
+
+
+def fetch_driest(
+    url: str = DEFAULT_URL, timeout: float = 10, lang: str = "en"
+) -> DriestReading | None:
+    """Download the driest district from the current report (`dataType=rhrread`)."""
+    report = fetch_rain(url, timeout, lang)
+    if not report.readings:
+        return None
+    driest = min(report.readings, key=lambda reading: reading.rainfall_mm)
+    return DriestReading(driest.place, driest.rainfall_mm)
 
 
 def fetch_lightning(url: str = DEFAULT_URL, timeout: float = 10, lang: str = "en") -> LightningReport:
@@ -1359,6 +1376,16 @@ def format_wettest_miss(*, as_json: bool = False) -> str:
     return _unavailable("No rainfall readings are available.", as_json=as_json)
 
 
+def format_driest(reading: DriestReading) -> str:
+    """Render the driest district from the current report."""
+    return f"Hong Kong driest\n{reading.place}  {_number(reading.rainfall_mm)} mm\n"
+
+
+def format_driest_miss(*, as_json: bool = False) -> str:
+    """Say that the current report has no rainfall readings."""
+    return _unavailable("No rainfall readings are available.", as_json=as_json)
+
+
 def parse_lightning(payload: dict) -> LightningReport:
     """Turn `rhrread` lightning data into places where lightning occurred."""
     return LightningReport(_lightning(payload))
@@ -1482,6 +1509,7 @@ def format_json(
     | HottestReading
     | ColdestReading
     | WettestReading
+    | DriestReading
     | TideReport
     | AqhiReport,
 ) -> str:
