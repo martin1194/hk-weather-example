@@ -2584,6 +2584,54 @@ def test_cli_rainstorm_json_is_one_object(monkeypatch, capsys):
     }
 
 
+def test_cli_cyclone_prints_messages(monkeypatch, capsys):
+    seen = {}
+    first = "At noon, Typhoon Mangkhut was centred about 510 kilometres southeast of Hong Kong."
+    second = "It is forecast to move west-northwest at about 22 kilometres per hour."
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response({"tcmessage": [f"  {first}  ", {"message": second}, ""]})
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--cyclone", "--lang", "tc"]) == 0
+    assert "dataType=rhrread" in seen["url"]
+    assert "lang=tc" in seen["url"]
+    assert capsys.readouterr().out == (
+        "Hong Kong tropical cyclone\n"
+        f"- {first}\n"
+        f"- {second}\n"
+    )
+
+
+def test_cli_cyclone_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {"tcmessage": "  Tropical Cyclone Warning Bulletin.  "}
+        ),
+    )
+    assert main(["-c", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "messages": ["Tropical Cyclone Warning Bulletin."]
+    }
+
+
+def test_cli_cyclone_when_blank_or_missing(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"tcmessage": ""}),
+    )
+    assert main(["--cyclone"]) == 0
+    assert capsys.readouterr().out == "No tropical cyclone message.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({}),
+    )
+    assert main(["--cyclone", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {"message": "No tropical cyclone message."}
+
+
 def test_cli_rainstorm_when_blank_or_missing(monkeypatch, capsys):
     monkeypatch.setattr(
         "hk_weather.hko.urllib.request.urlopen",

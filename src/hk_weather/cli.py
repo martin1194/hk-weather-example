@@ -13,6 +13,7 @@ from hk_weather.hko import (
     fetch_forecast,
     fetch_forecast_day,
     fetch_coldest,
+    fetch_cyclone,
     fetch_hottest,
     fetch_humidest,
     fetch_humidity,
@@ -47,6 +48,8 @@ from hk_weather.hko import (
     format_forecast,
     format_coldest,
     format_coldest_miss,
+    format_cyclone,
+    format_cyclone_miss,
     format_hottest,
     format_hottest_miss,
     format_humidest,
@@ -136,6 +139,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--sunrise prints today's sunrise and sunset; "
             "--moon prints today's moonrise and moonset; "
             "--rainstorm prints the rainstorm reminder; "
+            "--cyclone prints the tropical cyclone message; "
             "--humidest prints the most humid place; "
             "--least-humid prints the least humid place."
         ),
@@ -289,6 +293,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--rainstorm",
         action="store_true",
         help="Print the rainstorm reminder from the current report",
+    )
+    parser.add_argument(
+        "-c",
+        "--cyclone",
+        action="store_true",
+        help="Print the tropical cyclone message from the current report",
     )
     parser.add_argument(
         "--lightning",
@@ -469,6 +479,12 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_rainstorm_miss(as_json=args.json)
             else:
                 text = format_json(rainstorm) if args.json else format_rainstorm(rainstorm)
+        elif args.cyclone:
+            cyclone = fetch_cyclone(timeout=args.timeout, lang=args.lang)
+            if cyclone is None:
+                text = format_cyclone_miss(as_json=args.json)
+            else:
+                text = format_json(cyclone) if args.json else format_cyclone(cyclone)
         elif args.lightning:
             lightning = fetch_lightning(timeout=args.timeout, lang=args.lang)
             text = format_json(lightning) if args.json else format_lightning(lightning)
