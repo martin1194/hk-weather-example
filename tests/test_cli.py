@@ -5180,6 +5180,63 @@ def test_cli_temp_diff_when_missing(monkeypatch, capsys):
     }
 
 
+def test_cli_heat_index_prints_latest_minute(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _text_response(
+            "Date time,Automatic Weather Station,10 minute mean Hong Kong Heat Index\n"
+            "202610040251,Beas River,23.9\n"
+            "202610040300,Happy Valley,  25.8  \n"
+            "202610040300,Sha Tin,N/A\n"
+            "202610040300,King's Park,25.1\n"
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--heat-index", "--lang", "tc"]) == 0
+    assert seen["url"].endswith("recent10_10min_hkhi_uc.csv")
+    assert capsys.readouterr().out == (
+        "Hong Kong heat index\n"
+        "Recorded: 2026-10-04 03:00\n"
+        "Happy Valley  25.8\n"
+        "King's Park  25.1\n"
+    )
+
+
+def test_cli_heat_index_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Date time,Station,Index\n"
+            "202610040300,Happy Valley,25.8\n"
+        ),
+    )
+    assert main(["--heat-index", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "obs_time": "2026-10-04 03:00",
+        "stations": [{"place": "Happy Valley", "heat_index": 25.8}],
+    }
+
+
+def test_cli_heat_index_when_missing(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Date time,Station,Index\n"
+            "202610040300,Sha Tin,N/A\n"
+        ),
+    )
+    assert main(["--heat-index"]) == 0
+    assert capsys.readouterr().out == "No heat index is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(""),
+    )
+    assert main(["--heat-index", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {"message": "No heat index is available."}
+
+
 def test_cli_temp_time_prints_timestamp(monkeypatch, capsys):
     seen = {}
 
