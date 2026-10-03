@@ -958,6 +958,12 @@ class DailyStrikes:
 
 
 @dataclass(frozen=True)
+class CloudStrikes:
+    date: str
+    count: float
+
+
+@dataclass(frozen=True)
 class HumidityReading:
     place: str
     humidity_percent: float
@@ -2196,6 +2202,26 @@ def fetch_daily_strikes(timeout: float = 10, lang: str = "en") -> DailyStrikes |
     except UnicodeDecodeError as exc:
         raise WeatherError("Hong Kong Observatory returned invalid text") from exc
     return parse_daily_strikes(text, lang)
+
+
+def fetch_cloud_strikes(timeout: float = 10, lang: str = "en") -> CloudStrikes | None:
+    """Download the latest daily cloud-to-cloud lightning count."""
+    year = _hong_kong_today()[:4]
+    url = (
+        "https://data.weather.gov.hk/weatherAPI/cis/csvfile/HK/"
+        f"{year}/daily_HK_LGTC_{year}.csv"
+    )
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            raw = response.read()
+    except (urllib.error.URLError, TimeoutError) as exc:
+        raise WeatherError(f"could not reach Hong Kong Observatory: {exc}") from exc
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise WeatherError("Hong Kong Observatory returned invalid text") from exc
+    return parse_cloud_strikes(text, lang)
 
 
 def fetch_humidity(url: str = DEFAULT_URL, timeout: float = 10, lang: str = "en") -> HumidityReport:
@@ -5591,6 +5617,37 @@ def format_daily_strikes_miss(*, as_json: bool = False) -> str:
     return _unavailable("No daily lightning count is available.", as_json=as_json)
 
 
+def parse_cloud_strikes(text: str, lang: str = "en") -> CloudStrikes | None:
+    """Turn the cloud-to-cloud lightning CSV into the latest numeric day."""
+    del lang
+    latest: CloudStrikes | None = None
+    rows = csv.reader(io.StringIO(text))
+    for row in rows:
+        if len(row) < 4:
+            continue
+        year = _text(row[0]).lstrip("\ufeff")
+        month = _text(row[1])
+        day = _text(row[2])
+        value = _hour_mm(row[3])
+        if not (year.isdigit() and month.isdigit() and day.isdigit()) or value is None:
+            continue
+        latest = CloudStrikes(
+            f"{int(year):04d}-{int(month):02d}-{int(day):02d}",
+            value,
+        )
+    return latest
+
+
+def format_cloud_strikes(reading: CloudStrikes) -> str:
+    """Render the latest daily cloud-to-cloud lightning count."""
+    return f"Hong Kong cloud-to-cloud lightning\n{reading.date}  {_number(reading.count)}\n"
+
+
+def format_cloud_strikes_miss(*, as_json: bool = False) -> str:
+    """Say that no cloud-to-cloud lightning count is available."""
+    return _unavailable("No cloud-to-cloud lightning count is available.", as_json=as_json)
+
+
 def _strike_period(value: object) -> tuple[str, str]:
     text = _text(value)
     start, sep, end = text.partition("-")
@@ -5876,6 +5933,7 @@ def format_json(
     | LightningReport
     | LightningCountReport
     | DailyStrikes
+    | CloudStrikes
     | HumidityReport
     | HumidityTime
     | MinuteHumidityReport

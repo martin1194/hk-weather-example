@@ -73,6 +73,7 @@ from hk_weather.hko import (
     fetch_stations,
     fetch_strikes,
     fetch_daily_strikes,
+    fetch_cloud_strikes,
     fetch_summary,
     fetch_situation,
     fetch_sunrise,
@@ -243,6 +244,8 @@ from hk_weather.hko import (
     format_strikes_miss,
     format_daily_strikes,
     format_daily_strikes_miss,
+    format_cloud_strikes,
+    format_cloud_strikes_miss,
     format_sunrise,
     format_sunrise_miss,
     format_temps,
@@ -375,6 +378,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--hour-driest prints the driest of those stations; "
             "--lightning lists lightning locations; --strikes lists hourly lightning counts; "
             "--daily-strikes prints the latest daily cloud-to-ground count; "
+            "--cloud-strikes prints the latest daily cloud-to-cloud count; "
             "--humidity lists humidity readings; "
             "--humidity-time prints when those readings were recorded; "
             "--minute-humidity prints the latest 1-minute mean humidity; "
@@ -907,6 +911,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--daily-strikes",
         action="store_true",
         help="Print the latest daily cloud-to-ground lightning count over Hong Kong",
+    )
+    parser.add_argument(
+        "--cloud-strikes",
+        action="store_true",
+        help="Print the latest daily cloud-to-cloud lightning count over Hong Kong",
     )
     parser.add_argument(
         "--humidity",
@@ -1581,6 +1590,16 @@ def main(argv: list[str] | None = None) -> int:
             else:
                 text = (
                     format_json(daily_strikes) if args.json else format_daily_strikes(daily_strikes)
+                )
+        elif args.cloud_strikes:
+            cloud_strikes = fetch_cloud_strikes(timeout=args.timeout, lang=args.lang)
+            if cloud_strikes is None:
+                text = format_cloud_strikes_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(cloud_strikes)
+                    if args.json
+                    else format_cloud_strikes(cloud_strikes)
                 )
         elif args.humidity:
             humidity = fetch_humidity(timeout=args.timeout, lang=args.lang)
