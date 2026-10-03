@@ -1076,6 +1076,96 @@ def test_cli_nine_updated_when_missing(monkeypatch, capsys):
     }
 
 
+def test_cli_nine_weather_lists_each_day(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response(
+            {
+                "updateTime": "  2026-10-03T16:45:00+08:00  ",
+                "weatherForecast": [
+                    {
+                        "forecastDate": "20261004",
+                        "week": "Sunday",
+                        "forecastWeather": "  Mainly cloudy with a few showers.  ",
+                    },
+                    {
+                        "forecastDate": "20261005",
+                        "week": "Monday",
+                        "forecastWind": "East force 3.",
+                    },
+                    {
+                        "forecastDate": "20261006",
+                        "week": "Tuesday",
+                        "forecastWeather": "Sunny periods.",
+                    },
+                ],
+            }
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--nine-weather", "--lang", "tc"]) == 0
+    assert "dataType=fnd" in seen["url"]
+    assert "lang=tc" in seen["url"]
+    assert capsys.readouterr().out == (
+        "Hong Kong 9-day weather\n"
+        "Updated: 2026-10-03T16:45:00+08:00\n"
+        "2026-10-04 Sunday  Mainly cloudy with a few showers.\n"
+        "2026-10-06 Tuesday  Sunny periods.\n"
+    )
+
+
+def test_cli_nine_weather_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {
+                "updateTime": "2026-10-03T16:45:00+08:00",
+                "weatherForecast": [
+                    {
+                        "forecastDate": "20261004",
+                        "week": "Sunday",
+                        "forecastWeather": "Mainly cloudy with a few showers.",
+                    }
+                ],
+            }
+        ),
+    )
+    assert main(["--nine-weather", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "update_time": "2026-10-03T16:45:00+08:00",
+        "days": [
+            {
+                "date": "2026-10-04",
+                "week": "Sunday",
+                "weather": "Mainly cloudy with a few showers.",
+            }
+        ],
+    }
+
+
+def test_cli_nine_weather_when_missing(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {
+                "weatherForecast": [
+                    {"forecastDate": "20261004", "week": "Sunday", "forecastWind": "East force 3."}
+                ]
+            }
+        ),
+    )
+    assert main(["--nine-weather"]) == 0
+    assert capsys.readouterr().out == "No 9-day weather is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({}),
+    )
+    assert main(["--nine-weather", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {"message": "No 9-day weather is available."}
+
+
 def test_cli_today_prints_the_hong_kong_day(monkeypatch, capsys):
     seen = {}
     monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")

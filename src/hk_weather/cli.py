@@ -45,6 +45,7 @@ from hk_weather.hko import (
     fetch_nine_day,
     fetch_nine_situation,
     fetch_nine_updated,
+    fetch_nine_weather,
     fetch_sea_temp,
     fetch_soil_temp,
     fetch_year_rain,
@@ -148,6 +149,8 @@ from hk_weather.hko import (
     format_nine_situation_miss,
     format_nine_updated,
     format_nine_updated_miss,
+    format_nine_weather,
+    format_nine_weather_miss,
     format_sea_temp,
     format_sea_temp_miss,
     format_soil_temp,
@@ -237,6 +240,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--soil-temp prints soil temperatures; "
             "--nine-situation prints the 9-day general situation; "
             "--nine-updated prints when the 9-day forecast was updated; "
+            "--nine-weather prints each day's weather from the 9-day forecast; "
             "--warnings lists active warnings; "
             "--warning-time prints when active warnings were issued; "
             "--uv prints the UV index; --icon-time prints when the weather icon changed; "
@@ -384,6 +388,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--nine-updated",
         action="store_true",
         help="Print when the 9-day forecast was last updated",
+    )
+    parser.add_argument(
+        "--nine-weather",
+        action="store_true",
+        help="Print each day's weather from the 9-day forecast",
     )
     parser.add_argument(
         "-Y",
@@ -815,6 +824,12 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_nine_updated_miss(as_json=args.json)
             else:
                 text = format_json(nine_updated) if args.json else format_nine_updated(nine_updated)
+        elif args.nine_weather:
+            nine_weather = fetch_nine_weather(timeout=args.timeout, lang=args.lang)
+            if not nine_weather.days:
+                text = format_nine_weather_miss(as_json=args.json)
+            else:
+                text = format_json(nine_weather) if args.json else format_nine_weather(nine_weather)
         elif args.today:
             today = fetch_today(timeout=args.timeout, lang=args.lang)
             if today is None:
