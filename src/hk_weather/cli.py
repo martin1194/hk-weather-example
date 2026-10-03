@@ -33,6 +33,7 @@ from hk_weather.hko import (
     fetch_rain,
     fetch_rainstorm,
     fetch_stations,
+    fetch_strikes,
     fetch_summary,
     fetch_situation,
     fetch_sunrise,
@@ -99,6 +100,8 @@ from hk_weather.hko import (
     format_summary,
     format_report,
     format_stations,
+    format_strikes,
+    format_strikes_miss,
     format_sunrise,
     format_sunrise_miss,
     format_temps,
@@ -155,7 +158,8 @@ def build_parser() -> argparse.ArgumentParser:
             "--tips prints special weather tips; "
             "--stations lists each station; --list-places lists their names; "
             "--place NAME filters those stations; --rain lists district rainfall; "
-            "--lightning lists lightning locations; --humidity lists humidity readings; "
+            "--lightning lists lightning locations; --strikes lists hourly lightning counts; "
+            "--humidity lists humidity readings; "
             "--temps lists temperatures by place; --wind lists the forecast wind; "
             "--quake lists the latest earthquake message; "
             "--felt prints the locally felt earth tremor; --today prints today; "
@@ -378,6 +382,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--lightning",
         action="store_true",
         help="List lightning locations from the current report",
+    )
+    parser.add_argument(
+        "-l",
+        "--strikes",
+        action="store_true",
+        help="Print hourly cloud-to-ground and cloud-to-cloud lightning counts",
     )
     parser.add_argument(
         "--humidity",
@@ -616,6 +626,12 @@ def main(argv: list[str] | None = None) -> int:
         elif args.lightning:
             lightning = fetch_lightning(timeout=args.timeout, lang=args.lang)
             text = format_json(lightning) if args.json else format_lightning(lightning)
+        elif args.strikes:
+            strikes = fetch_strikes(timeout=args.timeout, lang=args.lang)
+            if not strikes.counts:
+                text = format_strikes_miss(as_json=args.json)
+            else:
+                text = format_json(strikes) if args.json else format_strikes(strikes)
         elif args.humidity:
             humidity = fetch_humidity(timeout=args.timeout, lang=args.lang)
             text = format_json(humidity) if args.json else format_humidity(humidity)

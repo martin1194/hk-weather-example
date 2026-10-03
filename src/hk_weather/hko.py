@@ -36,6 +36,11 @@ VISIBILITY_URL = (
     "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php"
     "?dataType=LTMV&rformat=json&lang=en"
 )
+# Hourly cloud-to-ground and cloud-to-cloud lightning counts. lang is accepted.
+STRIKES_URL = (
+    "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php"
+    "?dataType=LHL&rformat=json&lang=en"
+)
 # Astronomical high and low tides. opendata.php requires a station plus year,
 # month, and day; Quarry Bay is the default station. lang is accepted.
 TIDE_STATION = "QUB"
@@ -320,6 +325,20 @@ class DriestReading:
 @dataclass(frozen=True)
 class LightningReport:
     places: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class LightningCount:
+    start: str
+    end: str
+    kind: str
+    region: str
+    count: int
+
+
+@dataclass(frozen=True)
+class LightningCountReport:
+    counts: tuple[LightningCount, ...]
 
 
 @dataclass(frozen=True)
@@ -674,6 +693,13 @@ def fetch_cyclone(
 def fetch_lightning(url: str = DEFAULT_URL, timeout: float = 10, lang: str = "en") -> LightningReport:
     """Download lightning locations from the current report (`dataType=rhrread`)."""
     return parse_lightning(_fetch_json(_apply_lang(url, lang), timeout))
+
+
+def fetch_strikes(
+    url: str = STRIKES_URL, timeout: float = 10, lang: str = "en"
+) -> LightningCountReport:
+    """Download hourly lightning counts (`dataType=LHL`)."""
+    return parse_strikes(_fetch_json(_apply_lang(url, lang), timeout))
 
 
 def fetch_humidity(url: str = DEFAULT_URL, timeout: float = 10, lang: str = "en") -> HumidityReport:
@@ -1906,6 +1932,58 @@ def format_lightning(report: LightningReport) -> str:
     return "\n".join(lines) + "\n"
 
 
+def parse_strikes(payload: dict) -> LightningCountReport:
+    """Turn an `LHL` document into lightning counts by region."""
+    raw = payload.get("data")
+    counts: list[LightningCount] = []
+    if isinstance(raw, list):
+        for item in raw:
+            if not isinstance(item, list) or len(item) < 4:
+                continue
+            kind = _text(item[1])
+            region = _text(item[2])
+            count = _whole_count(item[3])
+            if not kind or not region or count is None:
+                continue
+            start, end = _strike_period(item[0])
+            counts.append(LightningCount(start, end, kind, region, count))
+    return LightningCountReport(tuple(counts))
+
+
+def format_strikes(report: LightningCountReport) -> str:
+    """Render hourly lightning counts, one region per line."""
+    lines = ["Hong Kong lightning count"]
+    for reading in report.counts:
+        period = reading.start if not reading.end else f"{reading.start}-{reading.end[11:]}"
+        if reading.end and reading.end[:10] != reading.start[:10]:
+            period = f"{reading.start}-{reading.end}"
+        lines.append(f"{period}  {reading.kind}  {reading.region}  {reading.count}")
+    return "\n".join(lines) + "\n"
+
+
+def format_strikes_miss(*, as_json: bool = False) -> str:
+    """Say that no lightning counts are available."""
+    return _unavailable("No lightning counts are available.", as_json=as_json)
+
+
+def _strike_period(value: object) -> tuple[str, str]:
+    text = _text(value)
+    start, sep, end = text.partition("-")
+    if sep and len(start) == 12 and start.isdigit() and len(end) == 12 and end.isdigit():
+        return _visibility_time(start), _visibility_time(end)
+    return text, ""
+
+
+def _whole_count(value: object) -> int | None:
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        return value
+    if isinstance(value, str) and value.strip().isdigit():
+        return int(value.strip())
+    return None
+
+
 def parse_humidity(payload: dict) -> HumidityReport:
     """Turn `rhrread` humidity data into one reading per place."""
     section = payload.get("humidity")
@@ -2109,6 +2187,7 @@ def format_json(
     | StationReport
     | RainReport
     | LightningReport
+    | LightningCountReport
     | HumidityReport
     | TempReport
     | WindForecast
