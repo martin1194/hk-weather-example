@@ -245,6 +245,13 @@ class HottestReading:
 
 
 @dataclass(frozen=True)
+class ColdestReading:
+    record_time: str
+    place: str
+    temperature_c: float
+
+
+@dataclass(frozen=True)
 class UvIndex:
     update_time: str
     place: str | None
@@ -388,6 +395,17 @@ def fetch_hottest(
         return None
     warmest = max(report.readings, key=lambda reading: reading.temperature_c)
     return HottestReading(report.record_time, warmest.place, warmest.temperature_c)
+
+
+def fetch_coldest(
+    url: str = DEFAULT_URL, timeout: float = 10, lang: str = "en"
+) -> ColdestReading | None:
+    """Download the coolest place from the current report (`dataType=rhrread`)."""
+    report = fetch_temps(url, timeout, lang)
+    if not report.readings:
+        return None
+    coolest = min(report.readings, key=lambda reading: reading.temperature_c)
+    return ColdestReading(report.record_time, coolest.place, coolest.temperature_c)
 
 
 def _apply_lang(url: str, lang: str) -> str:
@@ -1234,6 +1252,20 @@ def format_hottest_miss(*, as_json: bool = False) -> str:
     return _unavailable("No temperature readings are available.", as_json=as_json)
 
 
+def format_coldest(reading: ColdestReading) -> str:
+    """Render the coolest station from the current report."""
+    lines = ["Hong Kong coldest"]
+    if reading.record_time:
+        lines.append(f"Recorded: {reading.record_time}")
+    lines.append(f"{reading.place}  {_number(reading.temperature_c)}°C")
+    return "\n".join(lines) + "\n"
+
+
+def format_coldest_miss(*, as_json: bool = False) -> str:
+    """Say that the current report has no temperature readings."""
+    return _unavailable("No temperature readings are available.", as_json=as_json)
+
+
 def format_json(
     report: CurrentWeather
     | LocalForecast
@@ -1251,7 +1283,8 @@ def format_json(
     | PsrForecast
     | WeekendForecast
     | VisibilityReport
-    | HottestReading,
+    | HottestReading
+    | ColdestReading,
 ) -> str:
     """Render the same report as one JSON object."""
     return json.dumps(asdict(report), indent=2) + "\n"
