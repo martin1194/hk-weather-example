@@ -535,6 +535,13 @@ class MeanUv:
 
 
 @dataclass(frozen=True)
+class GammaDose:
+    station: str
+    date: str
+    dose_usv_h: float
+
+
+@dataclass(frozen=True)
 class AccumulatedRainfall:
     date: str
     rainfall_mm: float
@@ -990,6 +997,17 @@ def fetch_mean_uv(timeout: float = 10, lang: str = "en") -> MeanUv | None:
         f"&station={SUNSHINE_STATION}&lang=en"
     )
     return parse_mean_uv(_fetch_json(_apply_lang(url, lang), timeout), day)
+
+
+def fetch_dose(timeout: float = 10, lang: str = "en") -> GammaDose | None:
+    """Download yesterday's gamma dose rate (`dataType=RYES`, station KP)."""
+    day = _hong_kong_yesterday()
+    url = (
+        "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php"
+        f"?dataType=RYES&rformat=json&date={day.replace('-', '')}"
+        f"&station={SUNSHINE_STATION}&lang=en"
+    )
+    return parse_dose(_fetch_json(_apply_lang(url, lang), timeout), day)
 
 
 def fetch_accum_rain(timeout: float = 10, lang: str = "en") -> AccumulatedRainfall | None:
@@ -3361,6 +3379,31 @@ def format_mean_uv_miss(*, as_json: bool = False) -> str:
     return _unavailable("No mean UV index is available.", as_json=as_json)
 
 
+def parse_dose(payload: dict, date: str) -> GammaDose | None:
+    """Turn a `RYES` document into yesterday's gamma dose rate at King's Park."""
+    dose = _hour_mm(payload.get("KingsParkMicrosieverts"))
+    if dose is None:
+        return None
+    reported = _text(payload.get("ReportTimeInfoDate"))
+    if len(reported) == 8 and reported.isdigit():
+        date = f"{reported[:4]}-{reported[4:6]}-{reported[6:8]}"
+    return GammaDose(SUNSHINE_STATION_NAME, date, dose)
+
+
+def format_dose(reading: GammaDose) -> str:
+    """Render yesterday's gamma dose rate at King's Park."""
+    return (
+        "Hong Kong gamma dose rate\n"
+        f"Station: {reading.station}\n"
+        f"{reading.date}  {_number(reading.dose_usv_h)} µSv/h\n"
+    )
+
+
+def format_dose_miss(*, as_json: bool = False) -> str:
+    """Say that yesterday's gamma dose rate is not available."""
+    return _unavailable("No gamma dose rate is available.", as_json=as_json)
+
+
 def parse_accum_rain(payload: dict, date: str) -> AccumulatedRainfall | None:
     """Turn a `RYES` document into accumulated rainfall since 1 January."""
     rainfall = _hour_mm(payload.get("HKOReadingsAccumRainfall"))
@@ -3959,6 +4002,7 @@ def format_json(
     | Sunshine
     | MaxUv
     | MeanUv
+    | GammaDose
     | AccumulatedRainfall
     | AverageRainfall
     | RadiationReport
