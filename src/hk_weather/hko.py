@@ -419,6 +419,11 @@ class WeatherBulletin:
 
 
 @dataclass(frozen=True)
+class RadiationNote:
+    note: str
+
+
+@dataclass(frozen=True)
 class RainstormReminder:
     reminder: str
 
@@ -731,6 +736,16 @@ def fetch_bulletin(timeout: float = 10, lang: str = "en") -> WeatherBulletin | N
         f"?dataType=RYES&rformat=json&date={day.replace('-', '')}&station=HKO&lang=en"
     )
     return parse_bulletin(_fetch_json(_apply_lang(url, lang), timeout))
+
+
+def fetch_radiation_note(timeout: float = 10, lang: str = "en") -> RadiationNote | None:
+    """Download the radiation range note (`dataType=RYES`, station HKO)."""
+    day = _hong_kong_yesterday()
+    url = (
+        "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php"
+        f"?dataType=RYES&rformat=json&date={day.replace('-', '')}&station=HKO&lang=en"
+    )
+    return parse_radiation_note(_fetch_json(_apply_lang(url, lang), timeout))
 
 
 def fetch_summary(timeout: float = 10, lang: str = "en") -> WeatherSummary:
@@ -2537,6 +2552,24 @@ def format_bulletin_miss(*, as_json: bool = False) -> str:
     return _unavailable("No weather bulletin time is available.", as_json=as_json)
 
 
+def parse_radiation_note(payload: dict) -> RadiationNote | None:
+    """Turn a `RYES` document into the outdoor radiation range note."""
+    note = _text(payload.get("NoteDesc"))
+    if not note:
+        return None
+    return RadiationNote(note)
+
+
+def format_radiation_note(reading: RadiationNote) -> str:
+    """Render the note on the normal outdoor radiation range."""
+    return f"Hong Kong radiation note\n{reading.note}\n"
+
+
+def format_radiation_note_miss(*, as_json: bool = False) -> str:
+    """Say that the radiation range note is not available."""
+    return _unavailable("No radiation note is available.", as_json=as_json)
+
+
 def _hour_mm(value: object) -> float | None:
     if isinstance(value, bool):
         return None
@@ -2908,6 +2941,7 @@ def format_json(
     | AverageRainfall
     | RadiationReport
     | WeatherBulletin
+    | RadiationNote
     | PsrForecast
     | WeekendForecast
     | VisibilityReport
