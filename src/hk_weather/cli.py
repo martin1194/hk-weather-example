@@ -35,6 +35,7 @@ from hk_weather.hko import (
     fetch_hottest,
     fetch_humidest,
     fetch_humidity,
+    fetch_humidity_time,
     fetch_icon_time,
     fetch_icon,
     fetch_current_updated,
@@ -127,6 +128,8 @@ from hk_weather.hko import (
     format_humidest,
     format_humidest_miss,
     format_humidity,
+    format_humidity_time,
+    format_humidity_time_miss,
     format_hour_rain,
     format_hour_rain_miss,
     format_hour_wettest,
@@ -269,6 +272,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--hour-driest prints the driest of those stations; "
             "--lightning lists lightning locations; --strikes lists hourly lightning counts; "
             "--humidity lists humidity readings; "
+            "--humidity-time prints when those readings were recorded; "
             "--temps lists temperatures by place; "
             "--temp-time prints when those temperatures were recorded; "
             "--wind lists the forecast wind; "
@@ -666,6 +670,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--humidity",
         action="store_true",
         help="Print humidity readings from the current report",
+    )
+    parser.add_argument(
+        "--humidity-time",
+        action="store_true",
+        help="Print when the current humidity readings were recorded",
     )
     parser.add_argument(
         "--humidest",
@@ -1141,6 +1150,12 @@ def main(argv: list[str] | None = None) -> int:
         elif args.humidity:
             humidity = fetch_humidity(timeout=args.timeout, lang=args.lang)
             text = format_json(humidity) if args.json else format_humidity(humidity)
+        elif args.humidity_time:
+            humidity_time = fetch_humidity_time(timeout=args.timeout, lang=args.lang)
+            if humidity_time is None:
+                text = format_humidity_time_miss(as_json=args.json)
+            else:
+                text = format_json(humidity_time) if args.json else format_humidity_time(humidity_time)
         elif args.humidest:
             humidest = fetch_humidest(timeout=args.timeout, lang=args.lang)
             if humidest is None:

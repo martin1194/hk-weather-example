@@ -572,6 +572,11 @@ class HumidityReport:
 
 
 @dataclass(frozen=True)
+class HumidityTime:
+    recorded: str
+
+
+@dataclass(frozen=True)
 class HumidestReading:
     record_time: str
     place: str
@@ -1190,6 +1195,13 @@ def fetch_strikes(
 def fetch_humidity(url: str = DEFAULT_URL, timeout: float = 10, lang: str = "en") -> HumidityReport:
     """Download humidity readings from the current report (`dataType=rhrread`)."""
     return parse_humidity(_fetch_json(_apply_lang(url, lang), timeout))
+
+
+def fetch_humidity_time(
+    url: str = DEFAULT_URL, timeout: float = 10, lang: str = "en"
+) -> HumidityTime | None:
+    """Download when the current humidity readings were recorded (`dataType=rhrread`)."""
+    return parse_humidity_time(_fetch_json(_apply_lang(url, lang), timeout))
 
 
 def fetch_humidest(
@@ -3294,6 +3306,27 @@ def format_humidity(report: HumidityReport) -> str:
     return "\n".join(lines) + "\n"
 
 
+def parse_humidity_time(payload: dict) -> HumidityTime | None:
+    """Turn the `rhrread` humidity record time into one timestamp."""
+    section = payload.get("humidity")
+    if not isinstance(section, dict):
+        return None
+    text = _text(section.get("recordTime"))
+    if not text:
+        return None
+    return HumidityTime(text)
+
+
+def format_humidity_time(report: HumidityTime) -> str:
+    """Render when the current humidity readings were recorded."""
+    return f"Hong Kong humidity time\n{report.recorded}\n"
+
+
+def format_humidity_time_miss(*, as_json: bool = False) -> str:
+    """Say that the current report has no humidity record time."""
+    return _unavailable("No humidity time is available.", as_json=as_json)
+
+
 def format_humidest(reading: HumidestReading) -> str:
     """Render the most humid station from the current report."""
     lines = ["Hong Kong humidest"]
@@ -3505,6 +3538,7 @@ def format_json(
     | LightningReport
     | LightningCountReport
     | HumidityReport
+    | HumidityTime
     | TempReport
     | TempTime
     | WindForecast
