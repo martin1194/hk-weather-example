@@ -85,6 +85,7 @@ from hk_weather.hko import (
     fetch_forecast_icon,
     fetch_yesterday,
     fetch_mean_temp,
+    fetch_max_temp,
     filter_stations,
     format_aqhi,
     format_aqhi_miss,
@@ -225,6 +226,8 @@ from hk_weather.hko import (
     format_yesterday_miss,
     format_mean_temp,
     format_mean_temp_miss,
+    format_max_temp,
+    format_max_temp_miss,
 )
 
 
@@ -291,6 +294,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--felt prints the locally felt earth tremor; --today prints today; "
             "--yesterday prints yesterday's Observatory summary; "
             "--mean-temp prints the latest daily mean temperature; "
+            "--max-temp prints the latest daily maximum temperature; "
             "--grass prints yesterday's grass minimum; "
             "--accum-rain prints accumulated rainfall since 1 January; "
             "--avg-rain prints the climatological rainfall normal; "
@@ -452,6 +456,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--mean-temp",
         action="store_true",
         help="Print the latest daily mean temperature at the Observatory",
+    )
+    parser.add_argument(
+        "--max-temp",
+        action="store_true",
+        help="Print the latest daily maximum temperature at the Observatory",
     )
     parser.add_argument(
         "--grass",
@@ -939,6 +948,12 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_mean_temp_miss(as_json=args.json)
             else:
                 text = format_json(mean_temp) if args.json else format_mean_temp(mean_temp)
+        elif args.max_temp:
+            max_temp = fetch_max_temp(timeout=args.timeout, lang=args.lang)
+            if max_temp is None:
+                text = format_max_temp_miss(as_json=args.json)
+            else:
+                text = format_json(max_temp) if args.json else format_max_temp(max_temp)
         elif args.grass:
             grass = fetch_grass(timeout=args.timeout, lang=args.lang)
             if grass is None:
