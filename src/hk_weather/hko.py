@@ -133,6 +133,13 @@ class NineDayForecast:
 
 
 @dataclass(frozen=True)
+class SeaTemperature:
+    place: str
+    temperature_c: float
+    recorded: str
+
+
+@dataclass(frozen=True)
 class PsrDay:
     date: str
     week: str
@@ -570,6 +577,13 @@ def fetch_nine_day(
 ) -> NineDayForecast:
     """Download the 9-day forecast (`dataType=fnd`)."""
     return parse_nine_day(_fetch_json(_apply_lang(url, lang), timeout))
+
+
+def fetch_sea_temp(
+    url: str = NINE_DAY_URL, timeout: float = 10, lang: str = "en"
+) -> SeaTemperature | None:
+    """Download the sea temperature from the 9-day forecast (`dataType=fnd`)."""
+    return parse_sea_temp(_fetch_json(_apply_lang(url, lang), timeout))
 
 
 def fetch_psr(url: str = NINE_DAY_URL, timeout: float = 10, lang: str = "en") -> PsrForecast:
@@ -1299,6 +1313,35 @@ def format_nine_day(forecast: NineDayForecast) -> str:
         if day.weather:
             lines.append(day.weather)
     return "\n".join(lines) + "\n"
+
+
+def parse_sea_temp(payload: dict) -> SeaTemperature | None:
+    """Turn the `fnd` sea temperature into one reading."""
+    raw = payload.get("seaTemp")
+    value = _temp_value(raw)
+    if value is None or not isinstance(raw, dict):
+        return None
+    return SeaTemperature(
+        place=_text(raw.get("place")) or "Hong Kong",
+        temperature_c=value,
+        recorded=_text(raw.get("recordTime")),
+    )
+
+
+def format_sea_temp(reading: SeaTemperature) -> str:
+    """Render the sea temperature from the 9-day forecast."""
+    lines = [
+        "Hong Kong sea temperature",
+        f"{reading.place}  {_number(reading.temperature_c)}°C",
+    ]
+    if reading.recorded:
+        lines.append(f"Recorded: {reading.recorded}")
+    return "\n".join(lines) + "\n"
+
+
+def format_sea_temp_miss(*, as_json: bool = False) -> str:
+    """Say that the 9-day forecast has no sea temperature."""
+    return _unavailable("No sea temperature is available.", as_json=as_json)
 
 
 def format_psr(report: PsrForecast) -> str:
@@ -2602,6 +2645,7 @@ def format_json(
     | FireDanger
     | TcInfo
     | NineDayForecast
+    | SeaTemperature
     | UvIndex
     | IconUpdate
     | SpecialTips
