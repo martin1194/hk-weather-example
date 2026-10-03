@@ -692,6 +692,13 @@ class DailyMin:
 
 
 @dataclass(frozen=True)
+class DewPoint:
+    station: str
+    date: str
+    dew_point_c: float
+
+
+@dataclass(frozen=True)
 class GrassMinimum:
     date: str
     grass_min_c: float
@@ -1247,6 +1254,26 @@ def fetch_min_temp(timeout: float = 10, lang: str = "en") -> DailyMin | None:
         f"?dataType=CLMMINT&rformat=json&station=HKO&year={year}&lang=en"
     )
     return parse_min_temp(_fetch_json(_apply_lang(url, lang), timeout))
+
+
+def fetch_dew_point(timeout: float = 10, lang: str = "en") -> DewPoint | None:
+    """Download the latest daily mean dew point at the Observatory."""
+    year = _hong_kong_today()[:4]
+    url = (
+        "https://data.weather.gov.hk/weatherAPI/cis/csvfile/HKO/"
+        f"{year}/daily_HKO_DEW_{year}.csv"
+    )
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            raw = response.read()
+    except (urllib.error.URLError, TimeoutError) as exc:
+        raise WeatherError(f"could not reach Hong Kong Observatory: {exc}") from exc
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise WeatherError("Hong Kong Observatory returned invalid text") from exc
+    return parse_dew_point(text, lang)
 
 
 def fetch_grass(timeout: float = 10, lang: str = "en") -> GrassMinimum | None:
@@ -4157,6 +4184,49 @@ def format_min_temp_miss(*, as_json: bool = False) -> str:
     return _unavailable("No daily minimum temperature is available.", as_json=as_json)
 
 
+_DEW_STATIONS = {
+    "en": "Hong Kong Observatory",
+    "tc": "香港天文台",
+    "sc": "香港天文台",
+}
+
+
+def parse_dew_point(text: str, lang: str = "en") -> DewPoint | None:
+    """Turn the Observatory dew-point CSV into the latest numeric day."""
+    station = _DEW_STATIONS.get(lang, _DEW_STATIONS["en"])
+    latest: DewPoint | None = None
+    rows = csv.reader(io.StringIO(text))
+    for row in rows:
+        if len(row) < 4:
+            continue
+        year = _text(row[0]).lstrip("\ufeff")
+        month = _text(row[1])
+        day = _text(row[2])
+        value = _hour_mm(row[3])
+        if not (year.isdigit() and month.isdigit() and day.isdigit()) or value is None:
+            continue
+        latest = DewPoint(
+            station,
+            f"{int(year):04d}-{int(month):02d}-{int(day):02d}",
+            value,
+        )
+    return latest
+
+
+def format_dew_point(reading: DewPoint) -> str:
+    """Render the latest daily mean dew point at the Observatory."""
+    return (
+        "Hong Kong dew point\n"
+        f"Station: {reading.station}\n"
+        f"{reading.date}  {_number(reading.dew_point_c)}°C\n"
+    )
+
+
+def format_dew_point_miss(*, as_json: bool = False) -> str:
+    """Say that no daily mean dew point is available."""
+    return _unavailable("No dew point is available.", as_json=as_json)
+
+
 def parse_grass(payload: dict, date: str) -> GrassMinimum | None:
     """Turn a `RYES` document into yesterday's grass minimum temperature."""
     grass = _hour_mm(payload.get("HKOReadingsMinGrassTemp"))
@@ -4925,6 +4995,7 @@ def format_json(
     | DailyMean
     | DailyMax
     | DailyMin
+    | DewPoint
     | GrassMinimum
     | Sunshine
     | MaxUv
