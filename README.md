@@ -178,6 +178,8 @@ hk-weather --pressure
 hk-weather --pressure --json
 hk-weather --minute-grass
 hk-weather --minute-grass --json
+hk-weather --temp-diff
+hk-weather --temp-diff --json
 hk-weather --hottest
 hk-weather --hottest --json
 hk-weather --coldest
@@ -389,6 +391,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --pressure` prints the latest 1-minute mean sea level pressure at automatic stations, for example `Chek Lap Kok  1011.9 hPa`. `--pressure --json` prints those stations as one JSON object. `--lang` selects the English, Traditional Chinese, or Simplified Chinese station names. Stations marked `N/A` are omitted. If none remain, it says `No sea level pressure is available.`
 
 `hk-weather --minute-grass` prints the latest 1-minute mean grass temperature at automatic stations, for example `King's Park  25.9°C`. `--grass` still prints yesterday's grass minimum at the Observatory. `--minute-grass --json` prints those stations as one JSON object. `--lang` selects the station names. Stations marked `N/A` are omitted. If none remain, it says `No 1-minute grass temperatures are available.`
+
+`hk-weather --temp-diff` prints the past 24-hour air-temperature change at automatic stations, for example `Chek Lap Kok  -0.6°C` and `HK Observatory  +0.4°C`. `--minute-temp` still prints the latest 1-minute temperature. `--temp-diff --json` prints those stations as one JSON object. `--lang` selects the station names. Stations marked `N/A` are omitted. If none remain, it says `No 24-hour temperature changes are available.`
 
 `hk-weather --hottest` (or `-H`) prints the warmest place from the current report, for example `King's Park  31°C`. `--hottest --json` prints that reading as one JSON object. `--lang` applies. If no readings are present, it says so.
 

@@ -130,6 +130,21 @@ MINUTE_GRASS_URLS = {
         "latest_1min_grass_sc.csv"
     ),
 }
+# Past 24-hour air-temperature difference. CSV, one file per language.
+TEMP_DIFF_URLS = {
+    "en": (
+        "https://data.weather.gov.hk/weatherAPI/hko_data/regional-weather/"
+        "latest_past24_temperature_diff.csv"
+    ),
+    "tc": (
+        "https://data.weather.gov.hk/weatherAPI/hko_data/regional-weather/"
+        "latest_past24_temperature_diff_uc.csv"
+    ),
+    "sc": (
+        "https://data.weather.gov.hk/weatherAPI/hko_data/regional-weather/"
+        "latest_past24_temperature_diff_sc.csv"
+    ),
+}
 # Hourly cloud-to-ground and cloud-to-cloud lightning counts. lang is accepted.
 STRIKES_URL = (
     "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php"
@@ -842,6 +857,18 @@ class MinuteGrassReport:
 
 
 @dataclass(frozen=True)
+class TempDiffReading:
+    place: str
+    change_c: float
+
+
+@dataclass(frozen=True)
+class TempDiffReport:
+    obs_time: str
+    stations: tuple[TempDiffReading, ...]
+
+
+@dataclass(frozen=True)
 class HottestReading:
     record_time: str
     place: str
@@ -1394,6 +1421,22 @@ def fetch_minute_grass(timeout: float = 10, lang: str = "en") -> MinuteGrassRepo
     except UnicodeDecodeError as exc:
         raise WeatherError("Hong Kong Observatory returned invalid text") from exc
     return parse_minute_grass(text)
+
+
+def fetch_temp_diff(timeout: float = 10, lang: str = "en") -> TempDiffReport:
+    """Download the past 24-hour temperature change at automatic stations."""
+    url = TEMP_DIFF_URLS.get(lang, TEMP_DIFF_URLS["en"])
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            raw = response.read()
+    except (urllib.error.URLError, TimeoutError) as exc:
+        raise WeatherError(f"could not reach Hong Kong Observatory: {exc}") from exc
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise WeatherError("Hong Kong Observatory returned invalid text") from exc
+    return parse_temp_diff(text)
 
 
 def fetch_forecast_icon(
@@ -3238,6 +3281,61 @@ def format_minute_grass_miss(*, as_json: bool = False) -> str:
     return _unavailable("No 1-minute grass temperatures are available.", as_json=as_json)
 
 
+def _signed_change(value: str) -> float | None:
+    """Parse a temperature change such as `+0.4`, `-0.6`, or `N/A`."""
+    text = value.strip()
+    sign = 1.0
+    if text.startswith(("+", "-")):
+        sign = -1.0 if text.startswith("-") else 1.0
+        text = text[1:]
+    number = _hour_mm(text)
+    if number is None:
+        return None
+    return sign * number
+
+
+def parse_temp_diff(text: str) -> TempDiffReport:
+    """Turn the past-24-hour temperature-difference CSV into one row per station."""
+    stations: list[TempDiffReading] = []
+    obs_time = ""
+    rows = csv.reader(io.StringIO(text))
+    next(rows, None)
+    for row in rows:
+        if len(row) < 3:
+            continue
+        place = _text(row[1])
+        change = _signed_change(row[2]) if isinstance(row[2], str) else None
+        if not place or change is None:
+            continue
+        clock = _text(row[0])
+        if not obs_time and len(clock) == 12 and clock.isdigit():
+            obs_time = f"{clock[:4]}-{clock[4:6]}-{clock[6:8]} {clock[8:10]}:{clock[10:12]}"
+        stations.append(TempDiffReading(place, change))
+    return TempDiffReport(obs_time, tuple(stations))
+
+
+def format_temp_diff(report: TempDiffReport) -> str:
+    """Render the past 24-hour temperature change, one station per line."""
+    lines = ["Hong Kong 24-hour temperature change"]
+    if report.obs_time:
+        lines.append(f"Recorded: {report.obs_time}")
+    for reading in report.stations:
+        number = _number(abs(reading.change_c))
+        if reading.change_c > 0:
+            signed = f"+{number}"
+        elif reading.change_c < 0:
+            signed = f"-{number}"
+        else:
+            signed = "0"
+        lines.append(f"{reading.place}  {signed}°C")
+    return "\n".join(lines) + "\n"
+
+
+def format_temp_diff_miss(*, as_json: bool = False) -> str:
+    """Say that no 24-hour temperature changes are available."""
+    return _unavailable("No 24-hour temperature changes are available.", as_json=as_json)
+
+
 def format_forecast_icon(report: ForecastIcons) -> str:
     """Render each day's forecast icon."""
     lines = ["Hong Kong forecast icons"]
@@ -4484,6 +4582,7 @@ def format_json(
     | SinceMidnightReport
     | PressureReport
     | MinuteGrassReport
+    | TempDiffReport
     | WindForecast
     | GustReport
     | ForecastIcons
