@@ -3382,6 +3382,64 @@ def test_cli_tide_hour_when_missing(monkeypatch, capsys):
     assert json.loads(capsys.readouterr().out) == {"message": "No hourly tide heights are available."}
 
 
+def test_cli_tide_latest_prints_newest_time(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _text_response(
+            "Tide Station,Date,Time,Height(m)\n"
+            "Quarry Bay,2026-10-04,03:00,2.10\n"
+            "Quarry Bay,2026-10-04,03:15,  2.34  \n"
+            "Shek Pik,2026-10-04,03:15,2.31\n"
+            "Waglan Island,2026-10-04,03:15,----\n"
+            "Tai Po Kau,2026-10-04,02:00,2.00\n"
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--tide-latest", "--lang", "tc"]) == 0
+    assert seen["url"].endswith("ALL_tc.csv")
+    assert capsys.readouterr().out == (
+        "Hong Kong latest tide\n"
+        "Recorded: 2026-10-04 03:15\n"
+        "Quarry Bay  2.34 m\n"
+        "Shek Pik  2.31 m\n"
+    )
+
+
+def test_cli_tide_latest_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Tide Station,Date,Time,Height(m)\n"
+            "Quarry Bay,2026-10-04,03:15,2.34\n"
+        ),
+    )
+    assert main(["--tide-latest", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "obs_time": "2026-10-04 03:15",
+        "stations": [{"place": "Quarry Bay", "height_m": 2.34}],
+    }
+
+
+def test_cli_tide_latest_when_missing(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Tide Station,Date,Time,Height(m)\n"
+            "Waglan Island,2026-10-04,03:15,----\n"
+        ),
+    )
+    assert main(["--tide-latest"]) == 0
+    assert capsys.readouterr().out == "No latest tide heights are available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(""),
+    )
+    assert main(["--tide-latest", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {"message": "No latest tide heights are available."}
+
+
 _AQHI_XML = """<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0"><channel>
 <item><title>Central/Western</title><description><![CDATA[Central/Western - General Stations: 3 Low - Sat, 03 Oct 2026 08:30]]></description></item>
