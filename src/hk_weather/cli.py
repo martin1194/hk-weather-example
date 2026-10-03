@@ -76,6 +76,7 @@ from hk_weather.hko import (
     fetch_temp_time,
     fetch_minute_temp,
     fetch_since_midnight,
+    fetch_pressure,
     fetch_tc_info,
     fetch_tide,
     fetch_tide_hour,
@@ -222,6 +223,8 @@ from hk_weather.hko import (
     format_minute_temp_miss,
     format_since_midnight,
     format_since_midnight_miss,
+    format_pressure,
+    format_pressure_miss,
     format_tide,
     format_tide_miss,
     format_tide_hour,
@@ -318,6 +321,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--temp-time prints when those temperatures were recorded; "
             "--minute-temp prints the latest 1-minute mean temperature; "
             "--since-midnight prints each station's high and low since midnight; "
+            "--pressure prints the latest 1-minute sea level pressure; "
             "--wind lists the forecast wind; "
             "--gust prints the latest 10-minute wind and gust; "
             "--forecast-icon prints each day's weather icon; "
@@ -812,6 +816,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--since-midnight",
         action="store_true",
         help="Print each station's maximum and minimum temperature since midnight",
+    )
+    parser.add_argument(
+        "--pressure",
+        action="store_true",
+        help="Print the latest 1-minute mean sea level pressure at automatic stations",
     )
     parser.add_argument(
         "-H",
@@ -1380,6 +1389,12 @@ def main(argv: list[str] | None = None) -> int:
                     if args.json
                     else format_since_midnight(since_midnight)
                 )
+        elif args.pressure:
+            pressure = fetch_pressure(timeout=args.timeout, lang=args.lang)
+            if not pressure.stations:
+                text = format_pressure_miss(as_json=args.json)
+            else:
+                text = format_json(pressure) if args.json else format_pressure(pressure)
         elif args.hottest:
             hottest = fetch_hottest(timeout=args.timeout, lang=args.lang)
             if hottest is None:
