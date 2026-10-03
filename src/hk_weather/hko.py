@@ -209,6 +209,12 @@ class RainReport:
 
 
 @dataclass(frozen=True)
+class WettestReading:
+    place: str
+    rainfall_mm: float
+
+
+@dataclass(frozen=True)
 class LightningReport:
     places: tuple[str, ...]
 
@@ -369,6 +375,17 @@ def fetch_stations(url: str = DEFAULT_URL, timeout: float = 10, lang: str = "en"
 def fetch_rain(url: str = DEFAULT_URL, timeout: float = 10, lang: str = "en") -> RainReport:
     """Download district rainfall from the current report (`dataType=rhrread`)."""
     return parse_rain(_fetch_json(_apply_lang(url, lang), timeout))
+
+
+def fetch_wettest(
+    url: str = DEFAULT_URL, timeout: float = 10, lang: str = "en"
+) -> WettestReading | None:
+    """Download the wettest district from the current report (`dataType=rhrread`)."""
+    report = fetch_rain(url, timeout, lang)
+    if not report.readings:
+        return None
+    wettest = report.readings[0]
+    return WettestReading(wettest.place, wettest.rainfall_mm)
 
 
 def fetch_lightning(url: str = DEFAULT_URL, timeout: float = 10, lang: str = "en") -> LightningReport:
@@ -1162,6 +1179,16 @@ def format_rain(report: RainReport) -> str:
     return "\n".join(lines) + "\n"
 
 
+def format_wettest(reading: WettestReading) -> str:
+    """Render the wettest district from the current report."""
+    return f"Hong Kong wettest\n{reading.place}  {_number(reading.rainfall_mm)} mm\n"
+
+
+def format_wettest_miss(*, as_json: bool = False) -> str:
+    """Say that the current report has no rainfall readings."""
+    return _unavailable("No rainfall readings are available.", as_json=as_json)
+
+
 def parse_lightning(payload: dict) -> LightningReport:
     """Turn `rhrread` lightning data into places where lightning occurred."""
     return LightningReport(_lightning(payload))
@@ -1283,7 +1310,8 @@ def format_json(
     | WeekendForecast
     | VisibilityReport
     | HottestReading
-    | ColdestReading,
+    | ColdestReading
+    | WettestReading,
 ) -> str:
     """Render the same report as one JSON object."""
     return json.dumps(asdict(report), indent=2) + "\n"
