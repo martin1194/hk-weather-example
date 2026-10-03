@@ -28,6 +28,7 @@ from hk_weather.hko import (
     fetch_rain,
     fetch_rainstorm,
     fetch_stations,
+    fetch_summary,
     fetch_sunrise,
     fetch_wettest,
     fetch_temps,
@@ -76,6 +77,7 @@ from hk_weather.hko import (
     format_rainstorm,
     format_rainstorm_miss,
     format_short,
+    format_summary,
     format_report,
     format_stations,
     format_sunrise,
@@ -122,7 +124,8 @@ def build_parser() -> argparse.ArgumentParser:
         prog="hk-weather",
         description=(
             "Print Hong Kong weather from Hong Kong Observatory open data. "
-            "Current conditions by default; --forecast prints the local forecast; "
+            "Current conditions by default; --summary prints a short briefing; "
+            "--forecast prints the local forecast; "
             "--nine-day prints the 9-day forecast; --warnings lists active warnings; "
             "--uv prints the UV index; --tips prints special weather tips; "
             "--stations lists each station; --list-places lists their names; "
@@ -173,6 +176,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--short",
         action="store_true",
         help="Print current conditions on one line",
+    )
+    parser.add_argument(
+        "-S",
+        "--summary",
+        action="store_true",
+        help="Print conditions, active warnings, and today's high and low",
     )
     parser.add_argument(
         "--forecast",
@@ -569,6 +578,9 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_json(matched) if args.json else format_stations(matched)
             else:
                 text = format_place_miss(query, matched.update_time, as_json=args.json)
+        elif args.summary:
+            summary = fetch_summary(timeout=args.timeout, lang=args.lang)
+            text = format_json(summary) if args.json else format_summary(summary)
         else:
             weather = fetch_current(timeout=args.timeout, lang=args.lang)
             if args.json:
