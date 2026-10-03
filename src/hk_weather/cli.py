@@ -21,6 +21,7 @@ from hk_weather.hko import (
     fetch_quakes,
     fetch_rain,
     fetch_stations,
+    fetch_sunrise,
     fetch_wettest,
     fetch_temps,
     fetch_tide,
@@ -56,6 +57,8 @@ from hk_weather.hko import (
     format_short,
     format_report,
     format_stations,
+    format_sunrise,
+    format_sunrise_miss,
     format_temps,
     format_tide,
     format_tide_miss,
@@ -117,7 +120,8 @@ def build_parser() -> argparse.ArgumentParser:
             "--wettest prints the wettest district; "
             "--driest prints the driest district; "
             "--tide prints today's high and low tides; "
-            "--aqhi prints the air quality health index."
+            "--aqhi prints the air quality health index; "
+            "--sunrise prints today's sunrise and sunset."
         ),
     )
     parser.add_argument(
@@ -210,6 +214,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--aqhi",
         action="store_true",
         help="Print the current Air Quality Health Index by station",
+    )
+    parser.add_argument(
+        "-U",
+        "--sunrise",
+        action="store_true",
+        help="Print today's sunrise, sun transit, and sunset",
     )
     parser.add_argument(
         "-w",
@@ -383,6 +393,12 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_aqhi_miss(as_json=args.json)
             else:
                 text = format_json(aqhi) if args.json else format_aqhi(aqhi)
+        elif args.sunrise:
+            sunrise = fetch_sunrise(timeout=args.timeout, lang=args.lang)
+            if sunrise is None:
+                text = format_sunrise_miss(as_json=args.json)
+            else:
+                text = format_json(sunrise) if args.json else format_sunrise(sunrise)
         elif args.uv:
             uv = fetch_uv(timeout=args.timeout, lang=args.lang)
             text = format_json(uv) if args.json else format_uv(uv)
