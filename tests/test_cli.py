@@ -1166,6 +1166,110 @@ def test_cli_nine_weather_when_missing(monkeypatch, capsys):
     assert json.loads(capsys.readouterr().out) == {"message": "No 9-day weather is available."}
 
 
+def test_cli_nine_temp_lists_each_day(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response(
+            {
+                "updateTime": "  2026-10-03T16:45:00+08:00  ",
+                "weatherForecast": [
+                    {
+                        "forecastDate": "20261004",
+                        "week": "Sunday",
+                        "forecastMaxtemp": {"value": 31, "unit": "C"},
+                        "forecastMintemp": {"value": 26, "unit": "C"},
+                    },
+                    {
+                        "forecastDate": "20261005",
+                        "week": "Monday",
+                        "forecastWeather": "Sunny periods.",
+                    },
+                    {
+                        "forecastDate": "20261006",
+                        "week": "Tuesday",
+                        "forecastMaxtemp": {"value": 30.5, "unit": "C"},
+                    },
+                    {
+                        "forecastDate": "20261007",
+                        "week": "Wednesday",
+                        "forecastMintemp": {"value": 27, "unit": "C"},
+                    },
+                ],
+            }
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--nine-temp", "--lang", "tc"]) == 0
+    assert "dataType=fnd" in seen["url"]
+    assert "lang=tc" in seen["url"]
+    assert capsys.readouterr().out == (
+        "Hong Kong 9-day temperatures\n"
+        "Updated: 2026-10-03T16:45:00+08:00\n"
+        "2026-10-04 Sunday  high 31°C  low 26°C\n"
+        "2026-10-06 Tuesday  high 30.5°C\n"
+        "2026-10-07 Wednesday  low 27°C\n"
+    )
+
+
+def test_cli_nine_temp_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {
+                "updateTime": "2026-10-03T16:45:00+08:00",
+                "weatherForecast": [
+                    {
+                        "forecastDate": "20261004",
+                        "week": "Sunday",
+                        "forecastMaxtemp": {"value": 31, "unit": "C"},
+                        "forecastMintemp": {"value": 26, "unit": "C"},
+                    }
+                ],
+            }
+        ),
+    )
+    assert main(["--nine-temp", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "update_time": "2026-10-03T16:45:00+08:00",
+        "days": [
+            {
+                "date": "2026-10-04",
+                "week": "Sunday",
+                "temp_high_c": 31.0,
+                "temp_low_c": 26.0,
+            }
+        ],
+    }
+
+
+def test_cli_nine_temp_when_missing(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {
+                "weatherForecast": [
+                    {
+                        "forecastDate": "20261004",
+                        "week": "Sunday",
+                        "forecastWeather": "Sunny periods.",
+                        "forecastMaxtemp": {"value": True, "unit": "C"},
+                    }
+                ]
+            }
+        ),
+    )
+    assert main(["--nine-temp"]) == 0
+    assert capsys.readouterr().out == "No 9-day temperatures are available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({}),
+    )
+    assert main(["--nine-temp", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {"message": "No 9-day temperatures are available."}
+
+
 def test_cli_today_prints_the_hong_kong_day(monkeypatch, capsys):
     seen = {}
     monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")

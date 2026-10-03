@@ -185,6 +185,20 @@ class NineWeather:
 
 
 @dataclass(frozen=True)
+class NineTempDay:
+    date: str
+    week: str
+    temp_high_c: float | None
+    temp_low_c: float | None
+
+
+@dataclass(frozen=True)
+class NineTemp:
+    update_time: str
+    days: tuple[NineTempDay, ...]
+
+
+@dataclass(frozen=True)
 class SeaTemperature:
     place: str
     temperature_c: float
@@ -763,6 +777,11 @@ def fetch_nine_weather(
 ) -> NineWeather:
     """Download each day's weather from the 9-day forecast (`dataType=fnd`)."""
     return parse_nine_weather(_fetch_json(_apply_lang(url, lang), timeout))
+
+
+def fetch_nine_temp(url: str = NINE_DAY_URL, timeout: float = 10, lang: str = "en") -> NineTemp:
+    """Download each day's high and low from the 9-day forecast (`dataType=fnd`)."""
+    return parse_nine_temp(_fetch_json(_apply_lang(url, lang), timeout))
 
 
 def fetch_psr(url: str = NINE_DAY_URL, timeout: float = 10, lang: str = "en") -> PsrForecast:
@@ -1818,6 +1837,53 @@ def format_nine_weather(report: NineWeather) -> str:
 def format_nine_weather_miss(*, as_json: bool = False) -> str:
     """Say that the 9-day forecast has no daily weather text."""
     return _unavailable("No 9-day weather is available.", as_json=as_json)
+
+
+def parse_nine_temp(payload: dict) -> NineTemp:
+    """Turn `fnd` forecast high and low fields into one line per day."""
+    raw_days = payload.get("weatherForecast")
+    days: list[NineTempDay] = []
+    if isinstance(raw_days, list):
+        for item in raw_days:
+            if not isinstance(item, dict):
+                continue
+            high = _temp_value(item.get("forecastMaxtemp"))
+            low = _temp_value(item.get("forecastMintemp"))
+            if high is None and low is None:
+                continue
+            days.append(
+                NineTempDay(
+                    date=_forecast_date(item.get("forecastDate")) or "unknown",
+                    week=_text(item.get("week")),
+                    temp_high_c=high,
+                    temp_low_c=low,
+                )
+            )
+    return NineTemp(
+        update_time=_text(payload.get("updateTime")),
+        days=tuple(days),
+    )
+
+
+def format_nine_temp(report: NineTemp) -> str:
+    """Render each day's high and low from the 9-day forecast."""
+    lines = ["Hong Kong 9-day temperatures"]
+    if report.update_time:
+        lines.append(f"Updated: {report.update_time}")
+    for day in report.days:
+        heading = " ".join(part for part in (day.date, day.week) if part)
+        details: list[str] = []
+        if day.temp_high_c is not None:
+            details.append(f"high {_number(day.temp_high_c)}°C")
+        if day.temp_low_c is not None:
+            details.append(f"low {_number(day.temp_low_c)}°C")
+        lines.append(f"{heading}  {'  '.join(details)}".strip())
+    return "\n".join(lines) + "\n"
+
+
+def format_nine_temp_miss(*, as_json: bool = False) -> str:
+    """Say that the 9-day forecast has no daily temperatures."""
+    return _unavailable("No 9-day temperatures are available.", as_json=as_json)
 
 
 def format_psr(report: PsrForecast) -> str:
@@ -3292,6 +3358,7 @@ def format_json(
     | ForecastUpdated
     | NineUpdated
     | NineWeather
+    | NineTemp
     | GeneralSituation
     | FireDanger
     | TcInfo
