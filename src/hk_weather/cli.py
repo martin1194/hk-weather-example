@@ -66,6 +66,7 @@ from hk_weather.hko import (
     fetch_sunrise,
     fetch_wettest,
     fetch_temps,
+    fetch_temp_time,
     fetch_tc_info,
     fetch_tide,
     fetch_tips,
@@ -187,6 +188,8 @@ from hk_weather.hko import (
     format_sunrise,
     format_sunrise_miss,
     format_temps,
+    format_temp_time,
+    format_temp_time_miss,
     format_tide,
     format_tide_miss,
     format_tc_info,
@@ -266,7 +269,9 @@ def build_parser() -> argparse.ArgumentParser:
             "--hour-driest prints the driest of those stations; "
             "--lightning lists lightning locations; --strikes lists hourly lightning counts; "
             "--humidity lists humidity readings; "
-            "--temps lists temperatures by place; --wind lists the forecast wind; "
+            "--temps lists temperatures by place; "
+            "--temp-time prints when those temperatures were recorded; "
+            "--wind lists the forecast wind; "
             "--forecast-icon prints each day's weather icon; "
             "--quake lists the latest earthquake message; "
             "--felt prints the locally felt earth tremor; --today prints today; "
@@ -676,6 +681,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--temps",
         action="store_true",
         help="Print temperatures by place from the current report",
+    )
+    parser.add_argument(
+        "--temp-time",
+        action="store_true",
+        help="Print when the current temperatures were recorded",
     )
     parser.add_argument(
         "-H",
@@ -1146,6 +1156,12 @@ def main(argv: list[str] | None = None) -> int:
         elif args.temps:
             temps = fetch_temps(timeout=args.timeout, lang=args.lang)
             text = format_json(temps) if args.json else format_temps(temps)
+        elif args.temp_time:
+            temp_time = fetch_temp_time(timeout=args.timeout, lang=args.lang)
+            if temp_time is None:
+                text = format_temp_time_miss(as_json=args.json)
+            else:
+                text = format_json(temp_time) if args.json else format_temp_time(temp_time)
         elif args.hottest:
             hottest = fetch_hottest(timeout=args.timeout, lang=args.lang)
             if hottest is None:

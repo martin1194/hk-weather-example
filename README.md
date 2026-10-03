@@ -144,6 +144,8 @@ hk-weather --least-humid
 hk-weather --least-humid --json
 hk-weather --temps
 hk-weather --temps --json
+hk-weather --temp-time
+hk-weather --temp-time --json
 hk-weather --hottest
 hk-weather --hottest --json
 hk-weather --coldest
@@ -321,6 +323,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --least-humid` prints the least humid place from the current report, for example `King's Park  80%`. `--least-humid --json` prints that reading as one JSON object. `--lang` applies. If no reading is present, it says so.
 
 `hk-weather --temps` prints temperature by place from the current report, with the record time when the Observatory includes it. `--temps --json` prints that list as one JSON object. If no readings are present, it says so.
+
+`hk-weather --temp-time` prints when those temperatures were recorded (`temperature.recordTime`). `--temps` still prints the readings. `--current-updated` still prints when the whole report was updated. `--temp-time --json` prints that timestamp as one JSON object. `--lang` applies. If the field is missing or blank, it says `No temperature time is available.`
 
 `hk-weather --hottest` (or `-H`) prints the warmest place from the current report, for example `King's Park  31°C`. `--hottest --json` prints that reading as one JSON object. `--lang` applies. If no readings are present, it says so.
 
