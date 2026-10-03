@@ -37,6 +37,8 @@ hk-weather --tide
 hk-weather --tide --json
 hk-weather --aqhi
 hk-weather --aqhi --json
+hk-weather --sunrise
+hk-weather --sunrise --json
 hk-weather --warnings
 hk-weather --warnings --json
 hk-weather --warning-info
@@ -119,6 +121,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --tide` (or `-I`) prints today's astronomical high and low tides at Quarry Bay (`opendata.php`, `dataType=HLT`), for example `2026-10-03  01:05  2.44 m`. `--tide --json` prints that list as one JSON object. `--lang` applies. If none are present, it says so.
 
 `hk-weather --aqhi` (or `-A`) prints the current Air Quality Health Index at each monitoring station, for example `Central/Western  General Stations  3  Low`. `--aqhi --json` prints that list as one JSON object. `--lang` chooses the English, Traditional Chinese, or Simplified Chinese feed. If none are present, it says so.
+
+`hk-weather --sunrise` (or `-U`) prints today's sunrise, sun transit, and sunset (`opendata.php`, `dataType=SRS`), for example `Rise: 06:15` and `Set: 18:09`. `--sunrise --json` prints that day as one JSON object. `--lang` applies. If the times are missing, it says so.
 
 `hk-weather --warnings` (or `-w`) prints each active warning as a code and description. `--warnings --json` prints them as one JSON object. If none are in force, it says so.
 

@@ -1272,6 +1272,65 @@ def test_cli_aqhi_when_no_readings(monkeypatch, capsys):
     assert json.loads(capsys.readouterr().out) == {"message": "No AQHI readings are available."}
 
 
+def test_cli_sunrise_prints_times(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response(
+            {
+                "fields": ["YYYY-MM-DD", "RISE", "TRAN.", "SET"],
+                "data": [["2026-10-03", "06:15", "12:12", "18:09"], ["", "", "", ""]],
+            }
+        )
+
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda: "2026-10-03")
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["-U", "--lang", "tc"]) == 0
+    assert "opendata.php" in seen["url"]
+    assert "dataType=SRS" in seen["url"]
+    assert "year=2026" in seen["url"]
+    assert "month=10" in seen["url"]
+    assert "day=3" in seen["url"]
+    assert "lang=tc" in seen["url"]
+    assert capsys.readouterr().out == (
+        "Hong Kong sunrise\n"
+        "2026-10-03\n"
+        "Rise: 06:15\n"
+        "Transit: 12:12\n"
+        "Set: 18:09\n"
+    )
+
+
+def test_cli_sunrise_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda: "2026-10-03")
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {"data": [["2026-10-03", "06:15", "12:12", "18:09"]]}
+        ),
+    )
+    assert main(["--sunrise", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "date": "2026-10-03",
+        "rise": "06:15",
+        "transit": "12:12",
+        "set": "18:09",
+    }
+
+
+def test_cli_sunrise_when_no_times(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda: "2026-10-03")
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"data": []}),
+    )
+    assert main(["--sunrise"]) == 0
+    assert capsys.readouterr().out == "No sunrise times are available.\n"
+    assert main(["--sunrise", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {"message": "No sunrise times are available."}
+
+
 def test_cli_visibility_when_none_available(monkeypatch, capsys):
     monkeypatch.setattr(
         "hk_weather.hko.urllib.request.urlopen",

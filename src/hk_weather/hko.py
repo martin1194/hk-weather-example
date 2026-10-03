@@ -219,6 +219,14 @@ class AqhiReport:
 
 
 @dataclass(frozen=True)
+class Sunrise:
+    date: str
+    rise: str
+    transit: str
+    set: str
+
+
+@dataclass(frozen=True)
 class SpecialTips:
     tips: tuple[str, ...]
 
@@ -420,6 +428,19 @@ def fetch_aqhi(timeout: float = 10, lang: str = "en") -> AqhiReport:
     """Download the current Air Quality Health Index (EPD station RSS)."""
     url = AQHI_URLS.get(lang, AQHI_URLS["en"])
     return parse_aqhi(_fetch_text(url, timeout))
+
+
+def fetch_sunrise(timeout: float = 10, lang: str = "en") -> Sunrise | None:
+    """Download today's sunrise, sun transit, and sunset (`dataType=SRS`)."""
+    today = _hong_kong_today()
+    year = int(today[:4])
+    month = int(today[5:7])
+    day = int(today[8:10])
+    url = (
+        "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php"
+        f"?dataType=SRS&rformat=json&year={year}&month={month}&day={day}&lang=en"
+    )
+    return parse_sunrise(_fetch_json(_apply_lang(url, lang), timeout))
 
 
 def fetch_uv(url: str = UV_URL, timeout: float = 10, lang: str = "en") -> UvIndex:
@@ -1146,6 +1167,40 @@ def format_aqhi_miss(*, as_json: bool = False) -> str:
     return _unavailable("No AQHI readings are available.", as_json=as_json)
 
 
+def parse_sunrise(payload: dict) -> Sunrise | None:
+    """Turn an `SRS` document into today's sunrise, transit, and sunset."""
+    raw = payload.get("data")
+    if not isinstance(raw, list):
+        return None
+    for item in raw:
+        if not isinstance(item, list) or len(item) < 4:
+            continue
+        date = _text(item[0])
+        rise = _text(item[1])
+        transit = _text(item[2])
+        sunset = _text(item[3])
+        if date and (rise or transit or sunset):
+            return Sunrise(date, rise, transit, sunset)
+    return None
+
+
+def format_sunrise(reading: Sunrise) -> str:
+    """Render today's sunrise, sun transit, and sunset."""
+    lines = ["Hong Kong sunrise", reading.date]
+    if reading.rise:
+        lines.append(f"Rise: {reading.rise}")
+    if reading.transit:
+        lines.append(f"Transit: {reading.transit}")
+    if reading.set:
+        lines.append(f"Set: {reading.set}")
+    return "\n".join(lines) + "\n"
+
+
+def format_sunrise_miss(*, as_json: bool = False) -> str:
+    """Say that today's sunrise times are not available."""
+    return _unavailable("No sunrise times are available.", as_json=as_json)
+
+
 def _visibility_time(value: object) -> str:
     text = _text(value)
     if len(text) == 12 and text.isdigit():
@@ -1511,7 +1566,8 @@ def format_json(
     | WettestReading
     | DriestReading
     | TideReport
-    | AqhiReport,
+    | AqhiReport
+    | Sunrise,
 ) -> str:
     """Render the same report as one JSON object."""
     return json.dumps(asdict(report), indent=2) + "\n"
