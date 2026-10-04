@@ -12,6 +12,7 @@ from hk_weather.hko import (
     fetch_driest,
     fetch_nowcast,
     fetch_daily_rain,
+    fetch_lau_fau_rain,
     fetch_forecast,
     fetch_outlook,
     fetch_coastal,
@@ -135,6 +136,7 @@ from hk_weather.hko import (
     format_nowcast_miss,
     format_daily_rain,
     format_daily_rain_miss,
+    format_lau_fau_rain_miss,
     format_forecast,
     format_outlook,
     format_outlook_miss,
@@ -474,6 +476,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--driest prints the driest district; "
             "--nowcast prints the heaviest rainfall-nowcast cell in each half-hour; "
             "--daily-rain prints the latest daily rainfall total; "
+            "--lau-fau-rain prints the latest daily rainfall at Lau Fau Shan; "
             "--tide prints today's high and low tides; "
             "--tide-hour prints today's hourly tide heights; "
             "--tide-latest prints the latest observed tide height; "
@@ -952,6 +955,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--daily-rain",
         action="store_true",
         help="Print the latest daily total rainfall at the Observatory",
+    )
+    parser.add_argument(
+        "--lau-fau-rain",
+        action="store_true",
+        help="Print the latest daily total rainfall at Lau Fau Shan",
     )
     parser.add_argument(
         "--rainstorm",
@@ -1681,6 +1689,12 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_daily_rain_miss(as_json=args.json)
             else:
                 text = format_json(daily_rain) if args.json else format_daily_rain(daily_rain)
+        elif args.lau_fau_rain:
+            lau_fau_rain = fetch_lau_fau_rain(timeout=args.timeout, lang=args.lang)
+            if lau_fau_rain is None:
+                text = format_lau_fau_rain_miss(as_json=args.json)
+            else:
+                text = format_json(lau_fau_rain) if args.json else format_daily_rain(lau_fau_rain)
         elif args.rainstorm:
             rainstorm = fetch_rainstorm(timeout=args.timeout, lang=args.lang)
             if rainstorm is None:
