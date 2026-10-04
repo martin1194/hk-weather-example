@@ -24,6 +24,7 @@ from hk_weather.hko import (
     fetch_cheung_chau_rain,
     fetch_waglan_rain,
     fetch_tate_rain,
+    fetch_peng_chau_rain,
     fetch_forecast,
     fetch_outlook,
     fetch_coastal,
@@ -226,6 +227,7 @@ from hk_weather.hko import (
     format_cheung_chau_rain_miss,
     format_waglan_rain_miss,
     format_tate_rain_miss,
+    format_peng_chau_rain_miss,
     format_forecast,
     format_outlook,
     format_outlook_miss,
@@ -716,6 +718,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--cheung-chau-rain prints the latest daily rainfall at Cheung Chau; "
             "--waglan-rain prints the latest daily rainfall at Waglan Island; "
             "--tate-rain prints the latest daily rainfall at Tate's Cairn; "
+            "--peng-chau-rain prints the latest daily rainfall at Peng Chau; "
             "--tide prints today's high and low tides; "
             "--tide-hour prints today's hourly tide heights; "
             "--tide-latest prints the latest observed tide height; "
@@ -1469,6 +1472,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--tate-rain",
         action="store_true",
         help="Print the latest daily total rainfall at Tate's Cairn",
+    )
+    parser.add_argument(
+        "--peng-chau-rain",
+        action="store_true",
+        help="Print the latest daily total rainfall at Peng Chau",
     )
     parser.add_argument(
         "--rainstorm",
@@ -2764,6 +2772,16 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_tate_rain_miss(as_json=args.json)
             else:
                 text = format_json(tate_rain) if args.json else format_daily_rain(tate_rain)
+        elif args.peng_chau_rain:
+            peng_chau_rain = fetch_peng_chau_rain(timeout=args.timeout, lang=args.lang)
+            if peng_chau_rain is None:
+                text = format_peng_chau_rain_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(peng_chau_rain)
+                    if args.json
+                    else format_daily_rain(peng_chau_rain)
+                )
         elif args.rainstorm:
             rainstorm = fetch_rainstorm(timeout=args.timeout, lang=args.lang)
             if rainstorm is None:
