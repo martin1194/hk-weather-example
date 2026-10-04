@@ -122,6 +122,7 @@ from hk_weather.hko import (
     fetch_forecast_icon,
     fetch_yesterday,
     fetch_mean_temp,
+    fetch_tai_mo_temp,
     fetch_max_temp,
     fetch_min_temp,
     fetch_dew_point,
@@ -341,6 +342,8 @@ from hk_weather.hko import (
     format_yesterday_miss,
     format_mean_temp,
     format_mean_temp_miss,
+    format_tai_mo_temp,
+    format_tai_mo_temp_miss,
     format_max_temp,
     format_max_temp_miss,
     format_min_temp,
@@ -446,6 +449,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--felt prints the locally felt earth tremor; --today prints today; "
             "--yesterday prints yesterday's Observatory summary; "
             "--mean-temp prints the latest daily mean temperature; "
+            "--tai-mo-temp prints the latest daily mean temperature at Tai Mo Shan; "
             "--max-temp prints the latest daily maximum temperature; "
             "--min-temp prints the latest daily minimum temperature; "
             "--dew-point prints the latest daily mean dew point; "
@@ -637,6 +641,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--mean-temp",
         action="store_true",
         help="Print the latest daily mean temperature at the Observatory",
+    )
+    parser.add_argument(
+        "--tai-mo-temp",
+        action="store_true",
+        help="Print the latest daily mean temperature at Tai Mo Shan",
     )
     parser.add_argument(
         "--max-temp",
@@ -1346,6 +1355,14 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_mean_temp_miss(as_json=args.json)
             else:
                 text = format_json(mean_temp) if args.json else format_mean_temp(mean_temp)
+        elif args.tai_mo_temp:
+            tai_mo_temp = fetch_tai_mo_temp(timeout=args.timeout, lang=args.lang)
+            if tai_mo_temp is None:
+                text = format_tai_mo_temp_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(tai_mo_temp) if args.json else format_tai_mo_temp(tai_mo_temp)
+                )
         elif args.max_temp:
             max_temp = fetch_max_temp(timeout=args.timeout, lang=args.lang)
             if max_temp is None:

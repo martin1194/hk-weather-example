@@ -796,6 +796,13 @@ class DailyMean:
 
 
 @dataclass(frozen=True)
+class TaiMoTemp:
+    station: str
+    date: str
+    temperature_c: float
+
+
+@dataclass(frozen=True)
 class DailyMax:
     date: str
     temperature_c: float
@@ -1494,6 +1501,26 @@ def fetch_mean_temp(timeout: float = 10, lang: str = "en") -> DailyMean | None:
         f"?dataType=CLMTEMP&rformat=json&station=HKO&year={year}&lang=en"
     )
     return parse_mean_temp(_fetch_json(_apply_lang(url, lang), timeout))
+
+
+def fetch_tai_mo_temp(timeout: float = 10, lang: str = "en") -> TaiMoTemp | None:
+    """Download the latest daily mean temperature at Tai Mo Shan."""
+    year = _hong_kong_today()[:4]
+    url = (
+        "https://data.weather.gov.hk/weatherAPI/cis/csvfile/TMS/"
+        f"{year}/daily_TMS_TEMP_{year}.csv"
+    )
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            raw = response.read()
+    except (urllib.error.URLError, TimeoutError) as exc:
+        raise WeatherError(f"could not reach Hong Kong Observatory: {exc}") from exc
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise WeatherError("Hong Kong Observatory returned invalid text") from exc
+    return parse_tai_mo_temp(text, lang)
 
 
 def fetch_max_temp(timeout: float = 10, lang: str = "en") -> DailyMax | None:
@@ -5488,6 +5515,49 @@ def format_mean_temp_miss(*, as_json: bool = False) -> str:
     return _unavailable("No daily mean temperature is available.", as_json=as_json)
 
 
+_TAI_MO_STATIONS = {
+    "en": "Tai Mo Shan",
+    "tc": "大帽山",
+    "sc": "大帽山",
+}
+
+
+def parse_tai_mo_temp(text: str, lang: str = "en") -> TaiMoTemp | None:
+    """Turn the Tai Mo Shan temperature CSV into the latest numeric day."""
+    station = _TAI_MO_STATIONS.get(lang, _TAI_MO_STATIONS["en"])
+    latest: TaiMoTemp | None = None
+    rows = csv.reader(io.StringIO(text))
+    for row in rows:
+        if len(row) < 4:
+            continue
+        year = _text(row[0]).lstrip("\ufeff")
+        month = _text(row[1])
+        day = _text(row[2])
+        value = _hour_mm(row[3])
+        if not (year.isdigit() and month.isdigit() and day.isdigit()) or value is None:
+            continue
+        latest = TaiMoTemp(
+            station,
+            f"{int(year):04d}-{int(month):02d}-{int(day):02d}",
+            value,
+        )
+    return latest
+
+
+def format_tai_mo_temp(reading: TaiMoTemp) -> str:
+    """Render the latest daily mean temperature at Tai Mo Shan."""
+    return (
+        "Hong Kong daily mean temperature\n"
+        f"Station: {reading.station}\n"
+        f"{reading.date}  {_number(reading.temperature_c)}°C\n"
+    )
+
+
+def format_tai_mo_temp_miss(*, as_json: bool = False) -> str:
+    """Say that no Tai Mo Shan temperature is available."""
+    return _unavailable("No Tai Mo Shan temperature is available.", as_json=as_json)
+
+
 def parse_max_temp(payload: dict) -> DailyMax | None:
     """Turn a `CLMMAXT` table into the latest numeric daily maximum."""
     raw = payload.get("data")
@@ -6844,6 +6914,7 @@ def format_json(
     | TomorrowForecast
     | YesterdayReport
     | DailyMean
+    | TaiMoTemp
     | DailyMax
     | DailyMin
     | DewPoint
