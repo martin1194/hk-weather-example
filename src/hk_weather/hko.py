@@ -1130,6 +1130,13 @@ class MinuteGrassReport:
 
 
 @dataclass(frozen=True)
+class DailyGrass:
+    station: str
+    date: str
+    grass_c: float
+
+
+@dataclass(frozen=True)
 class TempDiffReading:
     place: str
     change_c: float
@@ -1963,6 +1970,26 @@ def fetch_minute_grass(timeout: float = 10, lang: str = "en") -> MinuteGrassRepo
     except UnicodeDecodeError as exc:
         raise WeatherError("Hong Kong Observatory returned invalid text") from exc
     return parse_minute_grass(text)
+
+
+def fetch_daily_grass(timeout: float = 10, lang: str = "en") -> DailyGrass | None:
+    """Download the latest daily grass minimum at King's Park."""
+    year = _hong_kong_today()[:4]
+    url = (
+        "https://data.weather.gov.hk/weatherAPI/cis/csvfile/KP/"
+        f"{year}/daily_KP_GMT_{year}.csv"
+    )
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            raw = response.read()
+    except (urllib.error.URLError, TimeoutError) as exc:
+        raise WeatherError(f"could not reach Hong Kong Observatory: {exc}") from exc
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise WeatherError("Hong Kong Observatory returned invalid text") from exc
+    return parse_daily_grass(text, lang)
 
 
 def fetch_temp_diff(timeout: float = 10, lang: str = "en") -> TempDiffReport:
@@ -4393,6 +4420,49 @@ def format_minute_grass_miss(*, as_json: bool = False) -> str:
     return _unavailable("No 1-minute grass temperatures are available.", as_json=as_json)
 
 
+_DAILY_GRASS_STATIONS = {
+    "en": "King's Park",
+    "tc": "京士柏",
+    "sc": "京士柏",
+}
+
+
+def parse_daily_grass(text: str, lang: str = "en") -> DailyGrass | None:
+    """Turn the King's Park grass-temperature CSV into the latest numeric day."""
+    station = _DAILY_GRASS_STATIONS.get(lang, _DAILY_GRASS_STATIONS["en"])
+    latest: DailyGrass | None = None
+    rows = csv.reader(io.StringIO(text))
+    for row in rows:
+        if len(row) < 4:
+            continue
+        year = _text(row[0]).lstrip("\ufeff")
+        month = _text(row[1])
+        day = _text(row[2])
+        value = _hour_mm(row[3])
+        if not (year.isdigit() and month.isdigit() and day.isdigit()) or value is None:
+            continue
+        latest = DailyGrass(
+            station,
+            f"{int(year):04d}-{int(month):02d}-{int(day):02d}",
+            value,
+        )
+    return latest
+
+
+def format_daily_grass(reading: DailyGrass) -> str:
+    """Render the latest daily grass minimum at King's Park."""
+    return (
+        "Hong Kong daily grass temperature\n"
+        f"Station: {reading.station}\n"
+        f"{reading.date}  {_number(reading.grass_c)}°C\n"
+    )
+
+
+def format_daily_grass_miss(*, as_json: bool = False) -> str:
+    """Say that no daily grass minimum is available."""
+    return _unavailable("No daily grass temperature is available.", as_json=as_json)
+
+
 def _signed_change(value: str) -> float | None:
     """Parse a temperature change such as `+0.4`, `-0.6`, or `N/A`."""
     text = value.strip()
@@ -6445,6 +6515,7 @@ def format_json(
     | PressureReport
     | MeanPressure
     | MinuteGrassReport
+    | DailyGrass
     | TempDiffReport
     | HeatIndexReport
     | WbgtReport
