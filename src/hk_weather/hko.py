@@ -1031,6 +1031,13 @@ class LeastHumidReading:
 
 
 @dataclass(frozen=True)
+class MeanHumidity:
+    station: str
+    date: str
+    humidity_percent: float
+
+
+@dataclass(frozen=True)
 class TempReading:
     place: str
     temperature_c: float
@@ -1861,6 +1868,26 @@ def fetch_minute_humidity(timeout: float = 10, lang: str = "en") -> MinuteHumidi
     except UnicodeDecodeError as exc:
         raise WeatherError("Hong Kong Observatory returned invalid text") from exc
     return parse_minute_humidity(text)
+
+
+def fetch_mean_humidity(timeout: float = 10, lang: str = "en") -> MeanHumidity | None:
+    """Download the latest daily mean relative humidity at the Observatory."""
+    year = _hong_kong_today()[:4]
+    url = (
+        "https://data.weather.gov.hk/weatherAPI/cis/csvfile/HKO/"
+        f"{year}/daily_HKO_RH_{year}.csv"
+    )
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            raw = response.read()
+    except (urllib.error.URLError, TimeoutError) as exc:
+        raise WeatherError(f"could not reach Hong Kong Observatory: {exc}") from exc
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise WeatherError("Hong Kong Observatory returned invalid text") from exc
+    return parse_mean_humidity(text, lang)
 
 
 def fetch_since_midnight(timeout: float = 10, lang: str = "en") -> SinceMidnightReport:
@@ -4099,6 +4126,49 @@ def format_minute_humidity_miss(*, as_json: bool = False) -> str:
     return _unavailable("No 1-minute humidity readings are available.", as_json=as_json)
 
 
+_MEAN_HUMIDITY_STATIONS = {
+    "en": "Hong Kong Observatory",
+    "tc": "香港天文台",
+    "sc": "香港天文台",
+}
+
+
+def parse_mean_humidity(text: str, lang: str = "en") -> MeanHumidity | None:
+    """Turn the Observatory humidity CSV into the latest numeric day."""
+    station = _MEAN_HUMIDITY_STATIONS.get(lang, _MEAN_HUMIDITY_STATIONS["en"])
+    latest: MeanHumidity | None = None
+    rows = csv.reader(io.StringIO(text))
+    for row in rows:
+        if len(row) < 4:
+            continue
+        year = _text(row[0]).lstrip("\ufeff")
+        month = _text(row[1])
+        day = _text(row[2])
+        value = _hour_mm(row[3])
+        if not (year.isdigit() and month.isdigit() and day.isdigit()) or value is None:
+            continue
+        latest = MeanHumidity(
+            station,
+            f"{int(year):04d}-{int(month):02d}-{int(day):02d}",
+            value,
+        )
+    return latest
+
+
+def format_mean_humidity(reading: MeanHumidity) -> str:
+    """Render the latest daily mean humidity at the Observatory."""
+    return (
+        "Hong Kong daily mean humidity\n"
+        f"Station: {reading.station}\n"
+        f"{reading.date}  {_number(reading.humidity_percent)}%\n"
+    )
+
+
+def format_mean_humidity_miss(*, as_json: bool = False) -> str:
+    """Say that no daily mean humidity is available."""
+    return _unavailable("No daily mean humidity is available.", as_json=as_json)
+
+
 def parse_since_midnight(text: str) -> SinceMidnightReport:
     """Turn the since-midnight temperature CSV into one row per station."""
     stations: list[SinceMidnightReading] = []
@@ -6297,6 +6367,7 @@ def format_json(
     | HumidityReport
     | HumidityTime
     | MinuteHumidityReport
+    | MeanHumidity
     | TempReport
     | TempTime
     | MinuteTempReport
