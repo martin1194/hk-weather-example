@@ -8321,6 +8321,67 @@ def test_cli_lau_fau_rain_when_missing(monkeypatch, capsys):
     }
 
 
+def test_cli_shek_kong_rain_prints_latest_day(monkeypatch, capsys):
+    seen = {}
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _text_response(
+            "年/Year,月/Month,日/Day,數值/Value,數據完整性/data Completeness\n"
+            "2026,8,29,1.5,C\n"
+            "2026,8,30,***,\n"
+            "2026,8,31,  24.5  ,C\n"
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--shek-kong-rain", "--lang", "tc"]) == 0
+    assert seen["url"].endswith("daily_SEK_RF_2026.csv")
+    assert capsys.readouterr().out == (
+        "Hong Kong daily rainfall\n"
+        "Station: 石崗\n"
+        "2026-08-31  24.5 mm\n"
+    )
+
+
+def test_cli_shek_kong_rain_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Year,Month,Day,Value,Completeness\n"
+            "2026,8,31,24.5,C\n"
+        ),
+    )
+    assert main(["--shek-kong-rain", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "station": "Shek Kong",
+        "date": "2026-08-31",
+        "rainfall_mm": 24.5,
+    }
+
+
+def test_cli_shek_kong_rain_when_missing(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Year,Month,Day,Value,Completeness\n"
+            "2026,8,31,***,\n"
+        ),
+    )
+    assert main(["--shek-kong-rain"]) == 0
+    assert capsys.readouterr().out == "No Shek Kong rainfall is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(""),
+    )
+    assert main(["--shek-kong-rain", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No Shek Kong rainfall is available."
+    }
+
+
 def test_cli_rainstorm_prints_reminder(monkeypatch, capsys):
     seen = {}
     message = (

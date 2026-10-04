@@ -196,6 +196,8 @@ hk-weather --daily-rain
 hk-weather --daily-rain --json
 hk-weather --lau-fau-rain
 hk-weather --lau-fau-rain --json
+hk-weather --shek-kong-rain
+hk-weather --shek-kong-rain --json
 hk-weather --rainstorm
 hk-weather --rainstorm --json
 hk-weather --cyclone
@@ -491,6 +493,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --daily-rain` prints the latest daily total rainfall at the Observatory, for example `2026-08-31  25 mm`. `--rain` still prints district rainfall, and `--nowcast` still prints the nowcast peaks. A total of zero is kept. `--daily-rain --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No daily rainfall is available.`
 
 `hk-weather --lau-fau-rain` prints the latest daily total rainfall at Lau Fau Shan, for example `2026-08-31  40 mm`. `--daily-rain` still prints the Observatory total. A total of zero is kept. `--lau-fau-rain --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Lau Fau Shan rainfall is available.`
+
+`hk-weather --shek-kong-rain` prints the latest daily total rainfall at Shek Kong, for example `2026-08-31  24.5 mm`. `--daily-rain` still prints the Observatory total, and `--lau-fau-rain` still prints Lau Fau Shan. A total of zero is kept. `--shek-kong-rain --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Shek Kong rainfall is available.`
 
 `hk-weather --lightning` lists places where the current report shows lightning. `--lightning --json` prints those places as one JSON object. If none are reported, it says so.
 
