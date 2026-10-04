@@ -300,6 +300,8 @@ hk-weather --park-humidity
 hk-weather --park-humidity --json
 hk-weather --sai-kung-humidity
 hk-weather --sai-kung-humidity --json
+hk-weather --cheung-chau-humidity
+hk-weather --cheung-chau-humidity --json
 hk-weather --temps
 hk-weather --temps --json
 hk-weather --temp-time
@@ -681,6 +683,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --park-humidity` prints the latest daily mean relative humidity at King's Park, for example `2026-08-31  84%`. `--mean-humidity` still prints the Observatory reading, `--tai-mo-humidity` still prints Tai Mo Shan, `--waglan-humidity` still prints Waglan Island, `--tate-humidity` still prints Tate's Cairn, `--ta-kwu-ling-humidity` still prints Ta Kwu Ling, `--wetland-humidity` still prints Wetland Park, `--shek-kong-humidity` still prints Shek Kong, and `--lau-fau-humidity` still prints Lau Fau Shan. `--park-dew`, `--park-pressure`, `--park-wet`, and `--park-rain` still print King's Park's other daily readings. `--park-humidity --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No King's Park humidity is available.`
 
 `hk-weather --sai-kung-humidity` prints the latest daily mean relative humidity at Sai Kung, for example `2026-08-31  86%`. `--mean-humidity` still prints the Observatory reading, `--tai-mo-humidity` still prints Tai Mo Shan, `--waglan-humidity` still prints Waglan Island, `--tate-humidity` still prints Tate's Cairn, `--ta-kwu-ling-humidity` still prints Ta Kwu Ling, `--wetland-humidity` still prints Wetland Park, `--shek-kong-humidity` still prints Shek Kong, `--lau-fau-humidity` still prints Lau Fau Shan, and `--park-humidity` still prints King's Park. `--sai-kung-temp`, `--sai-kung-min`, and `--sai-kung-dew` still print Sai Kung's other daily readings. `--sai-kung-humidity --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Sai Kung humidity is available.`
+
+`hk-weather --cheung-chau-humidity` prints the latest daily mean relative humidity at Cheung Chau, for example `2026-08-31  92%`. `--mean-humidity` still prints the Observatory reading, `--tai-mo-humidity` still prints Tai Mo Shan, `--waglan-humidity` still prints Waglan Island, `--tate-humidity` still prints Tate's Cairn, `--ta-kwu-ling-humidity` still prints Ta Kwu Ling, `--wetland-humidity` still prints Wetland Park, `--shek-kong-humidity` still prints Shek Kong, `--lau-fau-humidity` still prints Lau Fau Shan, `--park-humidity` still prints King's Park, and `--sai-kung-humidity` still prints Sai Kung. `--cheung-chau-max` still prints Cheung Chau's maximum temperature, `--cheung-wind` still prints its wind speed, `--cheung-prevailing` still prints its prevailing direction, and `--cheung-dew` still prints its dew point. `--cheung-chau-humidity --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Cheung Chau humidity is available.`
 
 `hk-weather --temps` prints temperature by place from the current report, with the record time when the Observatory includes it. `--temps --json` prints that list as one JSON object. If no readings are present, it says so.
 
