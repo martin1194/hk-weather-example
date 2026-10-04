@@ -257,6 +257,21 @@ AQHI_URLS = {
     "sc": "https://www.aqhi.gov.hk/epd/ddata/html/out/aqhi_ind_rss_ChS.xml",
 }
 UV_URL = DEFAULT_URL
+# Latest 15-minute mean UV index at King's Park. CSV, one file per language.
+FIFTEEN_UV_URLS = {
+    "en": (
+        "https://data.weather.gov.hk/weatherAPI/hko_data/regional-weather/"
+        "latest_15min_uvindex.csv"
+    ),
+    "tc": (
+        "https://data.weather.gov.hk/weatherAPI/hko_data/regional-weather/"
+        "latest_15min_uvindex_uc.csv"
+    ),
+    "sc": (
+        "https://data.weather.gov.hk/weatherAPI/hko_data/regional-weather/"
+        "latest_15min_uvindex_sc.csv"
+    ),
+}
 _CANCELLED = {"CANCEL", "CANCELLED"}
 HKO_STATION = "Hong Kong Observatory"
 USER_AGENT = "hk-weather-demo/0.1 (+https://github.com)"
@@ -1216,6 +1231,13 @@ class UvIndex:
 
 
 @dataclass(frozen=True)
+class FifteenUv:
+    station: str
+    time: str
+    uv_index: float
+
+
+@dataclass(frozen=True)
 class IconUpdate:
     updated: str
 
@@ -2096,6 +2118,22 @@ def fetch_lunar(timeout: float = 10, lang: str = "en") -> LunarDate | None:
 def fetch_uv(url: str = UV_URL, timeout: float = 10, lang: str = "en") -> UvIndex:
     """Download the UV index from the current weather report (`dataType=rhrread`)."""
     return parse_uv(_fetch_json(_apply_lang(url, lang), timeout))
+
+
+def fetch_fifteen_uv(timeout: float = 10, lang: str = "en") -> FifteenUv | None:
+    """Download the latest 15-minute mean UV index at King's Park."""
+    url = FIFTEEN_UV_URLS.get(lang, FIFTEEN_UV_URLS["en"])
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            raw = response.read()
+    except (urllib.error.URLError, TimeoutError) as exc:
+        raise WeatherError(f"could not reach Hong Kong Observatory: {exc}") from exc
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise WeatherError("Hong Kong Observatory returned invalid text") from exc
+    return parse_fifteen_uv(text, lang)
 
 
 def fetch_icon_time(
@@ -4527,6 +4565,47 @@ def format_uv(report: UvIndex) -> str:
     return "\n".join(lines) + "\n"
 
 
+_FIFTEEN_UV_STATIONS = {
+    "en": "King's Park",
+    "tc": "京士柏",
+    "sc": "京士柏",
+}
+
+
+def parse_fifteen_uv(text: str, lang: str = "en") -> FifteenUv | None:
+    """Turn the 15-minute UV CSV into the latest numeric reading."""
+    station = _FIFTEEN_UV_STATIONS.get(lang, _FIFTEEN_UV_STATIONS["en"])
+    latest: FifteenUv | None = None
+    rows = csv.reader(io.StringIO(text))
+    for row in rows:
+        if len(row) < 2:
+            continue
+        clock = _text(row[0]).lstrip("\ufeff")
+        value = _hour_mm(row[1])
+        if len(clock) != 12 or not clock.isdigit() or value is None:
+            continue
+        latest = FifteenUv(
+            station,
+            f"{clock[:4]}-{clock[4:6]}-{clock[6:8]} {clock[8:10]}:{clock[10:12]}",
+            value,
+        )
+    return latest
+
+
+def format_fifteen_uv(reading: FifteenUv) -> str:
+    """Render the latest 15-minute mean UV index at King's Park."""
+    return (
+        "Hong Kong 15-minute UV index\n"
+        f"Station: {reading.station}\n"
+        f"{reading.time}  {_number(reading.uv_index)}\n"
+    )
+
+
+def format_fifteen_uv_miss(*, as_json: bool = False) -> str:
+    """Say that no 15-minute UV index is available."""
+    return _unavailable("No 15-minute UV index is available.", as_json=as_json)
+
+
 def parse_icon_time(payload: dict) -> IconUpdate | None:
     """Turn the `rhrread` icon update time into one timestamp."""
     text = _text(payload.get("iconUpdateTime"))
@@ -6128,6 +6207,7 @@ def format_json(
     | SeaTemperature
     | SoilReport
     | UvIndex
+    | FifteenUv
     | IconUpdate
     | IconReport
     | CurrentUpdated

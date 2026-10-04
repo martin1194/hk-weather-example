@@ -4371,6 +4371,64 @@ def test_cli_uv_when_unavailable(monkeypatch, capsys):
     assert "Temperature:" not in out
 
 
+def test_cli_fifteen_uv_prints_latest_reading(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _text_response(
+            "Date time,past 15-minute mean UV Index\n"
+            "202610040800,0.4\n"
+            "202610040815,N/A\n"
+            "202610040830,  1.4  \n"
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--fifteen-uv", "--lang", "tc"]) == 0
+    assert seen["url"].endswith("latest_15min_uvindex_uc.csv")
+    assert capsys.readouterr().out == (
+        "Hong Kong 15-minute UV index\n"
+        "Station: 京士柏\n"
+        "2026-10-04 08:30  1.4\n"
+    )
+
+
+def test_cli_fifteen_uv_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Date time,past 15-minute mean UV Index\n"
+            "202610040815,1\n"
+        ),
+    )
+    assert main(["--fifteen-uv", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "station": "King's Park",
+        "time": "2026-10-04 08:15",
+        "uv_index": 1.0,
+    }
+
+
+def test_cli_fifteen_uv_when_missing(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Date time,past 15-minute mean UV Index\n"
+            "202610040815,N/A\n"
+        ),
+    )
+    assert main(["--fifteen-uv"]) == 0
+    assert capsys.readouterr().out == "No 15-minute UV index is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(""),
+    )
+    assert main(["--fifteen-uv", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No 15-minute UV index is available."
+    }
+
+
 def test_cli_icon_time_prints_timestamp(monkeypatch, capsys):
     seen = {}
 
