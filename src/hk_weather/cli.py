@@ -129,6 +129,7 @@ from hk_weather.hko import (
     fetch_gust,
     fetch_prevailing,
     fetch_cheung_prevailing,
+    fetch_ping_chau_prevailing,
     fetch_mean_wind,
     fetch_cheung_wind,
     fetch_lau_fau_wind,
@@ -365,6 +366,7 @@ from hk_weather.hko import (
     format_prevailing,
     format_prevailing_miss,
     format_cheung_prevailing_miss,
+    format_ping_chau_prevailing_miss,
     format_mean_wind,
     format_mean_wind_miss,
     format_cheung_wind_miss,
@@ -492,6 +494,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--gust prints the latest 10-minute wind and gust; "
             "--prevailing prints the latest prevailing wind direction; "
             "--cheung-prevailing prints the latest prevailing wind at Cheung Chau; "
+            "--ping-chau-prevailing prints the latest prevailing wind at Ping Chau; "
             "--mean-wind prints the latest daily mean wind speed; "
             "--cheung-wind prints the latest daily mean wind speed at Cheung Chau; "
             "--lau-fau-wind prints the latest daily mean wind speed at Lau Fau Shan; "
@@ -895,6 +898,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--cheung-prevailing",
         action="store_true",
         help="Print the latest daily prevailing wind direction at Cheung Chau",
+    )
+    parser.add_argument(
+        "--ping-chau-prevailing",
+        action="store_true",
+        help="Print the latest daily prevailing wind direction at Ping Chau",
     )
     parser.add_argument(
         "--mean-wind",
@@ -1768,6 +1776,18 @@ def main(argv: list[str] | None = None) -> int:
                     format_json(cheung_prevailing)
                     if args.json
                     else format_prevailing(cheung_prevailing)
+                )
+        elif args.ping_chau_prevailing:
+            ping_chau_prevailing = fetch_ping_chau_prevailing(
+                timeout=args.timeout, lang=args.lang
+            )
+            if ping_chau_prevailing is None:
+                text = format_ping_chau_prevailing_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(ping_chau_prevailing)
+                    if args.json
+                    else format_prevailing(ping_chau_prevailing)
                 )
         elif args.mean_wind:
             mean_wind = fetch_mean_wind(timeout=args.timeout, lang=args.lang)
