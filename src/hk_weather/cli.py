@@ -116,6 +116,7 @@ from hk_weather.hko import (
     fetch_wind,
     fetch_gust,
     fetch_prevailing,
+    fetch_cheung_prevailing,
     fetch_mean_wind,
     fetch_forecast_icon,
     fetch_yesterday,
@@ -327,6 +328,7 @@ from hk_weather.hko import (
     format_gust_miss,
     format_prevailing,
     format_prevailing_miss,
+    format_cheung_prevailing_miss,
     format_mean_wind,
     format_mean_wind_miss,
     format_forecast_icon,
@@ -431,6 +433,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--wind lists the forecast wind; "
             "--gust prints the latest 10-minute wind and gust; "
             "--prevailing prints the latest prevailing wind direction; "
+            "--cheung-prevailing prints the latest prevailing wind at Cheung Chau; "
             "--mean-wind prints the latest daily mean wind speed; "
             "--forecast-icon prints each day's weather icon; "
             "--quake lists the latest earthquake message; "
@@ -776,6 +779,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--prevailing",
         action="store_true",
         help="Print the latest daily prevailing wind direction at Waglan Island",
+    )
+    parser.add_argument(
+        "--cheung-prevailing",
+        action="store_true",
+        help="Print the latest daily prevailing wind direction at Cheung Chau",
     )
     parser.add_argument(
         "--mean-wind",
@@ -1516,6 +1524,16 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_prevailing_miss(as_json=args.json)
             else:
                 text = format_json(prevailing) if args.json else format_prevailing(prevailing)
+        elif args.cheung_prevailing:
+            cheung_prevailing = fetch_cheung_prevailing(timeout=args.timeout, lang=args.lang)
+            if cheung_prevailing is None:
+                text = format_cheung_prevailing_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(cheung_prevailing)
+                    if args.json
+                    else format_prevailing(cheung_prevailing)
+                )
         elif args.mean_wind:
             mean_wind = fetch_mean_wind(timeout=args.timeout, lang=args.lang)
             if mean_wind is None:
