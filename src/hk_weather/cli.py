@@ -27,6 +27,7 @@ from hk_weather.hko import (
     fetch_fire_danger,
     fetch_grass,
     fetch_sunshine,
+    fetch_daily_sun,
     fetch_max_uv,
     fetch_mean_uv,
     fetch_dose,
@@ -147,6 +148,8 @@ from hk_weather.hko import (
     format_grass_miss,
     format_sunshine,
     format_sunshine_miss,
+    format_daily_sun,
+    format_daily_sun_miss,
     format_max_uv,
     format_max_uv_miss,
     format_mean_uv,
@@ -426,6 +429,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--evapotranspiration prints the latest monthly potential evapotranspiration; "
             "--grass prints yesterday's grass minimum; "
             "--sunshine prints yesterday's sunshine duration; "
+            "--daily-sun prints the latest daily bright sunshine total; "
             "--max-uv prints yesterday's maximum UV index; "
             "--mean-uv prints yesterday's mean UV index; "
             "--dose prints yesterday's gamma dose rate; "
@@ -643,6 +647,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--sunshine",
         action="store_true",
         help="Print yesterday's sunshine duration at King's Park",
+    )
+    parser.add_argument(
+        "--daily-sun",
+        action="store_true",
+        help="Print the latest daily bright sunshine total at King's Park",
     )
     parser.add_argument(
         "--max-uv",
@@ -1319,6 +1328,12 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_sunshine_miss(as_json=args.json)
             else:
                 text = format_json(sunshine) if args.json else format_sunshine(sunshine)
+        elif args.daily_sun:
+            daily_sun = fetch_daily_sun(timeout=args.timeout, lang=args.lang)
+            if daily_sun is None:
+                text = format_daily_sun_miss(as_json=args.json)
+            else:
+                text = format_json(daily_sun) if args.json else format_daily_sun(daily_sun)
         elif args.max_uv:
             max_uv = fetch_max_uv(timeout=args.timeout, lang=args.lang)
             if max_uv is None:

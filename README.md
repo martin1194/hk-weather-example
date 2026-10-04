@@ -74,6 +74,8 @@ hk-weather --grass
 hk-weather --grass --json
 hk-weather --sunshine
 hk-weather --sunshine --json
+hk-weather --daily-sun
+hk-weather --daily-sun --json
 hk-weather --max-uv
 hk-weather --max-uv --json
 hk-weather --mean-uv
@@ -329,6 +331,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --grass` prints yesterday's grass minimum from that same summary (`HKOReadingsMinGrassTemp`). `--yesterday` still prints the air-temperature summary. `--grass --json` prints the grass minimum as one JSON object. `--lang` applies. If the reading is missing, it says `No grass minimum is available.`
 
 `hk-weather --sunshine` prints yesterday's sunshine duration at King's Park (`dataType=RYES`, station KP, `KingsParkReadingsSunShine`), for example `2026-10-02  4.7 hours`. `--grass` still prints yesterday's grass minimum. `--uv` still prints the current UV index. `--sunshine --json` prints that day as one JSON object. `--lang` applies. If the reading is missing, it says `No sunshine duration is available.`
+
+`hk-weather --daily-sun` prints the latest daily bright sunshine total at King's Park, for example `2026-08-31  2.2 hours`. `--sunshine` still prints yesterday's duration. A total of zero is kept. `--daily-sun --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No daily sunshine is available.`
 
 `hk-weather --max-uv` prints yesterday's maximum UV index at King's Park (`KingsParkReadingsMaxUVIndex` on that same report), for example `2026-10-02  6`. `--uv` still prints the current UV index. `--sunshine` still prints the sunshine duration. `--max-uv --json` prints that day as one JSON object. `--lang` applies. If the reading is missing, it says `No maximum UV index is available.`
 
