@@ -214,6 +214,8 @@ hk-weather --least-humid
 hk-weather --least-humid --json
 hk-weather --mean-humidity
 hk-weather --mean-humidity --json
+hk-weather --tai-mo-humidity
+hk-weather --tai-mo-humidity --json
 hk-weather --temps
 hk-weather --temps --json
 hk-weather --temp-time
@@ -493,6 +495,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --least-humid` prints the least humid place from the current report, for example `King's Park  80%`. `--least-humid --json` prints that reading as one JSON object. `--lang` applies. If no reading is present, it says so.
 
 `hk-weather --mean-humidity` prints the latest daily mean relative humidity at the Observatory, for example `2026-08-31  85%`. `--humidity` still prints the current station readings. `--mean-humidity --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No daily mean humidity is available.`
+
+`hk-weather --tai-mo-humidity` prints the latest daily mean relative humidity at Tai Mo Shan, for example `2026-08-31  96%`. `--mean-humidity` still prints the Observatory reading. `--tai-mo-humidity --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Tai Mo Shan humidity is available.`
 
 `hk-weather --temps` prints temperature by place from the current report, with the record time when the Observatory includes it. `--temps --json` prints that list as one JSON object. If no readings are present, it says so.
 
