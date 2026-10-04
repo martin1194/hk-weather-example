@@ -4042,6 +4042,67 @@ def test_cli_waglan_dew_when_missing(monkeypatch, capsys):
     }
 
 
+def test_cli_lau_fau_dew_prints_latest_day(monkeypatch, capsys):
+    seen = {}
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _text_response(
+            "年/Year,月/Month,日/Day,數值/Value,數據完整性/data Completeness\n"
+            "2026,8,29,27.5,C\n"
+            "2026,8,30,***,\n"
+            "2026,8,31,  25.7  ,C\n"
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--lau-fau-dew", "--lang", "tc"]) == 0
+    assert seen["url"].endswith("daily_LFS_DEW_2026.csv")
+    assert capsys.readouterr().out == (
+        "Hong Kong dew point\n"
+        "Station: 流浮山\n"
+        "2026-08-31  25.7°C\n"
+    )
+
+
+def test_cli_lau_fau_dew_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Year,Month,Day,Value,Completeness\n"
+            "2026,8,31,25.7,C\n"
+        ),
+    )
+    assert main(["--lau-fau-dew", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "station": "Lau Fau Shan",
+        "date": "2026-08-31",
+        "dew_point_c": 25.7,
+    }
+
+
+def test_cli_lau_fau_dew_when_missing(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Year,Month,Day,Value,Completeness\n"
+            "2026,8,31,***,\n"
+        ),
+    )
+    assert main(["--lau-fau-dew"]) == 0
+    assert capsys.readouterr().out == "No Lau Fau Shan dew point is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(""),
+    )
+    assert main(["--lau-fau-dew", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No Lau Fau Shan dew point is available."
+    }
+
+
 def test_cli_cloud_prints_latest_day(monkeypatch, capsys):
     seen = {}
     monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
