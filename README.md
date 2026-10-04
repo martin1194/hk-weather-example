@@ -352,6 +352,8 @@ hk-weather --sheung-shui-pressure
 hk-weather --sheung-shui-pressure --json
 hk-weather --waglan-pressure
 hk-weather --waglan-pressure --json
+hk-weather --cheung-chau-pressure
+hk-weather --cheung-chau-pressure --json
 hk-weather --minute-grass
 hk-weather --minute-grass --json
 hk-weather --daily-grass
@@ -765,6 +767,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --sheung-shui-pressure` prints the latest daily mean pressure at Sheung Shui, for example `2026-08-31  998.3 hPa`. `--mean-pressure` still prints the Observatory reading, `--park-pressure` still prints King's Park, `--sha-tin-pressure` still prints Sha Tin, and `--sheung-shui-max` still prints Sheung Shui's daily maximum. `--sheung-shui-pressure --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Sheung Shui pressure is available.`
 
 `hk-weather --waglan-pressure` prints the latest daily mean pressure at Waglan Island, for example `2026-08-31  998.8 hPa`. `--mean-pressure` still prints the Observatory reading, `--park-pressure` still prints King's Park, `--sha-tin-pressure` still prints Sha Tin, and `--sheung-shui-pressure` still prints Sheung Shui. `--waglan-max` still prints Waglan Island's daily maximum, `--waglan-humidity` still prints its humidity, and `--mean-wind` still prints its wind speed. `--waglan-pressure --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Waglan Island pressure is available.`
+
+`hk-weather --cheung-chau-pressure` prints the latest daily mean pressure at Cheung Chau, for example `2026-08-31  998.8 hPa`. `--mean-pressure` still prints the Observatory reading, `--park-pressure` still prints King's Park, `--sha-tin-pressure` still prints Sha Tin, `--sheung-shui-pressure` still prints Sheung Shui, and `--waglan-pressure` still prints Waglan Island. `--cheung-chau-max` still prints Cheung Chau's maximum temperature, `--cheung-chau-min` still prints its minimum, `--cheung-chau-humidity` still prints its humidity, `--cheung-wind` still prints its wind speed, `--cheung-prevailing` still prints its prevailing direction, `--cheung-dew` still prints its dew point, and `--cheung-chau-rain` still prints its rainfall. `--cheung-chau-pressure --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Cheung Chau pressure is available.`
 
 `hk-weather --minute-grass` prints the latest 1-minute mean grass temperature at automatic stations, for example `King's Park  25.9°C`. `--grass` still prints yesterday's grass minimum at the Observatory. `--minute-grass --json` prints those stations as one JSON object. `--lang` selects the station names. Stations marked `N/A` are omitted. If none remain, it says `No 1-minute grass temperatures are available.`
 
