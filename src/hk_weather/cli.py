@@ -124,6 +124,7 @@ from hk_weather.hko import (
     fetch_max_temp,
     fetch_min_temp,
     fetch_dew_point,
+    fetch_park_dew,
     fetch_cloud,
     fetch_evaporation,
     fetch_evapotranspiration,
@@ -343,6 +344,7 @@ from hk_weather.hko import (
     format_min_temp_miss,
     format_dew_point,
     format_dew_point_miss,
+    format_park_dew_miss,
     format_cloud,
     format_cloud_miss,
     format_evaporation,
@@ -443,6 +445,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--max-temp prints the latest daily maximum temperature; "
             "--min-temp prints the latest daily minimum temperature; "
             "--dew-point prints the latest daily mean dew point; "
+            "--park-dew prints the latest daily mean dew point at King's Park; "
             "--cloud prints the latest daily mean cloud amount; "
             "--evaporation prints the latest daily evaporation; "
             "--evapotranspiration prints the latest monthly potential evapotranspiration; "
@@ -645,6 +648,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--dew-point",
         action="store_true",
         help="Print the latest daily mean dew point at the Observatory",
+    )
+    parser.add_argument(
+        "--park-dew",
+        action="store_true",
+        help="Print the latest daily mean dew point at King's Park",
     )
     parser.add_argument(
         "--cloud",
@@ -1347,6 +1355,12 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_dew_point_miss(as_json=args.json)
             else:
                 text = format_json(dew_point) if args.json else format_dew_point(dew_point)
+        elif args.park_dew:
+            park_dew = fetch_park_dew(timeout=args.timeout, lang=args.lang)
+            if park_dew is None:
+                text = format_park_dew_miss(as_json=args.json)
+            else:
+                text = format_json(park_dew) if args.json else format_dew_point(park_dew)
         elif args.cloud:
             cloud = fetch_cloud(timeout=args.timeout, lang=args.lang)
             if cloud is None:

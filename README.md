@@ -64,6 +64,8 @@ hk-weather --min-temp
 hk-weather --min-temp --json
 hk-weather --dew-point
 hk-weather --dew-point --json
+hk-weather --park-dew
+hk-weather --park-dew --json
 hk-weather --cloud
 hk-weather --cloud --json
 hk-weather --evaporation
@@ -333,6 +335,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --min-temp` prints the latest daily minimum temperature at the Observatory for that same year (`dataType=CLMMINT`, station HKO), for example `2026-08-31  26.2°C`. `--max-temp` still prints the daily maximum. `--coldest` still prints the current coolest place. `--min-temp --json` prints that day as one JSON object. `--lang` applies. If no numeric day is present, it says `No daily minimum temperature is available.`
 
 `hk-weather --dew-point` prints the latest daily mean dew point at the Observatory for the current Hong Kong year, for example `2026-08-31  25°C`. `--mean-temp` still prints the daily mean air temperature. `--dew-point --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No dew point is available.`
+
+`hk-weather --park-dew` prints the latest daily mean dew point at King's Park, for example `2026-08-31  24.7°C`. `--dew-point` still prints the Observatory reading. `--park-dew --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No King's Park dew point is available.`
 
 `hk-weather --cloud` prints the latest daily mean cloud amount at the Observatory for the current Hong Kong year, for example `2026-08-31  88%`. `--dew-point` still prints the dew point. `--cloud --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No cloud amount is available.`
 
