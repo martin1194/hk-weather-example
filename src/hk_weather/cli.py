@@ -16,6 +16,7 @@ from hk_weather.hko import (
     fetch_shek_kong_rain,
     fetch_wetland_rain,
     fetch_sham_shui_po_rain,
+    fetch_park_rain,
     fetch_forecast,
     fetch_outlook,
     fetch_coastal,
@@ -175,6 +176,7 @@ from hk_weather.hko import (
     format_shek_kong_rain_miss,
     format_wetland_rain_miss,
     format_sham_shui_po_rain_miss,
+    format_park_rain_miss,
     format_forecast,
     format_outlook,
     format_outlook_miss,
@@ -587,6 +589,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--shek-kong-rain prints the latest daily rainfall at Shek Kong; "
             "--wetland-rain prints the latest daily rainfall at Wetland Park; "
             "--sham-shui-po-rain prints the latest daily rainfall at Sham Shui Po; "
+            "--park-rain prints the latest daily rainfall at King's Park; "
             "--tide prints today's high and low tides; "
             "--tide-hour prints today's hourly tide heights; "
             "--tide-latest prints the latest observed tide height; "
@@ -1185,6 +1188,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--sham-shui-po-rain",
         action="store_true",
         help="Print the latest daily total rainfall at Sham Shui Po",
+    )
+    parser.add_argument(
+        "--park-rain",
+        action="store_true",
+        help="Print the latest daily total rainfall at King's Park",
     )
     parser.add_argument(
         "--rainstorm",
@@ -2166,6 +2174,12 @@ def main(argv: list[str] | None = None) -> int:
                     if args.json
                     else format_daily_rain(sham_shui_po_rain)
                 )
+        elif args.park_rain:
+            park_rain = fetch_park_rain(timeout=args.timeout, lang=args.lang)
+            if park_rain is None:
+                text = format_park_rain_miss(as_json=args.json)
+            else:
+                text = format_json(park_rain) if args.json else format_daily_rain(park_rain)
         elif args.rainstorm:
             rainstorm = fetch_rainstorm(timeout=args.timeout, lang=args.lang)
             if rainstorm is None:
