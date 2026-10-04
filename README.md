@@ -262,6 +262,8 @@ hk-weather --sha-tin-rain
 hk-weather --sha-tin-rain --json
 hk-weather --ta-kwu-ling-rain
 hk-weather --ta-kwu-ling-rain --json
+hk-weather --cheung-chau-rain
+hk-weather --cheung-chau-rain --json
 hk-weather --rainstorm
 hk-weather --rainstorm --json
 hk-weather --cyclone
@@ -657,6 +659,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --sha-tin-rain` prints the latest daily total rainfall at Sha Tin, for example `2026-08-31  7 mm`. `--daily-rain` still prints the Observatory total, `--lau-fau-rain` still prints Lau Fau Shan, `--shek-kong-rain` still prints Shek Kong, `--wetland-rain` still prints Wetland Park, `--sham-shui-po-rain` still prints Sham Shui Po, `--park-rain` still prints King's Park, `--tseung-kwan-o-rain` still prints Tseung Kwan O, and `--sheung-shui-rain` still prints Sheung Shui. `--sha-tin-pressure` still prints Sha Tin's pressure, and `--sha-tin-dew` still prints its dew point. A total of zero is kept. `--sha-tin-rain --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Sha Tin rainfall is available.`
 
 `hk-weather --ta-kwu-ling-rain` prints the latest daily total rainfall at Ta Kwu Ling, for example `2026-08-31  13 mm`. `--daily-rain` still prints the Observatory total, `--lau-fau-rain` still prints Lau Fau Shan, `--shek-kong-rain` still prints Shek Kong, `--wetland-rain` still prints Wetland Park, `--sham-shui-po-rain` still prints Sham Shui Po, `--park-rain` still prints King's Park, `--tseung-kwan-o-rain` still prints Tseung Kwan O, `--sheung-shui-rain` still prints Sheung Shui, and `--sha-tin-rain` still prints Sha Tin. `--ta-kwu-ling-humidity` still prints Ta Kwu Ling's humidity. A total of zero is kept. `--ta-kwu-ling-rain --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Ta Kwu Ling rainfall is available.`
+
+`hk-weather --cheung-chau-rain` prints the latest daily total rainfall at Cheung Chau, for example `2026-08-31  2.5 mm`. `--daily-rain` still prints the Observatory total, `--lau-fau-rain` still prints Lau Fau Shan, `--shek-kong-rain` still prints Shek Kong, `--wetland-rain` still prints Wetland Park, `--sham-shui-po-rain` still prints Sham Shui Po, `--park-rain` still prints King's Park, `--tseung-kwan-o-rain` still prints Tseung Kwan O, `--sheung-shui-rain` still prints Sheung Shui, `--sha-tin-rain` still prints Sha Tin, and `--ta-kwu-ling-rain` still prints Ta Kwu Ling. `--cheung-chau-max` still prints Cheung Chau's maximum temperature, `--cheung-chau-humidity` still prints its humidity, `--cheung-wind` still prints its wind speed, `--cheung-prevailing` still prints its prevailing direction, and `--cheung-dew` still prints its dew point. A total of zero is kept. `--cheung-chau-rain --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Cheung Chau rainfall is available.`
 
 `hk-weather --lightning` lists places where the current report shows lightning. `--lightning --json` prints those places as one JSON object. If none are reported, it says so.
 
