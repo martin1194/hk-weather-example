@@ -214,6 +214,8 @@ hk-weather --shek-kong-rain
 hk-weather --shek-kong-rain --json
 hk-weather --wetland-rain
 hk-weather --wetland-rain --json
+hk-weather --sham-shui-po-rain
+hk-weather --sham-shui-po-rain --json
 hk-weather --rainstorm
 hk-weather --rainstorm --json
 hk-weather --cyclone
@@ -537,6 +539,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --shek-kong-rain` prints the latest daily total rainfall at Shek Kong, for example `2026-08-31  24.5 mm`. `--daily-rain` still prints the Observatory total, and `--lau-fau-rain` still prints Lau Fau Shan. A total of zero is kept. `--shek-kong-rain --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Shek Kong rainfall is available.`
 
 `hk-weather --wetland-rain` prints the latest daily total rainfall at Wetland Park, for example `2026-08-31  55.5 mm`. `--daily-rain` still prints the Observatory total, `--lau-fau-rain` still prints Lau Fau Shan, and `--shek-kong-rain` still prints Shek Kong. A total of zero is kept. `--wetland-rain --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Wetland Park rainfall is available.`
+
+`hk-weather --sham-shui-po-rain` prints the latest daily total rainfall at Sham Shui Po, for example `2026-08-31  35 mm`. `--daily-rain` still prints the Observatory total, `--lau-fau-rain` still prints Lau Fau Shan, `--shek-kong-rain` still prints Shek Kong, and `--wetland-rain` still prints Wetland Park. A total of zero is kept. `--sham-shui-po-rain --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Sham Shui Po rainfall is available.`
 
 `hk-weather --lightning` lists places where the current report shows lightning. `--lightning --json` prints those places as one JSON object. If none are reported, it says so.
 
