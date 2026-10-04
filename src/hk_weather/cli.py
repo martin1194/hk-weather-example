@@ -33,6 +33,7 @@ from hk_weather.hko import (
     fetch_max_uv,
     fetch_uv_peak,
     fetch_mean_uv,
+    fetch_daily_uv,
     fetch_dose,
     fetch_hourly_dose,
     fetch_accum_rain,
@@ -182,6 +183,7 @@ from hk_weather.hko import (
     format_uv_peak_miss,
     format_mean_uv,
     format_mean_uv_miss,
+    format_daily_uv_miss,
     format_dose,
     format_dose_miss,
     format_hourly_dose,
@@ -510,6 +512,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--max-uv prints yesterday's maximum UV index; "
             "--uv-peak prints the latest daily maximum UV index and its period; "
             "--mean-uv prints yesterday's mean UV index; "
+            "--daily-uv prints the latest daily mean UV index at King's Park; "
             "--dose prints yesterday's gamma dose rate; "
             "--hourly-dose prints the latest hourly gamma dose rate; "
             "--accum-rain prints accumulated rainfall since 1 January; "
@@ -779,6 +782,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--mean-uv",
         action="store_true",
         help="Print yesterday's mean UV index at King's Park",
+    )
+    parser.add_argument(
+        "--daily-uv",
+        action="store_true",
+        help="Print the latest daily mean UV index (7 a.m. to 6 p.m.) at King's Park",
     )
     parser.add_argument(
         "--dose",
@@ -1592,6 +1600,12 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_mean_uv_miss(as_json=args.json)
             else:
                 text = format_json(mean_uv) if args.json else format_mean_uv(mean_uv)
+        elif args.daily_uv:
+            daily_uv = fetch_daily_uv(timeout=args.timeout, lang=args.lang)
+            if daily_uv is None:
+                text = format_daily_uv_miss(as_json=args.json)
+            else:
+                text = format_json(daily_uv) if args.json else format_mean_uv(daily_uv)
         elif args.dose:
             dose = fetch_dose(timeout=args.timeout, lang=args.lang)
             if dose is None:
