@@ -72,6 +72,8 @@ hk-weather --tai-mo-min
 hk-weather --tai-mo-min --json
 hk-weather --tate-min
 hk-weather --tate-min --json
+hk-weather --sai-kung-min
+hk-weather --sai-kung-min --json
 hk-weather --tai-mo-max
 hk-weather --tai-mo-max --json
 hk-weather --tseung-kwan-o-max
@@ -431,6 +433,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --tai-mo-min` prints the latest daily minimum temperature at Tai Mo Shan, for example `2026-08-31  19.5°C`. `--min-temp` still prints the Observatory minimum, and `--tai-mo-temp` still prints the peak's daily mean. `--tai-mo-min --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Tai Mo Shan minimum temperature is available.`
 
 `hk-weather --tate-min` prints the latest daily minimum temperature at Tate's Cairn, for example `2026-08-31  22.1°C`. `--min-temp` still prints the Observatory minimum, `--tai-mo-min` still prints Tai Mo Shan, and `--tate-temp` still prints Tate's Cairn's daily mean. `--tate-min --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Tate's Cairn minimum temperature is available.`
+
+`hk-weather --sai-kung-min` prints the latest daily minimum temperature at Sai Kung, for example `2026-08-31  26.9°C`. `--min-temp` still prints the Observatory minimum, `--tai-mo-min` still prints Tai Mo Shan, and `--tate-min` still prints Tate's Cairn. `--sai-kung-temp` still prints Sai Kung's daily mean, and `--sai-kung-dew` still prints its dew point. `--sai-kung-min --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Sai Kung minimum temperature is available.`
 
 `hk-weather --tai-mo-max` prints the latest daily maximum temperature at Tai Mo Shan, for example `2026-08-31  24.1°C`. `--max-temp` still prints the Observatory maximum, `--tai-mo-temp` still prints the peak's daily mean, and `--tai-mo-min` still prints the peak's daily minimum. `--tai-mo-max --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Tai Mo Shan maximum temperature is available.`
 
