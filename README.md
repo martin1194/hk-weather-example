@@ -246,6 +246,8 @@ hk-weather --heat-index
 hk-weather --heat-index --json
 hk-weather --daily-heat
 hk-weather --daily-heat --json
+hk-weather --mean-heat
+hk-weather --mean-heat --json
 hk-weather --wbgt
 hk-weather --wbgt --json
 hk-weather --wet-bulb
@@ -535,6 +537,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --heat-index` prints the latest 10-minute mean Hong Kong Heat Index at automatic stations, for example `Happy Valley  25.8`. Earlier minutes in the file are omitted. `--heat-index --json` prints that minute as one JSON object. `--lang` selects the station names. Stations marked `N/A` are omitted. If none remain, it says `No heat index is available.`
 
 `hk-weather --daily-heat` prints the latest daily maximum Hong Kong Heat Index at King's Park, for example `2026-08-31  29.2`. `--heat-index` still prints the latest 10-minute readings. `--daily-heat --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No daily maximum heat index is available.`
+
+`hk-weather --mean-heat` prints the latest daily mean Hong Kong Heat Index at King's Park, for example `2026-08-31  26.6`. `--daily-heat` still prints that day's maximum, and `--heat-index` still prints the latest 10-minute readings. `--mean-heat --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No daily mean heat index is available.`
 
 `hk-weather --wbgt` prints the latest 60-minute mean Wet Bulb Globe Temperature at automatic stations, for example `Happy Valley  25.8°C`. `--heat-index` still prints the Hong Kong Heat Index. Earlier minutes in the file are omitted. `--wbgt --json` prints that minute as one JSON object. `--lang` selects the station names. Stations marked `N/A` are omitted. If none remain, it says `No wet bulb globe temperature is available.`
 
