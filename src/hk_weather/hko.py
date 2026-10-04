@@ -1763,6 +1763,26 @@ def fetch_wong_chuk_hang_dew(timeout: float = 10, lang: str = "en") -> DewPoint 
     return parse_wong_chuk_hang_dew(text, lang)
 
 
+def fetch_sai_kung_dew(timeout: float = 10, lang: str = "en") -> DewPoint | None:
+    """Download the latest daily mean dew point at Sai Kung."""
+    year = _hong_kong_today()[:4]
+    url = (
+        "https://data.weather.gov.hk/weatherAPI/cis/csvfile/SKG/"
+        f"{year}/daily_SKG_DEW_{year}.csv"
+    )
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            raw = response.read()
+    except (urllib.error.URLError, TimeoutError) as exc:
+        raise WeatherError(f"could not reach Hong Kong Observatory: {exc}") from exc
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise WeatherError("Hong Kong Observatory returned invalid text") from exc
+    return parse_sai_kung_dew(text, lang)
+
+
 def fetch_cloud(timeout: float = 10, lang: str = "en") -> CloudAmount | None:
     """Download the latest daily mean cloud amount at the Observatory."""
     year = _hong_kong_today()[:4]
@@ -7203,6 +7223,40 @@ def parse_wong_chuk_hang_dew(text: str, lang: str = "en") -> DewPoint | None:
 def format_wong_chuk_hang_dew_miss(*, as_json: bool = False) -> str:
     """Say that no Wong Chuk Hang dew point is available."""
     return _unavailable("No Wong Chuk Hang dew point is available.", as_json=as_json)
+
+
+_SAI_KUNG_DEW_STATIONS = {
+    "en": "Sai Kung",
+    "tc": "西貢",
+    "sc": "西贡",
+}
+
+
+def parse_sai_kung_dew(text: str, lang: str = "en") -> DewPoint | None:
+    """Turn the Sai Kung dew-point CSV into the latest numeric day."""
+    station = _SAI_KUNG_DEW_STATIONS.get(lang, _SAI_KUNG_DEW_STATIONS["en"])
+    latest: DewPoint | None = None
+    rows = csv.reader(io.StringIO(text))
+    for row in rows:
+        if len(row) < 4:
+            continue
+        year = _text(row[0]).lstrip("\ufeff")
+        month = _text(row[1])
+        day = _text(row[2])
+        value = _hour_mm(row[3])
+        if not (year.isdigit() and month.isdigit() and day.isdigit()) or value is None:
+            continue
+        latest = DewPoint(
+            station,
+            f"{int(year):04d}-{int(month):02d}-{int(day):02d}",
+            value,
+        )
+    return latest
+
+
+def format_sai_kung_dew_miss(*, as_json: bool = False) -> str:
+    """Say that no Sai Kung dew point is available."""
+    return _unavailable("No Sai Kung dew point is available.", as_json=as_json)
 
 
 _CLOUD_STATIONS = {
