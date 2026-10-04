@@ -2947,6 +2947,26 @@ def fetch_wetland_rain(timeout: float = 10, lang: str = "en") -> DailyRain | Non
     return parse_wetland_rain(text, lang)
 
 
+def fetch_sham_shui_po_rain(timeout: float = 10, lang: str = "en") -> DailyRain | None:
+    """Download the latest daily total rainfall at Sham Shui Po."""
+    year = _hong_kong_today()[:4]
+    url = (
+        "https://data.weather.gov.hk/weatherAPI/cis/csvfile/SSP/"
+        f"{year}/daily_SSP_RF_{year}.csv"
+    )
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            raw = response.read()
+    except (urllib.error.URLError, TimeoutError) as exc:
+        raise WeatherError(f"could not reach Hong Kong Observatory: {exc}") from exc
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise WeatherError("Hong Kong Observatory returned invalid text") from exc
+    return parse_sham_shui_po_rain(text, lang)
+
+
 def fetch_rainstorm(
     url: str = DEFAULT_URL, timeout: float = 10, lang: str = "en"
 ) -> RainstormReminder | None:
@@ -7581,6 +7601,40 @@ def parse_wetland_rain(text: str, lang: str = "en") -> DailyRain | None:
 def format_wetland_rain_miss(*, as_json: bool = False) -> str:
     """Say that no Wetland Park rainfall total is available."""
     return _unavailable("No Wetland Park rainfall is available.", as_json=as_json)
+
+
+_SHAM_SHUI_PO_STATIONS = {
+    "en": "Sham Shui Po",
+    "tc": "深水埗",
+    "sc": "深水埗",
+}
+
+
+def parse_sham_shui_po_rain(text: str, lang: str = "en") -> DailyRain | None:
+    """Turn the Sham Shui Po rainfall CSV into the latest numeric day."""
+    station = _SHAM_SHUI_PO_STATIONS.get(lang, _SHAM_SHUI_PO_STATIONS["en"])
+    latest: DailyRain | None = None
+    rows = csv.reader(io.StringIO(text))
+    for row in rows:
+        if len(row) < 4:
+            continue
+        year = _text(row[0]).lstrip("\ufeff")
+        month = _text(row[1])
+        day = _text(row[2])
+        value = _hour_mm(row[3])
+        if not (year.isdigit() and month.isdigit() and day.isdigit()) or value is None:
+            continue
+        latest = DailyRain(
+            station,
+            f"{int(year):04d}-{int(month):02d}-{int(day):02d}",
+            value,
+        )
+    return latest
+
+
+def format_sham_shui_po_rain_miss(*, as_json: bool = False) -> str:
+    """Say that no Sham Shui Po rainfall total is available."""
+    return _unavailable("No Sham Shui Po rainfall is available.", as_json=as_json)
 
 
 def parse_rainstorm(payload: dict) -> RainstormReminder | None:
