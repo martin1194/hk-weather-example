@@ -2373,6 +2373,68 @@ def test_cli_max_uv_when_missing(monkeypatch, capsys):
     assert json.loads(capsys.readouterr().out) == {"message": "No maximum UV index is available."}
 
 
+def test_cli_uv_peak_prints_latest_day(monkeypatch, capsys):
+    seen = {}
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _text_response(
+            "年/Year,月/Month,日/Day,數值/Value,記錄時間/Time recorded,數據完整性/data Completeness\n"
+            "2026,8,29,10,13:00-13:15,C\n"
+            "2026,8,30,***,*** ,\n"
+            "2026,8,31,  5  ,10:00-10:15,C\n"
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--uv-peak", "--lang", "tc"]) == 0
+    assert seen["url"].endswith("daily_KP_MAXUV_2026.csv")
+    assert capsys.readouterr().out == (
+        "Hong Kong daily maximum UV\n"
+        "Station: 京士柏\n"
+        "2026-08-31  5  10:00-10:15\n"
+    )
+
+
+def test_cli_uv_peak_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Year,Month,Day,Value,Time,Completeness\n"
+            "2026,8,31,5,10:00-10:15,C\n"
+        ),
+    )
+    assert main(["--uv-peak", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "station": "King's Park",
+        "date": "2026-08-31",
+        "uv_index": 5.0,
+        "period": "10:00-10:15",
+    }
+
+
+def test_cli_uv_peak_when_missing(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Year,Month,Day,Value,Time,Completeness\n"
+            "2026,8,31,***,***,\n"
+        ),
+    )
+    assert main(["--uv-peak"]) == 0
+    assert capsys.readouterr().out == "No daily maximum UV index is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(""),
+    )
+    assert main(["--uv-peak", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No daily maximum UV index is available."
+    }
+
+
 def test_cli_mean_uv_prints_yesterday_index(monkeypatch, capsys):
     seen = {}
     monkeypatch.setattr("hk_weather.hko._hong_kong_yesterday", lambda now=None: "2026-10-02")

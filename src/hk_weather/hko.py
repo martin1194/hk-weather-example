@@ -863,6 +863,14 @@ class MaxUv:
 
 
 @dataclass(frozen=True)
+class UvPeak:
+    station: str
+    date: str
+    uv_index: float
+    period: str
+
+
+@dataclass(frozen=True)
 class MeanUv:
     station: str
     date: str
@@ -1633,6 +1641,26 @@ def fetch_max_uv(timeout: float = 10, lang: str = "en") -> MaxUv | None:
         f"&station={SUNSHINE_STATION}&lang=en"
     )
     return parse_max_uv(_fetch_json(_apply_lang(url, lang), timeout), day)
+
+
+def fetch_uv_peak(timeout: float = 10, lang: str = "en") -> UvPeak | None:
+    """Download the latest daily maximum UV index and its 15-minute period."""
+    year = _hong_kong_today()[:4]
+    url = (
+        "https://data.weather.gov.hk/weatherAPI/cis/csvfile/KP/"
+        f"{year}/daily_KP_MAXUV_{year}.csv"
+    )
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            raw = response.read()
+    except (urllib.error.URLError, TimeoutError) as exc:
+        raise WeatherError(f"could not reach Hong Kong Observatory: {exc}") from exc
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise WeatherError("Hong Kong Observatory returned invalid text") from exc
+    return parse_uv_peak(text, lang)
 
 
 def fetch_mean_uv(timeout: float = 10, lang: str = "en") -> MeanUv | None:
@@ -5661,6 +5689,57 @@ def format_max_uv_miss(*, as_json: bool = False) -> str:
     return _unavailable("No maximum UV index is available.", as_json=as_json)
 
 
+_UV_PEAK_STATIONS = {
+    "en": "King's Park",
+    "tc": "京士柏",
+    "sc": "京士柏",
+}
+_UV_PEAK_MISSING = {"", "***", "N/A", "n/a", "----", "////"}
+
+
+def parse_uv_peak(text: str, lang: str = "en") -> UvPeak | None:
+    """Turn the King's Park maximum-UV CSV into the latest numeric day."""
+    station = _UV_PEAK_STATIONS.get(lang, _UV_PEAK_STATIONS["en"])
+    latest: UvPeak | None = None
+    rows = csv.reader(io.StringIO(text))
+    for row in rows:
+        if len(row) < 4:
+            continue
+        year = _text(row[0]).lstrip("\ufeff")
+        month = _text(row[1])
+        day = _text(row[2])
+        value = _hour_mm(row[3])
+        if not (year.isdigit() and month.isdigit() and day.isdigit()) or value is None:
+            continue
+        period = _text(row[4]) if len(row) > 4 else ""
+        if period in _UV_PEAK_MISSING:
+            period = ""
+        latest = UvPeak(
+            station,
+            f"{int(year):04d}-{int(month):02d}-{int(day):02d}",
+            value,
+            period,
+        )
+    return latest
+
+
+def format_uv_peak(reading: UvPeak) -> str:
+    """Render the latest daily maximum UV index and when it occurred."""
+    line = f"{reading.date}  {_number(reading.uv_index)}"
+    if reading.period:
+        line = f"{line}  {reading.period}"
+    return (
+        "Hong Kong daily maximum UV\n"
+        f"Station: {reading.station}\n"
+        f"{line}\n"
+    )
+
+
+def format_uv_peak_miss(*, as_json: bool = False) -> str:
+    """Say that no daily maximum UV index is available."""
+    return _unavailable("No daily maximum UV index is available.", as_json=as_json)
+
+
 def parse_mean_uv(payload: dict, date: str) -> MeanUv | None:
     """Turn a `RYES` document into yesterday's mean UV index at King's Park."""
     index = _hour_mm(payload.get("KingsParkReadingsMeanUVIndex"))
@@ -6542,6 +6621,7 @@ def format_json(
     | Sunshine
     | DailySun
     | MaxUv
+    | UvPeak
     | MeanUv
     | GammaDose
     | HourlyDoseReport
