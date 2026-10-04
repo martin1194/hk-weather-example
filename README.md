@@ -64,6 +64,8 @@ hk-weather --max-temp
 hk-weather --max-temp --json
 hk-weather --min-temp
 hk-weather --min-temp --json
+hk-weather --tai-mo-min
+hk-weather --tai-mo-min --json
 hk-weather --dew-point
 hk-weather --dew-point --json
 hk-weather --park-dew
@@ -347,6 +349,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --max-temp` prints the latest daily maximum temperature at the Observatory for that same year (`dataType=CLMMAXT`, station HKO), for example `2026-08-31  29.5°C`. `--mean-temp` still prints the daily mean. `--hottest` still prints the current warmest place. `--max-temp --json` prints that day as one JSON object. `--lang` applies. If no numeric day is present, it says `No daily maximum temperature is available.`
 
 `hk-weather --min-temp` prints the latest daily minimum temperature at the Observatory for that same year (`dataType=CLMMINT`, station HKO), for example `2026-08-31  26.2°C`. `--max-temp` still prints the daily maximum. `--coldest` still prints the current coolest place. `--min-temp --json` prints that day as one JSON object. `--lang` applies. If no numeric day is present, it says `No daily minimum temperature is available.`
+
+`hk-weather --tai-mo-min` prints the latest daily minimum temperature at Tai Mo Shan, for example `2026-08-31  19.5°C`. `--min-temp` still prints the Observatory minimum, and `--tai-mo-temp` still prints the peak's daily mean. `--tai-mo-min --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Tai Mo Shan minimum temperature is available.`
 
 `hk-weather --dew-point` prints the latest daily mean dew point at the Observatory for the current Hong Kong year, for example `2026-08-31  25°C`. `--mean-temp` still prints the daily mean air temperature. `--dew-point --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No dew point is available.`
 

@@ -127,6 +127,7 @@ from hk_weather.hko import (
     fetch_yesterday,
     fetch_mean_temp,
     fetch_tai_mo_temp,
+    fetch_tai_mo_min,
     fetch_max_temp,
     fetch_min_temp,
     fetch_dew_point,
@@ -352,6 +353,8 @@ from hk_weather.hko import (
     format_mean_temp_miss,
     format_tai_mo_temp,
     format_tai_mo_temp_miss,
+    format_tai_mo_min,
+    format_tai_mo_min_miss,
     format_max_temp,
     format_max_temp_miss,
     format_min_temp,
@@ -464,6 +467,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--tai-mo-temp prints the latest daily mean temperature at Tai Mo Shan; "
             "--max-temp prints the latest daily maximum temperature; "
             "--min-temp prints the latest daily minimum temperature; "
+            "--tai-mo-min prints the latest daily minimum temperature at Tai Mo Shan; "
             "--dew-point prints the latest daily mean dew point; "
             "--park-dew prints the latest daily mean dew point at King's Park; "
             "--cloud prints the latest daily mean cloud amount; "
@@ -668,6 +672,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--min-temp",
         action="store_true",
         help="Print the latest daily minimum temperature at the Observatory",
+    )
+    parser.add_argument(
+        "--tai-mo-min",
+        action="store_true",
+        help="Print the latest daily minimum temperature at Tai Mo Shan",
     )
     parser.add_argument(
         "--dew-point",
@@ -1407,6 +1416,12 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_min_temp_miss(as_json=args.json)
             else:
                 text = format_json(min_temp) if args.json else format_min_temp(min_temp)
+        elif args.tai_mo_min:
+            tai_mo_min = fetch_tai_mo_min(timeout=args.timeout, lang=args.lang)
+            if tai_mo_min is None:
+                text = format_tai_mo_min_miss(as_json=args.json)
+            else:
+                text = format_json(tai_mo_min) if args.json else format_tai_mo_min(tai_mo_min)
         elif args.dew_point:
             dew_point = fetch_dew_point(timeout=args.timeout, lang=args.lang)
             if dew_point is None:
