@@ -93,6 +93,7 @@ from hk_weather.hko import (
     fetch_daily_grass,
     fetch_temp_diff,
     fetch_heat_index,
+    fetch_daily_heat,
     fetch_wbgt,
     fetch_wet_bulb,
     fetch_solar,
@@ -288,6 +289,8 @@ from hk_weather.hko import (
     format_temp_diff_miss,
     format_heat_index,
     format_heat_index_miss,
+    format_daily_heat,
+    format_daily_heat_miss,
     format_wbgt,
     format_wbgt_miss,
     format_wet_bulb,
@@ -428,6 +431,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--daily-grass prints the latest daily grass minimum; "
             "--temp-diff prints the past 24-hour temperature change; "
             "--heat-index prints the latest Hong Kong Heat Index; "
+            "--daily-heat prints the latest daily maximum heat index at King's Park; "
             "--wbgt prints the latest Wet Bulb Globe Temperature; "
             "--wet-bulb prints the latest daily wet-bulb temperature; "
             "--solar prints the latest solar radiation; "
@@ -1088,6 +1092,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--heat-index",
         action="store_true",
         help="Print the latest 10-minute mean Hong Kong Heat Index",
+    )
+    parser.add_argument(
+        "--daily-heat",
+        action="store_true",
+        help="Print the latest daily maximum Hong Kong Heat Index at King's Park",
     )
     parser.add_argument(
         "--wbgt",
@@ -1872,6 +1881,12 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_heat_index_miss(as_json=args.json)
             else:
                 text = format_json(heat_index) if args.json else format_heat_index(heat_index)
+        elif args.daily_heat:
+            daily_heat = fetch_daily_heat(timeout=args.timeout, lang=args.lang)
+            if daily_heat is None:
+                text = format_daily_heat_miss(as_json=args.json)
+            else:
+                text = format_json(daily_heat) if args.json else format_daily_heat(daily_heat)
         elif args.wbgt:
             wbgt = fetch_wbgt(timeout=args.timeout, lang=args.lang)
             if not wbgt.stations:
