@@ -78,6 +78,8 @@ hk-weather --wong-chuk-hang-min
 hk-weather --wong-chuk-hang-min --json
 hk-weather --waglan-min
 hk-weather --waglan-min --json
+hk-weather --sha-tin-min
+hk-weather --sha-tin-min --json
 hk-weather --tai-mo-max
 hk-weather --tai-mo-max --json
 hk-weather --tseung-kwan-o-max
@@ -469,6 +471,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --wong-chuk-hang-min` prints the latest daily minimum temperature at Wong Chuk Hang, for example `2026-08-31  26.6°C`. `--min-temp` still prints the Observatory minimum, `--tai-mo-min` still prints Tai Mo Shan, `--tate-min` still prints Tate's Cairn, and `--sai-kung-min` still prints Sai Kung. `--wong-chuk-hang-dew` still prints Wong Chuk Hang's dew point. `--wong-chuk-hang-min --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Wong Chuk Hang minimum temperature is available.`
 
 `hk-weather --waglan-min` prints the latest daily minimum temperature at Waglan Island, for example `2026-08-31  26°C`. `--min-temp` still prints the Observatory minimum, `--tai-mo-min` still prints Tai Mo Shan, `--tate-min` still prints Tate's Cairn, `--sai-kung-min` still prints Sai Kung, and `--wong-chuk-hang-min` still prints Wong Chuk Hang. `--waglan-max` still prints Waglan Island's maximum, `--waglan-humidity` still prints its humidity, and `--waglan-pressure` still prints its pressure. `--waglan-min --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Waglan Island minimum temperature is available.`
+
+`hk-weather --sha-tin-min` prints the latest daily minimum temperature at Sha Tin, for example `2026-08-31  26.1°C`. `--min-temp` still prints the Observatory minimum, `--tai-mo-min` still prints Tai Mo Shan, `--tate-min` still prints Tate's Cairn, `--sai-kung-min` still prints Sai Kung, `--wong-chuk-hang-min` still prints Wong Chuk Hang, and `--waglan-min` still prints Waglan Island. `--sha-tin-humidity` still prints Sha Tin's humidity, `--sha-tin-dew` still prints its dew point, `--sha-tin-pressure` still prints its pressure, and `--sha-tin-rain` still prints its rainfall. `--sha-tin-min --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Sha Tin minimum temperature is available.`
 
 `hk-weather --tai-mo-max` prints the latest daily maximum temperature at Tai Mo Shan, for example `2026-08-31  24.1°C`. `--max-temp` still prints the Observatory maximum, `--tai-mo-temp` still prints the peak's daily mean, and `--tai-mo-min` still prints the peak's daily minimum. `--tai-mo-max --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Tai Mo Shan maximum temperature is available.`
 
