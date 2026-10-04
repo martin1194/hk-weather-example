@@ -70,6 +70,8 @@ hk-weather --tai-mo-min
 hk-weather --tai-mo-min --json
 hk-weather --tai-mo-max
 hk-weather --tai-mo-max --json
+hk-weather --tseung-kwan-o-max
+hk-weather --tseung-kwan-o-max --json
 hk-weather --dew-point
 hk-weather --dew-point --json
 hk-weather --park-dew
@@ -379,6 +381,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --tai-mo-min` prints the latest daily minimum temperature at Tai Mo Shan, for example `2026-08-31  19.5°C`. `--min-temp` still prints the Observatory minimum, and `--tai-mo-temp` still prints the peak's daily mean. `--tai-mo-min --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Tai Mo Shan minimum temperature is available.`
 
 `hk-weather --tai-mo-max` prints the latest daily maximum temperature at Tai Mo Shan, for example `2026-08-31  24.1°C`. `--max-temp` still prints the Observatory maximum, `--tai-mo-temp` still prints the peak's daily mean, and `--tai-mo-min` still prints the peak's daily minimum. `--tai-mo-max --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Tai Mo Shan maximum temperature is available.`
+
+`hk-weather --tseung-kwan-o-max` prints the latest daily maximum temperature at Tseung Kwan O, for example `2026-08-31  31.2°C`. `--max-temp` still prints the Observatory maximum, and `--tai-mo-max` still prints Tai Mo Shan. `--tseung-kwan-o-max --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Tseung Kwan O maximum temperature is available.`
 
 `hk-weather --dew-point` prints the latest daily mean dew point at the Observatory for the current Hong Kong year, for example `2026-08-31  25°C`. `--mean-temp` still prints the daily mean air temperature. `--dew-point --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No dew point is available.`
 
