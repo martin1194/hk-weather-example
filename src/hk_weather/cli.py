@@ -47,6 +47,7 @@ from hk_weather.hko import (
     fetch_humidity,
     fetch_humidity_time,
     fetch_minute_humidity,
+    fetch_mean_humidity,
     fetch_icon_time,
     fetch_icon,
     fetch_current_updated,
@@ -191,6 +192,8 @@ from hk_weather.hko import (
     format_humidity_time_miss,
     format_minute_humidity,
     format_minute_humidity_miss,
+    format_mean_humidity,
+    format_mean_humidity_miss,
     format_hour_rain,
     format_hour_rain_miss,
     format_hour_wettest,
@@ -399,6 +402,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--humidity lists humidity readings; "
             "--humidity-time prints when those readings were recorded; "
             "--minute-humidity prints the latest 1-minute mean humidity; "
+            "--mean-humidity prints the latest daily mean humidity; "
             "--temps lists temperatures by place; "
             "--temp-time prints when those temperatures were recorded; "
             "--minute-temp prints the latest 1-minute mean temperature; "
@@ -468,7 +472,8 @@ def build_parser() -> argparse.ArgumentParser:
             "--rainstorm prints the rainstorm reminder; "
             "--cyclone prints the tropical cyclone message; "
             "--humidest prints the most humid place; "
-            "--least-humid prints the least humid place."
+            "--least-humid prints the least humid place; "
+            "--mean-humidity prints the latest daily mean humidity."
         ),
     )
     parser.add_argument(
@@ -982,6 +987,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--least-humid",
         action="store_true",
         help="Print the least humid place from the current report",
+    )
+    parser.add_argument(
+        "--mean-humidity",
+        action="store_true",
+        help="Print the latest daily mean humidity at the Observatory",
     )
     parser.add_argument(
         "--temps",
@@ -1702,6 +1712,16 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_least_humid_miss(as_json=args.json)
             else:
                 text = format_json(least_humid) if args.json else format_least_humid(least_humid)
+        elif args.mean_humidity:
+            mean_humidity = fetch_mean_humidity(timeout=args.timeout, lang=args.lang)
+            if mean_humidity is None:
+                text = format_mean_humidity_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(mean_humidity)
+                    if args.json
+                    else format_mean_humidity(mean_humidity)
+                )
         elif args.temps:
             temps = fetch_temps(timeout=args.timeout, lang=args.lang)
             text = format_json(temps) if args.json else format_temps(temps)
