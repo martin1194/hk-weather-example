@@ -96,6 +96,7 @@ from hk_weather.hko import (
     fetch_temp_diff,
     fetch_heat_index,
     fetch_daily_heat,
+    fetch_mean_heat,
     fetch_wbgt,
     fetch_wet_bulb,
     fetch_airport_wet,
@@ -300,6 +301,8 @@ from hk_weather.hko import (
     format_heat_index_miss,
     format_daily_heat,
     format_daily_heat_miss,
+    format_mean_heat,
+    format_mean_heat_miss,
     format_wbgt,
     format_wbgt_miss,
     format_wet_bulb,
@@ -451,6 +454,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--temp-diff prints the past 24-hour temperature change; "
             "--heat-index prints the latest Hong Kong Heat Index; "
             "--daily-heat prints the latest daily maximum heat index at King's Park; "
+            "--mean-heat prints the latest daily mean heat index at King's Park; "
             "--wbgt prints the latest Wet Bulb Globe Temperature; "
             "--wet-bulb prints the latest daily wet-bulb temperature; "
             "--airport-wet prints the latest daily wet-bulb temperature at the airport; "
@@ -1151,6 +1155,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--daily-heat",
         action="store_true",
         help="Print the latest daily maximum Hong Kong Heat Index at King's Park",
+    )
+    parser.add_argument(
+        "--mean-heat",
+        action="store_true",
+        help="Print the latest daily mean Hong Kong Heat Index at King's Park",
     )
     parser.add_argument(
         "--wbgt",
@@ -1988,6 +1997,12 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_daily_heat_miss(as_json=args.json)
             else:
                 text = format_json(daily_heat) if args.json else format_daily_heat(daily_heat)
+        elif args.mean_heat:
+            mean_heat = fetch_mean_heat(timeout=args.timeout, lang=args.lang)
+            if mean_heat is None:
+                text = format_mean_heat_miss(as_json=args.json)
+            else:
+                text = format_json(mean_heat) if args.json else format_mean_heat(mean_heat)
         elif args.wbgt:
             wbgt = fetch_wbgt(timeout=args.timeout, lang=args.lang)
             if not wbgt.stations:
