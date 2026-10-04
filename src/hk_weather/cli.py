@@ -104,6 +104,7 @@ from hk_weather.hko import (
     fetch_park_pressure,
     fetch_sha_tin_pressure,
     fetch_sheung_shui_pressure,
+    fetch_waglan_pressure,
     fetch_minute_grass,
     fetch_daily_grass,
     fetch_obs_grass,
@@ -337,6 +338,7 @@ from hk_weather.hko import (
     format_park_pressure_miss,
     format_sha_tin_pressure_miss,
     format_sheung_shui_pressure_miss,
+    format_waglan_pressure_miss,
     format_minute_grass,
     format_minute_grass_miss,
     format_daily_grass,
@@ -522,6 +524,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--park-pressure prints the latest daily mean pressure at King's Park; "
             "--sha-tin-pressure prints the latest daily mean pressure at Sha Tin; "
             "--sheung-shui-pressure prints the latest daily mean pressure at Sheung Shui; "
+            "--waglan-pressure prints the latest daily mean pressure at Waglan Island; "
             "--minute-grass prints the latest 1-minute grass temperature; "
             "--daily-grass prints the latest daily grass minimum; "
             "--obs-grass prints the latest daily grass minimum at the Observatory; "
@@ -1379,6 +1382,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--sheung-shui-pressure",
         action="store_true",
         help="Print the latest daily mean pressure at Sheung Shui",
+    )
+    parser.add_argument(
+        "--waglan-pressure",
+        action="store_true",
+        help="Print the latest daily mean pressure at Waglan Island",
     )
     parser.add_argument(
         "--minute-grass",
@@ -2502,6 +2510,16 @@ def main(argv: list[str] | None = None) -> int:
                     format_json(sheung_shui_pressure)
                     if args.json
                     else format_mean_pressure(sheung_shui_pressure)
+                )
+        elif args.waglan_pressure:
+            waglan_pressure = fetch_waglan_pressure(timeout=args.timeout, lang=args.lang)
+            if waglan_pressure is None:
+                text = format_waglan_pressure_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(waglan_pressure)
+                    if args.json
+                    else format_mean_pressure(waglan_pressure)
                 )
         elif args.minute_grass:
             minute_grass = fetch_minute_grass(timeout=args.timeout, lang=args.lang)
