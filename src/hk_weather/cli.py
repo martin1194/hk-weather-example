@@ -136,6 +136,7 @@ from hk_weather.hko import (
     fetch_min_temp,
     fetch_dew_point,
     fetch_park_dew,
+    fetch_cheung_dew,
     fetch_cloud,
     fetch_evaporation,
     fetch_evapotranspiration,
@@ -372,6 +373,7 @@ from hk_weather.hko import (
     format_dew_point,
     format_dew_point_miss,
     format_park_dew_miss,
+    format_cheung_dew_miss,
     format_cloud,
     format_cloud_miss,
     format_evaporation,
@@ -483,6 +485,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--tai-mo-max prints the latest daily maximum temperature at Tai Mo Shan; "
             "--dew-point prints the latest daily mean dew point; "
             "--park-dew prints the latest daily mean dew point at King's Park; "
+            "--cheung-dew prints the latest daily mean dew point at Cheung Chau; "
             "--cloud prints the latest daily mean cloud amount; "
             "--evaporation prints the latest daily evaporation; "
             "--evapotranspiration prints the latest monthly potential evapotranspiration; "
@@ -706,6 +709,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--park-dew",
         action="store_true",
         help="Print the latest daily mean dew point at King's Park",
+    )
+    parser.add_argument(
+        "--cheung-dew",
+        action="store_true",
+        help="Print the latest daily mean dew point at Cheung Chau",
     )
     parser.add_argument(
         "--cloud",
@@ -1474,6 +1482,12 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_park_dew_miss(as_json=args.json)
             else:
                 text = format_json(park_dew) if args.json else format_dew_point(park_dew)
+        elif args.cheung_dew:
+            cheung_dew = fetch_cheung_dew(timeout=args.timeout, lang=args.lang)
+            if cheung_dew is None:
+                text = format_cheung_dew_miss(as_json=args.json)
+            else:
+                text = format_json(cheung_dew) if args.json else format_dew_point(cheung_dew)
         elif args.cloud:
             cloud = fetch_cloud(timeout=args.timeout, lang=args.lang)
             if cloud is None:
