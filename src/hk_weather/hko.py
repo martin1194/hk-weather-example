@@ -3287,6 +3287,26 @@ def fetch_park_rain(timeout: float = 10, lang: str = "en") -> DailyRain | None:
     return parse_park_rain(text, lang)
 
 
+def fetch_tseung_kwan_o_rain(timeout: float = 10, lang: str = "en") -> DailyRain | None:
+    """Download the latest daily total rainfall at Tseung Kwan O."""
+    year = _hong_kong_today()[:4]
+    url = (
+        "https://data.weather.gov.hk/weatherAPI/cis/csvfile/JKB/"
+        f"{year}/daily_JKB_RF_{year}.csv"
+    )
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            raw = response.read()
+    except (urllib.error.URLError, TimeoutError) as exc:
+        raise WeatherError(f"could not reach Hong Kong Observatory: {exc}") from exc
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise WeatherError("Hong Kong Observatory returned invalid text") from exc
+    return parse_tseung_kwan_o_rain(text, lang)
+
+
 def fetch_rainstorm(
     url: str = DEFAULT_URL, timeout: float = 10, lang: str = "en"
 ) -> RainstormReminder | None:
@@ -8503,6 +8523,33 @@ def parse_park_rain(text: str, lang: str = "en") -> DailyRain | None:
 def format_park_rain_miss(*, as_json: bool = False) -> str:
     """Say that no King's Park rainfall total is available."""
     return _unavailable("No King's Park rainfall is available.", as_json=as_json)
+
+
+def parse_tseung_kwan_o_rain(text: str, lang: str = "en") -> DailyRain | None:
+    """Turn the Tseung Kwan O rainfall CSV into the latest numeric day."""
+    station = _TSEUNG_KWAN_O_STATIONS.get(lang, _TSEUNG_KWAN_O_STATIONS["en"])
+    latest: DailyRain | None = None
+    rows = csv.reader(io.StringIO(text))
+    for row in rows:
+        if len(row) < 4:
+            continue
+        year = _text(row[0]).lstrip("\ufeff")
+        month = _text(row[1])
+        day = _text(row[2])
+        value = _hour_mm(row[3])
+        if not (year.isdigit() and month.isdigit() and day.isdigit()) or value is None:
+            continue
+        latest = DailyRain(
+            station,
+            f"{int(year):04d}-{int(month):02d}-{int(day):02d}",
+            value,
+        )
+    return latest
+
+
+def format_tseung_kwan_o_rain_miss(*, as_json: bool = False) -> str:
+    """Say that no Tseung Kwan O rainfall total is available."""
+    return _unavailable("No Tseung Kwan O rainfall is available.", as_json=as_json)
 
 
 def parse_rainstorm(payload: dict) -> RainstormReminder | None:
