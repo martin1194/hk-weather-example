@@ -101,6 +101,7 @@ from hk_weather.hko import (
     fetch_today,
     fetch_tomorrow,
     fetch_uv,
+    fetch_fifteen_uv,
     fetch_visibility,
     fetch_warning_info,
     fetch_warnings,
@@ -293,6 +294,8 @@ from hk_weather.hko import (
     format_tomorrow,
     format_tomorrow_miss,
     format_uv,
+    format_fifteen_uv,
+    format_fifteen_uv_miss,
     format_visibility,
     format_warning_info,
     format_wettest,
@@ -373,7 +376,9 @@ def build_parser() -> argparse.ArgumentParser:
             "--nine-humidity prints each day's humidity from the 9-day forecast; "
             "--warnings lists active warnings; "
             "--warning-time prints when active warnings were issued; "
-            "--uv prints the UV index; --icon-time prints when the weather icon changed; "
+            "--uv prints the UV index; "
+            "--fifteen-uv prints the latest 15-minute mean UV index; "
+            "--icon-time prints when the weather icon changed; "
             "--icon prints the current weather icon; "
             "--current-updated prints when the current weather report was updated; "
             "--tips prints special weather tips; "
@@ -826,6 +831,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--uv",
         action="store_true",
         help="Print the UV index from the current weather report",
+    )
+    parser.add_argument(
+        "--fifteen-uv",
+        action="store_true",
+        help="Print the latest 15-minute mean UV index at King's Park",
     )
     parser.add_argument(
         "-i",
@@ -1513,6 +1523,12 @@ def main(argv: list[str] | None = None) -> int:
         elif args.uv:
             uv = fetch_uv(timeout=args.timeout, lang=args.lang)
             text = format_json(uv) if args.json else format_uv(uv)
+        elif args.fifteen_uv:
+            fifteen_uv = fetch_fifteen_uv(timeout=args.timeout, lang=args.lang)
+            if fifteen_uv is None:
+                text = format_fifteen_uv_miss(as_json=args.json)
+            else:
+                text = format_json(fifteen_uv) if args.json else format_fifteen_uv(fifteen_uv)
         elif args.icon_time:
             icon_time = fetch_icon_time(timeout=args.timeout, lang=args.lang)
             if icon_time is None:
