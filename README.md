@@ -94,6 +94,8 @@ hk-weather --uv-peak
 hk-weather --uv-peak --json
 hk-weather --mean-uv
 hk-weather --mean-uv --json
+hk-weather --daily-uv
+hk-weather --daily-uv --json
 hk-weather --dose
 hk-weather --dose --json
 hk-weather --hourly-dose
@@ -399,6 +401,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --uv-peak` prints the latest daily maximum UV index at King's Park and the 15-minute period when it occurred, for example `2026-08-31  5  10:00-10:15`. `--max-uv` still prints yesterday's index, and `--fifteen-uv` still prints the latest 15-minute mean. A reading of zero is kept. `--uv-peak --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No daily maximum UV index is available.`
 
 `hk-weather --mean-uv` prints yesterday's mean UV index at King's Park (`KingsParkReadingsMeanUVIndex` on that same report), for example `2026-10-02  2`. `--max-uv` still prints the maximum. `--uv` still prints the current UV index. `--mean-uv --json` prints that day as one JSON object. `--lang` applies. If the reading is missing, it says `No mean UV index is available.`
+
+`hk-weather --daily-uv` prints the latest daily mean UV index at King's Park for 7 a.m. to 6 p.m., for example `2026-08-31  2`. `--mean-uv` still prints yesterday's index, `--uv-peak` still prints that day's maximum and its period, and `--max-uv` still prints yesterday's maximum. `--daily-uv --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No King's Park daily mean UV index is available.`
 
 `hk-weather --dose` prints yesterday's average ambient gamma dose rate at King's Park (`KingsParkMicrosieverts` on that same report), for example `2026-10-02  0.15 µSv/h`. `--radiation` still prints the outdoor radiation paragraph. `--dose --json` prints that day as one JSON object. `--lang` applies. If the reading is missing, it says `No gamma dose rate is available.`
 
