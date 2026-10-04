@@ -173,6 +173,7 @@ from hk_weather.hko import (
     fetch_waglan_min,
     fetch_sha_tin_min,
     fetch_cheung_chau_min,
+    fetch_park_min,
     fetch_tai_mo_max,
     fetch_tseung_kwan_o_max,
     fetch_sheung_shui_max,
@@ -461,6 +462,7 @@ from hk_weather.hko import (
     format_waglan_min_miss,
     format_sha_tin_min_miss,
     format_cheung_chau_min_miss,
+    format_park_min_miss,
     format_tai_mo_max,
     format_tai_mo_max_miss,
     format_tseung_kwan_o_max_miss,
@@ -624,6 +626,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--waglan-min prints the latest daily minimum temperature at Waglan Island; "
             "--sha-tin-min prints the latest daily minimum temperature at Sha Tin; "
             "--cheung-chau-min prints the latest daily minimum temperature at Cheung Chau; "
+            "--park-min prints the latest daily minimum temperature at King's Park; "
             "--tai-mo-max prints the latest daily maximum temperature at Tai Mo Shan; "
             "--tseung-kwan-o-max prints the latest daily maximum temperature at Tseung Kwan O; "
             "--sheung-shui-max prints the latest daily maximum temperature at Sheung Shui; "
@@ -899,6 +902,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--cheung-chau-min",
         action="store_true",
         help="Print the latest daily minimum temperature at Cheung Chau",
+    )
+    parser.add_argument(
+        "--park-min",
+        action="store_true",
+        help="Print the latest daily minimum temperature at King's Park",
     )
     parser.add_argument(
         "--tai-mo-max",
@@ -1968,6 +1976,12 @@ def main(argv: list[str] | None = None) -> int:
                     if args.json
                     else format_tai_mo_min(cheung_chau_min)
                 )
+        elif args.park_min:
+            park_min = fetch_park_min(timeout=args.timeout, lang=args.lang)
+            if park_min is None:
+                text = format_park_min_miss(as_json=args.json)
+            else:
+                text = format_json(park_min) if args.json else format_tai_mo_min(park_min)
         elif args.tai_mo_max:
             tai_mo_max = fetch_tai_mo_max(timeout=args.timeout, lang=args.lang)
             if tai_mo_max is None:
