@@ -101,6 +101,7 @@ from hk_weather.hko import (
     fetch_mean_pressure,
     fetch_park_pressure,
     fetch_sha_tin_pressure,
+    fetch_sheung_shui_pressure,
     fetch_minute_grass,
     fetch_daily_grass,
     fetch_obs_grass,
@@ -328,6 +329,7 @@ from hk_weather.hko import (
     format_mean_pressure_miss,
     format_park_pressure_miss,
     format_sha_tin_pressure_miss,
+    format_sheung_shui_pressure_miss,
     format_minute_grass,
     format_minute_grass_miss,
     format_daily_grass,
@@ -508,6 +510,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--mean-pressure prints the latest daily mean pressure; "
             "--park-pressure prints the latest daily mean pressure at King's Park; "
             "--sha-tin-pressure prints the latest daily mean pressure at Sha Tin; "
+            "--sheung-shui-pressure prints the latest daily mean pressure at Sheung Shui; "
             "--minute-grass prints the latest 1-minute grass temperature; "
             "--daily-grass prints the latest daily grass minimum; "
             "--obs-grass prints the latest daily grass minimum at the Observatory; "
@@ -1331,6 +1334,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--sha-tin-pressure",
         action="store_true",
         help="Print the latest daily mean pressure at Sha Tin",
+    )
+    parser.add_argument(
+        "--sheung-shui-pressure",
+        action="store_true",
+        help="Print the latest daily mean pressure at Sheung Shui",
     )
     parser.add_argument(
         "--minute-grass",
@@ -2394,6 +2402,18 @@ def main(argv: list[str] | None = None) -> int:
                     format_json(sha_tin_pressure)
                     if args.json
                     else format_mean_pressure(sha_tin_pressure)
+                )
+        elif args.sheung_shui_pressure:
+            sheung_shui_pressure = fetch_sheung_shui_pressure(
+                timeout=args.timeout, lang=args.lang
+            )
+            if sheung_shui_pressure is None:
+                text = format_sheung_shui_pressure_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(sheung_shui_pressure)
+                    if args.json
+                    else format_mean_pressure(sheung_shui_pressure)
                 )
         elif args.minute_grass:
             minute_grass = fetch_minute_grass(timeout=args.timeout, lang=args.lang)
