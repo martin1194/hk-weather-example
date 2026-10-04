@@ -105,6 +105,7 @@ from hk_weather.hko import (
     fetch_uv,
     fetch_fifteen_uv,
     fetch_visibility,
+    fetch_reduced_vis,
     fetch_warning_info,
     fetch_warnings,
     fetch_warning_time,
@@ -303,6 +304,8 @@ from hk_weather.hko import (
     format_fifteen_uv,
     format_fifteen_uv_miss,
     format_visibility,
+    format_reduced_vis,
+    format_reduced_vis_miss,
     format_warning_info,
     format_wettest,
     format_wettest_miss,
@@ -452,6 +455,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--warning-info prints detailed warning messages; "
             "--weekend prints Saturday and Sunday; "
             "--visibility lists 10-minute mean visibility; "
+            "--reduced-vis prints the latest daily hours of reduced visibility; "
             "--hottest prints the warmest place; "
             "--coldest prints the coolest place; "
             "--overnight prints the midnight-to-9am minimum; "
@@ -783,6 +787,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--visibility",
         action="store_true",
         help="Print the latest 10-minute mean visibility",
+    )
+    parser.add_argument(
+        "--reduced-vis",
+        action="store_true",
+        help="Print the latest daily hours of reduced visibility at the airport",
     )
     parser.add_argument(
         "-I",
@@ -1503,6 +1512,12 @@ def main(argv: list[str] | None = None) -> int:
         elif args.visibility:
             visibility = fetch_visibility(timeout=args.timeout, lang=args.lang)
             text = format_json(visibility) if args.json else format_visibility(visibility)
+        elif args.reduced_vis:
+            reduced_vis = fetch_reduced_vis(timeout=args.timeout, lang=args.lang)
+            if reduced_vis is None:
+                text = format_reduced_vis_miss(as_json=args.json)
+            else:
+                text = format_json(reduced_vis) if args.json else format_reduced_vis(reduced_vis)
         elif args.tide:
             tide = fetch_tide(timeout=args.timeout, lang=args.lang)
             if not tide.events:

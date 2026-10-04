@@ -619,6 +619,13 @@ class VisibilityReport:
 
 
 @dataclass(frozen=True)
+class ReducedVisibility:
+    station: str
+    date: str
+    hours: float
+
+
+@dataclass(frozen=True)
 class TideEvent:
     date: str
     time: str
@@ -2084,6 +2091,26 @@ def fetch_visibility(
 ) -> VisibilityReport:
     """Download the latest 10-minute mean visibility (`dataType=LTMV`)."""
     return parse_visibility(_fetch_json(_apply_lang(url, lang), timeout))
+
+
+def fetch_reduced_vis(timeout: float = 10, lang: str = "en") -> ReducedVisibility | None:
+    """Download the latest daily hours of reduced visibility at the airport."""
+    year = _hong_kong_today()[:4]
+    url = (
+        "https://data.weather.gov.hk/weatherAPI/cis/csvfile/HKA/"
+        f"{year}/daily_HKA_RVIS_{year}.csv"
+    )
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            raw = response.read()
+    except (urllib.error.URLError, TimeoutError) as exc:
+        raise WeatherError(f"could not reach Hong Kong Observatory: {exc}") from exc
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise WeatherError("Hong Kong Observatory returned invalid text") from exc
+    return parse_reduced_vis(text, lang)
 
 
 def fetch_tide(timeout: float = 10, lang: str = "en") -> TideReport:
@@ -3628,6 +3655,49 @@ def format_visibility(report: VisibilityReport) -> str:
         f"{reading.time}  {reading.place}  {reading.visibility}" for reading in report.readings
     )
     return "\n".join(lines) + "\n"
+
+
+_REDUCED_VIS_STATIONS = {
+    "en": "Hong Kong International Airport",
+    "tc": "香港國際機場",
+    "sc": "香港国际机场",
+}
+
+
+def parse_reduced_vis(text: str, lang: str = "en") -> ReducedVisibility | None:
+    """Turn the airport visibility CSV into the latest numeric day."""
+    station = _REDUCED_VIS_STATIONS.get(lang, _REDUCED_VIS_STATIONS["en"])
+    latest: ReducedVisibility | None = None
+    rows = csv.reader(io.StringIO(text))
+    for row in rows:
+        if len(row) < 4:
+            continue
+        year = _text(row[0]).lstrip("\ufeff")
+        month = _text(row[1])
+        day = _text(row[2])
+        value = _hour_mm(row[3])
+        if not (year.isdigit() and month.isdigit() and day.isdigit()) or value is None:
+            continue
+        latest = ReducedVisibility(
+            station,
+            f"{int(year):04d}-{int(month):02d}-{int(day):02d}",
+            value,
+        )
+    return latest
+
+
+def format_reduced_vis(reading: ReducedVisibility) -> str:
+    """Render the latest daily hours of reduced visibility at the airport."""
+    return (
+        "Hong Kong reduced visibility\n"
+        f"Station: {reading.station}\n"
+        f"{reading.date}  {_number(reading.hours)} hours\n"
+    )
+
+
+def format_reduced_vis_miss(*, as_json: bool = False) -> str:
+    """Say that no reduced-visibility total is available."""
+    return _unavailable("No reduced visibility is available.", as_json=as_json)
 
 
 def parse_tide(payload: dict, year: int) -> TideReport:
@@ -6415,6 +6485,7 @@ def format_json(
     | PsrForecast
     | WeekendForecast
     | VisibilityReport
+    | ReducedVisibility
     | HottestReading
     | ColdestReading
     | OvernightMinimum

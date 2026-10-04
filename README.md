@@ -123,6 +123,8 @@ hk-weather --felt
 hk-weather --felt --json
 hk-weather --visibility
 hk-weather --visibility --json
+hk-weather --reduced-vis
+hk-weather --reduced-vis --json
 hk-weather --tide
 hk-weather --tide --json
 hk-weather --tide-hour
@@ -383,6 +385,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --felt` (or `-q`) prints the latest locally felt earth tremor (`dataType=feltearthquake`), including time, magnitude, place, and intensity when the Observatory sends them. `--felt --json` prints that report as one JSON object. `--lang` applies. If none is reported, it says `No locally felt earth tremor is reported.`
 
 `hk-weather --visibility` (or `-V`) prints the latest 10-minute mean visibility (`opendata.php`, `dataType=LTMV`), for example `2026-10-03 07:30  Central  14 km`. `--visibility --json` prints those stations as one JSON object. `--lang` applies. Stations marked `N/A` are omitted. If none remain, it says so.
+
+`hk-weather --reduced-vis` prints the latest daily hours of reduced visibility at Hong Kong International Airport, for example `2026-08-31  0 hours`. `--visibility` still prints the latest 10-minute station readings. A total of zero is kept. `--reduced-vis --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No reduced visibility is available.`
 
 `hk-weather --tide` (or `-I`) prints today's astronomical high and low tides at Quarry Bay (`opendata.php`, `dataType=HLT`), for example `2026-10-03  01:05  2.44 m`. `--tide --json` prints that list as one JSON object. `--lang` applies. If none are present, it says so.
 
