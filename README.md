@@ -240,6 +240,8 @@ hk-weather --pressure
 hk-weather --pressure --json
 hk-weather --mean-pressure
 hk-weather --mean-pressure --json
+hk-weather --park-pressure
+hk-weather --park-pressure --json
 hk-weather --minute-grass
 hk-weather --minute-grass --json
 hk-weather --daily-grass
@@ -537,6 +539,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --pressure` prints the latest 1-minute mean sea level pressure at automatic stations, for example `Chek Lap Kok  1011.9 hPa`. `--pressure --json` prints those stations as one JSON object. `--lang` selects the English, Traditional Chinese, or Simplified Chinese station names. Stations marked `N/A` are omitted. If none remain, it says `No sea level pressure is available.`
 
 `hk-weather --mean-pressure` prints the latest daily mean pressure at the Observatory, for example `2026-08-31  998.7 hPa`. `--pressure` still prints the latest 1-minute station readings. `--mean-pressure --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No daily mean pressure is available.`
+
+`hk-weather --park-pressure` prints the latest daily mean pressure at King's Park, for example `2026-08-31  998.5 hPa`. `--mean-pressure` still prints the Observatory reading, and `--pressure` still prints the latest 1-minute station readings. `--park-dew` still prints King's Park's dew point. `--park-pressure --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No King's Park pressure is available.`
 
 `hk-weather --minute-grass` prints the latest 1-minute mean grass temperature at automatic stations, for example `King's Park  25.9°C`. `--grass` still prints yesterday's grass minimum at the Observatory. `--minute-grass --json` prints those stations as one JSON object. `--lang` selects the station names. Stations marked `N/A` are omitted. If none remain, it says `No 1-minute grass temperatures are available.`
 
