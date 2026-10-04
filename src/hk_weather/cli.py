@@ -153,6 +153,7 @@ from hk_weather.hko import (
     fetch_tai_mo_max,
     fetch_tseung_kwan_o_max,
     fetch_sheung_shui_max,
+    fetch_waglan_max,
     fetch_max_temp,
     fetch_min_temp,
     fetch_dew_point,
@@ -410,6 +411,7 @@ from hk_weather.hko import (
     format_tai_mo_max_miss,
     format_tseung_kwan_o_max_miss,
     format_sheung_shui_max_miss,
+    format_waglan_max_miss,
     format_max_temp,
     format_max_temp_miss,
     format_min_temp,
@@ -546,6 +548,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--tai-mo-max prints the latest daily maximum temperature at Tai Mo Shan; "
             "--tseung-kwan-o-max prints the latest daily maximum temperature at Tseung Kwan O; "
             "--sheung-shui-max prints the latest daily maximum temperature at Sheung Shui; "
+            "--waglan-max prints the latest daily maximum temperature at Waglan Island; "
             "--dew-point prints the latest daily mean dew point; "
             "--park-dew prints the latest daily mean dew point at King's Park; "
             "--cheung-dew prints the latest daily mean dew point at Cheung Chau; "
@@ -793,6 +796,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--sheung-shui-max",
         action="store_true",
         help="Print the latest daily maximum temperature at Sheung Shui",
+    )
+    parser.add_argument(
+        "--waglan-max",
+        action="store_true",
+        help="Print the latest daily maximum temperature at Waglan Island",
     )
     parser.add_argument(
         "--dew-point",
@@ -1696,6 +1704,12 @@ def main(argv: list[str] | None = None) -> int:
                     if args.json
                     else format_tai_mo_max(sheung_shui_max)
                 )
+        elif args.waglan_max:
+            waglan_max = fetch_waglan_max(timeout=args.timeout, lang=args.lang)
+            if waglan_max is None:
+                text = format_waglan_max_miss(as_json=args.json)
+            else:
+                text = format_json(waglan_max) if args.json else format_tai_mo_max(waglan_max)
         elif args.dew_point:
             dew_point = fetch_dew_point(timeout=args.timeout, lang=args.lang)
             if dew_point is None:

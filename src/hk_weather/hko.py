@@ -1663,6 +1663,26 @@ def fetch_sheung_shui_max(timeout: float = 10, lang: str = "en") -> TaiMoTemp | 
     return parse_sheung_shui_max(text, lang)
 
 
+def fetch_waglan_max(timeout: float = 10, lang: str = "en") -> TaiMoTemp | None:
+    """Download the latest daily maximum temperature at Waglan Island."""
+    year = _hong_kong_today()[:4]
+    url = (
+        "https://data.weather.gov.hk/weatherAPI/cis/csvfile/WGL/"
+        f"{year}/daily_WGL_MAXT_{year}.csv"
+    )
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            raw = response.read()
+    except (urllib.error.URLError, TimeoutError) as exc:
+        raise WeatherError(f"could not reach Hong Kong Observatory: {exc}") from exc
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise WeatherError("Hong Kong Observatory returned invalid text") from exc
+    return parse_waglan_max(text, lang)
+
+
 def fetch_max_temp(timeout: float = 10, lang: str = "en") -> DailyMax | None:
     """Download the latest daily maximum temperature (`dataType=CLMMAXT`, station HKO)."""
     year = _hong_kong_today()[:4]
@@ -7075,6 +7095,42 @@ def format_sheung_shui_max_miss(*, as_json: bool = False) -> str:
     """Say that no Sheung Shui maximum temperature is available."""
     return _unavailable(
         "No Sheung Shui maximum temperature is available.", as_json=as_json
+    )
+
+
+_WAGLAN_MAX_STATIONS = {
+    "en": "Waglan Island",
+    "tc": "橫瀾島",
+    "sc": "横澜岛",
+}
+
+
+def parse_waglan_max(text: str, lang: str = "en") -> TaiMoTemp | None:
+    """Turn the Waglan Island maximum-temperature CSV into the latest numeric day."""
+    station = _WAGLAN_MAX_STATIONS.get(lang, _WAGLAN_MAX_STATIONS["en"])
+    latest: TaiMoTemp | None = None
+    rows = csv.reader(io.StringIO(text))
+    for row in rows:
+        if len(row) < 4:
+            continue
+        year = _text(row[0]).lstrip("\ufeff")
+        month = _text(row[1])
+        day = _text(row[2])
+        value = _hour_mm(row[3])
+        if not (year.isdigit() and month.isdigit() and day.isdigit()) or value is None:
+            continue
+        latest = TaiMoTemp(
+            station,
+            f"{int(year):04d}-{int(month):02d}-{int(day):02d}",
+            value,
+        )
+    return latest
+
+
+def format_waglan_max_miss(*, as_json: bool = False) -> str:
+    """Say that no Waglan Island maximum temperature is available."""
+    return _unavailable(
+        "No Waglan Island maximum temperature is available.", as_json=as_json
     )
 
 
