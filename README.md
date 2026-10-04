@@ -78,6 +78,8 @@ hk-weather --daily-sun
 hk-weather --daily-sun --json
 hk-weather --max-uv
 hk-weather --max-uv --json
+hk-weather --uv-peak
+hk-weather --uv-peak --json
 hk-weather --mean-uv
 hk-weather --mean-uv --json
 hk-weather --dose
@@ -341,6 +343,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --daily-sun` prints the latest daily bright sunshine total at King's Park, for example `2026-08-31  2.2 hours`. `--sunshine` still prints yesterday's duration. A total of zero is kept. `--daily-sun --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No daily sunshine is available.`
 
 `hk-weather --max-uv` prints yesterday's maximum UV index at King's Park (`KingsParkReadingsMaxUVIndex` on that same report), for example `2026-10-02  6`. `--uv` still prints the current UV index. `--sunshine` still prints the sunshine duration. `--max-uv --json` prints that day as one JSON object. `--lang` applies. If the reading is missing, it says `No maximum UV index is available.`
+
+`hk-weather --uv-peak` prints the latest daily maximum UV index at King's Park and the 15-minute period when it occurred, for example `2026-08-31  5  10:00-10:15`. `--max-uv` still prints yesterday's index, and `--fifteen-uv` still prints the latest 15-minute mean. A reading of zero is kept. `--uv-peak --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No daily maximum UV index is available.`
 
 `hk-weather --mean-uv` prints yesterday's mean UV index at King's Park (`KingsParkReadingsMeanUVIndex` on that same report), for example `2026-10-02  2`. `--max-uv` still prints the maximum. `--uv` still prints the current UV index. `--mean-uv --json` prints that day as one JSON object. `--lang` applies. If the reading is missing, it says `No mean UV index is available.`
 
