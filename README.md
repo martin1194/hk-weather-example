@@ -248,6 +248,8 @@ hk-weather --waglan-humidity
 hk-weather --waglan-humidity --json
 hk-weather --tate-humidity
 hk-weather --tate-humidity --json
+hk-weather --ta-kwu-ling-humidity
+hk-weather --ta-kwu-ling-humidity --json
 hk-weather --temps
 hk-weather --temps --json
 hk-weather --temp-time
@@ -571,6 +573,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --waglan-humidity` prints the latest daily mean relative humidity at Waglan Island, for example `2026-08-31  91%`. `--mean-humidity` still prints the Observatory reading, and `--tai-mo-humidity` still prints Tai Mo Shan. `--mean-wind` still prints Waglan Island's daily mean wind speed. `--waglan-humidity --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Waglan Island humidity is available.`
 
 `hk-weather --tate-humidity` prints the latest daily mean relative humidity at Tate's Cairn, for example `2026-08-31  95%`. `--mean-humidity` still prints the Observatory reading, `--tai-mo-humidity` still prints Tai Mo Shan, and `--tate-temp` still prints Tate's Cairn's daily mean temperature. `--tate-humidity --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Tate's Cairn humidity is available.`
+
+`hk-weather --ta-kwu-ling-humidity` prints the latest daily mean relative humidity at Ta Kwu Ling, for example `2026-08-31  94%`. `--mean-humidity` still prints the Observatory reading, `--tai-mo-humidity` still prints Tai Mo Shan, `--waglan-humidity` still prints Waglan Island, and `--tate-humidity` still prints Tate's Cairn. `--ta-kwu-ling-humidity --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Ta Kwu Ling humidity is available.`
 
 `hk-weather --temps` prints temperature by place from the current report, with the record time when the Observatory includes it. `--temps --json` prints that list as one JSON object. If no readings are present, it says so.
 
