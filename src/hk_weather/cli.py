@@ -60,6 +60,7 @@ from hk_weather.hko import (
     fetch_tate_humidity,
     fetch_ta_kwu_ling_humidity,
     fetch_wetland_humidity,
+    fetch_shek_kong_humidity,
     fetch_icon_time,
     fetch_icon,
     fetch_current_updated,
@@ -252,6 +253,7 @@ from hk_weather.hko import (
     format_tate_humidity_miss,
     format_ta_kwu_ling_humidity_miss,
     format_wetland_humidity_miss,
+    format_shek_kong_humidity_miss,
     format_hour_rain,
     format_hour_rain_miss,
     format_hour_wettest,
@@ -506,6 +508,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--tate-humidity prints the latest daily mean humidity at Tate's Cairn; "
             "--ta-kwu-ling-humidity prints the latest daily mean humidity at Ta Kwu Ling; "
             "--wetland-humidity prints the latest daily mean humidity at Wetland Park; "
+            "--shek-kong-humidity prints the latest daily mean humidity at Shek Kong; "
             "--temps lists temperatures by place; "
             "--temp-time prints when those temperatures were recorded; "
             "--minute-temp prints the latest 1-minute mean temperature; "
@@ -1310,6 +1313,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--wetland-humidity",
         action="store_true",
         help="Print the latest daily mean humidity at Wetland Park",
+    )
+    parser.add_argument(
+        "--shek-kong-humidity",
+        action="store_true",
+        help="Print the latest daily mean humidity at Shek Kong",
     )
     parser.add_argument(
         "--temps",
@@ -2375,6 +2383,16 @@ def main(argv: list[str] | None = None) -> int:
                     format_json(wetland_humidity)
                     if args.json
                     else format_mean_humidity(wetland_humidity)
+                )
+        elif args.shek_kong_humidity:
+            shek_kong_humidity = fetch_shek_kong_humidity(timeout=args.timeout, lang=args.lang)
+            if shek_kong_humidity is None:
+                text = format_shek_kong_humidity_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(shek_kong_humidity)
+                    if args.json
+                    else format_mean_humidity(shek_kong_humidity)
                 )
         elif args.temps:
             temps = fetch_temps(timeout=args.timeout, lang=args.lang)
