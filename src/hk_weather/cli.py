@@ -128,6 +128,7 @@ from hk_weather.hko import (
     fetch_mean_temp,
     fetch_tai_mo_temp,
     fetch_tai_mo_min,
+    fetch_tai_mo_max,
     fetch_max_temp,
     fetch_min_temp,
     fetch_dew_point,
@@ -355,6 +356,8 @@ from hk_weather.hko import (
     format_tai_mo_temp_miss,
     format_tai_mo_min,
     format_tai_mo_min_miss,
+    format_tai_mo_max,
+    format_tai_mo_max_miss,
     format_max_temp,
     format_max_temp_miss,
     format_min_temp,
@@ -468,6 +471,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--max-temp prints the latest daily maximum temperature; "
             "--min-temp prints the latest daily minimum temperature; "
             "--tai-mo-min prints the latest daily minimum temperature at Tai Mo Shan; "
+            "--tai-mo-max prints the latest daily maximum temperature at Tai Mo Shan; "
             "--dew-point prints the latest daily mean dew point; "
             "--park-dew prints the latest daily mean dew point at King's Park; "
             "--cloud prints the latest daily mean cloud amount; "
@@ -677,6 +681,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--tai-mo-min",
         action="store_true",
         help="Print the latest daily minimum temperature at Tai Mo Shan",
+    )
+    parser.add_argument(
+        "--tai-mo-max",
+        action="store_true",
+        help="Print the latest daily maximum temperature at Tai Mo Shan",
     )
     parser.add_argument(
         "--dew-point",
@@ -1422,6 +1431,12 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_tai_mo_min_miss(as_json=args.json)
             else:
                 text = format_json(tai_mo_min) if args.json else format_tai_mo_min(tai_mo_min)
+        elif args.tai_mo_max:
+            tai_mo_max = fetch_tai_mo_max(timeout=args.timeout, lang=args.lang)
+            if tai_mo_max is None:
+                text = format_tai_mo_max_miss(as_json=args.json)
+            else:
+                text = format_json(tai_mo_max) if args.json else format_tai_mo_max(tai_mo_max)
         elif args.dew_point:
             dew_point = fetch_dew_point(timeout=args.timeout, lang=args.lang)
             if dew_point is None:
