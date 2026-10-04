@@ -68,6 +68,8 @@ hk-weather --sha-tin-temp
 hk-weather --sha-tin-temp --json
 hk-weather --sheung-shui-temp
 hk-weather --sheung-shui-temp --json
+hk-weather --wong-chuk-hang-temp
+hk-weather --wong-chuk-hang-temp --json
 hk-weather --max-temp
 hk-weather --max-temp --json
 hk-weather --min-temp
@@ -501,6 +503,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --sha-tin-temp` prints the latest daily mean temperature at Sha Tin, for example `2026-08-31  27.5°C`. `--mean-temp` still prints the Observatory reading, `--tai-mo-temp` still prints Tai Mo Shan, `--tate-temp` still prints Tate's Cairn, and `--sai-kung-temp` still prints Sai Kung. `--sha-tin-min` still prints Sha Tin's minimum, `--sha-tin-max` still prints its maximum, `--sha-tin-humidity` still prints its humidity, `--sha-tin-dew` still prints its dew point, `--sha-tin-pressure` still prints its pressure, and `--sha-tin-rain` still prints its rainfall. `--sha-tin-temp --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Sha Tin temperature is available.`
 
 `hk-weather --sheung-shui-temp` prints the latest daily mean temperature at Sheung Shui, for example `2026-08-31  27.1°C`. `--mean-temp` still prints the Observatory reading, `--tai-mo-temp` still prints Tai Mo Shan, `--tate-temp` still prints Tate's Cairn, `--sai-kung-temp` still prints Sai Kung, and `--sha-tin-temp` still prints Sha Tin. `--sheung-shui-min` still prints Sheung Shui's minimum, `--sheung-shui-max` still prints its maximum, `--sheung-shui-dew` still prints its dew point, `--sheung-shui-pressure` still prints its pressure, `--sheung-shui-rain` still prints its rainfall, and `--sheung-shui-humidity` still prints its humidity. `--sheung-shui-temp --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Sheung Shui temperature is available.`
+
+`hk-weather --wong-chuk-hang-temp` prints the latest daily mean temperature at Wong Chuk Hang, for example `2026-08-31  27.7°C`. `--mean-temp` still prints the Observatory reading, `--tai-mo-temp` still prints Tai Mo Shan, `--tate-temp` still prints Tate's Cairn, `--sai-kung-temp` still prints Sai Kung, `--sha-tin-temp` still prints Sha Tin, and `--sheung-shui-temp` still prints Sheung Shui. `--wong-chuk-hang-min` still prints Wong Chuk Hang's minimum, `--wong-chuk-hang-max` still prints its maximum, `--wong-chuk-hang-dew` still prints its dew point, and `--wong-chuk-hang-humidity` still prints its humidity. `--wong-chuk-hang-temp --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Wong Chuk Hang temperature is available.`
 
 `hk-weather --max-temp` prints the latest daily maximum temperature at the Observatory for that same year (`dataType=CLMMAXT`, station HKO), for example `2026-08-31  29.5°C`. `--mean-temp` still prints the daily mean. `--hottest` still prints the current warmest place. `--max-temp --json` prints that day as one JSON object. `--lang` applies. If no numeric day is present, it says `No daily maximum temperature is available.`
 
