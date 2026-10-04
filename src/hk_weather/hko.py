@@ -2094,6 +2094,26 @@ def fetch_daily_grass(timeout: float = 10, lang: str = "en") -> DailyGrass | Non
     return parse_daily_grass(text, lang)
 
 
+def fetch_obs_grass(timeout: float = 10, lang: str = "en") -> DailyGrass | None:
+    """Download the latest daily grass minimum at the Observatory."""
+    year = _hong_kong_today()[:4]
+    url = (
+        "https://data.weather.gov.hk/weatherAPI/cis/csvfile/HKO/"
+        f"{year}/daily_HKO_GMT_{year}.csv"
+    )
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            raw = response.read()
+    except (urllib.error.URLError, TimeoutError) as exc:
+        raise WeatherError(f"could not reach Hong Kong Observatory: {exc}") from exc
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise WeatherError("Hong Kong Observatory returned invalid text") from exc
+    return parse_obs_grass(text, lang)
+
+
 def fetch_temp_diff(timeout: float = 10, lang: str = "en") -> TempDiffReport:
     """Download the past 24-hour temperature change at automatic stations."""
     url = TEMP_DIFF_URLS.get(lang, TEMP_DIFF_URLS["en"])
@@ -4637,6 +4657,40 @@ def format_daily_grass(reading: DailyGrass) -> str:
 def format_daily_grass_miss(*, as_json: bool = False) -> str:
     """Say that no daily grass minimum is available."""
     return _unavailable("No daily grass temperature is available.", as_json=as_json)
+
+
+_OBS_GRASS_STATIONS = {
+    "en": "Hong Kong Observatory",
+    "tc": "香港天文台",
+    "sc": "香港天文台",
+}
+
+
+def parse_obs_grass(text: str, lang: str = "en") -> DailyGrass | None:
+    """Turn the Observatory grass-temperature CSV into the latest numeric day."""
+    station = _OBS_GRASS_STATIONS.get(lang, _OBS_GRASS_STATIONS["en"])
+    latest: DailyGrass | None = None
+    rows = csv.reader(io.StringIO(text))
+    for row in rows:
+        if len(row) < 4:
+            continue
+        year = _text(row[0]).lstrip("\ufeff")
+        month = _text(row[1])
+        day = _text(row[2])
+        value = _hour_mm(row[3])
+        if not (year.isdigit() and month.isdigit() and day.isdigit()) or value is None:
+            continue
+        latest = DailyGrass(
+            station,
+            f"{int(year):04d}-{int(month):02d}-{int(day):02d}",
+            value,
+        )
+    return latest
+
+
+def format_obs_grass_miss(*, as_json: bool = False) -> str:
+    """Say that no Observatory grass minimum is available."""
+    return _unavailable("No Observatory grass temperature is available.", as_json=as_json)
 
 
 def _signed_change(value: str) -> float | None:

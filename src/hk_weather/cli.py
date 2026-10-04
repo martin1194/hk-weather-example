@@ -91,6 +91,7 @@ from hk_weather.hko import (
     fetch_mean_pressure,
     fetch_minute_grass,
     fetch_daily_grass,
+    fetch_obs_grass,
     fetch_temp_diff,
     fetch_heat_index,
     fetch_daily_heat,
@@ -286,6 +287,7 @@ from hk_weather.hko import (
     format_minute_grass_miss,
     format_daily_grass,
     format_daily_grass_miss,
+    format_obs_grass_miss,
     format_temp_diff,
     format_temp_diff_miss,
     format_heat_index,
@@ -432,6 +434,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--mean-pressure prints the latest daily mean pressure; "
             "--minute-grass prints the latest 1-minute grass temperature; "
             "--daily-grass prints the latest daily grass minimum; "
+            "--obs-grass prints the latest daily grass minimum at the Observatory; "
             "--temp-diff prints the past 24-hour temperature change; "
             "--heat-index prints the latest Hong Kong Heat Index; "
             "--daily-heat prints the latest daily maximum heat index at King's Park; "
@@ -1091,6 +1094,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--daily-grass",
         action="store_true",
         help="Print the latest daily grass minimum at King's Park",
+    )
+    parser.add_argument(
+        "--obs-grass",
+        action="store_true",
+        help="Print the latest daily grass minimum at the Observatory",
     )
     parser.add_argument(
         "--temp-diff",
@@ -1886,6 +1894,12 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_daily_grass_miss(as_json=args.json)
             else:
                 text = format_json(daily_grass) if args.json else format_daily_grass(daily_grass)
+        elif args.obs_grass:
+            obs_grass = fetch_obs_grass(timeout=args.timeout, lang=args.lang)
+            if obs_grass is None:
+                text = format_obs_grass_miss(as_json=args.json)
+            else:
+                text = format_json(obs_grass) if args.json else format_daily_grass(obs_grass)
         elif args.temp_diff:
             temp_diff = fetch_temp_diff(timeout=args.timeout, lang=args.lang)
             if not temp_diff.stations:
