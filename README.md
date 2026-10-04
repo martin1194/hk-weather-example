@@ -78,6 +78,8 @@ hk-weather --park-dew
 hk-weather --park-dew --json
 hk-weather --cheung-dew
 hk-weather --cheung-dew --json
+hk-weather --wong-chuk-hang-dew
+hk-weather --wong-chuk-hang-dew --json
 hk-weather --cloud
 hk-weather --cloud --json
 hk-weather --evaporation
@@ -397,6 +399,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --park-dew` prints the latest daily mean dew point at King's Park, for example `2026-08-31  24.7°C`. `--dew-point` still prints the Observatory reading. `--park-dew --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No King's Park dew point is available.`
 
 `hk-weather --cheung-dew` prints the latest daily mean dew point at Cheung Chau, for example `2026-08-31  25.6°C`. `--dew-point` still prints the Observatory reading, and `--park-dew` still prints King's Park. `--cheung-wind` still prints Cheung Chau's daily mean wind speed. `--cheung-dew --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Cheung Chau dew point is available.`
+
+`hk-weather --wong-chuk-hang-dew` prints the latest daily mean dew point at Wong Chuk Hang, for example `2026-08-31  25.9°C`. `--dew-point` still prints the Observatory reading, `--park-dew` still prints King's Park, and `--cheung-dew` still prints Cheung Chau. `--wong-chuk-hang-dew --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Wong Chuk Hang dew point is available.`
 
 `hk-weather --cloud` prints the latest daily mean cloud amount at the Observatory for the current Hong Kong year, for example `2026-08-31  88%`. `--dew-point` still prints the dew point. `--cloud --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No cloud amount is available.`
 
