@@ -940,6 +940,13 @@ class NowcastReport:
 
 
 @dataclass(frozen=True)
+class DailyRain:
+    station: str
+    date: str
+    rainfall_mm: float
+
+
+@dataclass(frozen=True)
 class LightningReport:
     places: tuple[str, ...]
 
@@ -2183,6 +2190,26 @@ def fetch_nowcast(timeout: float = 10, lang: str = "en") -> NowcastReport:
     except UnicodeDecodeError as exc:
         raise WeatherError("Hong Kong Observatory returned invalid text") from exc
     return parse_nowcast(text)
+
+
+def fetch_daily_rain(timeout: float = 10, lang: str = "en") -> DailyRain | None:
+    """Download the latest daily total rainfall at the Observatory."""
+    year = _hong_kong_today()[:4]
+    url = (
+        "https://data.weather.gov.hk/weatherAPI/cis/csvfile/HKO/"
+        f"{year}/daily_HKO_RF_{year}.csv"
+    )
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            raw = response.read()
+    except (urllib.error.URLError, TimeoutError) as exc:
+        raise WeatherError(f"could not reach Hong Kong Observatory: {exc}") from exc
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise WeatherError("Hong Kong Observatory returned invalid text") from exc
+    return parse_daily_rain(text, lang)
 
 
 def fetch_rainstorm(
@@ -5559,6 +5586,49 @@ def format_nowcast_miss(*, as_json: bool = False) -> str:
     return _unavailable("No rainfall nowcast is available.", as_json=as_json)
 
 
+_DAILY_RAIN_STATIONS = {
+    "en": "Hong Kong Observatory",
+    "tc": "香港天文台",
+    "sc": "香港天文台",
+}
+
+
+def parse_daily_rain(text: str, lang: str = "en") -> DailyRain | None:
+    """Turn the Observatory rainfall CSV into the latest numeric day."""
+    station = _DAILY_RAIN_STATIONS.get(lang, _DAILY_RAIN_STATIONS["en"])
+    latest: DailyRain | None = None
+    rows = csv.reader(io.StringIO(text))
+    for row in rows:
+        if len(row) < 4:
+            continue
+        year = _text(row[0]).lstrip("\ufeff")
+        month = _text(row[1])
+        day = _text(row[2])
+        value = _hour_mm(row[3])
+        if not (year.isdigit() and month.isdigit() and day.isdigit()) or value is None:
+            continue
+        latest = DailyRain(
+            station,
+            f"{int(year):04d}-{int(month):02d}-{int(day):02d}",
+            value,
+        )
+    return latest
+
+
+def format_daily_rain(reading: DailyRain) -> str:
+    """Render the latest daily total rainfall at the Observatory."""
+    return (
+        "Hong Kong daily rainfall\n"
+        f"Station: {reading.station}\n"
+        f"{reading.date}  {_number(reading.rainfall_mm)} mm\n"
+    )
+
+
+def format_daily_rain_miss(*, as_json: bool = False) -> str:
+    """Say that no daily rainfall total is available."""
+    return _unavailable("No daily rainfall is available.", as_json=as_json)
+
+
 def parse_rainstorm(payload: dict) -> RainstormReminder | None:
     """Turn the `rhrread` rainstorm reminder into one message."""
     text = _text(payload.get("rainstormReminder"))
@@ -6065,6 +6135,7 @@ def format_json(
     | WettestReading
     | DriestReading
     | NowcastReport
+    | DailyRain
     | RainstormReminder
     | CycloneMessage
     | TideReport

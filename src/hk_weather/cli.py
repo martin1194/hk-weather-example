@@ -11,6 +11,7 @@ from hk_weather.hko import (
     fetch_current,
     fetch_driest,
     fetch_nowcast,
+    fetch_daily_rain,
     fetch_forecast,
     fetch_outlook,
     fetch_coastal,
@@ -125,6 +126,8 @@ from hk_weather.hko import (
     format_driest_miss,
     format_nowcast,
     format_nowcast_miss,
+    format_daily_rain,
+    format_daily_rain_miss,
     format_forecast,
     format_outlook,
     format_outlook_miss,
@@ -441,6 +444,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--wettest prints the wettest district; "
             "--driest prints the driest district; "
             "--nowcast prints the heaviest rainfall-nowcast cell in each half-hour; "
+            "--daily-rain prints the latest daily rainfall total; "
             "--tide prints today's high and low tides; "
             "--tide-hour prints today's hourly tide heights; "
             "--tide-latest prints the latest observed tide height; "
@@ -893,6 +897,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--nowcast",
         action="store_true",
         help="Print the heaviest cell in each half-hour of the rainfall nowcast",
+    )
+    parser.add_argument(
+        "--daily-rain",
+        action="store_true",
+        help="Print the latest daily total rainfall at the Observatory",
     )
     parser.add_argument(
         "--rainstorm",
@@ -1577,6 +1586,12 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_nowcast_miss(as_json=args.json)
             else:
                 text = format_json(nowcast) if args.json else format_nowcast(nowcast)
+        elif args.daily_rain:
+            daily_rain = fetch_daily_rain(timeout=args.timeout, lang=args.lang)
+            if daily_rain is None:
+                text = format_daily_rain_miss(as_json=args.json)
+            else:
+                text = format_json(daily_rain) if args.json else format_daily_rain(daily_rain)
         elif args.rainstorm:
             rainstorm = fetch_rainstorm(timeout=args.timeout, lang=args.lang)
             if rainstorm is None:
