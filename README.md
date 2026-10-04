@@ -218,6 +218,8 @@ hk-weather --mean-pressure
 hk-weather --mean-pressure --json
 hk-weather --minute-grass
 hk-weather --minute-grass --json
+hk-weather --daily-grass
+hk-weather --daily-grass --json
 hk-weather --temp-diff
 hk-weather --temp-diff --json
 hk-weather --heat-index
@@ -481,6 +483,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --mean-pressure` prints the latest daily mean pressure at the Observatory, for example `2026-08-31  998.7 hPa`. `--pressure` still prints the latest 1-minute station readings. `--mean-pressure --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No daily mean pressure is available.`
 
 `hk-weather --minute-grass` prints the latest 1-minute mean grass temperature at automatic stations, for example `King's Park  25.9°C`. `--grass` still prints yesterday's grass minimum at the Observatory. `--minute-grass --json` prints those stations as one JSON object. `--lang` selects the station names. Stations marked `N/A` are omitted. If none remain, it says `No 1-minute grass temperatures are available.`
+
+`hk-weather --daily-grass` prints the latest daily grass minimum at King's Park, for example `2026-08-31  23.9°C`. `--grass` still prints yesterday's Observatory minimum, and `--minute-grass` still prints the 1-minute readings. A reading of zero is kept. `--daily-grass --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No daily grass temperature is available.`
 
 `hk-weather --temp-diff` prints the past 24-hour air-temperature change at automatic stations, for example `Chek Lap Kok  -0.6°C` and `HK Observatory  +0.4°C`. `--minute-temp` still prints the latest 1-minute temperature. `--temp-diff --json` prints those stations as one JSON object. `--lang` selects the station names. Stations marked `N/A` are omitted. If none remain, it says `No 24-hour temperature changes are available.`
 
