@@ -2586,6 +2586,26 @@ def fetch_shek_kong_humidity(timeout: float = 10, lang: str = "en") -> MeanHumid
     return parse_shek_kong_humidity(text, lang)
 
 
+def fetch_lau_fau_humidity(timeout: float = 10, lang: str = "en") -> MeanHumidity | None:
+    """Download the latest daily mean relative humidity at Lau Fau Shan."""
+    year = _hong_kong_today()[:4]
+    url = (
+        "https://data.weather.gov.hk/weatherAPI/cis/csvfile/LFS/"
+        f"{year}/daily_LFS_RH_{year}.csv"
+    )
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            raw = response.read()
+    except (urllib.error.URLError, TimeoutError) as exc:
+        raise WeatherError(f"could not reach Hong Kong Observatory: {exc}") from exc
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise WeatherError("Hong Kong Observatory returned invalid text") from exc
+    return parse_lau_fau_humidity(text, lang)
+
+
 def fetch_since_midnight(timeout: float = 10, lang: str = "en") -> SinceMidnightReport:
     """Download each station's maximum and minimum temperature since midnight."""
     url = SINCE_MIDNIGHT_URLS.get(lang, SINCE_MIDNIGHT_URLS["en"])
@@ -5769,6 +5789,40 @@ def parse_shek_kong_humidity(text: str, lang: str = "en") -> MeanHumidity | None
 def format_shek_kong_humidity_miss(*, as_json: bool = False) -> str:
     """Say that no Shek Kong humidity is available."""
     return _unavailable("No Shek Kong humidity is available.", as_json=as_json)
+
+
+_LAU_FAU_HUMIDITY_STATIONS = {
+    "en": "Lau Fau Shan",
+    "tc": "流浮山",
+    "sc": "流浮山",
+}
+
+
+def parse_lau_fau_humidity(text: str, lang: str = "en") -> MeanHumidity | None:
+    """Turn the Lau Fau Shan humidity CSV into the latest numeric day."""
+    station = _LAU_FAU_HUMIDITY_STATIONS.get(lang, _LAU_FAU_HUMIDITY_STATIONS["en"])
+    latest: MeanHumidity | None = None
+    rows = csv.reader(io.StringIO(text))
+    for row in rows:
+        if len(row) < 4:
+            continue
+        year = _text(row[0]).lstrip("\ufeff")
+        month = _text(row[1])
+        day = _text(row[2])
+        value = _hour_mm(row[3])
+        if not (year.isdigit() and month.isdigit() and day.isdigit()) or value is None:
+            continue
+        latest = MeanHumidity(
+            station,
+            f"{int(year):04d}-{int(month):02d}-{int(day):02d}",
+            value,
+        )
+    return latest
+
+
+def format_lau_fau_humidity_miss(*, as_json: bool = False) -> str:
+    """Say that no Lau Fau Shan humidity is available."""
+    return _unavailable("No Lau Fau Shan humidity is available.", as_json=as_json)
 
 
 def parse_since_midnight(text: str) -> SinceMidnightReport:
