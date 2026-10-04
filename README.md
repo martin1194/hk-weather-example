@@ -132,6 +132,8 @@ hk-weather --sheung-shui-dew
 hk-weather --sheung-shui-dew --json
 hk-weather --waglan-dew
 hk-weather --waglan-dew --json
+hk-weather --lau-fau-dew
+hk-weather --lau-fau-dew --json
 hk-weather --cloud
 hk-weather --cloud --json
 hk-weather --evaporation
@@ -561,6 +563,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --sheung-shui-dew` prints the latest daily mean dew point at Sheung Shui, for example `2026-08-31  24.8°C`. `--dew-point` still prints the Observatory reading, `--park-dew` still prints King's Park, `--cheung-dew` still prints Cheung Chau, `--wong-chuk-hang-dew` still prints Wong Chuk Hang, `--sai-kung-dew` still prints Sai Kung, and `--sha-tin-dew` still prints Sha Tin. `--sheung-shui-max` still prints Sheung Shui's maximum temperature, `--sheung-shui-pressure` still prints its pressure, `--sheung-shui-rain` still prints its rainfall, and `--sheung-shui-humidity` still prints its humidity. `--sheung-shui-dew --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Sheung Shui dew point is available.`
 
 `hk-weather --waglan-dew` prints the latest daily mean dew point at Waglan Island, for example `2026-08-31  26°C`. `--dew-point` still prints the Observatory reading, `--park-dew` still prints King's Park, `--cheung-dew` still prints Cheung Chau, `--wong-chuk-hang-dew` still prints Wong Chuk Hang, `--sai-kung-dew` still prints Sai Kung, `--sha-tin-dew` still prints Sha Tin, and `--sheung-shui-dew` still prints Sheung Shui. `--waglan-max` still prints Waglan Island's maximum, `--waglan-min` still prints its minimum, `--waglan-humidity` still prints its humidity, `--waglan-pressure` still prints its pressure, and `--waglan-rain` still prints its rainfall. `--waglan-dew --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Waglan Island dew point is available.`
+
+`hk-weather --lau-fau-dew` prints the latest daily mean dew point at Lau Fau Shan, for example `2026-08-31  25.7°C`. `--dew-point` still prints the Observatory reading, `--park-dew` still prints King's Park, `--cheung-dew` still prints Cheung Chau, `--wong-chuk-hang-dew` still prints Wong Chuk Hang, `--sai-kung-dew` still prints Sai Kung, `--sha-tin-dew` still prints Sha Tin, `--sheung-shui-dew` still prints Sheung Shui, and `--waglan-dew` still prints Waglan Island. `--lau-fau-max` still prints Lau Fau Shan's maximum, `--lau-fau-min` still prints its minimum, `--lau-fau-rain` still prints its rainfall, `--lau-fau-wind` still prints its wind speed, `--lau-fau-humidity` still prints its humidity, and `--lau-fau-pressure` still prints its pressure. `--lau-fau-dew --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Lau Fau Shan dew point is available.`
 
 `hk-weather --cloud` prints the latest daily mean cloud amount at the Observatory for the current Hong Kong year, for example `2026-08-31  88%`. `--dew-point` still prints the dew point. `--cloud --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No cloud amount is available.`
 
