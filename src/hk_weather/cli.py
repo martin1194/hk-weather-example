@@ -52,6 +52,7 @@ from hk_weather.hko import (
     fetch_minute_humidity,
     fetch_mean_humidity,
     fetch_tai_mo_humidity,
+    fetch_waglan_humidity,
     fetch_icon_time,
     fetch_icon,
     fetch_current_updated,
@@ -215,6 +216,7 @@ from hk_weather.hko import (
     format_mean_humidity,
     format_mean_humidity_miss,
     format_tai_mo_humidity_miss,
+    format_waglan_humidity_miss,
     format_hour_rain,
     format_hour_rain_miss,
     format_hour_wettest,
@@ -444,6 +446,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--minute-humidity prints the latest 1-minute mean humidity; "
             "--mean-humidity prints the latest daily mean humidity; "
             "--tai-mo-humidity prints the latest daily mean humidity at Tai Mo Shan; "
+            "--waglan-humidity prints the latest daily mean humidity at Waglan Island; "
             "--temps lists temperatures by place; "
             "--temp-time prints when those temperatures were recorded; "
             "--minute-temp prints the latest 1-minute mean temperature; "
@@ -1103,6 +1106,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--tai-mo-humidity",
         action="store_true",
         help="Print the latest daily mean humidity at Tai Mo Shan",
+    )
+    parser.add_argument(
+        "--waglan-humidity",
+        action="store_true",
+        help="Print the latest daily mean humidity at Waglan Island",
     )
     parser.add_argument(
         "--temps",
@@ -1937,6 +1945,16 @@ def main(argv: list[str] | None = None) -> int:
                     format_json(tai_mo_humidity)
                     if args.json
                     else format_mean_humidity(tai_mo_humidity)
+                )
+        elif args.waglan_humidity:
+            waglan_humidity = fetch_waglan_humidity(timeout=args.timeout, lang=args.lang)
+            if waglan_humidity is None:
+                text = format_waglan_humidity_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(waglan_humidity)
+                    if args.json
+                    else format_mean_humidity(waglan_humidity)
                 )
         elif args.temps:
             temps = fetch_temps(timeout=args.timeout, lang=args.lang)
