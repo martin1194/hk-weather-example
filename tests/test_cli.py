@@ -7610,6 +7610,67 @@ def test_cli_airport_wet_when_missing(monkeypatch, capsys):
     }
 
 
+def test_cli_park_wet_prints_latest_day(monkeypatch, capsys):
+    seen = {}
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _text_response(
+            "年/Year,月/Month,日/Day,數值/Value,數據完整性/data Completeness\n"
+            "2026,8,29,26.1,C\n"
+            "2026,8,30,***,\n"
+            "2026,8,31,  25.6  ,C\n"
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--park-wet", "--lang", "tc"]) == 0
+    assert seen["url"].endswith("daily_KP_WET_2026.csv")
+    assert capsys.readouterr().out == (
+        "Hong Kong wet bulb temperature\n"
+        "Station: 京士柏\n"
+        "2026-08-31  25.6°C\n"
+    )
+
+
+def test_cli_park_wet_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Year,Month,Day,Value,Completeness\n"
+            "2026,8,31,25.6,C\n"
+        ),
+    )
+    assert main(["--park-wet", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "station": "King's Park",
+        "date": "2026-08-31",
+        "wet_bulb_c": 25.6,
+    }
+
+
+def test_cli_park_wet_when_missing(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Year,Month,Day,Value,Completeness\n"
+            "2026,8,31,***,\n"
+        ),
+    )
+    assert main(["--park-wet"]) == 0
+    assert capsys.readouterr().out == "No King's Park wet bulb temperature is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(""),
+    )
+    assert main(["--park-wet", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No King's Park wet bulb temperature is available."
+    }
+
+
 def test_cli_solar_prints_latest_minute(monkeypatch, capsys):
     seen = {}
 

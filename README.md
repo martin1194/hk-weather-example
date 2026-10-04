@@ -266,6 +266,8 @@ hk-weather --wet-bulb
 hk-weather --wet-bulb --json
 hk-weather --airport-wet
 hk-weather --airport-wet --json
+hk-weather --park-wet
+hk-weather --park-wet --json
 hk-weather --solar
 hk-weather --solar --json
 hk-weather --global-solar
@@ -569,6 +571,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --wet-bulb` prints the latest daily mean wet-bulb temperature at the Observatory, for example `2026-08-31  25.8°C`. `--wbgt` still prints the current Wet Bulb Globe Temperature. `--dew-point` still prints the dew point. `--wet-bulb --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No wet bulb temperature is available.`
 
 `hk-weather --airport-wet` prints the latest daily mean wet-bulb temperature at Hong Kong International Airport, for example `2026-07-31  24.4°C`. `--wet-bulb` still prints the Observatory reading. `--airport-wet --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No airport wet bulb temperature is available.`
+
+`hk-weather --park-wet` prints the latest daily mean wet-bulb temperature at King's Park, for example `2026-08-31  25.6°C`. `--wet-bulb` still prints the Observatory reading, and `--airport-wet` still prints the airport. `--park-dew` still prints King's Park's dew point. `--park-wet --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No King's Park wet bulb temperature is available.`
 
 `hk-weather --solar` prints the latest 1-minute global, direct, and diffuse solar radiation, for example `Kau Sai Chau  global 1  direct 0  diffuse 1 W/m²`. Earlier minutes in the file are omitted. `--solar --json` prints that minute as one JSON object. `--lang` selects the station names. A station is omitted when any component is `N/A`. If none remain, it says `No solar radiation is available.`
 
