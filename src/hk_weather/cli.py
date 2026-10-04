@@ -98,6 +98,7 @@ from hk_weather.hko import (
     fetch_daily_heat,
     fetch_wbgt,
     fetch_wet_bulb,
+    fetch_airport_wet,
     fetch_solar,
     fetch_global_solar,
     fetch_tc_info,
@@ -301,6 +302,7 @@ from hk_weather.hko import (
     format_wbgt_miss,
     format_wet_bulb,
     format_wet_bulb_miss,
+    format_airport_wet_miss,
     format_solar,
     format_solar_miss,
     format_global_solar,
@@ -445,6 +447,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--daily-heat prints the latest daily maximum heat index at King's Park; "
             "--wbgt prints the latest Wet Bulb Globe Temperature; "
             "--wet-bulb prints the latest daily wet-bulb temperature; "
+            "--airport-wet prints the latest daily wet-bulb temperature at the airport; "
             "--solar prints the latest solar radiation; "
             "--global-solar prints the latest daily global solar radiation; "
             "--wind lists the forecast wind; "
@@ -1140,6 +1143,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--wet-bulb",
         action="store_true",
         help="Print the latest daily mean wet-bulb temperature at the Observatory",
+    )
+    parser.add_argument(
+        "--airport-wet",
+        action="store_true",
+        help="Print the latest daily mean wet-bulb temperature at the airport",
     )
     parser.add_argument(
         "--solar",
@@ -1962,6 +1970,12 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_wet_bulb_miss(as_json=args.json)
             else:
                 text = format_json(wet_bulb) if args.json else format_wet_bulb(wet_bulb)
+        elif args.airport_wet:
+            airport_wet = fetch_airport_wet(timeout=args.timeout, lang=args.lang)
+            if airport_wet is None:
+                text = format_airport_wet_miss(as_json=args.json)
+            else:
+                text = format_json(airport_wet) if args.json else format_wet_bulb(airport_wet)
         elif args.solar:
             solar = fetch_solar(timeout=args.timeout, lang=args.lang)
             if not solar.stations:
