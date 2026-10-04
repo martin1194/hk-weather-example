@@ -92,6 +92,8 @@ hk-weather --cheung-chau-max
 hk-weather --cheung-chau-max --json
 hk-weather --park-max
 hk-weather --park-max --json
+hk-weather --lau-fau-max
+hk-weather --lau-fau-max --json
 hk-weather --dew-point
 hk-weather --dew-point --json
 hk-weather --park-dew
@@ -479,6 +481,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --cheung-chau-max` prints the latest daily maximum temperature at Cheung Chau, for example `2026-08-31  30.7°C`. `--max-temp` still prints the Observatory maximum, `--tai-mo-max` still prints Tai Mo Shan, `--tseung-kwan-o-max` still prints Tseung Kwan O, `--sheung-shui-max` still prints Sheung Shui, `--waglan-max` still prints Waglan Island, and `--shek-kong-max` still prints Shek Kong. `--cheung-wind` still prints Cheung Chau's wind speed, `--cheung-prevailing` still prints its prevailing direction, and `--cheung-dew` still prints its dew point. `--cheung-chau-max --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Cheung Chau maximum temperature is available.`
 
 `hk-weather --park-max` prints the latest daily maximum temperature at King's Park, for example `2026-08-31  30.4°C`. `--max-temp` still prints the Observatory maximum, `--tai-mo-max` still prints Tai Mo Shan, `--tseung-kwan-o-max` still prints Tseung Kwan O, `--sheung-shui-max` still prints Sheung Shui, `--waglan-max` still prints Waglan Island, `--shek-kong-max` still prints Shek Kong, and `--cheung-chau-max` still prints Cheung Chau. `--park-dew`, `--park-pressure`, `--park-wet`, `--park-rain`, and `--park-humidity` still print King's Park's other daily readings. `--park-max --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No King's Park maximum temperature is available.`
+
+`hk-weather --lau-fau-max` prints the latest daily maximum temperature at Lau Fau Shan, for example `2026-08-31  29.4°C`. `--max-temp` still prints the Observatory maximum, `--tai-mo-max` still prints Tai Mo Shan, `--tseung-kwan-o-max` still prints Tseung Kwan O, `--sheung-shui-max` still prints Sheung Shui, `--waglan-max` still prints Waglan Island, `--shek-kong-max` still prints Shek Kong, `--cheung-chau-max` still prints Cheung Chau, and `--park-max` still prints King's Park. `--lau-fau-rain` still prints Lau Fau Shan's rainfall, `--lau-fau-wind` still prints its wind speed, and `--lau-fau-humidity` still prints its humidity. `--lau-fau-max --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Lau Fau Shan maximum temperature is available.`
 
 `hk-weather --dew-point` prints the latest daily mean dew point at the Observatory for the current Hong Kong year, for example `2026-08-31  25°C`. `--mean-temp` still prints the daily mean air temperature. `--dew-point --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No dew point is available.`
 
