@@ -133,6 +133,8 @@ hk-weather --prevailing
 hk-weather --prevailing --json
 hk-weather --cheung-prevailing
 hk-weather --cheung-prevailing --json
+hk-weather --ping-chau-prevailing
+hk-weather --ping-chau-prevailing --json
 hk-weather --mean-wind
 hk-weather --mean-wind --json
 hk-weather --cheung-wind
@@ -447,6 +449,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --prevailing` prints the latest daily prevailing wind direction at Waglan Island, for example `2026-08-31  360°`. `--wind` still prints the forecast wind, and `--gust` still prints the latest gusts. `--prevailing --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No prevailing wind is available.`
 
 `hk-weather --cheung-prevailing` prints the latest daily prevailing wind direction at Cheung Chau, for example `2026-08-31  360°`. `--prevailing` still prints Waglan Island. `--cheung-prevailing --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Cheung Chau prevailing wind is available.`
+
+`hk-weather --ping-chau-prevailing` prints the latest daily prevailing wind direction at Ping Chau, for example `2026-08-31  330°`. `--prevailing` still prints Waglan Island, `--cheung-prevailing` still prints Cheung Chau, and `--peng-chau-wind` still prints Peng Chau's mean wind speed. `--ping-chau-prevailing --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Ping Chau prevailing wind is available.`
 
 `hk-weather --mean-wind` prints the latest daily mean wind speed at Waglan Island, for example `2026-08-31  5.9 km/h`. `--prevailing` still prints the wind direction, and `--gust` still prints the latest gusts. `--mean-wind --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No mean wind speed is available.`
 
