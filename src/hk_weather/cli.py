@@ -107,6 +107,7 @@ from hk_weather.hko import (
     fetch_wet_bulb,
     fetch_airport_wet,
     fetch_park_wet,
+    fetch_sha_lo_wan_wet,
     fetch_solar,
     fetch_global_solar,
     fetch_tc_info,
@@ -328,6 +329,7 @@ from hk_weather.hko import (
     format_wet_bulb_miss,
     format_airport_wet_miss,
     format_park_wet_miss,
+    format_sha_lo_wan_wet_miss,
     format_solar,
     format_solar_miss,
     format_global_solar,
@@ -488,6 +490,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--wet-bulb prints the latest daily wet-bulb temperature; "
             "--airport-wet prints the latest daily wet-bulb temperature at the airport; "
             "--park-wet prints the latest daily wet-bulb temperature at King's Park; "
+            "--sha-lo-wan-wet prints the latest daily wet-bulb temperature at Sha Lo Wan; "
             "--solar prints the latest solar radiation; "
             "--global-solar prints the latest daily global solar radiation; "
             "--wind lists the forecast wind; "
@@ -1279,6 +1282,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--park-wet",
         action="store_true",
         help="Print the latest daily mean wet-bulb temperature at King's Park",
+    )
+    parser.add_argument(
+        "--sha-lo-wan-wet",
+        action="store_true",
+        help="Print the latest daily mean wet-bulb temperature at Sha Lo Wan",
     )
     parser.add_argument(
         "--solar",
@@ -2229,6 +2237,12 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_park_wet_miss(as_json=args.json)
             else:
                 text = format_json(park_wet) if args.json else format_wet_bulb(park_wet)
+        elif args.sha_lo_wan_wet:
+            sha_lo_wan_wet = fetch_sha_lo_wan_wet(timeout=args.timeout, lang=args.lang)
+            if sha_lo_wan_wet is None:
+                text = format_sha_lo_wan_wet_miss(as_json=args.json)
+            else:
+                text = format_json(sha_lo_wan_wet) if args.json else format_wet_bulb(sha_lo_wan_wet)
         elif args.solar:
             solar = fetch_solar(timeout=args.timeout, lang=args.lang)
             if not solar.stations:
