@@ -14,6 +14,7 @@ from hk_weather.hko import (
     fetch_daily_rain,
     fetch_lau_fau_rain,
     fetch_shek_kong_rain,
+    fetch_wetland_rain,
     fetch_forecast,
     fetch_outlook,
     fetch_coastal,
@@ -158,6 +159,7 @@ from hk_weather.hko import (
     format_daily_rain_miss,
     format_lau_fau_rain_miss,
     format_shek_kong_rain_miss,
+    format_wetland_rain_miss,
     format_forecast,
     format_outlook,
     format_outlook_miss,
@@ -542,6 +544,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--daily-rain prints the latest daily rainfall total; "
             "--lau-fau-rain prints the latest daily rainfall at Lau Fau Shan; "
             "--shek-kong-rain prints the latest daily rainfall at Shek Kong; "
+            "--wetland-rain prints the latest daily rainfall at Wetland Park; "
             "--tide prints today's high and low tides; "
             "--tide-hour prints today's hourly tide heights; "
             "--tide-latest prints the latest observed tide height; "
@@ -1080,6 +1083,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--shek-kong-rain",
         action="store_true",
         help="Print the latest daily total rainfall at Shek Kong",
+    )
+    parser.add_argument(
+        "--wetland-rain",
+        action="store_true",
+        help="Print the latest daily total rainfall at Wetland Park",
     )
     parser.add_argument(
         "--rainstorm",
@@ -1936,6 +1944,12 @@ def main(argv: list[str] | None = None) -> int:
                     if args.json
                     else format_daily_rain(shek_kong_rain)
                 )
+        elif args.wetland_rain:
+            wetland_rain = fetch_wetland_rain(timeout=args.timeout, lang=args.lang)
+            if wetland_rain is None:
+                text = format_wetland_rain_miss(as_json=args.json)
+            else:
+                text = format_json(wetland_rain) if args.json else format_daily_rain(wetland_rain)
         elif args.rainstorm:
             rainstorm = fetch_rainstorm(timeout=args.timeout, lang=args.lang)
             if rainstorm is None:
