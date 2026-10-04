@@ -842,6 +842,13 @@ class Sunshine:
 
 
 @dataclass(frozen=True)
+class DailySun:
+    station: str
+    date: str
+    hours: float
+
+
+@dataclass(frozen=True)
 class MaxUv:
     station: str
     date: str
@@ -1574,6 +1581,26 @@ def fetch_sunshine(timeout: float = 10, lang: str = "en") -> Sunshine | None:
         f"&station={SUNSHINE_STATION}&lang=en"
     )
     return parse_sunshine(_fetch_json(_apply_lang(url, lang), timeout), day)
+
+
+def fetch_daily_sun(timeout: float = 10, lang: str = "en") -> DailySun | None:
+    """Download the latest daily bright sunshine total at King's Park."""
+    year = _hong_kong_today()[:4]
+    url = (
+        "https://data.weather.gov.hk/weatherAPI/cis/csvfile/KP/"
+        f"{year}/daily_KP_SUN_{year}.csv"
+    )
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            raw = response.read()
+    except (urllib.error.URLError, TimeoutError) as exc:
+        raise WeatherError(f"could not reach Hong Kong Observatory: {exc}") from exc
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise WeatherError("Hong Kong Observatory returned invalid text") from exc
+    return parse_daily_sun(text, lang)
 
 
 def fetch_max_uv(timeout: float = 10, lang: str = "en") -> MaxUv | None:
@@ -5356,6 +5383,49 @@ def format_sunshine_miss(*, as_json: bool = False) -> str:
     return _unavailable("No sunshine duration is available.", as_json=as_json)
 
 
+_DAILY_SUN_STATIONS = {
+    "en": "King's Park",
+    "tc": "京士柏",
+    "sc": "京士柏",
+}
+
+
+def parse_daily_sun(text: str, lang: str = "en") -> DailySun | None:
+    """Turn the King's Park sunshine CSV into the latest numeric day."""
+    station = _DAILY_SUN_STATIONS.get(lang, _DAILY_SUN_STATIONS["en"])
+    latest: DailySun | None = None
+    rows = csv.reader(io.StringIO(text))
+    for row in rows:
+        if len(row) < 4:
+            continue
+        year = _text(row[0]).lstrip("\ufeff")
+        month = _text(row[1])
+        day = _text(row[2])
+        value = _hour_mm(row[3])
+        if not (year.isdigit() and month.isdigit() and day.isdigit()) or value is None:
+            continue
+        latest = DailySun(
+            station,
+            f"{int(year):04d}-{int(month):02d}-{int(day):02d}",
+            value,
+        )
+    return latest
+
+
+def format_daily_sun(reading: DailySun) -> str:
+    """Render the latest daily bright sunshine total at King's Park."""
+    return (
+        "Hong Kong daily sunshine\n"
+        f"Station: {reading.station}\n"
+        f"{reading.date}  {_number(reading.hours)} hours\n"
+    )
+
+
+def format_daily_sun_miss(*, as_json: bool = False) -> str:
+    """Say that no daily sunshine total is available."""
+    return _unavailable("No daily sunshine is available.", as_json=as_json)
+
+
 def parse_max_uv(payload: dict, date: str) -> MaxUv | None:
     """Turn a `RYES` document into yesterday's maximum UV index at King's Park."""
     index = _hour_mm(payload.get("KingsParkReadingsMaxUVIndex"))
@@ -6258,6 +6328,7 @@ def format_json(
     | Evapotranspiration
     | GrassMinimum
     | Sunshine
+    | DailySun
     | MaxUv
     | MeanUv
     | GammaDose
