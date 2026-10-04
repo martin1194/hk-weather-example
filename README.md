@@ -272,6 +272,8 @@ hk-weather --ta-kwu-ling-humidity
 hk-weather --ta-kwu-ling-humidity --json
 hk-weather --wetland-humidity
 hk-weather --wetland-humidity --json
+hk-weather --shek-kong-humidity
+hk-weather --shek-kong-humidity --json
 hk-weather --temps
 hk-weather --temps --json
 hk-weather --temp-time
@@ -623,6 +625,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --ta-kwu-ling-humidity` prints the latest daily mean relative humidity at Ta Kwu Ling, for example `2026-08-31  94%`. `--mean-humidity` still prints the Observatory reading, `--tai-mo-humidity` still prints Tai Mo Shan, `--waglan-humidity` still prints Waglan Island, and `--tate-humidity` still prints Tate's Cairn. `--ta-kwu-ling-humidity --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Ta Kwu Ling humidity is available.`
 
 `hk-weather --wetland-humidity` prints the latest daily mean relative humidity at Wetland Park, for example `2026-08-31  96%`. `--mean-humidity` still prints the Observatory reading, `--tai-mo-humidity` still prints Tai Mo Shan, `--waglan-humidity` still prints Waglan Island, `--tate-humidity` still prints Tate's Cairn, `--ta-kwu-ling-humidity` still prints Ta Kwu Ling, and `--wetland-rain` still prints Wetland Park's rainfall. `--wetland-humidity --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Wetland Park humidity is available.`
+
+`hk-weather --shek-kong-humidity` prints the latest daily mean relative humidity at Shek Kong, for example `2026-08-31  93%`. `--mean-humidity` still prints the Observatory reading, `--tai-mo-humidity` still prints Tai Mo Shan, `--waglan-humidity` still prints Waglan Island, `--tate-humidity` still prints Tate's Cairn, `--ta-kwu-ling-humidity` still prints Ta Kwu Ling, `--wetland-humidity` still prints Wetland Park, and `--shek-kong-rain` still prints Shek Kong's rainfall. `--shek-kong-humidity --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Shek Kong humidity is available.`
 
 `hk-weather --temps` prints temperature by place from the current report, with the record time when the Observatory includes it. `--temps --json` prints that list as one JSON object. If no readings are present, it says so.
 
