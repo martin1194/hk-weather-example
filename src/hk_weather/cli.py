@@ -169,6 +169,7 @@ from hk_weather.hko import (
     fetch_waglan_max,
     fetch_shek_kong_max,
     fetch_cheung_chau_max,
+    fetch_park_max,
     fetch_max_temp,
     fetch_min_temp,
     fetch_dew_point,
@@ -443,6 +444,7 @@ from hk_weather.hko import (
     format_waglan_max_miss,
     format_shek_kong_max_miss,
     format_cheung_chau_max_miss,
+    format_park_max_miss,
     format_max_temp,
     format_max_temp_miss,
     format_min_temp,
@@ -593,6 +595,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--waglan-max prints the latest daily maximum temperature at Waglan Island; "
             "--shek-kong-max prints the latest daily maximum temperature at Shek Kong; "
             "--cheung-chau-max prints the latest daily maximum temperature at Cheung Chau; "
+            "--park-max prints the latest daily maximum temperature at King's Park; "
             "--dew-point prints the latest daily mean dew point; "
             "--park-dew prints the latest daily mean dew point at King's Park; "
             "--cheung-dew prints the latest daily mean dew point at Cheung Chau; "
@@ -869,6 +872,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--cheung-chau-max",
         action="store_true",
         help="Print the latest daily maximum temperature at Cheung Chau",
+    )
+    parser.add_argument(
+        "--park-max",
+        action="store_true",
+        help="Print the latest daily maximum temperature at King's Park",
     )
     parser.add_argument(
         "--dew-point",
@@ -1878,6 +1886,12 @@ def main(argv: list[str] | None = None) -> int:
                     if args.json
                     else format_tai_mo_max(cheung_chau_max)
                 )
+        elif args.park_max:
+            park_max = fetch_park_max(timeout=args.timeout, lang=args.lang)
+            if park_max is None:
+                text = format_park_max_miss(as_json=args.json)
+            else:
+                text = format_json(park_max) if args.json else format_tai_mo_max(park_max)
         elif args.dew_point:
             dew_point = fetch_dew_point(timeout=args.timeout, lang=args.lang)
             if dew_point is None:
