@@ -78,6 +78,8 @@ hk-weather --tseung-kwan-o-max
 hk-weather --tseung-kwan-o-max --json
 hk-weather --sheung-shui-max
 hk-weather --sheung-shui-max --json
+hk-weather --waglan-max
+hk-weather --waglan-max --json
 hk-weather --dew-point
 hk-weather --dew-point --json
 hk-weather --park-dew
@@ -419,6 +421,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --tseung-kwan-o-max` prints the latest daily maximum temperature at Tseung Kwan O, for example `2026-08-31  31.2°C`. `--max-temp` still prints the Observatory maximum, and `--tai-mo-max` still prints Tai Mo Shan. `--tseung-kwan-o-max --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Tseung Kwan O maximum temperature is available.`
 
 `hk-weather --sheung-shui-max` prints the latest daily maximum temperature at Sheung Shui, for example `2026-08-31  30.9°C`. `--max-temp` still prints the Observatory maximum, `--tai-mo-max` still prints Tai Mo Shan, and `--tseung-kwan-o-max` still prints Tseung Kwan O. `--sheung-shui-max --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Sheung Shui maximum temperature is available.`
+
+`hk-weather --waglan-max` prints the latest daily maximum temperature at Waglan Island, for example `2026-08-31  31.7°C`. `--max-temp` still prints the Observatory maximum, `--tai-mo-max` still prints Tai Mo Shan, `--tseung-kwan-o-max` still prints Tseung Kwan O, and `--sheung-shui-max` still prints Sheung Shui. `--mean-wind` still prints Waglan Island's wind speed, and `--waglan-humidity` still prints its humidity. `--waglan-max --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Waglan Island maximum temperature is available.`
 
 `hk-weather --dew-point` prints the latest daily mean dew point at the Observatory for the current Hong Kong year, for example `2026-08-31  25°C`. `--mean-temp` still prints the daily mean air temperature. `--dew-point --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No dew point is available.`
 
