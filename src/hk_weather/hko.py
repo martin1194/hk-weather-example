@@ -1075,6 +1075,13 @@ class PressureReport:
 
 
 @dataclass(frozen=True)
+class MeanPressure:
+    station: str
+    date: str
+    pressure_hpa: float
+
+
+@dataclass(frozen=True)
 class MinuteGrassReading:
     place: str
     grass_c: float
@@ -1837,6 +1844,26 @@ def fetch_pressure(timeout: float = 10, lang: str = "en") -> PressureReport:
     except UnicodeDecodeError as exc:
         raise WeatherError("Hong Kong Observatory returned invalid text") from exc
     return parse_pressure(text)
+
+
+def fetch_mean_pressure(timeout: float = 10, lang: str = "en") -> MeanPressure | None:
+    """Download the latest daily mean pressure at the Observatory."""
+    year = _hong_kong_today()[:4]
+    url = (
+        "https://data.weather.gov.hk/weatherAPI/cis/csvfile/HKO/"
+        f"{year}/daily_HKO_MSLP_{year}.csv"
+    )
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            raw = response.read()
+    except (urllib.error.URLError, TimeoutError) as exc:
+        raise WeatherError(f"could not reach Hong Kong Observatory: {exc}") from exc
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise WeatherError("Hong Kong Observatory returned invalid text") from exc
+    return parse_mean_pressure(text, lang)
 
 
 def fetch_minute_grass(timeout: float = 10, lang: str = "en") -> MinuteGrassReport:
@@ -4083,6 +4110,49 @@ def format_pressure_miss(*, as_json: bool = False) -> str:
     return _unavailable("No sea level pressure is available.", as_json=as_json)
 
 
+_MEAN_PRESSURE_STATIONS = {
+    "en": "Hong Kong Observatory",
+    "tc": "香港天文台",
+    "sc": "香港天文台",
+}
+
+
+def parse_mean_pressure(text: str, lang: str = "en") -> MeanPressure | None:
+    """Turn the Observatory pressure CSV into the latest numeric day."""
+    station = _MEAN_PRESSURE_STATIONS.get(lang, _MEAN_PRESSURE_STATIONS["en"])
+    latest: MeanPressure | None = None
+    rows = csv.reader(io.StringIO(text))
+    for row in rows:
+        if len(row) < 4:
+            continue
+        year = _text(row[0]).lstrip("\ufeff")
+        month = _text(row[1])
+        day = _text(row[2])
+        value = _hour_mm(row[3])
+        if not (year.isdigit() and month.isdigit() and day.isdigit()) or value is None:
+            continue
+        latest = MeanPressure(
+            station,
+            f"{int(year):04d}-{int(month):02d}-{int(day):02d}",
+            value,
+        )
+    return latest
+
+
+def format_mean_pressure(reading: MeanPressure) -> str:
+    """Render the latest daily mean pressure at the Observatory."""
+    return (
+        "Hong Kong daily mean pressure\n"
+        f"Station: {reading.station}\n"
+        f"{reading.date}  {_number(reading.pressure_hpa)} hPa\n"
+    )
+
+
+def format_mean_pressure_miss(*, as_json: bool = False) -> str:
+    """Say that no daily mean pressure is available."""
+    return _unavailable("No daily mean pressure is available.", as_json=as_json)
+
+
 def parse_minute_grass(text: str) -> MinuteGrassReport:
     """Turn the regional grass-temperature CSV into one row per station."""
     stations: list[MinuteGrassReading] = []
@@ -6082,6 +6152,7 @@ def format_json(
     | MinuteTempReport
     | SinceMidnightReport
     | PressureReport
+    | MeanPressure
     | MinuteGrassReport
     | TempDiffReport
     | HeatIndexReport

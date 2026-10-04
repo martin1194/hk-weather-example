@@ -84,6 +84,7 @@ from hk_weather.hko import (
     fetch_minute_temp,
     fetch_since_midnight,
     fetch_pressure,
+    fetch_mean_pressure,
     fetch_minute_grass,
     fetch_temp_diff,
     fetch_heat_index,
@@ -261,6 +262,8 @@ from hk_weather.hko import (
     format_since_midnight_miss,
     format_pressure,
     format_pressure_miss,
+    format_mean_pressure,
+    format_mean_pressure_miss,
     format_minute_grass,
     format_minute_grass_miss,
     format_temp_diff,
@@ -393,6 +396,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--minute-temp prints the latest 1-minute mean temperature; "
             "--since-midnight prints each station's high and low since midnight; "
             "--pressure prints the latest 1-minute sea level pressure; "
+            "--mean-pressure prints the latest daily mean pressure; "
             "--minute-grass prints the latest 1-minute grass temperature; "
             "--temp-diff prints the past 24-hour temperature change; "
             "--heat-index prints the latest Hong Kong Heat Index; "
@@ -984,6 +988,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--pressure",
         action="store_true",
         help="Print the latest 1-minute mean sea level pressure at automatic stations",
+    )
+    parser.add_argument(
+        "--mean-pressure",
+        action="store_true",
+        help="Print the latest daily mean pressure at the Observatory",
     )
     parser.add_argument(
         "--minute-grass",
@@ -1693,6 +1702,16 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_pressure_miss(as_json=args.json)
             else:
                 text = format_json(pressure) if args.json else format_pressure(pressure)
+        elif args.mean_pressure:
+            mean_pressure = fetch_mean_pressure(timeout=args.timeout, lang=args.lang)
+            if mean_pressure is None:
+                text = format_mean_pressure_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(mean_pressure)
+                    if args.json
+                    else format_mean_pressure(mean_pressure)
+                )
         elif args.minute_grass:
             minute_grass = fetch_minute_grass(timeout=args.timeout, lang=args.lang)
             if not minute_grass.stations:
