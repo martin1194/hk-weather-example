@@ -136,6 +136,7 @@ from hk_weather.hko import (
     fetch_sha_lo_wan_pressure,
     fetch_shek_kong_pressure,
     fetch_ta_kwu_ling_pressure,
+    fetch_airport_pressure,
     fetch_minute_grass,
     fetch_daily_grass,
     fetch_obs_grass,
@@ -478,6 +479,7 @@ from hk_weather.hko import (
     format_sha_lo_wan_pressure_miss,
     format_shek_kong_pressure_miss,
     format_ta_kwu_ling_pressure_miss,
+    format_airport_pressure_miss,
     format_minute_grass,
     format_minute_grass_miss,
     format_daily_grass,
@@ -761,6 +763,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--sha-lo-wan-pressure prints the latest daily mean pressure at Sha Lo Wan; "
             "--shek-kong-pressure prints the latest daily mean pressure at Shek Kong; "
             "--ta-kwu-ling-pressure prints the latest daily mean pressure at Ta Kwu Ling; "
+            "--airport-pressure prints the latest daily mean pressure at the airport; "
             "--minute-grass prints the latest 1-minute grass temperature; "
             "--daily-grass prints the latest daily grass minimum; "
             "--obs-grass prints the latest daily grass minimum at the Observatory; "
@@ -2251,6 +2254,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--ta-kwu-ling-pressure",
         action="store_true",
         help="Print the latest daily mean pressure at Ta Kwu Ling",
+    )
+    parser.add_argument(
+        "--airport-pressure",
+        action="store_true",
+        help="Print the latest daily mean pressure at the airport",
     )
     parser.add_argument(
         "--minute-grass",
@@ -4418,6 +4426,16 @@ def main(argv: list[str] | None = None) -> int:
                     format_json(ta_kwu_ling_pressure)
                     if args.json
                     else format_mean_pressure(ta_kwu_ling_pressure)
+                )
+        elif args.airport_pressure:
+            airport_pressure = fetch_airport_pressure(timeout=args.timeout, lang=args.lang)
+            if airport_pressure is None:
+                text = format_airport_pressure_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(airport_pressure)
+                    if args.json
+                    else format_mean_pressure(airport_pressure)
                 )
         elif args.minute_grass:
             minute_grass = fetch_minute_grass(timeout=args.timeout, lang=args.lang)
