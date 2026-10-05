@@ -2383,6 +2383,26 @@ def fetch_airport_min(timeout: float = 10, lang: str = "en") -> TaiMoTemp | None
     return parse_airport_min(text, lang)
 
 
+def fetch_yuen_long_park_min(timeout: float = 10, lang: str = "en") -> TaiMoTemp | None:
+    """Download the latest daily minimum temperature at Yuen Long Park."""
+    year = _hong_kong_today()[:4]
+    url = (
+        "https://data.weather.gov.hk/weatherAPI/cis/csvfile/YLP/"
+        f"{year}/daily_YLP_MINT_{year}.csv"
+    )
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            raw = response.read()
+    except (urllib.error.URLError, TimeoutError) as exc:
+        raise WeatherError(f"could not reach Hong Kong Observatory: {exc}") from exc
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise WeatherError("Hong Kong Observatory returned invalid text") from exc
+    return parse_yuen_long_park_min(text, lang)
+
+
 def fetch_tai_mo_max(timeout: float = 10, lang: str = "en") -> TaiMoTemp | None:
     """Download the latest daily maximum temperature at Tai Mo Shan."""
     year = _hong_kong_today()[:4]
@@ -12745,6 +12765,44 @@ def parse_airport_min(text: str, lang: str = "en") -> TaiMoTemp | None:
 def format_airport_min_miss(*, as_json: bool = False) -> str:
     """Say that no airport minimum temperature is available."""
     return _unavailable("No airport minimum temperature is available.", as_json=as_json)
+
+
+_YUEN_LONG_PARK_MIN_STATIONS = {
+    "en": "Yuen Long Park",
+    "tc": "元朗公園",
+    "sc": "元朗公园",
+}
+
+
+def parse_yuen_long_park_min(text: str, lang: str = "en") -> TaiMoTemp | None:
+    """Turn the Yuen Long Park minimum-temperature CSV into the latest numeric day."""
+    station = _YUEN_LONG_PARK_MIN_STATIONS.get(
+        lang, _YUEN_LONG_PARK_MIN_STATIONS["en"]
+    )
+    latest: TaiMoTemp | None = None
+    rows = csv.reader(io.StringIO(text))
+    for row in rows:
+        if len(row) < 4:
+            continue
+        year = _text(row[0]).lstrip("\ufeff")
+        month = _text(row[1])
+        day = _text(row[2])
+        value = _hour_mm(row[3])
+        if not (year.isdigit() and month.isdigit() and day.isdigit()) or value is None:
+            continue
+        latest = TaiMoTemp(
+            station,
+            f"{int(year):04d}-{int(month):02d}-{int(day):02d}",
+            value,
+        )
+    return latest
+
+
+def format_yuen_long_park_min_miss(*, as_json: bool = False) -> str:
+    """Say that no Yuen Long Park minimum temperature is available."""
+    return _unavailable(
+        "No Yuen Long Park minimum temperature is available.", as_json=as_json
+    )
 
 
 def parse_tai_mo_max(text: str, lang: str = "en") -> TaiMoTemp | None:
