@@ -96,6 +96,8 @@ hk-weather --sha-lo-wan-temp
 hk-weather --sha-lo-wan-temp --json
 hk-weather --airport-temp
 hk-weather --airport-temp --json
+hk-weather --clear-water-bay-temp
+hk-weather --clear-water-bay-temp --json
 hk-weather --max-temp
 hk-weather --max-temp --json
 hk-weather --min-temp
@@ -677,6 +679,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --sha-lo-wan-temp` prints the latest daily mean temperature at Sha Lo Wan, for example `2026-08-31  26.6°C`. `--mean-temp` still prints the Observatory reading, `--tai-mo-temp` still prints Tai Mo Shan, `--tate-temp` still prints Tate's Cairn, `--sai-kung-temp` still prints Sai Kung, `--sha-tin-temp` still prints Sha Tin, `--sheung-shui-temp` still prints Sheung Shui, `--wong-chuk-hang-temp` still prints Wong Chuk Hang, `--lau-fau-temp` still prints Lau Fau Shan, `--tseung-kwan-o-temp` still prints Tseung Kwan O, `--sham-shui-po-temp` still prints Sham Shui Po, `--shek-kong-temp` still prints Shek Kong, `--wetland-temp` still prints Wetland Park, `--ta-kwu-ling-temp` still prints Ta Kwu Ling, `--peng-chau-temp` still prints Peng Chau, `--park-temp` still prints King's Park, `--cheung-chau-temp` still prints Cheung Chau, `--waglan-temp` still prints Waglan Island, and `--ping-chau-temp` still prints Ping Chau. `--sha-lo-wan-wet` still prints Sha Lo Wan's wet-bulb temperature. `--sha-lo-wan-temp --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Sha Lo Wan temperature is available.`
 
 `hk-weather --airport-temp` prints the latest daily mean temperature at Hong Kong International Airport, for example `2026-07-31  26.2°C`. The published airport series currently ends in July. `--mean-temp` still prints the Observatory reading, and the other station temperature flags still print their own stations. `--airport-wet` still prints the airport wet-bulb temperature. `--airport-temp --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No airport temperature is available.`
+
+`hk-weather --clear-water-bay-temp` prints the latest daily mean temperature at Clear Water Bay, for example `2026-08-31  27°C`. `--mean-temp` still prints the Observatory reading, and the other station temperature flags still print their own stations. `--clear-water-bay-temp --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Clear Water Bay temperature is available.`
 
 `hk-weather --max-temp` prints the latest daily maximum temperature at the Observatory for that same year (`dataType=CLMMAXT`, station HKO), for example `2026-08-31  29.5°C`. `--mean-temp` still prints the daily mean. `--hottest` still prints the current warmest place. `--max-temp --json` prints that day as one JSON object. `--lang` applies. If no numeric day is present, it says `No daily maximum temperature is available.`
 
