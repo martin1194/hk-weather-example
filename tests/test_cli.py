@@ -3084,6 +3084,67 @@ def test_cli_hong_kong_park_temp_when_missing(monkeypatch, capsys):
     }
 
 
+def test_cli_ngong_ping_temp_prints_latest_day(monkeypatch, capsys):
+    seen = {}
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _text_response(
+            "年/Year,月/Month,日/Day,數值/Value,數據完整性/data Completeness\n"
+            "2026,8,29,24.2,C\n"
+            "2026,8,30,***,\n"
+            "2026,8,31,  23.7  ,C\n"
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--ngong-ping-temp", "--lang", "tc"]) == 0
+    assert seen["url"].endswith("daily_NGP_TEMP_2026.csv")
+    assert capsys.readouterr().out == (
+        "Hong Kong daily mean temperature\n"
+        "Station: 昂坪\n"
+        "2026-08-31  23.7°C\n"
+    )
+
+
+def test_cli_ngong_ping_temp_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Year,Month,Day,Value,Completeness\n"
+            "2026,8,31,23.7,C\n"
+        ),
+    )
+    assert main(["--ngong-ping-temp", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "station": "Ngong Ping",
+        "date": "2026-08-31",
+        "temperature_c": 23.7,
+    }
+
+
+def test_cli_ngong_ping_temp_when_missing(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Year,Month,Day,Value,Completeness\n"
+            "2026,8,31,***,\n"
+        ),
+    )
+    assert main(["--ngong-ping-temp"]) == 0
+    assert capsys.readouterr().out == "No Ngong Ping temperature is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(""),
+    )
+    assert main(["--ngong-ping-temp", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No Ngong Ping temperature is available."
+    }
+
+
 def test_cli_max_temp_prints_latest_day(monkeypatch, capsys):
     seen = {}
     monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
