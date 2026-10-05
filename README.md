@@ -375,6 +375,8 @@ hk-weather --airport-wind
 hk-weather --airport-wind --json
 hk-weather --green-island-wind
 hk-weather --green-island-wind --json
+hk-weather --ngong-ping-wind
+hk-weather --ngong-ping-wind --json
 hk-weather --forecast-icon
 hk-weather --forecast-icon --json
 hk-weather --quake
@@ -1015,6 +1017,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --airport-wind` prints the latest daily mean wind speed at Hong Kong International Airport, for example `2026-07-31  14 km/h`. The published airport series currently ends in July. `--mean-wind` still prints Waglan Island, and the other station wind flags still print their own stations. `--airport-temp` still prints the airport mean temperature, `--airport-max` still prints its maximum, `--airport-min` still prints its minimum, `--airport-humidity` still prints its humidity, `--airport-dew` still prints its dew point, `--airport-rain` still prints its rainfall, `--airport-pressure` still prints its pressure, and `--airport-wet` still prints its wet-bulb temperature. A speed of zero is kept. `--airport-wind --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No airport mean wind speed is available.`
 
 `hk-weather --green-island-wind` prints the latest daily mean wind speed at Green Island, for example `2026-08-31  9.3 km/h`. `--mean-wind` still prints Waglan Island, and the other station wind flags still print their own stations. `--green-island-rain` still prints Green Island's rainfall. A speed of zero is kept. `--green-island-wind --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Green Island mean wind speed is available.`
+
+`hk-weather --ngong-ping-wind` prints the latest daily mean wind speed at Ngong Ping, for example `2026-08-31  12.5 km/h`. `--mean-wind` still prints Waglan Island, and the other station wind flags still print their own stations. `--ngong-ping-temp` still prints Ngong Ping's mean temperature, `--ngong-ping-max` still prints its maximum, and `--ngong-ping-min` still prints its minimum. A speed of zero is kept. `--ngong-ping-wind --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Ngong Ping mean wind speed is available.`
 
 `hk-weather --forecast-icon` prints each day's weather icon from that forecast (`ForecastIcon`), for example `2026-10-04 Sunday  54  Sunny Intervals with Showers`. `--wind` still prints the wind. `--forecast-icon --json` prints those days as one JSON object. `--lang` applies. If no icon is present, it says `No forecast icons are available.`
 
