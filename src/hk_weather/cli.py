@@ -256,6 +256,7 @@ from hk_weather.hko import (
     fetch_airport_min,
     fetch_yuen_long_park_min,
     fetch_clear_water_bay_min,
+    fetch_tap_mun_min,
     fetch_tai_mo_max,
     fetch_tseung_kwan_o_max,
     fetch_sheung_shui_max,
@@ -647,6 +648,7 @@ from hk_weather.hko import (
     format_airport_min_miss,
     format_yuen_long_park_min_miss,
     format_clear_water_bay_min_miss,
+    format_tap_mun_min_miss,
     format_tai_mo_max,
     format_tai_mo_max_miss,
     format_tseung_kwan_o_max_miss,
@@ -906,6 +908,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--airport-min prints the latest daily minimum temperature at the airport; "
             "--yuen-long-park-min prints the latest daily minimum temperature at Yuen Long Park; "
             "--clear-water-bay-min prints the latest daily minimum temperature at Clear Water Bay; "
+            "--tap-mun-min prints the latest daily minimum temperature at Tap Mun; "
             "--tai-mo-max prints the latest daily maximum temperature at Tai Mo Shan; "
             "--tseung-kwan-o-max prints the latest daily maximum temperature at Tseung Kwan O; "
             "--sheung-shui-max prints the latest daily maximum temperature at Sheung Shui; "
@@ -1388,6 +1391,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--clear-water-bay-min",
         action="store_true",
         help="Print the latest daily minimum temperature at Clear Water Bay",
+    )
+    parser.add_argument(
+        "--tap-mun-min",
+        action="store_true",
+        help="Print the latest daily minimum temperature at Tap Mun",
     )
     parser.add_argument(
         "--tai-mo-max",
@@ -3131,6 +3139,16 @@ def main(argv: list[str] | None = None) -> int:
                     format_json(clear_water_bay_min)
                     if args.json
                     else format_tai_mo_min(clear_water_bay_min)
+                )
+        elif args.tap_mun_min:
+            tap_mun_min = fetch_tap_mun_min(timeout=args.timeout, lang=args.lang)
+            if tap_mun_min is None:
+                text = format_tap_mun_min_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(tap_mun_min)
+                    if args.json
+                    else format_tai_mo_min(tap_mun_min)
                 )
         elif args.tai_mo_max:
             tai_mo_max = fetch_tai_mo_max(timeout=args.timeout, lang=args.lang)
