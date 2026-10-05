@@ -250,6 +250,8 @@ hk-weather --sha-lo-wan-dew
 hk-weather --sha-lo-wan-dew --json
 hk-weather --airport-dew
 hk-weather --airport-dew --json
+hk-weather --clear-water-bay-dew
+hk-weather --clear-water-bay-dew --json
 hk-weather --cloud
 hk-weather --cloud --json
 hk-weather --evaporation
@@ -891,6 +893,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --sha-lo-wan-dew` prints the latest daily mean dew point at Sha Lo Wan, for example `2026-08-31  25.6°C`. `--dew-point` still prints the Observatory reading, `--park-dew` still prints King's Park, `--cheung-dew` still prints Cheung Chau, `--wong-chuk-hang-dew` still prints Wong Chuk Hang, `--sai-kung-dew` still prints Sai Kung, `--sha-tin-dew` still prints Sha Tin, `--sheung-shui-dew` still prints Sheung Shui, `--waglan-dew` still prints Waglan Island, `--lau-fau-dew` still prints Lau Fau Shan, `--wetland-dew` still prints Wetland Park, `--ta-kwu-ling-dew` still prints Ta Kwu Ling, `--shek-kong-dew` still prints Shek Kong, `--tseung-kwan-o-dew` still prints Tseung Kwan O, `--tai-mo-dew` still prints Tai Mo Shan, and `--peng-chau-dew` still prints Peng Chau. `--sha-lo-wan-temp` still prints Sha Lo Wan's mean temperature, `--sha-lo-wan-humidity` still prints its humidity, `--sha-lo-wan-wind` still prints its wind speed, and `--sha-lo-wan-prevailing` still prints its prevailing wind. `--sha-lo-wan-dew --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Sha Lo Wan dew point is available.`
 
 `hk-weather --airport-dew` prints the latest daily mean dew point at Hong Kong International Airport, for example `2026-07-31  23.7°C`. The published airport series currently ends in July. `--dew-point` still prints the Observatory reading, and the other station dew-point flags still print their own stations. `--airport-temp` still prints the airport mean temperature, `--airport-max` still prints its maximum, `--airport-min` still prints its minimum, `--airport-humidity` still prints its humidity, `--airport-rain` still prints its rainfall, `--airport-pressure` still prints its pressure, and `--airport-wet` still prints its wet-bulb temperature. `--airport-dew --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No airport dew point is available.`
+
+`hk-weather --clear-water-bay-dew` prints the latest daily mean dew point at Clear Water Bay, for example `2026-08-31  25°C`. `--dew-point` still prints the Observatory reading, and the other station dew-point flags still print their own stations. `--clear-water-bay-temp` still prints Clear Water Bay's mean temperature, `--clear-water-bay-max` still prints its maximum, `--clear-water-bay-min` still prints its minimum, and `--clear-water-bay-rain` still prints its rainfall. `--clear-water-bay-dew --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Clear Water Bay dew point is available.`
 
 `hk-weather --cloud` prints the latest daily mean cloud amount at the Observatory for the current Hong Kong year, for example `2026-08-31  88%`. `--dew-point` still prints the dew point. `--cloud --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No cloud amount is available.`
 
