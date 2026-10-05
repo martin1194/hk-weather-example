@@ -112,6 +112,8 @@ hk-weather --yuen-long-park-temp
 hk-weather --yuen-long-park-temp --json
 hk-weather --tap-mun-temp
 hk-weather --tap-mun-temp --json
+hk-weather --shau-kei-wan-temp
+hk-weather --shau-kei-wan-temp --json
 hk-weather --max-temp
 hk-weather --max-temp --json
 hk-weather --min-temp
@@ -771,6 +773,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --yuen-long-park-temp` prints the latest daily mean temperature at Yuen Long Park, for example `2026-08-31  27.3°C`. `--mean-temp` still prints the Observatory reading, and the other station temperature flags still print their own stations. `--yuen-long-park-temp --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Yuen Long Park temperature is available.`
 
 `hk-weather --tap-mun-temp` prints the latest daily mean temperature at Tap Mun, for example `2026-08-31  26.7°C`. `--mean-temp` still prints the Observatory reading, and the other station temperature flags still print their own stations. `--tap-mun-temp --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Tap Mun temperature is available.`
+
+`hk-weather --shau-kei-wan-temp` prints the latest daily mean temperature at Shau Kei Wan, for example `2026-08-31  27.1°C`. `--mean-temp` still prints the Observatory reading, and the other station temperature flags still print their own stations. `--shau-kei-wan-humidity` still prints Shau Kei Wan's humidity, `--shau-kei-wan-dew` still prints its dew point, and `--shau-kei-wan-rain` still prints its rainfall. `--shau-kei-wan-temp --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Shau Kei Wan temperature is available.`
 
 `hk-weather --max-temp` prints the latest daily maximum temperature at the Observatory for that same year (`dataType=CLMMAXT`, station HKO), for example `2026-08-31  29.5°C`. `--mean-temp` still prints the daily mean. `--hottest` still prints the current warmest place. `--max-temp --json` prints that day as one JSON object. `--lang` applies. If no numeric day is present, it says `No daily maximum temperature is available.`
 
