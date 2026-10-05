@@ -4624,6 +4624,26 @@ def fetch_ta_kwu_ling_pressure(timeout: float = 10, lang: str = "en") -> MeanPre
     return parse_ta_kwu_ling_pressure(text, lang)
 
 
+def fetch_airport_pressure(timeout: float = 10, lang: str = "en") -> MeanPressure | None:
+    """Download the latest daily mean pressure at the airport."""
+    year = _hong_kong_today()[:4]
+    url = (
+        "https://data.weather.gov.hk/weatherAPI/cis/csvfile/HKA/"
+        f"{year}/daily_HKA_MSLP_{year}.csv"
+    )
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            raw = response.read()
+    except (urllib.error.URLError, TimeoutError) as exc:
+        raise WeatherError(f"could not reach Hong Kong Observatory: {exc}") from exc
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise WeatherError("Hong Kong Observatory returned invalid text") from exc
+    return parse_airport_pressure(text, lang)
+
+
 def fetch_minute_grass(timeout: float = 10, lang: str = "en") -> MinuteGrassReport:
     """Download the latest 1-minute mean grass temperature at automatic stations."""
     url = MINUTE_GRASS_URLS.get(lang, MINUTE_GRASS_URLS["en"])
@@ -9656,6 +9676,40 @@ def parse_ta_kwu_ling_pressure(text: str, lang: str = "en") -> MeanPressure | No
 def format_ta_kwu_ling_pressure_miss(*, as_json: bool = False) -> str:
     """Say that no Ta Kwu Ling pressure is available."""
     return _unavailable("No Ta Kwu Ling pressure is available.", as_json=as_json)
+
+
+_AIRPORT_PRESSURE_STATIONS = {
+    "en": "Hong Kong International Airport",
+    "tc": "香港國際機場",
+    "sc": "香港国际机场",
+}
+
+
+def parse_airport_pressure(text: str, lang: str = "en") -> MeanPressure | None:
+    """Turn the airport pressure CSV into the latest numeric day."""
+    station = _AIRPORT_PRESSURE_STATIONS.get(lang, _AIRPORT_PRESSURE_STATIONS["en"])
+    latest: MeanPressure | None = None
+    rows = csv.reader(io.StringIO(text))
+    for row in rows:
+        if len(row) < 4:
+            continue
+        year = _text(row[0]).lstrip("\ufeff")
+        month = _text(row[1])
+        day = _text(row[2])
+        value = _hour_mm(row[3])
+        if not (year.isdigit() and month.isdigit() and day.isdigit()) or value is None:
+            continue
+        latest = MeanPressure(
+            station,
+            f"{int(year):04d}-{int(month):02d}-{int(day):02d}",
+            value,
+        )
+    return latest
+
+
+def format_airport_pressure_miss(*, as_json: bool = False) -> str:
+    """Say that no airport pressure is available."""
+    return _unavailable("No airport pressure is available.", as_json=as_json)
 
 
 def parse_minute_grass(text: str) -> MinuteGrassReport:
