@@ -193,6 +193,7 @@ from hk_weather.hko import (
     fetch_sham_shui_po_min,
     fetch_shek_kong_min,
     fetch_wetland_min,
+    fetch_ta_kwu_ling_min,
     fetch_tai_mo_max,
     fetch_tseung_kwan_o_max,
     fetch_sheung_shui_max,
@@ -509,6 +510,7 @@ from hk_weather.hko import (
     format_sham_shui_po_min_miss,
     format_shek_kong_min_miss,
     format_wetland_min_miss,
+    format_ta_kwu_ling_min_miss,
     format_tai_mo_max,
     format_tai_mo_max_miss,
     format_tseung_kwan_o_max_miss,
@@ -698,6 +700,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--sham-shui-po-min prints the latest daily minimum temperature at Sham Shui Po; "
             "--shek-kong-min prints the latest daily minimum temperature at Shek Kong; "
             "--wetland-min prints the latest daily minimum temperature at Wetland Park; "
+            "--ta-kwu-ling-min prints the latest daily minimum temperature at Ta Kwu Ling; "
             "--tai-mo-max prints the latest daily maximum temperature at Tai Mo Shan; "
             "--tseung-kwan-o-max prints the latest daily maximum temperature at Tseung Kwan O; "
             "--sheung-shui-max prints the latest daily maximum temperature at Sheung Shui; "
@@ -1053,6 +1056,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--wetland-min",
         action="store_true",
         help="Print the latest daily minimum temperature at Wetland Park",
+    )
+    parser.add_argument(
+        "--ta-kwu-ling-min",
+        action="store_true",
+        help="Print the latest daily minimum temperature at Ta Kwu Ling",
     )
     parser.add_argument(
         "--tai-mo-max",
@@ -2310,6 +2318,16 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_wetland_min_miss(as_json=args.json)
             else:
                 text = format_json(wetland_min) if args.json else format_tai_mo_min(wetland_min)
+        elif args.ta_kwu_ling_min:
+            ta_kwu_ling_min = fetch_ta_kwu_ling_min(timeout=args.timeout, lang=args.lang)
+            if ta_kwu_ling_min is None:
+                text = format_ta_kwu_ling_min_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(ta_kwu_ling_min)
+                    if args.json
+                    else format_tai_mo_min(ta_kwu_ling_min)
+                )
         elif args.tai_mo_max:
             tai_mo_max = fetch_tai_mo_max(timeout=args.timeout, lang=args.lang)
             if tai_mo_max is None:
