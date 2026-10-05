@@ -8277,6 +8277,67 @@ def test_cli_tai_mo_wind_when_missing(monkeypatch, capsys):
     }
 
 
+def test_cli_tate_wind_prints_latest_day(monkeypatch, capsys):
+    seen = {}
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _text_response(
+            "年/Year,月/Month,日/Day,數值/Value,數據完整性/data Completeness\n"
+            "2026,8,29,12.8,C\n"
+            "2026,8,30,***,\n"
+            "2026,8,31,  9.8  ,C\n"
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--tate-wind", "--lang", "tc"]) == 0
+    assert seen["url"].endswith("daily_TC_WSPD_2026.csv")
+    assert capsys.readouterr().out == (
+        "Hong Kong mean wind speed\n"
+        "Station: 大老山\n"
+        "2026-08-31  9.8 km/h\n"
+    )
+
+
+def test_cli_tate_wind_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Year,Month,Day,Value,Completeness\n"
+            "2026,8,31,9.8,C\n"
+        ),
+    )
+    assert main(["--tate-wind", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "station": "Tate's Cairn",
+        "date": "2026-08-31",
+        "wind_km_h": 9.8,
+    }
+
+
+def test_cli_tate_wind_when_missing(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Year,Month,Day,Value,Completeness\n"
+            "2026,8,31,***,\n"
+        ),
+    )
+    assert main(["--tate-wind"]) == 0
+    assert capsys.readouterr().out == "No Tate's Cairn mean wind speed is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(""),
+    )
+    assert main(["--tate-wind", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No Tate's Cairn mean wind speed is available."
+    }
+
+
 def test_cli_forecast_icon_lists_each_day(monkeypatch, capsys):
     seen = {}
 
