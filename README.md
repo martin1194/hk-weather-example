@@ -108,6 +108,8 @@ hk-weather --wong-tai-sin-temp
 hk-weather --wong-tai-sin-temp --json
 hk-weather --tsuen-wan-temp
 hk-weather --tsuen-wan-temp --json
+hk-weather --yuen-long-park-temp
+hk-weather --yuen-long-park-temp --json
 hk-weather --max-temp
 hk-weather --max-temp --json
 hk-weather --min-temp
@@ -703,6 +705,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --wong-tai-sin-temp` prints the latest daily mean temperature at Wong Tai Sin, for example `2026-08-31  27.7°C`. `--mean-temp` still prints the Observatory reading, and the other station temperature flags still print their own stations. `--wong-tai-sin-temp --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Wong Tai Sin temperature is available.`
 
 `hk-weather --tsuen-wan-temp` prints the latest daily mean temperature at Tsuen Wan, for example `2026-08-31  26°C`. `--mean-temp` still prints the Observatory reading, and the other station temperature flags still print their own stations. `--tsuen-wan-temp --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Tsuen Wan temperature is available.`
+
+`hk-weather --yuen-long-park-temp` prints the latest daily mean temperature at Yuen Long Park, for example `2026-08-31  27.3°C`. `--mean-temp` still prints the Observatory reading, and the other station temperature flags still print their own stations. `--yuen-long-park-temp --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Yuen Long Park temperature is available.`
 
 `hk-weather --max-temp` prints the latest daily maximum temperature at the Observatory for that same year (`dataType=CLMMAXT`, station HKO), for example `2026-08-31  29.5°C`. `--mean-temp` still prints the daily mean. `--hottest` still prints the current warmest place. `--max-temp --json` prints that day as one JSON object. `--lang` applies. If no numeric day is present, it says `No daily maximum temperature is available.`
 
