@@ -476,6 +476,8 @@ hk-weather --airport-rain
 hk-weather --airport-rain --json
 hk-weather --green-island-rain
 hk-weather --green-island-rain --json
+hk-weather --tsuen-wan-rain
+hk-weather --tsuen-wan-rain --json
 hk-weather --rainstorm
 hk-weather --rainstorm --json
 hk-weather --cyclone
@@ -1115,6 +1117,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --airport-rain` prints the latest daily total rainfall at Hong Kong International Airport, for example `2026-07-31  25.6 mm`. The published airport series currently ends in July. `--daily-rain` still prints the Observatory total, and the other station rainfall flags still print their own stations. `--airport-temp` still prints the airport mean temperature, `--airport-max` still prints its maximum, `--airport-min` still prints its minimum, and `--airport-humidity` still prints its humidity. A total of zero is kept. `--airport-rain --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No airport rainfall is available.`
 
 `hk-weather --green-island-rain` prints the latest daily total rainfall at Green Island, for example `2026-08-31  31.5 mm`. `--daily-rain` still prints the Observatory total, and the other station rainfall flags still print their own stations. A total of zero is kept. `--green-island-rain --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Green Island rainfall is available.`
+
+`hk-weather --tsuen-wan-rain` prints the latest daily total rainfall at Tsuen Wan, for example `2026-08-31  22 mm`. `--daily-rain` still prints the Observatory total, and the other station rainfall flags still print their own stations. `--tsuen-wan-temp` still prints Tsuen Wan's mean temperature, `--tsuen-wan-max` still prints its maximum, and `--tsuen-wan-min` still prints its minimum. A total of zero is kept. `--tsuen-wan-rain --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Tsuen Wan rainfall is available.`
 
 `hk-weather --lightning` lists places where the current report shows lightning. `--lightning --json` prints those places as one JSON object. If none are reported, it says so.
 
