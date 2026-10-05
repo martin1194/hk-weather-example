@@ -548,6 +548,8 @@ hk-weather --sha-lo-wan-humidity
 hk-weather --sha-lo-wan-humidity --json
 hk-weather --airport-humidity
 hk-weather --airport-humidity --json
+hk-weather --tsuen-wan-humidity
+hk-weather --tsuen-wan-humidity --json
 hk-weather --temps
 hk-weather --temps --json
 hk-weather --temp-time
@@ -1197,6 +1199,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --sha-lo-wan-humidity` prints the latest daily mean relative humidity at Sha Lo Wan, for example `2026-08-31  94%`. `--mean-humidity` still prints the Observatory reading, `--tai-mo-humidity` still prints Tai Mo Shan, `--waglan-humidity` still prints Waglan Island, `--tate-humidity` still prints Tate's Cairn, `--ta-kwu-ling-humidity` still prints Ta Kwu Ling, `--wetland-humidity` still prints Wetland Park, `--shek-kong-humidity` still prints Shek Kong, `--lau-fau-humidity` still prints Lau Fau Shan, `--park-humidity` still prints King's Park, `--sai-kung-humidity` still prints Sai Kung, `--cheung-chau-humidity` still prints Cheung Chau, `--sha-tin-humidity` still prints Sha Tin, `--sheung-shui-humidity` still prints Sheung Shui, `--wong-chuk-hang-humidity` still prints Wong Chuk Hang, `--tseung-kwan-o-humidity` still prints Tseung Kwan O, and `--peng-chau-humidity` still prints Peng Chau. `--sha-lo-wan-temp` still prints Sha Lo Wan's mean temperature, and `--sha-lo-wan-wet` still prints its wet-bulb temperature. `--sha-lo-wan-humidity --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Sha Lo Wan humidity is available.`
 
 `hk-weather --airport-humidity` prints the latest daily mean relative humidity at Hong Kong International Airport, for example `2026-07-31  86%`. The published airport series currently ends in July. `--mean-humidity` still prints the Observatory reading, and the other station humidity flags still print their own stations. `--airport-temp` still prints the airport mean temperature, and `--airport-wet` still prints its wet-bulb temperature. `--airport-humidity --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No airport humidity is available.`
+
+`hk-weather --tsuen-wan-humidity` prints the latest daily mean relative humidity at Tsuen Wan, for example `2026-08-31  93%`. `--mean-humidity` still prints the Observatory reading, and the other station humidity flags still print their own stations. `--tsuen-wan-temp` still prints Tsuen Wan's mean temperature, `--tsuen-wan-max` still prints its maximum, `--tsuen-wan-min` still prints its minimum, `--tsuen-wan-rain` still prints its rainfall, and `--tsuen-wan-dew` still prints its dew point. `--tsuen-wan-humidity --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Tsuen Wan humidity is available.`
 
 `hk-weather --temps` prints temperature by place from the current report, with the record time when the Observatory includes it. `--temps --json` prints that list as one JSON object. If no readings are present, it says so.
 
