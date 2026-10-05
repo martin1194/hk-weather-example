@@ -158,6 +158,8 @@ hk-weather --tap-mun-min
 hk-weather --tap-mun-min --json
 hk-weather --hong-kong-park-min
 hk-weather --hong-kong-park-min --json
+hk-weather --ngong-ping-min
+hk-weather --ngong-ping-min --json
 hk-weather --tai-mo-max
 hk-weather --tai-mo-max --json
 hk-weather --tseung-kwan-o-max
@@ -777,6 +779,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --tap-mun-min` prints the latest daily minimum temperature at Tap Mun, for example `2026-08-31  25.8°C`. `--min-temp` still prints the Observatory minimum, and the other station minimum flags still print their own stations. `--tap-mun-temp` still prints Tap Mun's mean temperature, and `--tap-mun-max` still prints its maximum. `--tap-mun-min --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Tap Mun minimum temperature is available.`
 
 `hk-weather --hong-kong-park-min` prints the latest daily minimum temperature at Hong Kong Park, for example `2026-08-31  25.8°C`. `--min-temp` still prints the Observatory minimum, and the other station minimum flags still print their own stations. `--hong-kong-park-temp` still prints Hong Kong Park's mean temperature, and `--hong-kong-park-max` still prints its maximum. `--hong-kong-park-min --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Hong Kong Park minimum temperature is available.`
+
+`hk-weather --ngong-ping-min` prints the latest daily minimum temperature at Ngong Ping, for example `2026-08-31  22.4°C`. `--min-temp` still prints the Observatory minimum, and the other station minimum flags still print their own stations. `--ngong-ping-temp` still prints Ngong Ping's mean temperature, and `--ngong-ping-max` still prints its maximum. `--ngong-ping-min --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Ngong Ping minimum temperature is available.`
 
 `hk-weather --tai-mo-max` prints the latest daily maximum temperature at Tai Mo Shan, for example `2026-08-31  24.1°C`. `--max-temp` still prints the Observatory maximum, `--tai-mo-temp` still prints the peak's daily mean, and `--tai-mo-min` still prints the peak's daily minimum. `--tai-mo-max --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Tai Mo Shan maximum temperature is available.`
 
