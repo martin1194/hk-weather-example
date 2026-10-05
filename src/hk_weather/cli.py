@@ -173,6 +173,7 @@ from hk_weather.hko import (
     fetch_wong_chuk_hang_prevailing,
     fetch_sai_kung_prevailing,
     fetch_tseung_kwan_o_prevailing,
+    fetch_shek_kong_prevailing,
     fetch_mean_wind,
     fetch_cheung_wind,
     fetch_lau_fau_wind,
@@ -524,6 +525,7 @@ from hk_weather.hko import (
     format_wong_chuk_hang_prevailing_miss,
     format_sai_kung_prevailing_miss,
     format_tseung_kwan_o_prevailing_miss,
+    format_shek_kong_prevailing_miss,
     format_mean_wind,
     format_mean_wind_miss,
     format_cheung_wind_miss,
@@ -754,6 +756,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--wong-chuk-hang-prevailing prints the latest prevailing wind at Wong Chuk Hang; "
             "--sai-kung-prevailing prints the latest prevailing wind at Sai Kung; "
             "--tseung-kwan-o-prevailing prints the latest prevailing wind at Tseung Kwan O; "
+            "--shek-kong-prevailing prints the latest prevailing wind at Shek Kong; "
             "--mean-wind prints the latest daily mean wind speed; "
             "--cheung-wind prints the latest daily mean wind speed at Cheung Chau; "
             "--lau-fau-wind prints the latest daily mean wind speed at Lau Fau Shan; "
@@ -1570,6 +1573,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--tseung-kwan-o-prevailing",
         action="store_true",
         help="Print the latest daily prevailing wind direction at Tseung Kwan O",
+    )
+    parser.add_argument(
+        "--shek-kong-prevailing",
+        action="store_true",
+        help="Print the latest daily prevailing wind direction at Shek Kong",
     )
     parser.add_argument(
         "--mean-wind",
@@ -3270,6 +3278,18 @@ def main(argv: list[str] | None = None) -> int:
                     format_json(tseung_kwan_o_prevailing)
                     if args.json
                     else format_prevailing(tseung_kwan_o_prevailing)
+                )
+        elif args.shek_kong_prevailing:
+            shek_kong_prevailing = fetch_shek_kong_prevailing(
+                timeout=args.timeout, lang=args.lang
+            )
+            if shek_kong_prevailing is None:
+                text = format_shek_kong_prevailing_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(shek_kong_prevailing)
+                    if args.json
+                    else format_prevailing(shek_kong_prevailing)
                 )
         elif args.mean_wind:
             mean_wind = fetch_mean_wind(timeout=args.timeout, lang=args.lang)
