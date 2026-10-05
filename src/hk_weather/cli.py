@@ -260,6 +260,7 @@ from hk_weather.hko import (
     fetch_hong_kong_park_min,
     fetch_ngong_ping_min,
     fetch_kwun_tong_min,
+    fetch_wong_tai_sin_min,
     fetch_tai_mo_max,
     fetch_tseung_kwan_o_max,
     fetch_sheung_shui_max,
@@ -659,6 +660,7 @@ from hk_weather.hko import (
     format_hong_kong_park_min_miss,
     format_ngong_ping_min_miss,
     format_kwun_tong_min_miss,
+    format_wong_tai_sin_min_miss,
     format_tai_mo_max,
     format_tai_mo_max_miss,
     format_tseung_kwan_o_max_miss,
@@ -926,6 +928,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--hong-kong-park-min prints the latest daily minimum temperature at Hong Kong Park; "
             "--ngong-ping-min prints the latest daily minimum temperature at Ngong Ping; "
             "--kwun-tong-min prints the latest daily minimum temperature at Kwun Tong; "
+            "--wong-tai-sin-min prints the latest daily minimum temperature at Wong Tai Sin; "
             "--tai-mo-max prints the latest daily maximum temperature at Tai Mo Shan; "
             "--tseung-kwan-o-max prints the latest daily maximum temperature at Tseung Kwan O; "
             "--sheung-shui-max prints the latest daily maximum temperature at Sheung Shui; "
@@ -1432,6 +1435,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--kwun-tong-min",
         action="store_true",
         help="Print the latest daily minimum temperature at Kwun Tong",
+    )
+    parser.add_argument(
+        "--wong-tai-sin-min",
+        action="store_true",
+        help="Print the latest daily minimum temperature at Wong Tai Sin",
     )
     parser.add_argument(
         "--tai-mo-max",
@@ -3237,6 +3245,18 @@ def main(argv: list[str] | None = None) -> int:
                     format_json(kwun_tong_min)
                     if args.json
                     else format_tai_mo_min(kwun_tong_min)
+                )
+        elif args.wong_tai_sin_min:
+            wong_tai_sin_min = fetch_wong_tai_sin_min(
+                timeout=args.timeout, lang=args.lang
+            )
+            if wong_tai_sin_min is None:
+                text = format_wong_tai_sin_min_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(wong_tai_sin_min)
+                    if args.json
+                    else format_tai_mo_min(wong_tai_sin_min)
                 )
         elif args.tai_mo_max:
             tai_mo_max = fetch_tai_mo_max(timeout=args.timeout, lang=args.lang)
