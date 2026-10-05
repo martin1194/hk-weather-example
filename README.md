@@ -265,6 +265,8 @@ hk-weather --tai-po-kau-wind
 hk-weather --tai-po-kau-wind --json
 hk-weather --tai-mo-to-wind
 hk-weather --tai-mo-to-wind --json
+hk-weather --tai-mo-wind
+hk-weather --tai-mo-wind --json
 hk-weather --forecast-icon
 hk-weather --forecast-icon --json
 hk-weather --quake
@@ -773,6 +775,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --tai-po-kau-wind` prints the latest daily mean wind speed at Tai Po Kau, for example `2026-08-31  4.8 km/h`. `--mean-wind` still prints Waglan Island, `--cheung-wind` still prints Cheung Chau, `--lau-fau-wind` still prints Lau Fau Shan, and `--peng-chau-wind` still prints Peng Chau. A speed of zero is kept. `--tai-po-kau-wind --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Tai Po Kau mean wind speed is available.`
 
 `hk-weather --tai-mo-to-wind` prints the latest daily mean wind speed at Tai Mo To, for example `2026-08-31  7.4 km/h`. `--mean-wind` still prints Waglan Island, `--cheung-wind` still prints Cheung Chau, `--lau-fau-wind` still prints Lau Fau Shan, `--peng-chau-wind` still prints Peng Chau, and `--tai-po-kau-wind` still prints Tai Po Kau. `--tai-mo-to-prevailing` still prints Tai Mo To's prevailing wind direction. A speed of zero is kept. `--tai-mo-to-wind --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Tai Mo To mean wind speed is available.`
+
+`hk-weather --tai-mo-wind` prints the latest daily mean wind speed at Tai Mo Shan, for example `2026-08-31  10.9 km/h`. `--mean-wind` still prints Waglan Island, `--cheung-wind` still prints Cheung Chau, `--lau-fau-wind` still prints Lau Fau Shan, `--peng-chau-wind` still prints Peng Chau, `--tai-po-kau-wind` still prints Tai Po Kau, and `--tai-mo-to-wind` still prints Tai Mo To. `--tai-mo-temp` still prints Tai Mo Shan's mean temperature, `--tai-mo-max` still prints its maximum, `--tai-mo-min` still prints its minimum, `--tai-mo-dew` still prints its dew point, `--tai-mo-rain` still prints its rainfall, `--tai-mo-humidity` still prints its humidity, and `--tai-mo-pressure` still prints its pressure. A speed of zero is kept. `--tai-mo-wind --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Tai Mo Shan mean wind speed is available.`
 
 `hk-weather --forecast-icon` prints each day's weather icon from that forecast (`ForecastIcon`), for example `2026-10-04 Sunday  54  Sunny Intervals with Showers`. `--wind` still prints the wind. `--forecast-icon --json` prints those days as one JSON object. `--lang` applies. If no icon is present, it says `No forecast icons are available.`
 
