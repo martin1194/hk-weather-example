@@ -173,6 +173,7 @@ from hk_weather.hko import (
     fetch_peng_chau_wind,
     fetch_tai_po_kau_wind,
     fetch_tai_mo_to_wind,
+    fetch_tai_mo_wind,
     fetch_forecast_icon,
     fetch_yesterday,
     fetch_mean_temp,
@@ -507,6 +508,7 @@ from hk_weather.hko import (
     format_peng_chau_wind_miss,
     format_tai_po_kau_wind_miss,
     format_tai_mo_to_wind_miss,
+    format_tai_mo_wind_miss,
     format_forecast_icon,
     format_forecast_icon_miss,
     format_yesterday,
@@ -718,6 +720,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--peng-chau-wind prints the latest daily mean wind speed at Peng Chau; "
             "--tai-po-kau-wind prints the latest daily mean wind speed at Tai Po Kau; "
             "--tai-mo-to-wind prints the latest daily mean wind speed at Tai Mo To; "
+            "--tai-mo-wind prints the latest daily mean wind speed at Tai Mo Shan; "
             "--forecast-icon prints each day's weather icon; "
             "--quake lists the latest earthquake message; "
             "--felt prints the locally felt earth tremor; --today prints today; "
@@ -1516,6 +1519,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--tai-mo-to-wind",
         action="store_true",
         help="Print the latest daily mean wind speed at Tai Mo To",
+    )
+    parser.add_argument(
+        "--tai-mo-wind",
+        action="store_true",
+        help="Print the latest daily mean wind speed at Tai Mo Shan",
     )
     parser.add_argument(
         "--forecast-icon",
@@ -3100,6 +3108,16 @@ def main(argv: list[str] | None = None) -> int:
                     format_json(tai_mo_to_wind)
                     if args.json
                     else format_mean_wind(tai_mo_to_wind)
+                )
+        elif args.tai_mo_wind:
+            tai_mo_wind = fetch_tai_mo_wind(timeout=args.timeout, lang=args.lang)
+            if tai_mo_wind is None:
+                text = format_tai_mo_wind_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(tai_mo_wind)
+                    if args.json
+                    else format_mean_wind(tai_mo_wind)
                 )
         elif args.forecast_icon:
             forecast_icon = fetch_forecast_icon(timeout=args.timeout, lang=args.lang)
