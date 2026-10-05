@@ -152,6 +152,8 @@ hk-weather --airport-min
 hk-weather --airport-min --json
 hk-weather --yuen-long-park-min
 hk-weather --yuen-long-park-min --json
+hk-weather --clear-water-bay-min
+hk-weather --clear-water-bay-min --json
 hk-weather --tai-mo-max
 hk-weather --tai-mo-max --json
 hk-weather --tseung-kwan-o-max
@@ -759,6 +761,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --airport-min` prints the latest daily minimum temperature at Hong Kong International Airport, for example `2026-07-31  24.2°C`. The published airport series currently ends in July. `--min-temp` still prints the Observatory minimum, and the other station minimum flags still print their own stations. `--airport-temp` still prints the airport mean temperature, `--airport-max` still prints its maximum, `--airport-humidity` still prints its humidity, and `--airport-wet` still prints its wet-bulb temperature. `--airport-min --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No airport minimum temperature is available.`
 
 `hk-weather --yuen-long-park-min` prints the latest daily minimum temperature at Yuen Long Park, for example `2026-08-31  25.6°C`. `--min-temp` still prints the Observatory minimum, and the other station minimum flags still print their own stations. `--yuen-long-park-temp` still prints Yuen Long Park's mean temperature, and `--yuen-long-park-max` still prints its maximum. `--yuen-long-park-min --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Yuen Long Park minimum temperature is available.`
+
+`hk-weather --clear-water-bay-min` prints the latest daily minimum temperature at Clear Water Bay, for example `2026-08-31  25.9°C`. `--min-temp` still prints the Observatory minimum, and the other station minimum flags still print their own stations. `--clear-water-bay-temp` still prints Clear Water Bay's mean temperature, and `--clear-water-bay-max` still prints its maximum. `--clear-water-bay-min --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Clear Water Bay minimum temperature is available.`
 
 `hk-weather --tai-mo-max` prints the latest daily maximum temperature at Tai Mo Shan, for example `2026-08-31  24.1°C`. `--max-temp` still prints the Observatory maximum, `--tai-mo-temp` still prints the peak's daily mean, and `--tai-mo-min` still prints the peak's daily minimum. `--tai-mo-max --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Tai Mo Shan maximum temperature is available.`
 
