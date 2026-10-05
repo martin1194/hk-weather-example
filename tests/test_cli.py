@@ -7972,6 +7972,67 @@ def test_cli_lau_fau_prevailing_when_missing(monkeypatch, capsys):
     }
 
 
+def test_cli_sha_lo_wan_prevailing_prints_latest_day(monkeypatch, capsys):
+    seen = {}
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _text_response(
+            "年/Year,月/Month,日/Day,數值/Value,數據完整性/data Completeness\n"
+            "2026,8,29,230,C\n"
+            "2026,8,30,***,\n"
+            "2026,8,31,  260  ,C\n"
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--sha-lo-wan-prevailing", "--lang", "tc"]) == 0
+    assert seen["url"].endswith("daily_SLW_PDIR_2026.csv")
+    assert capsys.readouterr().out == (
+        "Hong Kong prevailing wind\n"
+        "Station: 沙螺灣\n"
+        "2026-08-31  260°\n"
+    )
+
+
+def test_cli_sha_lo_wan_prevailing_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Year,Month,Day,Value,Completeness\n"
+            "2026,8,31,260,C\n"
+        ),
+    )
+    assert main(["--sha-lo-wan-prevailing", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "station": "Sha Lo Wan",
+        "date": "2026-08-31",
+        "direction_deg": 260.0,
+    }
+
+
+def test_cli_sha_lo_wan_prevailing_when_missing(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Year,Month,Day,Value,Completeness\n"
+            "2026,8,31,***,\n"
+        ),
+    )
+    assert main(["--sha-lo-wan-prevailing"]) == 0
+    assert capsys.readouterr().out == "No Sha Lo Wan prevailing wind is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(""),
+    )
+    assert main(["--sha-lo-wan-prevailing", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No Sha Lo Wan prevailing wind is available."
+    }
+
+
 def test_cli_mean_wind_prints_latest_day(monkeypatch, capsys):
     seen = {}
     monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
