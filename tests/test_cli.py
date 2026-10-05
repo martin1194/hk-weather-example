@@ -15498,6 +15498,73 @@ def test_cli_clear_water_bay_humidity_when_missing(monkeypatch, capsys):
     }
 
 
+def test_cli_shau_kei_wan_humidity_prints_latest_day(monkeypatch, capsys):
+    seen = {}
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _text_response(
+            "年/Year,月/Month,日/Day,數值/Value,數據完整性/data Completeness\n"
+            "2026,8,29,88,C\n"
+            "2026,8,30,***,\n"
+            "2026,8,31,  90  ,C\n"
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--shau-kei-wan-humidity", "--lang", "tc"]) == 0
+    assert seen["url"].endswith("daily_SKW_RH_2026.csv")
+    assert capsys.readouterr().out == (
+        "Hong Kong daily mean humidity\n"
+        "Station: 筲箕灣\n"
+        "2026-08-31  90%\n"
+    )
+    assert main(["--shau-kei-wan-humidity", "--lang", "sc"]) == 0
+    assert capsys.readouterr().out == (
+        "Hong Kong daily mean humidity\n"
+        "Station: 筲箕湾\n"
+        "2026-08-31  90%\n"
+    )
+
+
+def test_cli_shau_kei_wan_humidity_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Year,Month,Day,Value,Completeness\n"
+            "2026,8,31,90,C\n"
+        ),
+    )
+    assert main(["--shau-kei-wan-humidity", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "station": "Shau Kei Wan",
+        "date": "2026-08-31",
+        "humidity_percent": 90.0,
+    }
+
+
+def test_cli_shau_kei_wan_humidity_when_missing(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Year,Month,Day,Value,Completeness\n"
+            "2026,8,31,***,\n"
+        ),
+    )
+    assert main(["--shau-kei-wan-humidity"]) == 0
+    assert capsys.readouterr().out == "No Shau Kei Wan humidity is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(""),
+    )
+    assert main(["--shau-kei-wan-humidity", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No Shau Kei Wan humidity is available."
+    }
+
+
 def test_cli_since_midnight_prints_high_and_low(monkeypatch, capsys):
     seen = {}
 
