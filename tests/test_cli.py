@@ -2901,6 +2901,67 @@ def test_cli_sha_lo_wan_temp_when_missing(monkeypatch, capsys):
     }
 
 
+def test_cli_airport_temp_prints_latest_day(monkeypatch, capsys):
+    seen = {}
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _text_response(
+            "年/Year,月/Month,日/Day,數值/Value,數據完整性/data Completeness\n"
+            "2026,7,29,26.8,C\n"
+            "2026,7,30,***,\n"
+            "2026,7,31,  26.2  ,C\n"
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--airport-temp", "--lang", "tc"]) == 0
+    assert seen["url"].endswith("daily_HKA_TEMP_2026.csv")
+    assert capsys.readouterr().out == (
+        "Hong Kong daily mean temperature\n"
+        "Station: 香港國際機場\n"
+        "2026-07-31  26.2°C\n"
+    )
+
+
+def test_cli_airport_temp_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Year,Month,Day,Value,Completeness\n"
+            "2026,7,31,26.2,C\n"
+        ),
+    )
+    assert main(["--airport-temp", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "station": "Hong Kong International Airport",
+        "date": "2026-07-31",
+        "temperature_c": 26.2,
+    }
+
+
+def test_cli_airport_temp_when_missing(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Year,Month,Day,Value,Completeness\n"
+            "2026,7,31,***,\n"
+        ),
+    )
+    assert main(["--airport-temp"]) == 0
+    assert capsys.readouterr().out == "No airport temperature is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(""),
+    )
+    assert main(["--airport-temp", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No airport temperature is available."
+    }
+
+
 def test_cli_max_temp_prints_latest_day(monkeypatch, capsys):
     seen = {}
     monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
