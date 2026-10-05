@@ -496,6 +496,8 @@ hk-weather --clear-water-bay-rain
 hk-weather --clear-water-bay-rain --json
 hk-weather --shau-kei-wan-rain
 hk-weather --shau-kei-wan-rain --json
+hk-weather --happy-valley-rain
+hk-weather --happy-valley-rain --json
 hk-weather --rainstorm
 hk-weather --rainstorm --json
 hk-weather --cyclone
@@ -1163,6 +1165,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --clear-water-bay-rain` prints the latest daily total rainfall at Clear Water Bay, for example `2026-08-31  7 mm`. `--daily-rain` still prints the Observatory total, and the other station rainfall flags still print their own stations. `--clear-water-bay-temp` still prints Clear Water Bay's mean temperature, `--clear-water-bay-max` still prints its maximum, and `--clear-water-bay-min` still prints its minimum. A total of zero is kept. `--clear-water-bay-rain --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Clear Water Bay rainfall is available.`
 
 `hk-weather --shau-kei-wan-rain` prints the latest daily total rainfall at Shau Kei Wan, for example `2026-08-31  31.5 mm`. `--daily-rain` still prints the Observatory total, and the other station rainfall flags still print their own stations. `--shau-kei-wan-humidity` still prints Shau Kei Wan's humidity, and `--shau-kei-wan-dew` still prints its dew point. A total of zero is kept. `--shau-kei-wan-rain --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Shau Kei Wan rainfall is available.`
+
+`hk-weather --happy-valley-rain` prints the latest daily total rainfall at Happy Valley, for example `2026-08-31  14.5 mm`. `--daily-rain` still prints the Observatory total, and the other station rainfall flags still print their own stations. `--heat-index` still prints the Hong Kong Heat Index, which can include Happy Valley. A total of zero is kept. `--happy-valley-rain --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Happy Valley rainfall is available.`
 
 `hk-weather --lightning` lists places where the current report shows lightning. `--lightning --json` prints those places as one JSON object. If none are reported, it says so.
 
