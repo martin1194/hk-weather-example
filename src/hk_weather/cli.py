@@ -177,6 +177,7 @@ from hk_weather.hko import (
     fetch_sha_tin_prevailing,
     fetch_ta_kwu_ling_prevailing,
     fetch_wetland_prevailing,
+    fetch_tai_mo_prevailing,
     fetch_mean_wind,
     fetch_cheung_wind,
     fetch_lau_fau_wind,
@@ -532,6 +533,7 @@ from hk_weather.hko import (
     format_sha_tin_prevailing_miss,
     format_ta_kwu_ling_prevailing_miss,
     format_wetland_prevailing_miss,
+    format_tai_mo_prevailing_miss,
     format_mean_wind,
     format_mean_wind_miss,
     format_cheung_wind_miss,
@@ -766,6 +768,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--sha-tin-prevailing prints the latest prevailing wind at Sha Tin; "
             "--ta-kwu-ling-prevailing prints the latest prevailing wind at Ta Kwu Ling; "
             "--wetland-prevailing prints the latest prevailing wind at Wetland Park; "
+            "--tai-mo-prevailing prints the latest prevailing wind at Tai Mo Shan; "
             "--mean-wind prints the latest daily mean wind speed; "
             "--cheung-wind prints the latest daily mean wind speed at Cheung Chau; "
             "--lau-fau-wind prints the latest daily mean wind speed at Lau Fau Shan; "
@@ -1602,6 +1605,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--wetland-prevailing",
         action="store_true",
         help="Print the latest daily prevailing wind direction at Wetland Park",
+    )
+    parser.add_argument(
+        "--tai-mo-prevailing",
+        action="store_true",
+        help="Print the latest daily prevailing wind direction at Tai Mo Shan",
     )
     parser.add_argument(
         "--mean-wind",
@@ -3350,6 +3358,18 @@ def main(argv: list[str] | None = None) -> int:
                     format_json(wetland_prevailing)
                     if args.json
                     else format_prevailing(wetland_prevailing)
+                )
+        elif args.tai_mo_prevailing:
+            tai_mo_prevailing = fetch_tai_mo_prevailing(
+                timeout=args.timeout, lang=args.lang
+            )
+            if tai_mo_prevailing is None:
+                text = format_tai_mo_prevailing_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(tai_mo_prevailing)
+                    if args.json
+                    else format_prevailing(tai_mo_prevailing)
                 )
         elif args.mean_wind:
             mean_wind = fetch_mean_wind(timeout=args.timeout, lang=args.lang)
