@@ -216,6 +216,7 @@ from hk_weather.hko import (
     fetch_lau_fau_dew,
     fetch_wetland_dew,
     fetch_ta_kwu_ling_dew,
+    fetch_shek_kong_dew,
     fetch_cloud,
     fetch_evaporation,
     fetch_evapotranspiration,
@@ -532,6 +533,7 @@ from hk_weather.hko import (
     format_lau_fau_dew_miss,
     format_wetland_dew_miss,
     format_ta_kwu_ling_dew_miss,
+    format_shek_kong_dew_miss,
     format_cloud,
     format_cloud_miss,
     format_evaporation,
@@ -711,6 +713,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--lau-fau-dew prints the latest daily mean dew point at Lau Fau Shan; "
             "--wetland-dew prints the latest daily mean dew point at Wetland Park; "
             "--ta-kwu-ling-dew prints the latest daily mean dew point at Ta Kwu Ling; "
+            "--shek-kong-dew prints the latest daily mean dew point at Shek Kong; "
             "--cloud prints the latest daily mean cloud amount; "
             "--evaporation prints the latest daily evaporation; "
             "--evapotranspiration prints the latest monthly potential evapotranspiration; "
@@ -1146,6 +1149,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--ta-kwu-ling-dew",
         action="store_true",
         help="Print the latest daily mean dew point at Ta Kwu Ling",
+    )
+    parser.add_argument(
+        "--shek-kong-dew",
+        action="store_true",
+        help="Print the latest daily mean dew point at Shek Kong",
     )
     parser.add_argument(
         "--cloud",
@@ -2432,6 +2440,12 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_ta_kwu_ling_dew_miss(as_json=args.json)
             else:
                 text = format_json(ta_kwu_ling_dew) if args.json else format_dew_point(ta_kwu_ling_dew)
+        elif args.shek_kong_dew:
+            shek_kong_dew = fetch_shek_kong_dew(timeout=args.timeout, lang=args.lang)
+            if shek_kong_dew is None:
+                text = format_shek_kong_dew_miss(as_json=args.json)
+            else:
+                text = format_json(shek_kong_dew) if args.json else format_dew_point(shek_kong_dew)
         elif args.cloud:
             cloud = fetch_cloud(timeout=args.timeout, lang=args.lang)
             if cloud is None:
