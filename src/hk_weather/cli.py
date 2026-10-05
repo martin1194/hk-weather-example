@@ -176,6 +176,7 @@ from hk_weather.hko import (
     fetch_shek_kong_prevailing,
     fetch_sha_tin_prevailing,
     fetch_ta_kwu_ling_prevailing,
+    fetch_wetland_prevailing,
     fetch_mean_wind,
     fetch_cheung_wind,
     fetch_lau_fau_wind,
@@ -530,6 +531,7 @@ from hk_weather.hko import (
     format_shek_kong_prevailing_miss,
     format_sha_tin_prevailing_miss,
     format_ta_kwu_ling_prevailing_miss,
+    format_wetland_prevailing_miss,
     format_mean_wind,
     format_mean_wind_miss,
     format_cheung_wind_miss,
@@ -763,6 +765,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--shek-kong-prevailing prints the latest prevailing wind at Shek Kong; "
             "--sha-tin-prevailing prints the latest prevailing wind at Sha Tin; "
             "--ta-kwu-ling-prevailing prints the latest prevailing wind at Ta Kwu Ling; "
+            "--wetland-prevailing prints the latest prevailing wind at Wetland Park; "
             "--mean-wind prints the latest daily mean wind speed; "
             "--cheung-wind prints the latest daily mean wind speed at Cheung Chau; "
             "--lau-fau-wind prints the latest daily mean wind speed at Lau Fau Shan; "
@@ -1594,6 +1597,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--ta-kwu-ling-prevailing",
         action="store_true",
         help="Print the latest daily prevailing wind direction at Ta Kwu Ling",
+    )
+    parser.add_argument(
+        "--wetland-prevailing",
+        action="store_true",
+        help="Print the latest daily prevailing wind direction at Wetland Park",
     )
     parser.add_argument(
         "--mean-wind",
@@ -3330,6 +3338,18 @@ def main(argv: list[str] | None = None) -> int:
                     format_json(ta_kwu_ling_prevailing)
                     if args.json
                     else format_prevailing(ta_kwu_ling_prevailing)
+                )
+        elif args.wetland_prevailing:
+            wetland_prevailing = fetch_wetland_prevailing(
+                timeout=args.timeout, lang=args.lang
+            )
+            if wetland_prevailing is None:
+                text = format_wetland_prevailing_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(wetland_prevailing)
+                    if args.json
+                    else format_prevailing(wetland_prevailing)
                 )
         elif args.mean_wind:
             mean_wind = fetch_mean_wind(timeout=args.timeout, lang=args.lang)
