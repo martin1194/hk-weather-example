@@ -150,6 +150,8 @@ hk-weather --sha-lo-wan-min
 hk-weather --sha-lo-wan-min --json
 hk-weather --airport-min
 hk-weather --airport-min --json
+hk-weather --yuen-long-park-min
+hk-weather --yuen-long-park-min --json
 hk-weather --tai-mo-max
 hk-weather --tai-mo-max --json
 hk-weather --tseung-kwan-o-max
@@ -753,6 +755,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --sha-lo-wan-min` prints the latest daily minimum temperature at Sha Lo Wan, for example `2026-08-31  25.4°C`. `--min-temp` still prints the Observatory minimum, `--tai-mo-min` still prints Tai Mo Shan, `--tate-min` still prints Tate's Cairn, `--sai-kung-min` still prints Sai Kung, `--wong-chuk-hang-min` still prints Wong Chuk Hang, `--waglan-min` still prints Waglan Island, `--sha-tin-min` still prints Sha Tin, `--cheung-chau-min` still prints Cheung Chau, `--park-min` still prints King's Park, `--lau-fau-min` still prints Lau Fau Shan, `--sheung-shui-min` still prints Sheung Shui, `--tseung-kwan-o-min` still prints Tseung Kwan O, `--sham-shui-po-min` still prints Sham Shui Po, `--shek-kong-min` still prints Shek Kong, `--wetland-min` still prints Wetland Park, and `--ta-kwu-ling-min` still prints Ta Kwu Ling. `--sha-lo-wan-temp` still prints Sha Lo Wan's mean temperature, `--sha-lo-wan-humidity` still prints its humidity, and `--sha-lo-wan-wet` still prints its wet-bulb temperature. `--sha-lo-wan-min --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Sha Lo Wan minimum temperature is available.`
 
 `hk-weather --airport-min` prints the latest daily minimum temperature at Hong Kong International Airport, for example `2026-07-31  24.2°C`. The published airport series currently ends in July. `--min-temp` still prints the Observatory minimum, and the other station minimum flags still print their own stations. `--airport-temp` still prints the airport mean temperature, `--airport-max` still prints its maximum, `--airport-humidity` still prints its humidity, and `--airport-wet` still prints its wet-bulb temperature. `--airport-min --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No airport minimum temperature is available.`
+
+`hk-weather --yuen-long-park-min` prints the latest daily minimum temperature at Yuen Long Park, for example `2026-08-31  25.6°C`. `--min-temp` still prints the Observatory minimum, and the other station minimum flags still print their own stations. `--yuen-long-park-temp` still prints Yuen Long Park's mean temperature, and `--yuen-long-park-max` still prints its maximum. `--yuen-long-park-min --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Yuen Long Park minimum temperature is available.`
 
 `hk-weather --tai-mo-max` prints the latest daily maximum temperature at Tai Mo Shan, for example `2026-08-31  24.1°C`. `--max-temp` still prints the Observatory maximum, `--tai-mo-temp` still prints the peak's daily mean, and `--tai-mo-min` still prints the peak's daily minimum. `--tai-mo-max --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Tai Mo Shan maximum temperature is available.`
 
