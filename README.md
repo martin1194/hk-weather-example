@@ -480,6 +480,8 @@ hk-weather --tsuen-wan-rain
 hk-weather --tsuen-wan-rain --json
 hk-weather --tap-mun-rain
 hk-weather --tap-mun-rain --json
+hk-weather --clear-water-bay-rain
+hk-weather --clear-water-bay-rain --json
 hk-weather --rainstorm
 hk-weather --rainstorm --json
 hk-weather --cyclone
@@ -1123,6 +1125,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --tsuen-wan-rain` prints the latest daily total rainfall at Tsuen Wan, for example `2026-08-31  22 mm`. `--daily-rain` still prints the Observatory total, and the other station rainfall flags still print their own stations. `--tsuen-wan-temp` still prints Tsuen Wan's mean temperature, `--tsuen-wan-max` still prints its maximum, and `--tsuen-wan-min` still prints its minimum. A total of zero is kept. `--tsuen-wan-rain --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Tsuen Wan rainfall is available.`
 
 `hk-weather --tap-mun-rain` prints the latest daily total rainfall at Tap Mun, for example `2026-08-31  4 mm`. `--daily-rain` still prints the Observatory total, and the other station rainfall flags still print their own stations. `--tap-mun-temp` still prints Tap Mun's mean temperature, `--tap-mun-max` still prints its maximum, and `--tap-mun-min` still prints its minimum. A total of zero is kept. `--tap-mun-rain --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Tap Mun rainfall is available.`
+
+`hk-weather --clear-water-bay-rain` prints the latest daily total rainfall at Clear Water Bay, for example `2026-08-31  7 mm`. `--daily-rain` still prints the Observatory total, and the other station rainfall flags still print their own stations. `--clear-water-bay-temp` still prints Clear Water Bay's mean temperature, `--clear-water-bay-max` still prints its maximum, and `--clear-water-bay-min` still prints its minimum. A total of zero is kept. `--clear-water-bay-rain --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Clear Water Bay rainfall is available.`
 
 `hk-weather --lightning` lists places where the current report shows lightning. `--lightning --json` prints those places as one JSON object. If none are reported, it says so.
 
