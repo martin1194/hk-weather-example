@@ -188,6 +188,8 @@ hk-weather --airport-max
 hk-weather --airport-max --json
 hk-weather --yuen-long-park-max
 hk-weather --yuen-long-park-max --json
+hk-weather --clear-water-bay-max
+hk-weather --clear-water-bay-max --json
 hk-weather --dew-point
 hk-weather --dew-point --json
 hk-weather --park-dew
@@ -793,6 +795,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --airport-max` prints the latest daily maximum temperature at Hong Kong International Airport, for example `2026-07-31  28.2°C`. The published airport series currently ends in July. `--max-temp` still prints the Observatory maximum, and the other station maximum flags still print their own stations. `--airport-temp` still prints the airport mean temperature, `--airport-humidity` still prints its humidity, and `--airport-wet` still prints its wet-bulb temperature. `--airport-max --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No airport maximum temperature is available.`
 
 `hk-weather --yuen-long-park-max` prints the latest daily maximum temperature at Yuen Long Park, for example `2026-08-31  31.4°C`. `--max-temp` still prints the Observatory maximum, and the other station maximum flags still print their own stations. `--yuen-long-park-temp` still prints Yuen Long Park's mean temperature. `--yuen-long-park-max --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Yuen Long Park maximum temperature is available.`
+
+`hk-weather --clear-water-bay-max` prints the latest daily maximum temperature at Clear Water Bay, for example `2026-08-31  31.1°C`. `--max-temp` still prints the Observatory maximum, and the other station maximum flags still print their own stations. `--clear-water-bay-temp` still prints Clear Water Bay's mean temperature. `--clear-water-bay-max --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Clear Water Bay maximum temperature is available.`
 
 `hk-weather --dew-point` prints the latest daily mean dew point at the Observatory for the current Hong Kong year, for example `2026-08-31  25°C`. `--mean-temp` still prints the daily mean air temperature. `--dew-point --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No dew point is available.`
 
