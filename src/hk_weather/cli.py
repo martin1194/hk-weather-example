@@ -177,6 +177,7 @@ from hk_weather.hko import (
     fetch_wong_chuk_hang_temp,
     fetch_lau_fau_temp,
     fetch_tseung_kwan_o_temp,
+    fetch_sham_shui_po_temp,
     fetch_tai_mo_min,
     fetch_tate_min,
     fetch_sai_kung_min,
@@ -487,6 +488,7 @@ from hk_weather.hko import (
     format_wong_chuk_hang_temp_miss,
     format_lau_fau_temp_miss,
     format_tseung_kwan_o_temp_miss,
+    format_sham_shui_po_temp_miss,
     format_tai_mo_min,
     format_tai_mo_min_miss,
     format_tate_min_miss,
@@ -670,6 +672,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--wong-chuk-hang-temp prints the latest daily mean temperature at Wong Chuk Hang; "
             "--lau-fau-temp prints the latest daily mean temperature at Lau Fau Shan; "
             "--tseung-kwan-o-temp prints the latest daily mean temperature at Tseung Kwan O; "
+            "--sham-shui-po-temp prints the latest daily mean temperature at Sham Shui Po; "
             "--max-temp prints the latest daily maximum temperature; "
             "--min-temp prints the latest daily minimum temperature; "
             "--tai-mo-min prints the latest daily minimum temperature at Tai Mo Shan; "
@@ -948,6 +951,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--tseung-kwan-o-temp",
         action="store_true",
         help="Print the latest daily mean temperature at Tseung Kwan O",
+    )
+    parser.add_argument(
+        "--sham-shui-po-temp",
+        action="store_true",
+        help="Print the latest daily mean temperature at Sham Shui Po",
     )
     parser.add_argument(
         "--max-temp",
@@ -2129,6 +2137,16 @@ def main(argv: list[str] | None = None) -> int:
                     format_json(tseung_kwan_o_temp)
                     if args.json
                     else format_tai_mo_temp(tseung_kwan_o_temp)
+                )
+        elif args.sham_shui_po_temp:
+            sham_shui_po_temp = fetch_sham_shui_po_temp(timeout=args.timeout, lang=args.lang)
+            if sham_shui_po_temp is None:
+                text = format_sham_shui_po_temp_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(sham_shui_po_temp)
+                    if args.json
+                    else format_tai_mo_temp(sham_shui_po_temp)
                 )
         elif args.max_temp:
             max_temp = fetch_max_temp(timeout=args.timeout, lang=args.lang)
