@@ -13124,6 +13124,67 @@ def test_cli_sha_lo_wan_humidity_when_missing(monkeypatch, capsys):
     }
 
 
+def test_cli_airport_humidity_prints_latest_day(monkeypatch, capsys):
+    seen = {}
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _text_response(
+            "年/Year,月/Month,日/Day,數值/Value,數據完整性/data Completeness\n"
+            "2026,7,29,89,C\n"
+            "2026,7,30,***,\n"
+            "2026,7,31,  86  ,C\n"
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--airport-humidity", "--lang", "tc"]) == 0
+    assert seen["url"].endswith("daily_HKA_RH_2026.csv")
+    assert capsys.readouterr().out == (
+        "Hong Kong daily mean humidity\n"
+        "Station: 香港國際機場\n"
+        "2026-07-31  86%\n"
+    )
+
+
+def test_cli_airport_humidity_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Year,Month,Day,Value,Completeness\n"
+            "2026,7,31,86,C\n"
+        ),
+    )
+    assert main(["--airport-humidity", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "station": "Hong Kong International Airport",
+        "date": "2026-07-31",
+        "humidity_percent": 86.0,
+    }
+
+
+def test_cli_airport_humidity_when_missing(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Year,Month,Day,Value,Completeness\n"
+            "2026,7,31,***,\n"
+        ),
+    )
+    assert main(["--airport-humidity"]) == 0
+    assert capsys.readouterr().out == "No airport humidity is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(""),
+    )
+    assert main(["--airport-humidity", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No airport humidity is available."
+    }
+
+
 def test_cli_since_midnight_prints_high_and_low(monkeypatch, capsys):
     seen = {}
 
