@@ -183,6 +183,7 @@ from hk_weather.hko import (
     fetch_wetland_temp,
     fetch_ta_kwu_ling_temp,
     fetch_peng_chau_temp,
+    fetch_park_temp,
     fetch_tai_mo_min,
     fetch_tate_min,
     fetch_sai_kung_min,
@@ -503,6 +504,7 @@ from hk_weather.hko import (
     format_wetland_temp_miss,
     format_ta_kwu_ling_temp_miss,
     format_peng_chau_temp_miss,
+    format_park_temp_miss,
     format_tai_mo_min,
     format_tai_mo_min_miss,
     format_tate_min_miss,
@@ -696,6 +698,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--wetland-temp prints the latest daily mean temperature at Wetland Park; "
             "--ta-kwu-ling-temp prints the latest daily mean temperature at Ta Kwu Ling; "
             "--peng-chau-temp prints the latest daily mean temperature at Peng Chau; "
+            "--park-temp prints the latest daily mean temperature at King's Park; "
             "--max-temp prints the latest daily maximum temperature; "
             "--min-temp prints the latest daily minimum temperature; "
             "--tai-mo-min prints the latest daily minimum temperature at Tai Mo Shan; "
@@ -1003,6 +1006,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--peng-chau-temp",
         action="store_true",
         help="Print the latest daily mean temperature at Peng Chau",
+    )
+    parser.add_argument(
+        "--park-temp",
+        action="store_true",
+        help="Print the latest daily mean temperature at King's Park",
     )
     parser.add_argument(
         "--max-temp",
@@ -2260,6 +2268,12 @@ def main(argv: list[str] | None = None) -> int:
                     if args.json
                     else format_tai_mo_temp(peng_chau_temp)
                 )
+        elif args.park_temp:
+            park_temp = fetch_park_temp(timeout=args.timeout, lang=args.lang)
+            if park_temp is None:
+                text = format_park_temp_miss(as_json=args.json)
+            else:
+                text = format_json(park_temp) if args.json else format_tai_mo_temp(park_temp)
         elif args.max_temp:
             max_temp = fetch_max_temp(timeout=args.timeout, lang=args.lang)
             if max_temp is None:
