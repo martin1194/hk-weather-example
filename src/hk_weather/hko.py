@@ -3454,6 +3454,26 @@ def fetch_sai_kung_wind(timeout: float = 10, lang: str = "en") -> MeanWind | Non
     return parse_sai_kung_wind(text, lang)
 
 
+def fetch_sha_tin_wind(timeout: float = 10, lang: str = "en") -> MeanWind | None:
+    """Download the latest daily mean wind speed at Sha Tin."""
+    year = _hong_kong_today()[:4]
+    url = (
+        "https://data.weather.gov.hk/weatherAPI/cis/csvfile/SHA/"
+        f"{year}/daily_SHA_WSPD_{year}.csv"
+    )
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            raw = response.read()
+    except (urllib.error.URLError, TimeoutError) as exc:
+        raise WeatherError(f"could not reach Hong Kong Observatory: {exc}") from exc
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise WeatherError("Hong Kong Observatory returned invalid text") from exc
+    return parse_sha_tin_wind(text, lang)
+
+
 def fetch_minute_temp(timeout: float = 10, lang: str = "en") -> MinuteTempReport:
     """Download the latest 1-minute mean air temperature at automatic stations."""
     url = MINUTE_TEMP_URLS.get(lang, MINUTE_TEMP_URLS["en"])
@@ -7135,6 +7155,42 @@ def format_sai_kung_wind_miss(*, as_json: bool = False) -> str:
     """Say that no Sai Kung mean wind speed is available."""
     return _unavailable(
         "No Sai Kung mean wind speed is available.", as_json=as_json
+    )
+
+
+_SHA_TIN_WIND_STATIONS = {
+    "en": "Sha Tin",
+    "tc": "沙田",
+    "sc": "沙田",
+}
+
+
+def parse_sha_tin_wind(text: str, lang: str = "en") -> MeanWind | None:
+    """Turn the Sha Tin mean-wind CSV into the latest numeric day."""
+    station = _SHA_TIN_WIND_STATIONS.get(lang, _SHA_TIN_WIND_STATIONS["en"])
+    latest: MeanWind | None = None
+    rows = csv.reader(io.StringIO(text))
+    for row in rows:
+        if len(row) < 4:
+            continue
+        year = _text(row[0]).lstrip("\ufeff")
+        month = _text(row[1])
+        day = _text(row[2])
+        value = _hour_mm(row[3])
+        if not (year.isdigit() and month.isdigit() and day.isdigit()) or value is None:
+            continue
+        latest = MeanWind(
+            station,
+            f"{int(year):04d}-{int(month):02d}-{int(day):02d}",
+            value,
+        )
+    return latest
+
+
+def format_sha_tin_wind_miss(*, as_json: bool = False) -> str:
+    """Say that no Sha Tin mean wind speed is available."""
+    return _unavailable(
+        "No Sha Tin mean wind speed is available.", as_json=as_json
     )
 
 

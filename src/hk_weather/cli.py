@@ -177,6 +177,7 @@ from hk_weather.hko import (
     fetch_tate_wind,
     fetch_shek_kong_wind,
     fetch_sai_kung_wind,
+    fetch_sha_tin_wind,
     fetch_forecast_icon,
     fetch_yesterday,
     fetch_mean_temp,
@@ -515,6 +516,7 @@ from hk_weather.hko import (
     format_tate_wind_miss,
     format_shek_kong_wind_miss,
     format_sai_kung_wind_miss,
+    format_sha_tin_wind_miss,
     format_forecast_icon,
     format_forecast_icon_miss,
     format_yesterday,
@@ -730,6 +732,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--tate-wind prints the latest daily mean wind speed at Tate's Cairn; "
             "--shek-kong-wind prints the latest daily mean wind speed at Shek Kong; "
             "--sai-kung-wind prints the latest daily mean wind speed at Sai Kung; "
+            "--sha-tin-wind prints the latest daily mean wind speed at Sha Tin; "
             "--forecast-icon prints each day's weather icon; "
             "--quake lists the latest earthquake message; "
             "--felt prints the locally felt earth tremor; --today prints today; "
@@ -1548,6 +1551,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--sai-kung-wind",
         action="store_true",
         help="Print the latest daily mean wind speed at Sai Kung",
+    )
+    parser.add_argument(
+        "--sha-tin-wind",
+        action="store_true",
+        help="Print the latest daily mean wind speed at Sha Tin",
     )
     parser.add_argument(
         "--forecast-icon",
@@ -3172,6 +3180,16 @@ def main(argv: list[str] | None = None) -> int:
                     format_json(sai_kung_wind)
                     if args.json
                     else format_mean_wind(sai_kung_wind)
+                )
+        elif args.sha_tin_wind:
+            sha_tin_wind = fetch_sha_tin_wind(timeout=args.timeout, lang=args.lang)
+            if sha_tin_wind is None:
+                text = format_sha_tin_wind_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(sha_tin_wind)
+                    if args.json
+                    else format_mean_wind(sha_tin_wind)
                 )
         elif args.forecast_icon:
             forecast_icon = fetch_forecast_icon(timeout=args.timeout, lang=args.lang)
