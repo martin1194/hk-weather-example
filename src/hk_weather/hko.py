@@ -1983,6 +1983,26 @@ def fetch_wong_tai_sin_temp(timeout: float = 10, lang: str = "en") -> TaiMoTemp 
     return parse_wong_tai_sin_temp(text, lang)
 
 
+def fetch_tsuen_wan_temp(timeout: float = 10, lang: str = "en") -> TaiMoTemp | None:
+    """Download the latest daily mean temperature at Tsuen Wan."""
+    year = _hong_kong_today()[:4]
+    url = (
+        "https://data.weather.gov.hk/weatherAPI/cis/csvfile/TWN/"
+        f"{year}/daily_TWN_TEMP_{year}.csv"
+    )
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            raw = response.read()
+    except (urllib.error.URLError, TimeoutError) as exc:
+        raise WeatherError(f"could not reach Hong Kong Observatory: {exc}") from exc
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise WeatherError("Hong Kong Observatory returned invalid text") from exc
+    return parse_tsuen_wan_temp(text, lang)
+
+
 def fetch_tai_mo_min(timeout: float = 10, lang: str = "en") -> TaiMoTemp | None:
     """Download the latest daily minimum temperature at Tai Mo Shan."""
     year = _hong_kong_today()[:4]
@@ -11915,6 +11935,40 @@ def parse_wong_tai_sin_temp(text: str, lang: str = "en") -> TaiMoTemp | None:
 def format_wong_tai_sin_temp_miss(*, as_json: bool = False) -> str:
     """Say that no Wong Tai Sin temperature is available."""
     return _unavailable("No Wong Tai Sin temperature is available.", as_json=as_json)
+
+
+_TSUEN_WAN_TEMP_STATIONS = {
+    "en": "Tsuen Wan",
+    "tc": "荃灣",
+    "sc": "荃湾",
+}
+
+
+def parse_tsuen_wan_temp(text: str, lang: str = "en") -> TaiMoTemp | None:
+    """Turn the Tsuen Wan mean-temperature CSV into the latest numeric day."""
+    station = _TSUEN_WAN_TEMP_STATIONS.get(lang, _TSUEN_WAN_TEMP_STATIONS["en"])
+    latest: TaiMoTemp | None = None
+    rows = csv.reader(io.StringIO(text))
+    for row in rows:
+        if len(row) < 4:
+            continue
+        year = _text(row[0]).lstrip("\ufeff")
+        month = _text(row[1])
+        day = _text(row[2])
+        value = _hour_mm(row[3])
+        if not (year.isdigit() and month.isdigit() and day.isdigit()) or value is None:
+            continue
+        latest = TaiMoTemp(
+            station,
+            f"{int(year):04d}-{int(month):02d}-{int(day):02d}",
+            value,
+        )
+    return latest
+
+
+def format_tsuen_wan_temp_miss(*, as_json: bool = False) -> str:
+    """Say that no Tsuen Wan temperature is available."""
+    return _unavailable("No Tsuen Wan temperature is available.", as_json=as_json)
 
 
 def parse_tai_mo_min(text: str, lang: str = "en") -> TaiMoTemp | None:
