@@ -3423,6 +3423,26 @@ def fetch_clear_water_bay_dew(timeout: float = 10, lang: str = "en") -> DewPoint
     return parse_clear_water_bay_dew(text, lang)
 
 
+def fetch_hong_kong_park_dew(timeout: float = 10, lang: str = "en") -> DewPoint | None:
+    """Download the latest daily mean dew point at Hong Kong Park."""
+    year = _hong_kong_today()[:4]
+    url = (
+        "https://data.weather.gov.hk/weatherAPI/cis/csvfile/HKP/"
+        f"{year}/daily_HKP_DEW_{year}.csv"
+    )
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            raw = response.read()
+    except (urllib.error.URLError, TimeoutError) as exc:
+        raise WeatherError(f"could not reach Hong Kong Observatory: {exc}") from exc
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise WeatherError("Hong Kong Observatory returned invalid text") from exc
+    return parse_hong_kong_park_dew(text, lang)
+
+
 def fetch_cloud(timeout: float = 10, lang: str = "en") -> CloudAmount | None:
     """Download the latest daily mean cloud amount at the Observatory."""
     year = _hong_kong_today()[:4]
@@ -15060,6 +15080,42 @@ def format_clear_water_bay_dew_miss(*, as_json: bool = False) -> str:
     return _unavailable(
         "No Clear Water Bay dew point is available.", as_json=as_json
     )
+
+
+_HONG_KONG_PARK_DEW_STATIONS = {
+    "en": "Hong Kong Park",
+    "tc": "香港公園",
+    "sc": "香港公园",
+}
+
+
+def parse_hong_kong_park_dew(text: str, lang: str = "en") -> DewPoint | None:
+    """Turn the Hong Kong Park dew-point CSV into the latest numeric day."""
+    station = _HONG_KONG_PARK_DEW_STATIONS.get(
+        lang, _HONG_KONG_PARK_DEW_STATIONS["en"]
+    )
+    latest: DewPoint | None = None
+    rows = csv.reader(io.StringIO(text))
+    for row in rows:
+        if len(row) < 4:
+            continue
+        year = _text(row[0]).lstrip("\ufeff")
+        month = _text(row[1])
+        day = _text(row[2])
+        value = _hour_mm(row[3])
+        if not (year.isdigit() and month.isdigit() and day.isdigit()) or value is None:
+            continue
+        latest = DewPoint(
+            station,
+            f"{int(year):04d}-{int(month):02d}-{int(day):02d}",
+            value,
+        )
+    return latest
+
+
+def format_hong_kong_park_dew_miss(*, as_json: bool = False) -> str:
+    """Say that no Hong Kong Park dew point is available."""
+    return _unavailable("No Hong Kong Park dew point is available.", as_json=as_json)
 
 
 _CLOUD_STATIONS = {

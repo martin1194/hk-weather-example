@@ -252,6 +252,8 @@ hk-weather --airport-dew
 hk-weather --airport-dew --json
 hk-weather --clear-water-bay-dew
 hk-weather --clear-water-bay-dew --json
+hk-weather --hong-kong-park-dew
+hk-weather --hong-kong-park-dew --json
 hk-weather --cloud
 hk-weather --cloud --json
 hk-weather --evaporation
@@ -895,6 +897,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --airport-dew` prints the latest daily mean dew point at Hong Kong International Airport, for example `2026-07-31  23.7°C`. The published airport series currently ends in July. `--dew-point` still prints the Observatory reading, and the other station dew-point flags still print their own stations. `--airport-temp` still prints the airport mean temperature, `--airport-max` still prints its maximum, `--airport-min` still prints its minimum, `--airport-humidity` still prints its humidity, `--airport-rain` still prints its rainfall, `--airport-pressure` still prints its pressure, and `--airport-wet` still prints its wet-bulb temperature. `--airport-dew --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No airport dew point is available.`
 
 `hk-weather --clear-water-bay-dew` prints the latest daily mean dew point at Clear Water Bay, for example `2026-08-31  25°C`. `--dew-point` still prints the Observatory reading, and the other station dew-point flags still print their own stations. `--clear-water-bay-temp` still prints Clear Water Bay's mean temperature, `--clear-water-bay-max` still prints its maximum, `--clear-water-bay-min` still prints its minimum, and `--clear-water-bay-rain` still prints its rainfall. `--clear-water-bay-dew --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Clear Water Bay dew point is available.`
+
+`hk-weather --hong-kong-park-dew` prints the latest daily mean dew point at Hong Kong Park, for example `2026-08-31  25.1°C`. `--dew-point` still prints the Observatory reading, and the other station dew-point flags still print their own stations. `--hong-kong-park-temp` still prints Hong Kong Park's mean temperature, `--hong-kong-park-max` still prints its maximum, and `--hong-kong-park-min` still prints its minimum. `--hong-kong-park-dew --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Hong Kong Park dew point is available.`
 
 `hk-weather --cloud` prints the latest daily mean cloud amount at the Observatory for the current Hong Kong year, for example `2026-08-31  88%`. `--dew-point` still prints the dew point. `--cloud --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No cloud amount is available.`
 
