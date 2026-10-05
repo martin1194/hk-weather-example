@@ -265,6 +265,8 @@ hk-weather --sai-kung-prevailing
 hk-weather --sai-kung-prevailing --json
 hk-weather --tseung-kwan-o-prevailing
 hk-weather --tseung-kwan-o-prevailing --json
+hk-weather --shek-kong-prevailing
+hk-weather --shek-kong-prevailing --json
 hk-weather --mean-wind
 hk-weather --mean-wind --json
 hk-weather --cheung-wind
@@ -809,6 +811,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --sai-kung-prevailing` prints the latest daily prevailing wind direction at Sai Kung, for example `2026-08-31  30°`. `--prevailing` still prints Waglan Island, `--cheung-prevailing` still prints Cheung Chau, `--ping-chau-prevailing` still prints Ping Chau, `--tai-mo-to-prevailing` still prints Tai Mo To, `--tai-po-kau-prevailing` still prints Tai Po Kau, `--park-prevailing` still prints King's Park, `--lau-fau-prevailing` still prints Lau Fau Shan, `--sha-lo-wan-prevailing` still prints Sha Lo Wan, `--wong-chuk-hang-prevailing` still prints Wong Chuk Hang, and `--sai-kung-wind` still prints Sai Kung's mean wind speed. `--sai-kung-prevailing --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Sai Kung prevailing wind is available.`
 
 `hk-weather --tseung-kwan-o-prevailing` prints the latest daily prevailing wind direction at Tseung Kwan O, for example `2026-08-31  90°`. `--prevailing` still prints Waglan Island, `--cheung-prevailing` still prints Cheung Chau, `--ping-chau-prevailing` still prints Ping Chau, `--tai-mo-to-prevailing` still prints Tai Mo To, `--tai-po-kau-prevailing` still prints Tai Po Kau, `--park-prevailing` still prints King's Park, `--lau-fau-prevailing` still prints Lau Fau Shan, `--sha-lo-wan-prevailing` still prints Sha Lo Wan, `--wong-chuk-hang-prevailing` still prints Wong Chuk Hang, `--sai-kung-prevailing` still prints Sai Kung, and `--tseung-kwan-o-wind` still prints Tseung Kwan O's mean wind speed. `--tseung-kwan-o-prevailing --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Tseung Kwan O prevailing wind is available.`
+
+`hk-weather --shek-kong-prevailing` prints the latest daily prevailing wind direction at Shek Kong, for example `2026-08-31  60°`. `--prevailing` still prints Waglan Island, `--cheung-prevailing` still prints Cheung Chau, `--ping-chau-prevailing` still prints Ping Chau, `--tai-mo-to-prevailing` still prints Tai Mo To, `--tai-po-kau-prevailing` still prints Tai Po Kau, `--park-prevailing` still prints King's Park, `--lau-fau-prevailing` still prints Lau Fau Shan, `--sha-lo-wan-prevailing` still prints Sha Lo Wan, `--wong-chuk-hang-prevailing` still prints Wong Chuk Hang, `--sai-kung-prevailing` still prints Sai Kung, `--tseung-kwan-o-prevailing` still prints Tseung Kwan O, and `--shek-kong-wind` still prints Shek Kong's mean wind speed. `--shek-kong-prevailing --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Shek Kong prevailing wind is available.`
 
 `hk-weather --mean-wind` prints the latest daily mean wind speed at Waglan Island, for example `2026-08-31  5.9 km/h`. `--prevailing` still prints the wind direction, and `--gust` still prints the latest gusts. `--mean-wind --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No mean wind speed is available.`
 
