@@ -279,6 +279,7 @@ from hk_weather.hko import (
     fetch_clear_water_bay_max,
     fetch_tap_mun_max,
     fetch_hong_kong_park_max,
+    fetch_ngong_ping_max,
     fetch_max_temp,
     fetch_min_temp,
     fetch_dew_point,
@@ -674,6 +675,7 @@ from hk_weather.hko import (
     format_clear_water_bay_max_miss,
     format_tap_mun_max_miss,
     format_hong_kong_park_max_miss,
+    format_ngong_ping_max_miss,
     format_max_temp,
     format_max_temp_miss,
     format_min_temp,
@@ -935,6 +937,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--clear-water-bay-max prints the latest daily maximum temperature at Clear Water Bay; "
             "--tap-mun-max prints the latest daily maximum temperature at Tap Mun; "
             "--hong-kong-park-max prints the latest daily maximum temperature at Hong Kong Park; "
+            "--ngong-ping-max prints the latest daily maximum temperature at Ngong Ping; "
             "--dew-point prints the latest daily mean dew point; "
             "--park-dew prints the latest daily mean dew point at King's Park; "
             "--cheung-dew prints the latest daily mean dew point at Cheung Chau; "
@@ -1512,6 +1515,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--hong-kong-park-max",
         action="store_true",
         help="Print the latest daily maximum temperature at Hong Kong Park",
+    )
+    parser.add_argument(
+        "--ngong-ping-max",
+        action="store_true",
+        help="Print the latest daily maximum temperature at Ngong Ping",
     )
     parser.add_argument(
         "--dew-point",
@@ -3365,6 +3373,16 @@ def main(argv: list[str] | None = None) -> int:
                     format_json(hong_kong_park_max)
                     if args.json
                     else format_tai_mo_max(hong_kong_park_max)
+                )
+        elif args.ngong_ping_max:
+            ngong_ping_max = fetch_ngong_ping_max(timeout=args.timeout, lang=args.lang)
+            if ngong_ping_max is None:
+                text = format_ngong_ping_max_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(ngong_ping_max)
+                    if args.json
+                    else format_tai_mo_max(ngong_ping_max)
                 )
         elif args.dew_point:
             dew_point = fetch_dew_point(timeout=args.timeout, lang=args.lang)
