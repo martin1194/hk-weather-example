@@ -82,6 +82,7 @@ from hk_weather.hko import (
     fetch_tseung_kwan_o_humidity,
     fetch_peng_chau_humidity,
     fetch_sha_lo_wan_humidity,
+    fetch_airport_humidity,
     fetch_icon_time,
     fetch_icon,
     fetch_current_updated,
@@ -382,6 +383,7 @@ from hk_weather.hko import (
     format_tseung_kwan_o_humidity_miss,
     format_peng_chau_humidity_miss,
     format_sha_lo_wan_humidity_miss,
+    format_airport_humidity_miss,
     format_hour_rain,
     format_hour_rain_miss,
     format_hour_wettest,
@@ -733,6 +735,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--tseung-kwan-o-humidity prints the latest daily mean humidity at Tseung Kwan O; "
             "--peng-chau-humidity prints the latest daily mean humidity at Peng Chau; "
             "--sha-lo-wan-humidity prints the latest daily mean humidity at Sha Lo Wan; "
+            "--airport-humidity prints the latest daily mean humidity at the airport; "
             "--temps lists temperatures by place; "
             "--temp-time prints when those temperatures were recorded; "
             "--minute-temp prints the latest 1-minute mean temperature; "
@@ -2124,6 +2127,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--sha-lo-wan-humidity",
         action="store_true",
         help="Print the latest daily mean humidity at Sha Lo Wan",
+    )
+    parser.add_argument(
+        "--airport-humidity",
+        action="store_true",
+        help="Print the latest daily mean humidity at the airport",
     )
     parser.add_argument(
         "--temps",
@@ -4171,6 +4179,16 @@ def main(argv: list[str] | None = None) -> int:
                     format_json(sha_lo_wan_humidity)
                     if args.json
                     else format_mean_humidity(sha_lo_wan_humidity)
+                )
+        elif args.airport_humidity:
+            airport_humidity = fetch_airport_humidity(timeout=args.timeout, lang=args.lang)
+            if airport_humidity is None:
+                text = format_airport_humidity_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(airport_humidity)
+                    if args.json
+                    else format_mean_humidity(airport_humidity)
                 )
         elif args.temps:
             temps = fetch_temps(timeout=args.timeout, lang=args.lang)
