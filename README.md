@@ -550,6 +550,8 @@ hk-weather --airport-humidity
 hk-weather --airport-humidity --json
 hk-weather --tsuen-wan-humidity
 hk-weather --tsuen-wan-humidity --json
+hk-weather --hong-kong-park-humidity
+hk-weather --hong-kong-park-humidity --json
 hk-weather --temps
 hk-weather --temps --json
 hk-weather --temp-time
@@ -1201,6 +1203,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --airport-humidity` prints the latest daily mean relative humidity at Hong Kong International Airport, for example `2026-07-31  86%`. The published airport series currently ends in July. `--mean-humidity` still prints the Observatory reading, and the other station humidity flags still print their own stations. `--airport-temp` still prints the airport mean temperature, and `--airport-wet` still prints its wet-bulb temperature. `--airport-humidity --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No airport humidity is available.`
 
 `hk-weather --tsuen-wan-humidity` prints the latest daily mean relative humidity at Tsuen Wan, for example `2026-08-31  93%`. `--mean-humidity` still prints the Observatory reading, and the other station humidity flags still print their own stations. `--tsuen-wan-temp` still prints Tsuen Wan's mean temperature, `--tsuen-wan-max` still prints its maximum, `--tsuen-wan-min` still prints its minimum, `--tsuen-wan-rain` still prints its rainfall, and `--tsuen-wan-dew` still prints its dew point. `--tsuen-wan-humidity --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Tsuen Wan humidity is available.`
+
+`hk-weather --hong-kong-park-humidity` prints the latest daily mean relative humidity at Hong Kong Park, for example `2026-08-31  89%`. `--mean-humidity` still prints the Observatory reading, and the other station humidity flags still print their own stations. `--hong-kong-park-temp` still prints Hong Kong Park's mean temperature, `--hong-kong-park-max` still prints its maximum, `--hong-kong-park-min` still prints its minimum, and `--hong-kong-park-dew` still prints its dew point. `--hong-kong-park-humidity --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Hong Kong Park humidity is available.`
 
 `hk-weather --temps` prints temperature by place from the current report, with the record time when the Observatory includes it. `--temps --json` prints that list as one JSON object. If no readings are present, it says so.
 
