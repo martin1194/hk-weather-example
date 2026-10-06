@@ -268,6 +268,7 @@ from hk_weather.hko import (
     fetch_nei_lak_shan_wind,
     fetch_buoy_2_wind,
     fetch_buoy_8_wind,
+    fetch_cheung_chau_beach_wind,
     fetch_forecast_icon,
     fetch_yesterday,
     fetch_mean_temp,
@@ -787,6 +788,7 @@ from hk_weather.hko import (
     format_nei_lak_shan_wind_miss,
     format_buoy_2_wind_miss,
     format_buoy_8_wind_miss,
+    format_cheung_chau_beach_wind_miss,
     format_forecast_icon,
     format_forecast_icon_miss,
     format_yesterday,
@@ -1153,6 +1155,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--nei-lak-shan-wind prints the latest daily mean wind speed at Nei Lak Shan; "
             "--buoy-2-wind prints the latest daily mean wind speed at Automatic Weather Buoy No.2; "
             "--buoy-8-wind prints the latest daily mean wind speed at Automatic Weather Buoy No.8; "
+            "--cheung-chau-beach-wind prints the latest daily mean wind speed at Cheung Chau Beach; "
             "--forecast-icon prints each day's weather icon; "
             "--quake lists the latest earthquake message; "
             "--felt prints the locally felt earth tremor; --today prints today; "
@@ -2728,6 +2731,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--buoy-8-wind",
         action="store_true",
         help="Print the latest daily mean wind speed at Automatic Weather Buoy No.8",
+    )
+    parser.add_argument(
+        "--cheung-chau-beach-wind",
+        action="store_true",
+        help="Print the latest daily mean wind speed at Cheung Chau Beach",
     )
     parser.add_argument(
         "--forecast-icon",
@@ -6027,6 +6035,18 @@ def main(argv: list[str] | None = None) -> int:
                     format_json(buoy_8_wind)
                     if args.json
                     else format_mean_wind(buoy_8_wind)
+                )
+        elif args.cheung_chau_beach_wind:
+            cheung_chau_beach_wind = fetch_cheung_chau_beach_wind(
+                timeout=args.timeout, lang=args.lang
+            )
+            if cheung_chau_beach_wind is None:
+                text = format_cheung_chau_beach_wind_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(cheung_chau_beach_wind)
+                    if args.json
+                    else format_mean_wind(cheung_chau_beach_wind)
                 )
         elif args.forecast_icon:
             forecast_icon = fetch_forecast_icon(timeout=args.timeout, lang=args.lang)
