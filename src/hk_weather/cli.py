@@ -50,6 +50,7 @@ from hk_weather.hko import (
     fetch_tai_mei_tuk_pump_rain,
     fetch_ngong_ping_reservoir_rain,
     fetch_discovery_bay_rain,
+    fetch_adventist_college_rain,
     fetch_forecast,
     fetch_outlook,
     fetch_coastal,
@@ -390,6 +391,7 @@ from hk_weather.hko import (
     format_tai_mei_tuk_pump_rain_miss,
     format_ngong_ping_reservoir_rain_miss,
     format_discovery_bay_rain_miss,
+    format_adventist_college_rain_miss,
     format_forecast,
     format_outlook,
     format_outlook_miss,
@@ -1130,6 +1132,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--tai-mei-tuk-pump-rain prints the latest daily rainfall at Tai Mei Tuk Pumping Station; "
             "--ngong-ping-reservoir-rain prints the latest daily rainfall at Ngong Ping Fresh Water Reservoir; "
             "--discovery-bay-rain prints the latest daily rainfall at Discovery Bay; "
+            "--adventist-college-rain prints the latest daily rainfall at Hong Kong Adventist College(Sai Kung); "
             "--tide prints today's high and low tides; "
             "--tide-hour prints today's hourly tide heights; "
             "--tide-latest prints the latest observed tide height; "
@@ -2488,6 +2491,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--discovery-bay-rain",
         action="store_true",
         help="Print the latest daily total rainfall at Discovery Bay",
+    )
+    parser.add_argument(
+        "--adventist-college-rain",
+        action="store_true",
+        help="Print the latest daily total rainfall at Hong Kong Adventist College(Sai Kung)",
     )
     parser.add_argument(
         "--rainstorm",
@@ -5129,6 +5137,18 @@ def main(argv: list[str] | None = None) -> int:
                     format_json(discovery_bay_rain)
                     if args.json
                     else format_daily_rain(discovery_bay_rain)
+                )
+        elif args.adventist_college_rain:
+            adventist_college_rain = fetch_adventist_college_rain(
+                timeout=args.timeout, lang=args.lang
+            )
+            if adventist_college_rain is None:
+                text = format_adventist_college_rain_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(adventist_college_rain)
+                    if args.json
+                    else format_daily_rain(adventist_college_rain)
                 )
         elif args.rainstorm:
             rainstorm = fetch_rainstorm(timeout=args.timeout, lang=args.lang)
