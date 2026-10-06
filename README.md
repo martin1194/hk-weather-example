@@ -764,6 +764,8 @@ hk-weather --tuen-mun-home-humidity
 hk-weather --tuen-mun-home-humidity --json
 hk-weather --buoy-2-humidity
 hk-weather --buoy-2-humidity --json
+hk-weather --buoy-8-humidity
+hk-weather --buoy-8-humidity --json
 hk-weather --temps
 hk-weather --temps --json
 hk-weather --temp-time
@@ -1633,6 +1635,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --tuen-mun-home-humidity` prints the latest daily mean relative humidity at Tuen Mun Children and Juvenile Home, for example `2026-08-31  91%`. `--mean-humidity` still prints the Observatory reading, and the other station humidity flags still print their own stations. `--tuen-mun-home-temp` still prints the home's mean temperature, `--tuen-mun-home-max` still prints its maximum, `--tuen-mun-home-min` still prints its minimum, and `--tuen-mun-home-dew` still prints its dew point. `--tuen-mun-home-humidity --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `屯門兒童及青少年院` and simplified text uses `屯门儿童及青少年院`. Days marked `***` are omitted. If none remain, it says `No Tuen Mun Children and Juvenile Home humidity is available.`
 
 `hk-weather --buoy-2-humidity` prints the latest daily mean relative humidity at Automatic Weather Buoy No.2 (Hong Kong International Airport, West), for example `2026-08-31  85%`. `--mean-humidity` still prints the Observatory reading, and the other station humidity flags still print their own stations. `--buoy-2-temp` still prints the buoy's mean temperature, `--buoy-2-max` still prints its maximum, `--buoy-2-min` still prints its minimum, and `--buoy-2-dew` still prints its dew point. `--buoy-2-humidity --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `自動氣象浮標2號 (香港國際機場西面)` and simplified text uses `自动气象浮标2号 (香港国际机场西面)`. Days marked `***` are omitted. If none remain, it says `No Automatic Weather Buoy No.2 (Hong Kong International Airport, West) humidity is available.`
+
+`hk-weather --buoy-8-humidity` prints the latest daily mean relative humidity at Automatic Weather Buoy No.8 (Hong Kong International Airport, East), for example `2026-08-31  83%`. `--mean-humidity` still prints the Observatory reading, and the other station humidity flags still print their own stations. `--buoy-8-temp` still prints the buoy's mean temperature, `--buoy-8-dew` still prints its dew point, and `--buoy-2-humidity` still prints Automatic Weather Buoy No.2. `--buoy-8-humidity --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `自動氣象浮標8號 (香港國際機場東面)` and simplified text uses `自动气象浮标8号 (香港国际机场东面)`. Days marked `***` are omitted. If none remain, it says `No Automatic Weather Buoy No.8 (Hong Kong International Airport, East) humidity is available.`
 
 `hk-weather --temps` prints temperature by place from the current report, with the record time when the Observatory includes it. `--temps --json` prints that list as one JSON object. If no readings are present, it says so.
 

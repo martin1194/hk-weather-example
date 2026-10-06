@@ -125,6 +125,7 @@ from hk_weather.hko import (
     fetch_shing_mun_valley_humidity,
     fetch_tuen_mun_home_humidity,
     fetch_buoy_2_humidity,
+    fetch_buoy_8_humidity,
     fetch_icon_time,
     fetch_icon,
     fetch_current_updated,
@@ -576,6 +577,7 @@ from hk_weather.hko import (
     format_shing_mun_valley_humidity_miss,
     format_tuen_mun_home_humidity_miss,
     format_buoy_2_humidity_miss,
+    format_buoy_8_humidity_miss,
     format_hour_rain,
     format_hour_rain_miss,
     format_hour_wettest,
@@ -1055,6 +1057,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--shing-mun-valley-humidity prints the latest daily mean humidity at Tsuen Wan Shing Mun Valley; "
             "--tuen-mun-home-humidity prints the latest daily mean humidity at Tuen Mun Children and Juvenile Home; "
             "--buoy-2-humidity prints the latest daily mean humidity at Automatic Weather Buoy No.2; "
+            "--buoy-8-humidity prints the latest daily mean humidity at Automatic Weather Buoy No.8; "
             "--temps lists temperatures by place; "
             "--temp-time prints when those temperatures were recorded; "
             "--minute-temp prints the latest 1-minute mean temperature; "
@@ -3320,6 +3323,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--buoy-2-humidity",
         action="store_true",
         help="Print the latest daily mean humidity at Automatic Weather Buoy No.2",
+    )
+    parser.add_argument(
+        "--buoy-8-humidity",
+        action="store_true",
+        help="Print the latest daily mean humidity at Automatic Weather Buoy No.8",
     )
     parser.add_argument(
         "--temps",
@@ -7040,6 +7048,18 @@ def main(argv: list[str] | None = None) -> int:
                     format_json(buoy_2_humidity)
                     if args.json
                     else format_mean_humidity(buoy_2_humidity)
+                )
+        elif args.buoy_8_humidity:
+            buoy_8_humidity = fetch_buoy_8_humidity(
+                timeout=args.timeout, lang=args.lang
+            )
+            if buoy_8_humidity is None:
+                text = format_buoy_8_humidity_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(buoy_8_humidity)
+                    if args.json
+                    else format_mean_humidity(buoy_8_humidity)
                 )
         elif args.temps:
             temps = fetch_temps(timeout=args.timeout, lang=args.lang)
