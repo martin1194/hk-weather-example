@@ -473,6 +473,8 @@ hk-weather --buoy-2-prevailing
 hk-weather --buoy-2-prevailing --json
 hk-weather --buoy-8-prevailing
 hk-weather --buoy-8-prevailing --json
+hk-weather --cheung-chau-beach-prevailing
+hk-weather --cheung-chau-beach-prevailing --json
 hk-weather --mean-wind
 hk-weather --mean-wind --json
 hk-weather --cheung-wind
@@ -1349,6 +1351,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --buoy-2-prevailing` prints the latest daily prevailing wind direction at Automatic Weather Buoy No.2 (Hong Kong International Airport, West), for example `2026-08-31  350°`. `--prevailing` still prints Waglan Island, and the other station prevailing-wind flags still print their own stations. `--buoy-2-wind` still prints the buoy's mean wind speed. `--buoy-2-prevailing --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `自動氣象浮標2號 (香港國際機場西面)` and simplified text uses `自动气象浮标2号 (香港国际机场西面)`. Days marked `***` are omitted. If none remain, it says `No Automatic Weather Buoy No.2 (Hong Kong International Airport, West) prevailing wind is available.`
 
 `hk-weather --buoy-8-prevailing` prints the latest daily prevailing wind direction at Automatic Weather Buoy No.8 (Hong Kong International Airport, East), for example `2026-08-31  290°`. `--prevailing` still prints Waglan Island, and the other station prevailing-wind flags still print their own stations. `--buoy-8-wind` still prints the buoy's mean wind speed, and `--buoy-2-prevailing` still prints Automatic Weather Buoy No.2. `--buoy-8-prevailing --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `自動氣象浮標8號 (香港國際機場東面)` and simplified text uses `自动气象浮标8号 (香港国际机场东面)`. Days marked `***` are omitted. If none remain, it says `No Automatic Weather Buoy No.8 (Hong Kong International Airport, East) prevailing wind is available.`
+
+`hk-weather --cheung-chau-beach-prevailing` prints the latest daily prevailing wind direction at Cheung Chau Beach, for example `2026-08-31  50°`. `--prevailing` still prints Waglan Island, and the other station prevailing-wind flags still print their own stations. `--cheung-chau-beach-wind` still prints the beach's mean wind speed, `--cheung-prevailing` still prints Cheung Chau, and `--buoy-8-prevailing` still prints Automatic Weather Buoy No.8. `--cheung-chau-beach-prevailing --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `長洲泳灘` and simplified text uses `长洲泳滩`. Days marked `***` are omitted. If none remain, it says `No Cheung Chau Beach prevailing wind is available.`
 
 `hk-weather --mean-wind` prints the latest daily mean wind speed at Waglan Island, for example `2026-08-31  5.9 km/h`. `--prevailing` still prints the wind direction, and `--gust` still prints the latest gusts. `--mean-wind --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No mean wind speed is available.`
 

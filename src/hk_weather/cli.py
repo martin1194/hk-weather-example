@@ -240,6 +240,7 @@ from hk_weather.hko import (
     fetch_nei_lak_shan_prevailing,
     fetch_buoy_2_prevailing,
     fetch_buoy_8_prevailing,
+    fetch_cheung_chau_beach_prevailing,
     fetch_mean_wind,
     fetch_cheung_wind,
     fetch_lau_fau_wind,
@@ -759,6 +760,7 @@ from hk_weather.hko import (
     format_nei_lak_shan_prevailing_miss,
     format_buoy_2_prevailing_miss,
     format_buoy_8_prevailing_miss,
+    format_cheung_chau_beach_prevailing_miss,
     format_mean_wind,
     format_mean_wind_miss,
     format_cheung_wind_miss,
@@ -1127,6 +1129,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--nei-lak-shan-prevailing prints the latest prevailing wind at Nei Lak Shan; "
             "--buoy-2-prevailing prints the latest prevailing wind at Automatic Weather Buoy No.2; "
             "--buoy-8-prevailing prints the latest prevailing wind at Automatic Weather Buoy No.8; "
+            "--cheung-chau-beach-prevailing prints the latest prevailing wind at Cheung Chau Beach; "
             "--mean-wind prints the latest daily mean wind speed; "
             "--cheung-wind prints the latest daily mean wind speed at Cheung Chau; "
             "--lau-fau-wind prints the latest daily mean wind speed at Lau Fau Shan; "
@@ -2591,6 +2594,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--buoy-8-prevailing",
         action="store_true",
         help="Print the latest daily prevailing wind direction at Automatic Weather Buoy No.8",
+    )
+    parser.add_argument(
+        "--cheung-chau-beach-prevailing",
+        action="store_true",
+        help="Print the latest daily prevailing wind direction at Cheung Chau Beach",
     )
     parser.add_argument(
         "--mean-wind",
@@ -5757,6 +5765,18 @@ def main(argv: list[str] | None = None) -> int:
                     format_json(buoy_8_prevailing)
                     if args.json
                     else format_prevailing(buoy_8_prevailing)
+                )
+        elif args.cheung_chau_beach_prevailing:
+            cheung_chau_beach_prevailing = fetch_cheung_chau_beach_prevailing(
+                timeout=args.timeout, lang=args.lang
+            )
+            if cheung_chau_beach_prevailing is None:
+                text = format_cheung_chau_beach_prevailing_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(cheung_chau_beach_prevailing)
+                    if args.json
+                    else format_prevailing(cheung_chau_beach_prevailing)
                 )
         elif args.mean_wind:
             mean_wind = fetch_mean_wind(timeout=args.timeout, lang=args.lang)
