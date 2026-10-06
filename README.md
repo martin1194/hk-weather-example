@@ -660,6 +660,8 @@ hk-weather --lok-ma-chau-rain
 hk-weather --lok-ma-chau-rain --json
 hk-weather --lamma-island-rain
 hk-weather --lamma-island-rain --json
+hk-weather --tuen-mun-home-rain
+hk-weather --tuen-mun-home-rain --json
 hk-weather --rainstorm
 hk-weather --rainstorm --json
 hk-weather --cyclone
@@ -1513,6 +1515,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --lok-ma-chau-rain` prints the latest daily total rainfall at Lok Ma Chau, for example `2026-08-31  38.5 mm`. `--daily-rain` still prints the Observatory total, and the other station rainfall flags still print their own stations. A total of zero is kept. `--lok-ma-chau-rain --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `落馬洲` and simplified text uses `落马洲`. Days marked `***` are omitted. If none remain, it says `No Lok Ma Chau rainfall is available.`
 
 `hk-weather --lamma-island-rain` prints the latest daily total rainfall at Lamma Island, for example `2026-08-31  18 mm`. `--daily-rain` still prints the Observatory total, and the other station rainfall flags still print their own stations. A total of zero is kept. `--lamma-island-rain --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `南丫島` and simplified text uses `南丫岛`. Days marked `***` are omitted. If none remain, it says `No Lamma Island rainfall is available.`
+
+`hk-weather --tuen-mun-home-rain` prints the latest daily total rainfall at Tuen Mun Children and Juvenile Home, for example `2026-08-31  27.5 mm`. `--daily-rain` still prints the Observatory total, and the other station rainfall flags still print their own stations. `--tuen-mun-home-temp` still prints the home's mean temperature, `--tuen-mun-home-max` still prints its maximum, `--tuen-mun-home-min` still prints its minimum, `--tuen-mun-home-dew` still prints its dew point, and `--tuen-mun-home-humidity` still prints its humidity. A total of zero is kept. `--tuen-mun-home-rain --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `屯門兒童及青少年院` and simplified text uses `屯门儿童及青少年院`. Days marked `***` are omitted. If none remain, it says `No Tuen Mun Children and Juvenile Home rainfall is available.`
 
 `hk-weather --lightning` lists places where the current report shows lightning. `--lightning --json` prints those places as one JSON object. If none are reported, it says so.
 
