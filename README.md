@@ -1810,6 +1810,10 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 
 `hk-weather --place NAME` prints the same readings for stations whose name contains NAME (case-insensitive). `--json` and `--lang` apply. If nothing matches, it says so.
 
+## Exit status
+
+`hk-weather` exits with `0` when it prints a report, including when the next command closes the pipe early. It exits with `1` when the Observatory cannot be read, and with `2` when the command line is invalid.
+
 ## Test
 
 Tests mock HTTP, so they do not call the Observatory.
