@@ -508,6 +508,8 @@ hk-weather --tai-mei-tuk-rain
 hk-weather --tai-mei-tuk-rain --json
 hk-weather --kadoorie-farm-rain
 hk-weather --kadoorie-farm-rain --json
+hk-weather --the-peak-rain
+hk-weather --the-peak-rain --json
 hk-weather --rainstorm
 hk-weather --rainstorm --json
 hk-weather --cyclone
@@ -1187,6 +1189,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --tai-mei-tuk-rain` prints the latest daily total rainfall at Tai Mei Tuk, for example `2026-08-31  16 mm`. `--daily-rain` still prints the Observatory total, and the other station rainfall flags still print their own stations. `--tai-mei-tuk-temp` still prints Tai Mei Tuk's mean temperature. A total of zero is kept. `--tai-mei-tuk-rain --json` prints that day as one JSON object. `--lang` selects the station name. The Chinese name is `大美督` in both traditional and simplified text. Days marked `***` are omitted. If none remain, it says `No Tai Mei Tuk rainfall is available.`
 
 `hk-weather --kadoorie-farm-rain` prints the latest daily total rainfall at Kadoorie Farm and Botanic Garden, for example `2026-08-31  20.5 mm`. `--daily-rain` still prints the Observatory total, and the other station rainfall flags still print their own stations. `--tai-mei-tuk-rain` still prints Tai Mei Tuk's rainfall. A total of zero is kept. `--kadoorie-farm-rain --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Kadoorie Farm and Botanic Garden rainfall is available.`
+
+`hk-weather --the-peak-rain` prints the latest daily total rainfall at The Peak, for example `2026-08-31  10.5 mm`. `--daily-rain` still prints the Observatory total, and the other station rainfall flags still print their own stations. A total of zero is kept. `--the-peak-rain --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No The Peak rainfall is available.`
 
 `hk-weather --lightning` lists places where the current report shows lightning. `--lightning --json` prints those places as one JSON object. If none are reported, it says so.
 
