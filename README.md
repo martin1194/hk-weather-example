@@ -350,6 +350,8 @@ hk-weather --new-tsing-yi-dew
 hk-weather --new-tsing-yi-dew --json
 hk-weather --tate-dew
 hk-weather --tate-dew --json
+hk-weather --shing-mun-valley-dew
+hk-weather --shing-mun-valley-dew --json
 hk-weather --cloud
 hk-weather --cloud --json
 hk-weather --evaporation
@@ -1183,6 +1185,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --new-tsing-yi-dew` prints the latest daily mean dew point at New Tsing Yi Station, for example `2026-08-31  25.1°C`. `--dew-point` still prints the Observatory reading, and the other station dew-point flags still print their own stations. `--new-tsing-yi-temp` still prints New Tsing Yi Station's mean temperature, `--new-tsing-yi-max` still prints its maximum, and `--new-tsing-yi-min` still prints its minimum. `--new-tsing-yi-dew --json` prints that day as one JSON object. `--lang` selects the station name. The Chinese name is `新青衣站` in both traditional and simplified text. Days marked `***` are omitted. If none remain, it says `No New Tsing Yi Station dew point is available.`
 
 `hk-weather --tate-dew` prints the latest daily mean dew point at Tate's Cairn, for example `2026-08-31  23.3°C`. `--dew-point` still prints the Observatory reading, and the other station dew-point flags still print their own stations. `--tate-temp` still prints Tate's Cairn's mean temperature, `--tate-max` still prints its maximum, and `--tate-min` still prints its minimum. `--tate-dew --json` prints that day as one JSON object. `--lang` selects the station name. The Chinese name is `大老山` in both traditional and simplified text. Days marked `***` are omitted. If none remain, it says `No Tate's Cairn dew point is available.`
+
+`hk-weather --shing-mun-valley-dew` prints the latest daily mean dew point at Tsuen Wan Shing Mun Valley, for example `2026-08-31  24.6°C`. `--dew-point` still prints the Observatory reading, and the other station dew-point flags still print their own stations. `--shing-mun-valley-temp` still prints the valley's mean temperature, `--shing-mun-valley-max` still prints its maximum, `--shing-mun-valley-min` still prints its minimum, and `--tsuen-wan-dew` still prints Tsuen Wan. `--shing-mun-valley-dew --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `荃灣城門谷` and simplified text uses `荃湾城门谷`. Days marked `***` are omitted. If none remain, it says `No Tsuen Wan Shing Mun Valley dew point is available.`
 
 `hk-weather --cloud` prints the latest daily mean cloud amount at the Observatory for the current Hong Kong year, for example `2026-08-31  88%`. `--dew-point` still prints the dew point. `--cloud --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No cloud amount is available.`
 
