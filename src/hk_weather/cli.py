@@ -226,6 +226,7 @@ from hk_weather.hko import (
     fetch_green_island_prevailing,
     fetch_ngong_ping_prevailing,
     fetch_tai_mei_tuk_prevailing,
+    fetch_central_pier_prevailing,
     fetch_mean_wind,
     fetch_cheung_wind,
     fetch_lau_fau_wind,
@@ -696,6 +697,7 @@ from hk_weather.hko import (
     format_green_island_prevailing_miss,
     format_ngong_ping_prevailing_miss,
     format_tai_mei_tuk_prevailing_miss,
+    format_central_pier_prevailing_miss,
     format_mean_wind,
     format_mean_wind_miss,
     format_cheung_wind_miss,
@@ -1016,6 +1018,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--green-island-prevailing prints the latest prevailing wind at Green Island; "
             "--ngong-ping-prevailing prints the latest prevailing wind at Ngong Ping; "
             "--tai-mei-tuk-prevailing prints the latest prevailing wind at Tai Mei Tuk; "
+            "--central-pier-prevailing prints the latest prevailing wind at Central Pier; "
             "--mean-wind prints the latest daily mean wind speed; "
             "--cheung-wind prints the latest daily mean wind speed at Cheung Chau; "
             "--lau-fau-wind prints the latest daily mean wind speed at Lau Fau Shan; "
@@ -2274,6 +2277,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--tai-mei-tuk-prevailing",
         action="store_true",
         help="Print the latest daily prevailing wind direction at Tai Mei Tuk",
+    )
+    parser.add_argument(
+        "--central-pier-prevailing",
+        action="store_true",
+        help="Print the latest daily prevailing wind direction at Central Pier",
     )
     parser.add_argument(
         "--mean-wind",
@@ -4979,6 +4987,18 @@ def main(argv: list[str] | None = None) -> int:
                     format_json(tai_mei_tuk_prevailing)
                     if args.json
                     else format_prevailing(tai_mei_tuk_prevailing)
+                )
+        elif args.central_pier_prevailing:
+            central_pier_prevailing = fetch_central_pier_prevailing(
+                timeout=args.timeout, lang=args.lang
+            )
+            if central_pier_prevailing is None:
+                text = format_central_pier_prevailing_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(central_pier_prevailing)
+                    if args.json
+                    else format_prevailing(central_pier_prevailing)
                 )
         elif args.mean_wind:
             mean_wind = fetch_mean_wind(timeout=args.timeout, lang=args.lang)
