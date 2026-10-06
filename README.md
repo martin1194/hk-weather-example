@@ -8,7 +8,7 @@ Data comes from the [Hong Kong Observatory Open Data API](https://www.hko.gov.hk
 
 ## Run
 
-Pass one report flag at a time. `--json` and `--lang` combine with that flag. `--short` only shortens the current report and cannot be combined with `--json`. `--timeout` must be a finite number of seconds greater than 0. `--timeout -1` is rejected with that error. `--lang` accepts `en`, `tc`, or `sc` in any case. A blank or unknown code exits with `error: argument --lang: language must be en, tc, or sc`. `--json` prints Chinese and other non-ASCII text as characters, not `\u` escapes. An unknown flag or other argument error prints one line on stderr, such as `error: unrecognized arguments: --not-a-flag`, and exits with status 2. If the next command closes the pipe early, as in `hk-weather | head`, the program exits quietly instead of printing a traceback.
+Pass one report flag at a time. `--json` and `--lang` combine with that flag. `--short` only shortens the current report and cannot be combined with `--json`. `--timeout` must be a finite number of seconds greater than 0. `--timeout -1` is rejected with that error. `--lang` accepts `en`, `tc`, or `sc` in any case. A blank or unknown code exits with `error: argument --lang: language must be en, tc, or sc`. `--json` prints Chinese and other non-ASCII text as characters, not `\u` escapes. An unknown flag or other argument error prints one line on stderr, such as `error: unrecognized arguments: --not-a-flag`, and exits with status 2. If the next command closes the pipe early, as in `hk-weather | head`, the program exits quietly instead of printing a traceback. A closed pipe keeps the same exit status: `--version` is still 0, and an invalid command such as `--timeout 0` is still 2.
 
 ```bash
 pip install -e .
@@ -1812,7 +1812,7 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 
 ## Exit status
 
-`hk-weather` exits with `0` when it prints a report, including when the next command closes the pipe early. It exits with `1` when the Observatory cannot be read, and with `2` when the command line is invalid.
+`hk-weather` exits with `0` when it prints a report, including when the next command closes the pipe early. It exits with `1` when the Observatory cannot be read, and with `2` when the command line is invalid. Closing the pipe does not replace those statuses with Python's broken-pipe status.
 
 ## Test
 
