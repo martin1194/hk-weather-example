@@ -700,6 +700,8 @@ hk-weather --runway-park-humidity
 hk-weather --runway-park-humidity --json
 hk-weather --kowloon-city-humidity
 hk-weather --kowloon-city-humidity --json
+hk-weather --nei-lak-shan-humidity
+hk-weather --nei-lak-shan-humidity --json
 hk-weather --temps
 hk-weather --temps --json
 hk-weather --temp-time
@@ -1503,6 +1505,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --runway-park-humidity` prints the latest daily mean relative humidity at Kai Tak Runway Park, for example `2026-08-31  85%`. `--mean-humidity` still prints the Observatory reading, and the other station humidity flags still print their own stations. `--runway-park-temp` still prints Kai Tak Runway Park's mean temperature, and `--runway-park-dew` still prints its dew point. `--runway-park-humidity --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `啟德跑道公園` and simplified text uses `启德跑道公园`. Days marked `***` are omitted. If none remain, it says `No Kai Tak Runway Park humidity is available.`
 
 `hk-weather --kowloon-city-humidity` prints the latest daily mean relative humidity at Kowloon City, for example `2026-08-31  87%`. `--mean-humidity` still prints the Observatory reading, and the other station humidity flags still print their own stations. `--kowloon-city-dew` still prints Kowloon City's dew point, `--kowloon-city-temp` still prints its mean temperature, `--kowloon-city-max` still prints its maximum, and `--kowloon-city-min` still prints its minimum. `--kowloon-city-humidity --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `九龍城` and simplified text uses `九龙城`. Days marked `***` are omitted. If none remain, it says `No Kowloon City humidity is available.`
+
+`hk-weather --nei-lak-shan-humidity` prints the latest daily mean relative humidity at Nei Lak Shan, for example `2026-08-31  96%`. `--mean-humidity` still prints the Observatory reading, and the other station humidity flags still print their own stations. `--nei-lak-shan-temp` still prints Nei Lak Shan's mean temperature, and `--nei-lak-shan-dew` still prints its dew point. `--nei-lak-shan-humidity --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `彌勒山` and simplified text uses `弥勒山`. Days marked `***` are omitted. If none remain, it says `No Nei Lak Shan humidity is available.`
 
 `hk-weather --temps` prints temperature by place from the current report, with the record time when the Observatory includes it. `--temps --json` prints that list as one JSON object. If no readings are present, it says so.
 
