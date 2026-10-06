@@ -138,6 +138,8 @@ hk-weather --bluff-head-temp
 hk-weather --bluff-head-temp --json
 hk-weather --runway-park-temp
 hk-weather --runway-park-temp --json
+hk-weather --kowloon-city-temp
+hk-weather --kowloon-city-temp --json
 hk-weather --max-temp
 hk-weather --max-temp --json
 hk-weather --min-temp
@@ -925,6 +927,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --bluff-head-temp` prints the latest daily mean temperature at Bluff Head, for example `2026-08-31  27.3°C`. `--mean-temp` still prints the Observatory reading, and the other station temperature flags still print their own stations. `--bluff-head-temp --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `黃麻角` and simplified text uses `黄麻角`. Days marked `***` are omitted. If none remain, it says `No Bluff Head temperature is available.`
 
 `hk-weather --runway-park-temp` prints the latest daily mean temperature at Kai Tak Runway Park, for example `2026-08-31  27.5°C`. `--mean-temp` still prints the Observatory reading, and the other station temperature flags still print their own stations. `--runway-park-temp --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `啟德跑道公園` and simplified text uses `启德跑道公园`. Days marked `***` are omitted. If none remain, it says `No Kai Tak Runway Park temperature is available.`
+
+`hk-weather --kowloon-city-temp` prints the latest daily mean temperature at Kowloon City, for example `2026-08-31  27.4°C`. `--mean-temp` still prints the Observatory reading, and the other station temperature flags still print their own stations. `--kowloon-city-temp --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `九龍城` and simplified text uses `九龙城`. Days marked `***` are omitted. If none remain, it says `No Kowloon City temperature is available.`
 
 `hk-weather --max-temp` prints the latest daily maximum temperature at the Observatory for that same year (`dataType=CLMMAXT`, station HKO), for example `2026-08-31  29.5°C`. `--mean-temp` still prints the daily mean. `--hottest` still prints the current warmest place. `--max-temp --json` prints that day as one JSON object. `--lang` applies. If no numeric day is present, it says `No daily maximum temperature is available.`
 

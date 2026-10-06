@@ -294,6 +294,7 @@ from hk_weather.hko import (
     fetch_beas_river_temp,
     fetch_bluff_head_temp,
     fetch_runway_park_temp,
+    fetch_kowloon_city_temp,
     fetch_tai_mo_min,
     fetch_tate_min,
     fetch_sai_kung_min,
@@ -774,6 +775,7 @@ from hk_weather.hko import (
     format_beas_river_temp_miss,
     format_bluff_head_temp_miss,
     format_runway_park_temp_miss,
+    format_kowloon_city_temp_miss,
     format_tai_mo_min,
     format_tai_mo_min_miss,
     format_tate_min_miss,
@@ -1096,6 +1098,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--beas-river-temp prints the latest daily mean temperature at Beas River; "
             "--bluff-head-temp prints the latest daily mean temperature at Bluff Head; "
             "--runway-park-temp prints the latest daily mean temperature at Kai Tak Runway Park; "
+            "--kowloon-city-temp prints the latest daily mean temperature at Kowloon City; "
             "--max-temp prints the latest daily maximum temperature; "
             "--min-temp prints the latest daily minimum temperature; "
             "--tai-mo-min prints the latest daily minimum temperature at Tai Mo Shan; "
@@ -1615,6 +1618,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--runway-park-temp",
         action="store_true",
         help="Print the latest daily mean temperature at Kai Tak Runway Park",
+    )
+    parser.add_argument(
+        "--kowloon-city-temp",
+        action="store_true",
+        help="Print the latest daily mean temperature at Kowloon City",
     )
     parser.add_argument(
         "--max-temp",
@@ -3814,6 +3822,18 @@ def main(argv: list[str] | None = None) -> int:
                     format_json(runway_park_temp)
                     if args.json
                     else format_tai_mo_temp(runway_park_temp)
+                )
+        elif args.kowloon_city_temp:
+            kowloon_city_temp = fetch_kowloon_city_temp(
+                timeout=args.timeout, lang=args.lang
+            )
+            if kowloon_city_temp is None:
+                text = format_kowloon_city_temp_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(kowloon_city_temp)
+                    if args.json
+                    else format_tai_mo_temp(kowloon_city_temp)
                 )
         elif args.max_temp:
             max_temp = fetch_max_temp(timeout=args.timeout, lang=args.lang)
