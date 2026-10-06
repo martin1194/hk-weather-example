@@ -1021,7 +1021,10 @@ def package_version() -> str:
 
 def _language(value: str) -> str:
     """Normalize an Observatory language code to en, tc, or sc."""
-    return value.strip().lower()
+    lang = value.strip().lower()
+    if lang not in {"en", "tc", "sc"}:
+        raise argparse.ArgumentTypeError("language must be en, tc, or sc")
+    return lang
 
 
 class _QuietParser(argparse.ArgumentParser):
