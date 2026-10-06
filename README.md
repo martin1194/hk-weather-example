@@ -334,6 +334,8 @@ hk-weather --kowloon-city-dew
 hk-weather --kowloon-city-dew --json
 hk-weather --nei-lak-shan-dew
 hk-weather --nei-lak-shan-dew --json
+hk-weather --new-tsing-yi-dew
+hk-weather --new-tsing-yi-dew --json
 hk-weather --cloud
 hk-weather --cloud --json
 hk-weather --evaporation
@@ -1149,6 +1151,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --kowloon-city-dew` prints the latest daily mean dew point at Kowloon City, for example `2026-08-31  25°C`. `--dew-point` still prints the Observatory reading, and the other station dew-point flags still print their own stations. `--kowloon-city-temp` still prints Kowloon City's mean temperature, `--kowloon-city-max` still prints its maximum, and `--kowloon-city-min` still prints its minimum. `--kowloon-city-dew --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `九龍城` and simplified text uses `九龙城`. Days marked `***` are omitted. If none remain, it says `No Kowloon City dew point is available.`
 
 `hk-weather --nei-lak-shan-dew` prints the latest daily mean dew point at Nei Lak Shan, for example `2026-08-31  22.2°C`. `--dew-point` still prints the Observatory reading, and the other station dew-point flags still print their own stations. `--nei-lak-shan-temp` still prints Nei Lak Shan's mean temperature. `--nei-lak-shan-dew --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `彌勒山` and simplified text uses `弥勒山`. Days marked `***` are omitted. If none remain, it says `No Nei Lak Shan dew point is available.`
+
+`hk-weather --new-tsing-yi-dew` prints the latest daily mean dew point at New Tsing Yi Station, for example `2026-08-31  25.1°C`. `--dew-point` still prints the Observatory reading, and the other station dew-point flags still print their own stations. `--new-tsing-yi-temp` still prints New Tsing Yi Station's mean temperature, `--new-tsing-yi-max` still prints its maximum, and `--new-tsing-yi-min` still prints its minimum. `--new-tsing-yi-dew --json` prints that day as one JSON object. `--lang` selects the station name. The Chinese name is `新青衣站` in both traditional and simplified text. Days marked `***` are omitted. If none remain, it says `No New Tsing Yi Station dew point is available.`
 
 `hk-weather --cloud` prints the latest daily mean cloud amount at the Observatory for the current Hong Kong year, for example `2026-08-31  88%`. `--dew-point` still prints the dew point. `--cloud --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No cloud amount is available.`
 
