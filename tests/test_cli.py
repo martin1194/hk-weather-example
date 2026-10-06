@@ -47,6 +47,20 @@ def test_cli_reports_fetch_errors(monkeypatch, capsys):
     assert "could not reach Hong Kong Observatory" in err
 
 
+def test_cli_accepts_lang_in_any_case(monkeypatch, capsys):
+    seen = {}
+
+    def fake(timeout, lang="en"):
+        seen["lang"] = lang
+        return SAMPLE_WEATHER
+
+    monkeypatch.setattr("hk_weather.cli.fetch_current", fake)
+    for raw, expected in (("EN", "en"), ("Tc", "tc"), (" sc ", "sc")):
+        assert main(["--lang", raw]) == 0
+        assert seen["lang"] == expected
+        capsys.readouterr()
+
+
 def test_cli_rejects_non_positive_timeout(capsys):
     assert main(["--timeout", "0"]) == 2
     assert "timeout" in capsys.readouterr().err
