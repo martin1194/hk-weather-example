@@ -247,6 +247,7 @@ from hk_weather.hko import (
     fetch_yuen_long_park_temp,
     fetch_tap_mun_temp,
     fetch_shau_kei_wan_temp,
+    fetch_happy_valley_temp,
     fetch_tai_mo_min,
     fetch_tate_min,
     fetch_sai_kung_min,
@@ -662,6 +663,7 @@ from hk_weather.hko import (
     format_yuen_long_park_temp_miss,
     format_tap_mun_temp_miss,
     format_shau_kei_wan_temp_miss,
+    format_happy_valley_temp_miss,
     format_tai_mo_min,
     format_tai_mo_min_miss,
     format_tate_min_miss,
@@ -941,6 +943,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--yuen-long-park-temp prints the latest daily mean temperature at Yuen Long Park; "
             "--tap-mun-temp prints the latest daily mean temperature at Tap Mun; "
             "--shau-kei-wan-temp prints the latest daily mean temperature at Shau Kei Wan; "
+            "--happy-valley-temp prints the latest daily mean temperature at Happy Valley; "
             "--max-temp prints the latest daily maximum temperature; "
             "--min-temp prints the latest daily minimum temperature; "
             "--tai-mo-min prints the latest daily minimum temperature at Tai Mo Shan; "
@@ -1363,6 +1366,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--shau-kei-wan-temp",
         action="store_true",
         help="Print the latest daily mean temperature at Shau Kei Wan",
+    )
+    parser.add_argument(
+        "--happy-valley-temp",
+        action="store_true",
+        help="Print the latest daily mean temperature at Happy Valley",
     )
     parser.add_argument(
         "--max-temp",
@@ -3171,6 +3179,18 @@ def main(argv: list[str] | None = None) -> int:
                     format_json(shau_kei_wan_temp)
                     if args.json
                     else format_tai_mo_temp(shau_kei_wan_temp)
+                )
+        elif args.happy_valley_temp:
+            happy_valley_temp = fetch_happy_valley_temp(
+                timeout=args.timeout, lang=args.lang
+            )
+            if happy_valley_temp is None:
+                text = format_happy_valley_temp_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(happy_valley_temp)
+                    if args.json
+                    else format_tai_mo_temp(happy_valley_temp)
                 )
         elif args.max_temp:
             max_temp = fetch_max_temp(timeout=args.timeout, lang=args.lang)
