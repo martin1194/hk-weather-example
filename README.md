@@ -240,6 +240,8 @@ hk-weather --kadoorie-farm-max
 hk-weather --kadoorie-farm-max --json
 hk-weather --the-peak-max
 hk-weather --the-peak-max --json
+hk-weather --kat-o-max
+hk-weather --kat-o-max --json
 hk-weather --dew-point
 hk-weather --dew-point --json
 hk-weather --park-dew
@@ -983,6 +985,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --kadoorie-farm-max` prints the latest daily maximum temperature at Kadoorie Farm and Botanic Garden, for example `2026-08-31  27.7°C`. `--max-temp` still prints the Observatory maximum, and the other station maximum flags still print their own stations. `--kadoorie-farm-temp` still prints Kadoorie Farm's mean temperature. `--kadoorie-farm-max --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `嘉道理農場暨植物園` and simplified text uses `嘉道理农场暨植物园`. Days marked `***` are omitted. If none remain, it says `No Kadoorie Farm and Botanic Garden maximum temperature is available.`
 
 `hk-weather --the-peak-max` prints the latest daily maximum temperature at The Peak, for example `2026-08-31  28.2°C`. `--max-temp` still prints the Observatory maximum, and the other station maximum flags still print their own stations. `--the-peak-temp` still prints The Peak's mean temperature. `--the-peak-max --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `山頂` and simplified text uses `山顶`. Days marked `***` are omitted. If none remain, it says `No The Peak maximum temperature is available.`
+
+`hk-weather --kat-o-max` prints the latest daily maximum temperature at Kat O, for example `2026-08-31  29.7°C`. `--max-temp` still prints the Observatory maximum, and the other station maximum flags still print their own stations. `--kat-o-temp` still prints Kat O's mean temperature. `--kat-o-max --json` prints that day as one JSON object. `--lang` selects the station name. The Chinese name is `吉澳` in both traditional and simplified text. Days marked `***` are omitted. If none remain, it says `No Kat O maximum temperature is available.`
 
 `hk-weather --dew-point` prints the latest daily mean dew point at the Observatory for the current Hong Kong year, for example `2026-08-31  25°C`. `--mean-temp` still prints the daily mean air temperature. `--dew-point --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No dew point is available.`
 
