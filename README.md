@@ -25,6 +25,7 @@ hk-weather --fahrenheit
 hk-weather --short --fahrenheit
 hk-weather --ago
 hk-weather --short --ago
+hk-weather --short --where
 hk-weather --summary
 hk-weather --summary --json
 hk-weather --json
@@ -1829,6 +1830,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --fahrenheit` (or `-F`) prints degrees Fahrenheit beside Celsius on the current report, `--short`, and `--summary`. A reading of 28°C is shown as `28°C (82°F)`. `--json` stays in Celsius.
 
 `hk-weather --ago` adds how long ago the current reading was updated, for example `Updated: 2026-10-02T23:02:00+08:00 (12 min ago)`. `--short --ago` puts that note at the end of the one-line report. A reading under a minute old says `just now`. `--json` is unchanged.
+
+`hk-weather --short --where` adds the station name to the one-line report, for example `Rain, 28°C at Hong Kong Observatory, humidity 85%`. The full report already names that station. `--json` already includes the place.
 
 ## Exit status
 
