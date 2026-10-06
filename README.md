@@ -597,6 +597,8 @@ hk-weather --aqhi
 hk-weather --aqhi --json
 hk-weather --sunrise
 hk-weather --sunrise --json
+hk-weather --until-sunset
+hk-weather --until-sunset --json
 hk-weather --moon
 hk-weather --moon --json
 hk-weather --lunar
@@ -1507,6 +1509,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --aqhi` (or `-A`) prints the current Air Quality Health Index at each monitoring station, for example `Central/Western  General Stations  3  Low`. `--aqhi --json` prints that list as one JSON object. `--lang` chooses the English, Traditional Chinese, or Simplified Chinese feed. If none are present, it says so.
 
 `hk-weather --sunrise` (or `-U`) prints today's sunrise, sun transit, and sunset (`opendata.php`, `dataType=SRS`), for example `Rise: 06:15` and `Set: 18:09`. `--sunrise --json` prints that day as one JSON object. `--lang` applies. If the times are missing, it says so.
+
+`hk-weather --until-sunset` prints how long until that sunset, for example `Sunset in 10 hours 9 min` at 08:00 when sunset is 18:09. After sunset it says `Sunset was 1 hour 51 min ago`. Within the sunset minute it says `Sunset now`. `--until-sunset --json` prints the sunset clock and that phrase. If the sunset time is missing, it says `No sunset time is available.`
 
 `hk-weather --moon` (or `-M`) prints today's moonrise, moon transit, and moonset (`opendata.php`, `dataType=MRS`), for example `Rise: 23:39` and `Set: 12:48`. `--moon --json` prints that day as one JSON object. `--lang` applies. If the times are missing, it says so.
 

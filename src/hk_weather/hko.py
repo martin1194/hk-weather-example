@@ -10739,6 +10739,56 @@ def format_sunrise_miss(*, as_json: bool = False) -> str:
     return _unavailable("No sunrise times are available.", as_json=as_json)
 
 
+def _sunset_moment(reading: Sunrise) -> datetime | None:
+    """Combine the sunrise report's date and sunset clock into one HKT moment."""
+    parts = reading.set.strip().split(":")
+    if len(parts) != 2:
+        return None
+    try:
+        day = datetime.fromisoformat(reading.date.strip()).date()
+        hour = int(parts[0])
+        minute = int(parts[1])
+    except ValueError:
+        return None
+    if not (0 <= hour <= 23 and 0 <= minute <= 59):
+        return None
+    return datetime(day.year, day.month, day.day, hour, minute, tzinfo=_HKT)
+
+
+def _span_phrase(minutes: int) -> str:
+    """Format a positive number of minutes as hours and minutes."""
+    if minutes < 60:
+        return "1 min" if minutes == 1 else f"{minutes} min"
+    hours, remaining = divmod(minutes, 60)
+    hour_text = "1 hour" if hours == 1 else f"{hours} hours"
+    if remaining == 0:
+        return hour_text
+    minute_text = "1 min" if remaining == 1 else f"{remaining} min"
+    return f"{hour_text} {minute_text}"
+
+
+def _until_sunset_phrase(moment: datetime, now: datetime) -> str:
+    """Say whether sunset is ahead, now, or already past."""
+    seconds = int((moment - now).total_seconds())
+    if abs(seconds) < 60:
+        return "Sunset now"
+    span = _span_phrase(abs(seconds) // 60)
+    if seconds > 0:
+        return f"Sunset in {span}"
+    return f"Sunset was {span} ago"
+
+
+def format_until_sunset(reading: Sunrise | None, *, as_json: bool) -> str:
+    """Print how long until today's sunset."""
+    moment = _sunset_moment(reading) if reading is not None else None
+    if reading is None or moment is None:
+        return _unavailable("No sunset time is available.", as_json=as_json)
+    phrase = _until_sunset_phrase(moment, _clock())
+    if as_json:
+        return json.dumps({"sunset": reading.set, "until": phrase}, indent=2) + "\n"
+    return phrase + "\n"
+
+
 def parse_moon(payload: dict) -> Moon | None:
     """Turn an `MRS` document into today's moonrise, transit, and moonset."""
     reading = parse_sunrise(payload)
