@@ -55,6 +55,7 @@ from hk_weather.hko import (
     fetch_au_tau_rain,
     fetch_lok_ma_chau_rain,
     fetch_po_pin_chau_rain,
+    fetch_tuen_mun_reservior_rain,
     fetch_lamma_island_rain,
     fetch_tuen_mun_home_rain,
     fetch_forecast,
@@ -497,6 +498,7 @@ from hk_weather.hko import (
     format_au_tau_rain_miss,
     format_lok_ma_chau_rain_miss,
     format_po_pin_chau_rain_miss,
+    format_tuen_mun_reservior_rain_miss,
     format_lamma_island_rain_miss,
     format_tuen_mun_home_rain_miss,
     format_forecast,
@@ -1439,6 +1441,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--au-tau-rain prints the latest daily rainfall at Au Tau; "
             "--lok-ma-chau-rain prints the latest daily rainfall at Lok Ma Chau; "
             "--po-pin-chau-rain prints the latest daily rainfall at Po Pin Chau; "
+            "--tuen-mun-reservior-rain prints the latest daily rainfall at Tuen Mun Reservior; "
             "--lamma-island-rain prints the latest daily rainfall at Lamma Island; "
             "--tuen-mun-home-rain prints the latest daily rainfall at Tuen Mun Children and Juvenile Home; "
             "--tide prints today's high and low tides; "
@@ -3234,6 +3237,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--po-pin-chau-rain",
         action="store_true",
         help="Print the latest daily total rainfall at Po Pin Chau",
+    )
+    parser.add_argument(
+        "--tuen-mun-reservior-rain",
+        action="store_true",
+        help="Print the latest daily total rainfall at Tuen Mun Reservior",
     )
     parser.add_argument(
         "--lamma-island-rain",
@@ -6930,6 +6938,18 @@ def main(argv: list[str] | None = None) -> int:
                     format_json(po_pin_chau_rain)
                     if args.json
                     else format_daily_rain(po_pin_chau_rain)
+                )
+        elif args.tuen_mun_reservior_rain:
+            tuen_mun_reservior_rain = fetch_tuen_mun_reservior_rain(
+                timeout=args.timeout, lang=args.lang
+            )
+            if tuen_mun_reservior_rain is None:
+                text = format_tuen_mun_reservior_rain_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(tuen_mun_reservior_rain)
+                    if args.json
+                    else format_daily_rain(tuen_mun_reservior_rain)
                 )
         elif args.lamma_island_rain:
             lamma_island_rain = fetch_lamma_island_rain(
