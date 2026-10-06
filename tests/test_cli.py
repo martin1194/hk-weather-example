@@ -95,6 +95,27 @@ def test_cli_rejects_separate_negative_timeout(monkeypatch, capsys):
     assert "expected one argument" in capsys.readouterr().err
 
 
+def test_cli_rejects_day_with_another_report(monkeypatch, capsys):
+    def boom(*args, **kwargs):
+        raise AssertionError("should not fetch")
+
+    monkeypatch.setattr("hk_weather.cli.fetch_forecast", boom)
+    monkeypatch.setattr("hk_weather.cli.fetch_forecast_day", boom)
+    monkeypatch.setattr("hk_weather.cli.fetch_tomorrow", boom)
+    assert main(["--day", "1", "--forecast"]) == 2
+    assert (
+        capsys.readouterr().err
+        == "error: pass one report flag at a time (--forecast --day)\n"
+    )
+    assert main(["--tomorrow", "--day", "2"]) == 2
+    assert (
+        capsys.readouterr().err
+        == "error: pass one report flag at a time (--tomorrow --day)\n"
+    )
+    assert main(["--short", "--day", "1"]) == 2
+    assert capsys.readouterr().err == "error: --short only applies to the current report\n"
+
+
 def test_cli_rejects_two_report_flags(monkeypatch, capsys):
     def boom(*args, **kwargs):
         raise AssertionError("should not fetch")
