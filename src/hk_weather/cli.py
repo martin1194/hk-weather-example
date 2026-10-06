@@ -1013,10 +1013,15 @@ def _day_number(value: str) -> int:
 
 
 def package_version() -> str:
-    """Return the installed hk-weather version from package metadata."""
-    from importlib.metadata import version
+    """Return the installed version, or the bundled version if not installed."""
+    from importlib.metadata import PackageNotFoundError, version
 
-    return version("hk-weather")
+    try:
+        return version("hk-weather")
+    except PackageNotFoundError:
+        from hk_weather import __version__
+
+        return __version__
 
 
 def _language(value: str) -> str:

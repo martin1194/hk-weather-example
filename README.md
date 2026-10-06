@@ -898,7 +898,7 @@ hk-weather --place "King's Park"
 hk-weather --place park --json
 ```
 
-`hk-weather --version` prints the installed package version and exits.
+`hk-weather --version` prints the installed package version and exits. If that metadata is not installed, it prints the version bundled with the source instead of a traceback.
 
 Or without installing the script:
 
