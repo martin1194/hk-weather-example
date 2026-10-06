@@ -1013,13 +1013,15 @@ def _day_number(value: str) -> int:
 
 
 class _DayAction(argparse.Action):
-    """Reject a bad day while the command line is parsed."""
+    """Reject a bad day, or a second --day, while the command line is parsed."""
 
     def __call__(self, parser, namespace, values, option_string=None):
         try:
             number = _day_number(values)
         except argparse.ArgumentTypeError as exc:
             parser.error(str(exc))
+        if getattr(namespace, self.dest, None) is not None:
+            parser.error("--day can only be given once")
         setattr(namespace, self.dest, number)
 
 
