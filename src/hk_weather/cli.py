@@ -1089,6 +1089,20 @@ def _language(value: str) -> str:
     return lang
 
 
+class _LangAction(argparse.Action):
+    """Reject a second --lang while the command line is parsed."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._seen = False
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        if self._seen:
+            parser.error("--lang can only be given once")
+        self._seen = True
+        setattr(namespace, self.dest, values)
+
+
 def _place_name(value: str) -> str:
     """Argparse type: a place name must contain something other than spaces."""
     name = value.strip()
@@ -3832,10 +3846,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--lang",
+        action=_LangAction,
         type=_language,
         choices=("en", "tc", "sc"),
         default="en",
-        help="Observatory response language: en, tc, or sc, any case (default: en)",
+        help="Observatory response language: en, tc, or sc, any case (default: en; give this flag once)",
     )
     return parser
 

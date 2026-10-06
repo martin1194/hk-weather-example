@@ -231,6 +231,38 @@ def test_cli_rejects_timeout_that_is_not_a_number(capsys):
         )
 
 
+def test_cli_lang_can_only_be_given_once(monkeypatch, capsys):
+    def boom(*args, **kwargs):
+        raise AssertionError("should not fetch")
+
+    monkeypatch.setattr("hk_weather.cli.fetch_current", boom)
+    monkeypatch.setattr("importlib.metadata.version", lambda name: "1.2.3")
+    for argv in (
+        ["--lang", "en", "--lang", "tc"],
+        ["--lang=en", "--lang=sc"],
+        ["--lang", "EN", "--lang", "tc"],
+        ["--lang", "en", "--lang", "tc", "--version"],
+    ):
+        with pytest.raises(SystemExit) as exc:
+            main(argv)
+        assert exc.value.code == 2
+        captured = capsys.readouterr()
+        assert captured.err == "error: --lang can only be given once\n"
+        assert captured.out == ""
+
+    with pytest.raises(SystemExit) as exc:
+        main(["--lang", "en", "--lang", "fr"])
+    assert exc.value.code == 2
+    captured = capsys.readouterr()
+    assert captured.err == "error: argument --lang: language must be en, tc, or sc\n"
+    assert captured.out == ""
+
+    with pytest.raises(SystemExit) as exc:
+        main(["--lang", "tc", "--version"])
+    assert exc.value.code == 0
+    assert capsys.readouterr().out == "hk-weather 1.2.3\n"
+
+
 def test_cli_argument_errors_are_one_line(capsys):
     with pytest.raises(SystemExit) as exc:
         main(["--not-a-flag"])
