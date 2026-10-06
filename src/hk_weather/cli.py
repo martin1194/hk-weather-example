@@ -1223,6 +1223,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--fahrenheit adds °F beside °C; "
             "--ago says how long ago the current reading was updated; "
             "--where adds the station name to the one-line report; "
+            "--live-dew estimates the dew point from the current temperature and humidity; "
             "Current conditions by default; --summary prints a short briefing; "
             "--forecast prints the local forecast; "
             "--outlook prints the local-forecast outlook; "
@@ -1719,6 +1720,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--where",
         action="store_true",
         help="Include the station name on the one-line report",
+    )
+    parser.add_argument(
+        "--live-dew",
+        action="store_true",
+        help="Estimate the current dew point from temperature and humidity (not the daily --dew-point mean)",
     )
     parser.add_argument(
         "-S",
@@ -3974,7 +3980,15 @@ def _report_flags(args: argparse.Namespace) -> list[str]:
     flags = [
         name.replace("_", "-")
         for name, value in vars(args).items()
-        if value is True and name not in {"json", "short", "plain", "fahrenheit", "ago", "where"}
+        if value is True and name not in {
+            "json",
+            "short",
+            "plain",
+            "fahrenheit",
+            "ago",
+            "where",
+            "live_dew",
+        }
     ]
     if args.day is not None:
         flags.append("day")
@@ -8164,10 +8178,15 @@ def main(argv: list[str] | None = None) -> int:
                     fahrenheit=args.fahrenheit,
                     ago=args.ago,
                     where=args.where,
+                    live_dew=args.live_dew,
                 )
             else:
                 text = format_report(
-                    weather, plain=args.plain, fahrenheit=args.fahrenheit, ago=args.ago
+                    weather,
+                    plain=args.plain,
+                    fahrenheit=args.fahrenheit,
+                    ago=args.ago,
+                    live_dew=args.live_dew,
                 )
     except WeatherError as exc:
         _eprint(f"error: {exc}")

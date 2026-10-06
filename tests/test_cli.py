@@ -337,6 +337,44 @@ def test_cli_where_names_the_station_on_the_short_report(monkeypatch, capsys):
     assert "at Hong Kong Observatory" not in json.dumps(payload)
 
 
+def test_cli_live_dew_estimates_the_current_dew_point(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_current",
+        lambda timeout, lang="en": SAMPLE_WEATHER,
+    )
+    assert main(["--live-dew", "--plain"]) == 0
+    assert "Dew point: 25.2°C\n" in capsys.readouterr().out
+
+    assert main(["--short", "--live-dew", "--plain"]) == 0
+    assert capsys.readouterr().out == "Rain, 28°C, humidity 85%, dew point 25.2°C\n"
+
+    assert main(["--short", "--live-dew", "--fahrenheit", "--plain"]) == 0
+    assert capsys.readouterr().out == (
+        "Rain, 28°C (82°F), humidity 85%, dew point 25.2°C (77°F)\n"
+    )
+
+    assert main(["--short", "--plain"]) == 0
+    assert capsys.readouterr().out == "Rain, 28°C, humidity 85%\n"
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_current",
+        lambda timeout, lang="en": replace(SAMPLE_WEATHER, humidity_percent=None),
+    )
+    assert main(["--live-dew", "--plain"]) == 0
+    skipped = capsys.readouterr().out
+    assert "Humidity: n/a\n" in skipped
+    assert "Dew point" not in skipped
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_current",
+        lambda timeout, lang="en": SAMPLE_WEATHER,
+    )
+    assert main(["--live-dew", "--json"]) == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["humidity_percent"] == 85
+    assert "dew" not in json.dumps(payload)
+
+
 def test_cli_prints_report(monkeypatch, capsys):
     monkeypatch.setattr(
         "hk_weather.cli.fetch_current",

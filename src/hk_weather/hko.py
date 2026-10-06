@@ -5,6 +5,7 @@ from __future__ import annotations
 import csv
 import io
 import json
+import math
 import urllib.error
 import urllib.request
 import xml.etree.ElementTree as ET
@@ -9158,6 +9159,24 @@ def _ago_phrase(update_time: str) -> str | None:
     return "1 day ago" if days == 1 else f"{days} days ago"
 
 
+def _live_dew_c(temperature_c: float, humidity_percent: float) -> float:
+    """Magnus dew point over water from air temperature and relative humidity."""
+    a = 17.625
+    b = 243.04
+    gamma = math.log(humidity_percent / 100) + (a * temperature_c) / (b + temperature_c)
+    return (b * gamma) / (a - gamma)
+
+
+def _live_dew_text(
+    temperature_c: float, humidity_percent: float | None, *, fahrenheit: bool
+) -> str | None:
+    """Format an estimated dew point, or None when humidity cannot support one."""
+    if humidity_percent is None or not 0 < humidity_percent <= 100:
+        return None
+    dew = round(_live_dew_c(temperature_c, humidity_percent), 1)
+    return _celsius_text(dew, fahrenheit=fahrenheit)
+
+
 def _celsius_text(celsius: float, *, fahrenheit: bool) -> str:
     """Format a Celsius reading, optionally with Fahrenheit beside it."""
     text = f"{_number(celsius)}°C"
@@ -9168,7 +9187,12 @@ def _celsius_text(celsius: float, *, fahrenheit: bool) -> str:
 
 
 def format_report(
-    weather: CurrentWeather, *, plain: bool = False, fahrenheit: bool = False, ago: bool = False
+    weather: CurrentWeather,
+    *,
+    plain: bool = False,
+    fahrenheit: bool = False,
+    ago: bool = False,
+    live_dew: bool = False,
 ) -> str:
     """Render current conditions as plain text."""
     conditions = weather.conditions if plain else conditions_with_emoji(weather.conditions)
@@ -9190,6 +9214,12 @@ def format_report(
             else "n/a"
         ),
     ]
+    if live_dew:
+        dew = _live_dew_text(
+            weather.temperature_c, weather.humidity_percent, fahrenheit=fahrenheit
+        )
+        if dew is not None:
+            lines.append(f"Dew point: {dew}")
     if weather.rainfall_mm is not None and weather.rainfall_place:
         lines.append(
             "Rainfall (past hour, highest district): "
@@ -9233,6 +9263,7 @@ def format_short(
     fahrenheit: bool = False,
     ago: bool = False,
     where: bool = False,
+    live_dew: bool = False,
 ) -> str:
     """Render current conditions as one compact line."""
     humidity = (
@@ -9246,6 +9277,12 @@ def format_short(
     if where and place:
         temperature = f"{temperature} at {place}"
     line = f"{conditions}, {temperature}, humidity {humidity}"
+    if live_dew:
+        dew = _live_dew_text(
+            weather.temperature_c, weather.humidity_percent, fahrenheit=fahrenheit
+        )
+        if dew is not None:
+            line = f"{line}, dew point {dew}"
     if weather.warnings:
         note = _brief_warning(weather.warnings[0])
         extra = len(weather.warnings) - 1

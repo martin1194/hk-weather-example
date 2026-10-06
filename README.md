@@ -26,6 +26,8 @@ hk-weather --short --fahrenheit
 hk-weather --ago
 hk-weather --short --ago
 hk-weather --short --where
+hk-weather --live-dew
+hk-weather --short --live-dew
 hk-weather --summary
 hk-weather --summary --json
 hk-weather --json
@@ -1832,6 +1834,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --ago` adds how long ago the current reading was updated, for example `Updated: 2026-10-02T23:02:00+08:00 (12 min ago)`. `--short --ago` puts that note at the end of the one-line report. A reading under a minute old says `just now`. `--json` is unchanged.
 
 `hk-weather --short --where` adds the station name to the one-line report, for example `Rain, 28°C at Hong Kong Observatory, humidity 85%`. The full report already names that station. `--json` already includes the place.
+
+`hk-weather --live-dew` estimates the current dew point from the temperature and humidity. At 28°C and 85% humidity that is `Dew point: 25.2°C`. `--short --live-dew` adds the same estimate to the one-line report. This is not the daily mean from `--dew-point`. If humidity is missing, the estimate is left off. `--json` is unchanged.
 
 ## Exit status
 
