@@ -42,6 +42,8 @@ hk-weather --sea-temp
 hk-weather --sea-temp --json
 hk-weather --north-point-am-sea
 hk-weather --north-point-am-sea --json
+hk-weather --north-point-pm-sea
+hk-weather --north-point-pm-sea --json
 hk-weather --soil-temp
 hk-weather --soil-temp --json
 hk-weather --nine-situation
@@ -815,6 +817,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --sea-temp` prints the sea temperature from that forecast (`seaTemp`), for example `North Point  29°C`. `--nine-day` still prints the daily forecast. `--sea-temp --json` prints the reading as one JSON object. `--lang` applies. If the reading is missing, it says `No sea temperature is available.`
 
 `hk-weather --north-point-am-sea` prints the latest daily mean morning sea temperature at North Point, for example `2026-08-31  25°C`. `--sea-temp` still prints the sea temperature from the 9-day forecast. `--north-point-am-sea --json` prints that day as one JSON object. `--lang` selects the station name. The Chinese name is `北角` in both traditional and simplified text. Days marked `***` are omitted. If none remain, it says `No North Point morning sea temperature is available.`
+
+`hk-weather --north-point-pm-sea` prints the latest daily mean afternoon sea temperature at North Point, for example `2026-08-31  25°C`. `--north-point-am-sea` still prints the morning reading, and `--sea-temp` still prints the sea temperature from the 9-day forecast. `--north-point-pm-sea --json` prints that day as one JSON object. `--lang` selects the station name. The Chinese name is `北角` in both traditional and simplified text. Days marked `***` are omitted. If none remain, it says `No North Point afternoon sea temperature is available.`
 
 `hk-weather --soil-temp` prints soil temperatures from that forecast (`soilTemp`), one line per depth, for example `Hong Kong Observatory  0.5 m  30.6°C`. `--sea-temp` still prints the sea temperature. `--soil-temp --json` prints those readings as one JSON object. `--lang` applies. If none are present, it says `No soil temperature is available.`
 
