@@ -366,6 +366,7 @@ from hk_weather.hko import (
     fetch_pak_tam_chung_max,
     fetch_beas_river_max,
     fetch_kowloon_city_max,
+    fetch_new_tsing_yi_max,
     fetch_max_temp,
     fetch_min_temp,
     fetch_dew_point,
@@ -860,6 +861,7 @@ from hk_weather.hko import (
     format_pak_tam_chung_max_miss,
     format_beas_river_max_miss,
     format_kowloon_city_max_miss,
+    format_new_tsing_yi_max_miss,
     format_max_temp,
     format_max_temp_miss,
     format_min_temp,
@@ -1194,6 +1196,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--pak-tam-chung-max prints the latest daily maximum temperature at Pak Tam Chung (Tsak Yue Wu); "
             "--beas-river-max prints the latest daily maximum temperature at Beas River; "
             "--kowloon-city-max prints the latest daily maximum temperature at Kowloon City; "
+            "--new-tsing-yi-max prints the latest daily maximum temperature at New Tsing Yi Station; "
             "--dew-point prints the latest daily mean dew point; "
             "--park-dew prints the latest daily mean dew point at King's Park; "
             "--cheung-dew prints the latest daily mean dew point at Cheung Chau; "
@@ -1996,6 +1999,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--kowloon-city-max",
         action="store_true",
         help="Print the latest daily maximum temperature at Kowloon City",
+    )
+    parser.add_argument(
+        "--new-tsing-yi-max",
+        action="store_true",
+        help="Print the latest daily maximum temperature at New Tsing Yi Station",
     )
     parser.add_argument(
         "--dew-point",
@@ -4562,6 +4570,18 @@ def main(argv: list[str] | None = None) -> int:
                     format_json(kowloon_city_max)
                     if args.json
                     else format_tai_mo_max(kowloon_city_max)
+                )
+        elif args.new_tsing_yi_max:
+            new_tsing_yi_max = fetch_new_tsing_yi_max(
+                timeout=args.timeout, lang=args.lang
+            )
+            if new_tsing_yi_max is None:
+                text = format_new_tsing_yi_max_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(new_tsing_yi_max)
+                    if args.json
+                    else format_tai_mo_max(new_tsing_yi_max)
                 )
         elif args.dew_point:
             dew_point = fetch_dew_point(timeout=args.timeout, lang=args.lang)

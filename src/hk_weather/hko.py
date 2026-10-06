@@ -3657,6 +3657,26 @@ def fetch_kowloon_city_max(timeout: float = 10, lang: str = "en") -> TaiMoTemp |
     return parse_kowloon_city_max(text, lang)
 
 
+def fetch_new_tsing_yi_max(timeout: float = 10, lang: str = "en") -> TaiMoTemp | None:
+    """Download the latest daily maximum temperature at New Tsing Yi Station."""
+    year = _hong_kong_today()[:4]
+    url = (
+        "https://data.weather.gov.hk/weatherAPI/cis/csvfile/TY1/"
+        f"{year}/daily_TY1_MAXT_{year}.csv"
+    )
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            raw = response.read()
+    except (urllib.error.URLError, TimeoutError) as exc:
+        raise WeatherError(f"could not reach Hong Kong Observatory: {exc}") from exc
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise WeatherError("Hong Kong Observatory returned invalid text") from exc
+    return parse_new_tsing_yi_max(text, lang)
+
+
 def fetch_max_temp(timeout: float = 10, lang: str = "en") -> DailyMax | None:
     """Download the latest daily maximum temperature (`dataType=CLMMAXT`, station HKO)."""
     year = _hong_kong_today()[:4]
@@ -17967,6 +17987,42 @@ def format_kowloon_city_max_miss(*, as_json: bool = False) -> str:
     """Say that no Kowloon City maximum temperature is available."""
     return _unavailable(
         "No Kowloon City maximum temperature is available.", as_json=as_json
+    )
+
+
+_NEW_TSING_YI_MAX_STATIONS = {
+    "en": "New Tsing Yi Station",
+    "tc": "新青衣站",
+    "sc": "新青衣站",
+}
+
+
+def parse_new_tsing_yi_max(text: str, lang: str = "en") -> TaiMoTemp | None:
+    """Turn the New Tsing Yi Station maximum-temperature CSV into the latest numeric day."""
+    station = _NEW_TSING_YI_MAX_STATIONS.get(lang, _NEW_TSING_YI_MAX_STATIONS["en"])
+    latest: TaiMoTemp | None = None
+    rows = csv.reader(io.StringIO(text))
+    for row in rows:
+        if len(row) < 4:
+            continue
+        year = _text(row[0]).lstrip("\ufeff")
+        month = _text(row[1])
+        day = _text(row[2])
+        value = _hour_mm(row[3])
+        if not (year.isdigit() and month.isdigit() and day.isdigit()) or value is None:
+            continue
+        latest = TaiMoTemp(
+            station,
+            f"{int(year):04d}-{int(month):02d}-{int(day):02d}",
+            value,
+        )
+    return latest
+
+
+def format_new_tsing_yi_max_miss(*, as_json: bool = False) -> str:
+    """Say that no New Tsing Yi Station maximum temperature is available."""
+    return _unavailable(
+        "No New Tsing Yi Station maximum temperature is available.", as_json=as_json
     )
 
 
