@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import math
 import os
 import re
@@ -1098,6 +1099,30 @@ def package_version() -> str:
         return __version__
 
 
+def _format_about(version: str, *, as_json: bool) -> str:
+    """Describe this program and the Observatory open-data page."""
+    summary = (
+        "Current weather for Hong Kong, from the Hong Kong Observatory open data API. "
+        "No API key is required."
+    )
+    url = "https://www.hko.gov.hk/en/abouthko/opendata_intro.htm"
+    if as_json:
+        return (
+            json.dumps(
+                {
+                    "name": "hk-weather",
+                    "version": version,
+                    "summary": summary,
+                    "data_url": url,
+                },
+                indent=2,
+                ensure_ascii=False,
+            )
+            + "\n"
+        )
+    return f"hk-weather {version}\n{summary}\nData: {url}\n"
+
+
 def _language(value: str) -> str:
     """Normalize an Observatory language code to en, tc, or sc."""
     lang = value.strip().lower()
@@ -1159,6 +1184,7 @@ def build_parser() -> argparse.ArgumentParser:
         prog="hk-weather",
         description=(
             "Print Hong Kong weather from Hong Kong Observatory open data. "
+            "--about prints this program and the open-data page; "
             "Current conditions by default; --summary prints a short briefing; "
             "--forecast prints the local forecast; "
             "--outlook prints the local-forecast outlook; "
@@ -1605,6 +1631,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--version",
         action=_VersionAction,
         version=f"%(prog)s {package_version()}",
+    )
+    parser.add_argument(
+        "--about",
+        action="store_true",
+        help="Print what this program is and where the data comes from",
     )
     parser.add_argument(
         "--timeout",
@@ -3971,7 +4002,9 @@ def main(argv: list[str] | None = None) -> int:
         _eprint(f"error: {conflict}")
         return 2
     try:
-        if args.warnings:
+        if args.about:
+            text = _format_about(package_version(), as_json=args.json)
+        elif args.warnings:
             text = format_warnings(
                 fetch_warnings(timeout=args.timeout, lang=args.lang),
                 as_json=args.json,
