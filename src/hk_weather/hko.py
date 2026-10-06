@@ -9132,6 +9132,32 @@ def parse_current_report(payload: dict) -> CurrentWeather:
     )
 
 
+def _clock() -> datetime:
+    """Current time. Tests replace this so relative ages stay fixed."""
+    return datetime.now(timezone.utc)
+
+
+def _ago_phrase(update_time: str) -> str | None:
+    """Describe how long ago an Observatory timestamp was, or None if it cannot be read."""
+    try:
+        updated = datetime.fromisoformat(update_time)
+    except ValueError:
+        return None
+    if updated.tzinfo is None:
+        updated = updated.replace(tzinfo=timezone(timedelta(hours=8)))
+    seconds = int((_clock() - updated).total_seconds())
+    if seconds < 60:
+        return "just now"
+    minutes = seconds // 60
+    if minutes < 60:
+        return "1 min ago" if minutes == 1 else f"{minutes} min ago"
+    hours = minutes // 60
+    if hours < 24:
+        return "1 hour ago" if hours == 1 else f"{hours} hours ago"
+    days = hours // 24
+    return "1 day ago" if days == 1 else f"{days} days ago"
+
+
 def _celsius_text(celsius: float, *, fahrenheit: bool) -> str:
     """Format a Celsius reading, optionally with Fahrenheit beside it."""
     text = f"{_number(celsius)}°C"
@@ -9141,13 +9167,20 @@ def _celsius_text(celsius: float, *, fahrenheit: bool) -> str:
     return f"{text} ({converted}°F)"
 
 
-def format_report(weather: CurrentWeather, *, plain: bool = False, fahrenheit: bool = False) -> str:
+def format_report(
+    weather: CurrentWeather, *, plain: bool = False, fahrenheit: bool = False, ago: bool = False
+) -> str:
     """Render current conditions as plain text."""
     conditions = weather.conditions if plain else conditions_with_emoji(weather.conditions)
+    updated = f"Updated: {weather.update_time}"
+    if ago:
+        phrase = _ago_phrase(weather.update_time)
+        if phrase is not None:
+            updated = f"{updated} ({phrase})"
     lines = [
         "Hong Kong weather",
         "Source: Hong Kong Observatory open data",
-        f"Updated: {weather.update_time}",
+        updated,
         f"Conditions: {conditions}",
         f"Temperature: {_celsius_text(weather.temperature_c, fahrenheit=fahrenheit)} ({weather.place})",
         "Humidity: "
@@ -9193,7 +9226,9 @@ def format_summary(report: WeatherSummary, *, plain: bool = False, fahrenheit: b
     return "\n".join(lines) + "\n"
 
 
-def format_short(weather: CurrentWeather, *, plain: bool = False, fahrenheit: bool = False) -> str:
+def format_short(
+    weather: CurrentWeather, *, plain: bool = False, fahrenheit: bool = False, ago: bool = False
+) -> str:
     """Render current conditions as one compact line."""
     humidity = (
         f"{_number(weather.humidity_percent)}%"
@@ -9211,6 +9246,10 @@ def format_short(weather: CurrentWeather, *, plain: bool = False, fahrenheit: bo
         if extra:
             note = f"{note} (+{extra} more)"
         line = f"{line} — {note}"
+    if ago:
+        phrase = _ago_phrase(weather.update_time)
+        if phrase is not None:
+            line = f"{line} ({phrase})"
     return line + "\n"
 
 

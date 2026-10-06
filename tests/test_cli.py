@@ -2,6 +2,8 @@ import json
 import os
 import subprocess
 import sys
+from dataclasses import replace
+from datetime import datetime
 from urllib.error import URLError
 
 import pytest
@@ -242,6 +244,55 @@ def test_cli_fahrenheit_prints_beside_celsius(monkeypatch, capsys):
     summary = capsys.readouterr().out
     assert "high 30°C (86°F)" in summary
     assert "low 25°C (77°F)" in summary
+
+
+def test_cli_ago_says_how_old_the_reading_is(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_current",
+        lambda timeout, lang="en": SAMPLE_WEATHER,
+    )
+
+    def at(stamp: str) -> None:
+        moment = datetime.fromisoformat(stamp)
+        monkeypatch.setattr("hk_weather.hko._clock", lambda: moment)
+
+    at("2026-10-02T23:14:30+08:00")
+    assert main(["--ago"]) == 0
+    assert "Updated: 2026-10-02T23:02:00+08:00 (12 min ago)" in capsys.readouterr().out
+
+    assert main(["--short", "--ago", "--plain"]) == 0
+    assert capsys.readouterr().out == "Rain, 28°C, humidity 85% (12 min ago)\n"
+
+    at("2026-10-02T23:02:20+08:00")
+    assert main(["--short", "--ago", "--plain"]) == 0
+    assert capsys.readouterr().out == "Rain, 28°C, humidity 85% (just now)\n"
+
+    at("2026-10-03T00:02:00+08:00")
+    assert main(["--short", "--ago", "--plain"]) == 0
+    assert capsys.readouterr().out == "Rain, 28°C, humidity 85% (1 hour ago)\n"
+
+    at("2026-10-04T23:02:00+08:00")
+    assert main(["--short", "--ago", "--plain"]) == 0
+    assert capsys.readouterr().out == "Rain, 28°C, humidity 85% (2 days ago)\n"
+
+    assert main(["--ago", "--json"]) == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["update_time"] == "2026-10-02T23:02:00+08:00"
+    assert "ago" not in json.dumps(payload)
+
+    assert main([]) == 0
+    plain = capsys.readouterr().out
+    assert "Updated: 2026-10-02T23:02:00+08:00\n" in plain
+    assert "ago" not in plain
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_current",
+        lambda timeout, lang="en": replace(SAMPLE_WEATHER, update_time="not-a-time"),
+    )
+    assert main(["--ago"]) == 0
+    skipped = capsys.readouterr().out
+    assert "Updated: not-a-time\n" in skipped
+    assert "ago" not in skipped
 
 
 def test_cli_prints_report(monkeypatch, capsys):
