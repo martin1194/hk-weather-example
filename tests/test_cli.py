@@ -1,4 +1,7 @@
 import json
+import os
+import subprocess
+import sys
 from urllib.error import URLError
 
 import pytest
@@ -51,6 +54,51 @@ def test_cli_closed_pipe_exits_quietly(monkeypatch):
     )
     assert main([]) == 0
     assert seen == {"dup": (7, 1), "closed": 7}
+
+
+def _run_with_closed_pipe(args: list[str], stream: str) -> int:
+    read_fd, write_fd = os.pipe()
+    os.close(read_fd)
+    kwargs = {stream: write_fd}
+    if stream == "stdout":
+        kwargs["stderr"] = subprocess.DEVNULL
+    else:
+        kwargs["stdout"] = subprocess.DEVNULL
+    proc = subprocess.Popen([sys.executable, "-m", "hk_weather", *args], **kwargs)
+    os.close(write_fd)
+    return proc.wait()
+
+
+def test_closed_pipe_keeps_exit_status():
+    assert _run_with_closed_pipe(["--version"], "stdout") == 0
+    assert _run_with_closed_pipe(["--timeout", "0"], "stderr") == 2
+    assert _run_with_closed_pipe(["--not-a-flag"], "stderr") == 2
+
+
+def test_cli_closed_stderr_keeps_fetch_error(monkeypatch):
+    def boom(timeout, lang="en"):
+        raise WeatherError("down")
+
+    monkeypatch.setattr("hk_weather.cli.fetch_current", boom)
+
+    def broken(*args, **kwargs):
+        raise BrokenPipeError
+
+    seen = {}
+    monkeypatch.setattr("hk_weather.cli.sys.stderr.write", broken)
+    monkeypatch.setattr("hk_weather.cli.sys.stderr.flush", lambda: None)
+    monkeypatch.setattr("hk_weather.cli.sys.stderr.fileno", lambda: 2)
+    monkeypatch.setattr("hk_weather.cli.os.open", lambda path, flags: 9)
+    monkeypatch.setattr(
+        "hk_weather.cli.os.dup2",
+        lambda fd, target: seen.update(dup=(fd, target)),
+    )
+    monkeypatch.setattr(
+        "hk_weather.cli.os.close",
+        lambda fd: seen.update(closed=fd),
+    )
+    assert main([]) == 1
+    assert seen == {"dup": (9, 2), "closed": 9}
 
 
 def test_cli_prints_report(monkeypatch, capsys):

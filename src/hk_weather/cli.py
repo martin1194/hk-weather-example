@@ -1033,6 +1033,16 @@ class _QuietParser(argparse.ArgumentParser):
     def error(self, message: str) -> None:
         self.exit(2, f"error: {message}\n")
 
+    def _print_message(self, message, file=None):
+        if not message:
+            return
+        stream = sys.stderr if file is None else file
+        try:
+            stream.write(message)
+            stream.flush()
+        except BrokenPipeError:
+            _silence_broken_pipe(stream)
+
 
 def build_parser() -> argparse.ArgumentParser:
     parser = _QuietParser(
@@ -3791,46 +3801,56 @@ def _normalize_argv(argv: list[str] | None) -> list[str]:
     return normalized
 
 
+def _silence_broken_pipe(stream) -> None:
+    """Point a closed pipe at /dev/null so shutdown keeps the exit status."""
+    try:
+        devnull = os.open(os.devnull, os.O_WRONLY)
+        os.dup2(devnull, stream.fileno())
+        os.close(devnull)
+    except OSError:
+        pass
+
+
+def _eprint(message: str) -> None:
+    """Print an error. A closed stderr pipe does not change the exit status."""
+    try:
+        sys.stderr.write(f"{message}\n")
+        sys.stderr.flush()
+    except BrokenPipeError:
+        _silence_broken_pipe(sys.stderr)
+
+
 def _write_output(text: str) -> int:
     """Write a report. A closed pipe exits quietly instead of tracing back."""
     try:
         sys.stdout.write(text)
         sys.stdout.flush()
     except BrokenPipeError:
-        try:
-            devnull = os.open(os.devnull, os.O_WRONLY)
-            os.dup2(devnull, sys.stdout.fileno())
-            os.close(devnull)
-        except OSError:
-            pass
-        return 0
+        _silence_broken_pipe(sys.stdout)
     return 0
 
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(_normalize_argv(argv))
     if not math.isfinite(args.timeout) or args.timeout <= 0:
-        print("error: timeout must be greater than 0", file=sys.stderr)
+        _eprint("error: timeout must be greater than 0")
         return 2
     if args.day is not None:
         try:
             args.day = _day_number(args.day)
         except argparse.ArgumentTypeError as exc:
-            print(f"error: {exc}", file=sys.stderr)
+            _eprint(f"error: {exc}")
             return 2
     reports = _report_flags(args)
     if len(reports) > 1:
         chosen = " ".join(f"--{name}" for name in reports)
-        print(
-            f"error: pass one report flag at a time ({chosen})",
-            file=sys.stderr,
-        )
+        _eprint(f"error: pass one report flag at a time ({chosen})")
         return 2
     if args.short and reports:
-        print("error: --short only applies to the current report", file=sys.stderr)
+        _eprint("error: --short only applies to the current report")
         return 2
     if args.short and args.json:
-        print("error: --short cannot be combined with --json", file=sys.stderr)
+        _eprint("error: --short cannot be combined with --json")
         return 2
     try:
         if args.warnings:
@@ -7899,7 +7919,7 @@ def main(argv: list[str] | None = None) -> int:
         elif args.place is not None:
             query = args.place.strip()
             if not query:
-                print("error: place must not be empty", file=sys.stderr)
+                _eprint("error: place must not be empty")
                 return 2
             matched = filter_stations(
                 fetch_stations(timeout=args.timeout, lang=args.lang),
@@ -7921,6 +7941,6 @@ def main(argv: list[str] | None = None) -> int:
             else:
                 text = format_report(weather)
     except WeatherError as exc:
-        print(f"error: {exc}", file=sys.stderr)
+        _eprint(f"error: {exc}")
         return 1
     return _write_output(text)
