@@ -1224,6 +1224,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--ago says how long ago the current reading was updated; "
             "--where adds the station name to the one-line report; "
             "--live-dew estimates the dew point from the current temperature and humidity; "
+            "--when adds the observation time; "
             "Current conditions by default; --summary prints a short briefing; "
             "--forecast prints the local forecast; "
             "--outlook prints the local-forecast outlook; "
@@ -1725,6 +1726,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--live-dew",
         action="store_true",
         help="Estimate the current dew point from temperature and humidity (not the daily --dew-point mean)",
+    )
+    parser.add_argument(
+        "--when",
+        action="store_true",
+        help="Add the observation time, such as 23:02 HKT, to the current report",
     )
     parser.add_argument(
         "-S",
@@ -3988,6 +3994,7 @@ def _report_flags(args: argparse.Namespace) -> list[str]:
             "ago",
             "where",
             "live_dew",
+            "when",
         }
     ]
     if args.day is not None:
@@ -8179,6 +8186,7 @@ def main(argv: list[str] | None = None) -> int:
                     ago=args.ago,
                     where=args.where,
                     live_dew=args.live_dew,
+                    when=args.when,
                 )
             else:
                 text = format_report(
@@ -8187,6 +8195,7 @@ def main(argv: list[str] | None = None) -> int:
                     fahrenheit=args.fahrenheit,
                     ago=args.ago,
                     live_dew=args.live_dew,
+                    when=args.when,
                 )
     except WeatherError as exc:
         _eprint(f"error: {exc}")

@@ -375,6 +375,55 @@ def test_cli_live_dew_estimates_the_current_dew_point(monkeypatch, capsys):
     assert "dew" not in json.dumps(payload)
 
 
+def test_cli_when_shows_the_observation_time(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_current",
+        lambda timeout, lang="en": SAMPLE_WEATHER,
+    )
+    assert main(["--when", "--plain"]) == 0
+    assert "Updated: 2026-10-02T23:02:00+08:00 (23:02 HKT)" in capsys.readouterr().out
+
+    assert main(["--short", "--when", "--plain"]) == 0
+    assert capsys.readouterr().out == "Rain, 28°C, humidity 85% at 23:02 HKT\n"
+
+    assert main(["--short", "--plain"]) == 0
+    assert "HKT" not in capsys.readouterr().out
+
+    monkeypatch.setattr(
+        "hk_weather.hko._clock",
+        lambda: datetime.fromisoformat("2026-10-02T23:14:30+08:00"),
+    )
+    assert main(["--when", "--ago", "--plain"]) == 0
+    assert "Updated: 2026-10-02T23:02:00+08:00 (23:02 HKT, 12 min ago)" in capsys.readouterr().out
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_current",
+        lambda timeout, lang="en": replace(SAMPLE_WEATHER, update_time="not-a-time"),
+    )
+    assert main(["--when", "--plain"]) == 0
+    skipped = capsys.readouterr().out
+    assert "Updated: not-a-time\n" in skipped
+    assert "HKT" not in skipped
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_current",
+        lambda timeout, lang="en": replace(SAMPLE_WEATHER, update_time="2026-10-02T15:02:00+00:00"),
+    )
+    assert main(["--short", "--when", "--plain"]) == 0
+    utc = capsys.readouterr().out
+    assert utc == "Rain, 28°C, humidity 85% at 15:02\n"
+    assert "HKT" not in utc
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_current",
+        lambda timeout, lang="en": SAMPLE_WEATHER,
+    )
+    assert main(["--when", "--json"]) == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["update_time"] == "2026-10-02T23:02:00+08:00"
+    assert "HKT" not in json.dumps(payload)
+
+
 def test_cli_prints_report(monkeypatch, capsys):
     monkeypatch.setattr(
         "hk_weather.cli.fetch_current",

@@ -9159,6 +9159,18 @@ def _ago_phrase(update_time: str) -> str | None:
     return "1 day ago" if days == 1 else f"{days} days ago"
 
 
+def _clock_phrase(update_time: str) -> str | None:
+    """Return the observation clock time, labeled HKT when the offset is +08:00."""
+    try:
+        updated = datetime.fromisoformat(update_time)
+    except ValueError:
+        return None
+    clock = updated.strftime("%H:%M")
+    if updated.utcoffset() == timedelta(hours=8):
+        return f"{clock} HKT"
+    return clock
+
+
 def _live_dew_c(temperature_c: float, humidity_percent: float) -> float:
     """Magnus dew point over water from air temperature and relative humidity."""
     a = 17.625
@@ -9193,14 +9205,22 @@ def format_report(
     fahrenheit: bool = False,
     ago: bool = False,
     live_dew: bool = False,
+    when: bool = False,
 ) -> str:
     """Render current conditions as plain text."""
     conditions = weather.conditions if plain else conditions_with_emoji(weather.conditions)
     updated = f"Updated: {weather.update_time}"
+    notes: list[str] = []
+    if when:
+        clock = _clock_phrase(weather.update_time)
+        if clock is not None:
+            notes.append(clock)
     if ago:
         phrase = _ago_phrase(weather.update_time)
         if phrase is not None:
-            updated = f"{updated} ({phrase})"
+            notes.append(phrase)
+    if notes:
+        updated = f"{updated} ({', '.join(notes)})"
     lines = [
         "Hong Kong weather",
         "Source: Hong Kong Observatory open data",
@@ -9264,6 +9284,7 @@ def format_short(
     ago: bool = False,
     where: bool = False,
     live_dew: bool = False,
+    when: bool = False,
 ) -> str:
     """Render current conditions as one compact line."""
     humidity = (
@@ -9283,6 +9304,10 @@ def format_short(
         )
         if dew is not None:
             line = f"{line}, dew point {dew}"
+    if when:
+        clock = _clock_phrase(weather.update_time)
+        if clock is not None:
+            line = f"{line} at {clock}"
     if weather.warnings:
         note = _brief_warning(weather.warnings[0])
         extra = len(weather.warnings) - 1
