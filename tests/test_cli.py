@@ -201,6 +201,49 @@ def test_cli_timeout_can_only_be_given_once(monkeypatch, capsys):
     assert capsys.readouterr().out == "hk-weather 1.2.3\n"
 
 
+def test_cli_timeout_rejects_exponent_and_sign(monkeypatch, capsys):
+    def boom(*args, **kwargs):
+        raise AssertionError("should not fetch")
+
+    monkeypatch.setattr("hk_weather.cli.fetch_current", boom)
+    monkeypatch.setattr("importlib.metadata.version", lambda name: "1.2.3")
+    for argv in (
+        ["--timeout", "1e2"],
+        ["--timeout", "+5"],
+        ["--timeout", " 10"],
+        ["--timeout", "10 "],
+        ["--timeout", "1e2", "--version"],
+        ["--timeout", "+5", "--version"],
+    ):
+        with pytest.raises(SystemExit) as exc:
+            main(argv)
+        assert exc.value.code == 2
+        captured = capsys.readouterr()
+        assert captured.err == (
+            "error: argument --timeout: timeout must be greater than 0\n"
+        )
+        assert captured.out == ""
+
+    seen = {}
+
+    def fake(timeout, lang="en"):
+        seen["timeout"] = timeout
+        return SAMPLE_WEATHER
+
+    monkeypatch.setattr("hk_weather.cli.fetch_current", fake)
+    assert main(["--timeout", "10.5"]) == 0
+    assert seen["timeout"] == 10.5
+    capsys.readouterr()
+    assert main(["--timeout", ".5"]) == 0
+    assert seen["timeout"] == 0.5
+    capsys.readouterr()
+
+    with pytest.raises(SystemExit) as exc:
+        main(["--timeout", "10.5", "--version"])
+    assert exc.value.code == 0
+    assert capsys.readouterr().out == "hk-weather 1.2.3\n"
+
+
 def test_cli_rejects_non_positive_timeout(capsys):
     with pytest.raises(SystemExit) as exc:
         main(["--timeout", "0"])
