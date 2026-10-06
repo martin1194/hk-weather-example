@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import math
 import sys
 
 from hk_weather.hko import (
@@ -1473,7 +1474,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--timeout",
         type=float,
         default=10,
-        help="HTTP timeout in seconds (default: 10)",
+        help="HTTP timeout in seconds; must be greater than 0 (default: 10)",
     )
     parser.add_argument(
         "--json",
@@ -3745,7 +3746,7 @@ def _report_flags(args: argparse.Namespace) -> list[str]:
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
-    if args.timeout <= 0:
+    if not math.isfinite(args.timeout) or args.timeout <= 0:
         print("error: timeout must be greater than 0", file=sys.stderr)
         return 2
     reports = _report_flags(args)
