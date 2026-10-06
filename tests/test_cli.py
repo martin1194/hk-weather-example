@@ -466,6 +466,35 @@ def test_cli_raining_answers_yes_or_no(monkeypatch, capsys):
     assert "pass one report flag at a time (--raining --forecast)" in captured.err
 
 
+def test_cli_hotter_than_answers_yes_or_no(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_current",
+        lambda timeout, lang="en": SAMPLE_WEATHER,
+    )
+    assert main(["--hotter-than", "30"]) == 0
+    assert capsys.readouterr().out == "no\n"
+
+    assert main(["--hotter-than", "20"]) == 0
+    assert capsys.readouterr().out == "yes\n"
+
+    assert main(["--hotter-than", "28"]) == 0
+    assert capsys.readouterr().out == "no\n"
+
+    assert main(["--hotter-than", "30", "--json"]) == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload == {"hotter": False, "threshold_c": 30.0, "temperature_c": 28}
+
+    assert main(["--hotter-than", "30", "--forecast"]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "pass one report flag at a time (--forecast --hotter-than)" in captured.err
+
+    with pytest.raises(SystemExit) as exc:
+        main(["--hotter-than", "hot"])
+    assert exc.value.code == 2
+    assert "temperature threshold must be a number" in capsys.readouterr().err
+
+
 def test_cli_prints_report(monkeypatch, capsys):
     monkeypatch.setattr(
         "hk_weather.cli.fetch_current",

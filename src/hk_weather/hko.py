@@ -9357,6 +9357,24 @@ def format_raining(weather: CurrentWeather, *, as_json: bool) -> str:
     return "yes\n" if raining else "no\n"
 
 
+def format_hotter(weather: CurrentWeather, threshold_c: float, *, as_json: bool) -> str:
+    """Print yes or no if the current temperature is above threshold_c."""
+    hotter = weather.temperature_c > threshold_c
+    if as_json:
+        return (
+            json.dumps(
+                {
+                    "hotter": hotter,
+                    "threshold_c": threshold_c,
+                    "temperature_c": weather.temperature_c,
+                },
+                indent=2,
+            )
+            + "\n"
+        )
+    return "yes\n" if hotter else "no\n"
+
+
 def _brief_warning(message: str) -> str:
     sentence = message.strip().split(". ", 1)[0].rstrip(".")
     if len(sentence) > 80:
