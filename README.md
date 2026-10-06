@@ -1808,7 +1808,7 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 
 `hk-weather --list-places` prints the station names from the current report (temperature and humidity), so you can see what to pass to `--place`.
 
-`hk-weather --place NAME` prints the same readings for stations whose name contains NAME (case-insensitive). `--json` and `--lang` apply. If nothing matches, it says so.
+`hk-weather --place NAME` prints the same readings for stations whose name contains NAME (case-insensitive). `--json` and `--lang` apply. If nothing matches, it says so. A blank name, including one that is only spaces, exits with `error: argument --place: place must not be empty` while the command line is parsed, so `--place " " --version` does not print the version.
 
 ## Exit status
 
