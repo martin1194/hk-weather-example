@@ -9,7 +9,7 @@ from urllib.error import URLError
 import pytest
 
 from hk_weather.cli import main
-from hk_weather.hko import CurrentWeather, WeatherError
+from hk_weather.hko import CurrentWeather, Sunrise, WeatherError
 
 SAMPLE_WEATHER = CurrentWeather(
     update_time="2026-10-02T23:02:00+08:00",
@@ -19183,6 +19183,53 @@ def test_cli_aqhi_when_no_readings(monkeypatch, capsys):
     assert capsys.readouterr().out == "No AQHI readings are available.\n"
     assert main(["--aqhi", "--json"]) == 0
     assert json.loads(capsys.readouterr().out) == {"message": "No AQHI readings are available."}
+
+
+def test_cli_until_sunset_says_how_long(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_sunrise",
+        lambda timeout, lang="en": Sunrise("2026-10-03", "06:15", "12:12", "18:09"),
+    )
+    monkeypatch.setattr(
+        "hk_weather.hko._clock",
+        lambda: datetime.fromisoformat("2026-10-03T00:00:00+00:00"),
+    )
+    assert main(["--until-sunset"]) == 0
+    assert capsys.readouterr().out == "Sunset in 10 hours 9 min\n"
+    monkeypatch.setattr(
+        "hk_weather.hko._clock",
+        lambda: datetime.fromisoformat("2026-10-03T12:00:00+00:00"),
+    )
+    assert main(["--until-sunset"]) == 0
+    assert capsys.readouterr().out == "Sunset was 1 hour 51 min ago\n"
+    monkeypatch.setattr(
+        "hk_weather.hko._clock",
+        lambda: datetime.fromisoformat("2026-10-03T10:09:30+00:00"),
+    )
+    assert main(["--until-sunset"]) == 0
+    assert capsys.readouterr().out == "Sunset now\n"
+    monkeypatch.setattr(
+        "hk_weather.hko._clock",
+        lambda: datetime.fromisoformat("2026-10-03T00:00:00+00:00"),
+    )
+    assert main(["--until-sunset", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "sunset": "18:09",
+        "until": "Sunset in 10 hours 9 min",
+    }
+    assert main(["--until-sunset", "--sunrise"]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "pass one report flag at a time (--sunrise --until-sunset)" in captured.err
+    monkeypatch.setattr("hk_weather.cli.fetch_sunrise", lambda timeout, lang="en": None)
+    assert main(["--until-sunset"]) == 0
+    assert capsys.readouterr().out == "No sunset time is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_sunrise",
+        lambda timeout, lang="en": Sunrise("2026-10-03", "06:15", "12:12", ""),
+    )
+    assert main(["--until-sunset"]) == 0
+    assert capsys.readouterr().out == "No sunset time is available.\n"
 
 
 def test_cli_sunrise_prints_times(monkeypatch, capsys):
