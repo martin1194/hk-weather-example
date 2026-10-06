@@ -1024,11 +1024,14 @@ class _DayAction(argparse.Action):
 
 
 def _timeout_value(value: str) -> float:
-    """Argparse type: a timeout must be a number of seconds."""
+    """Argparse type: a timeout must be a number of seconds greater than 0."""
     try:
-        return float(value)
+        number = float(value)
     except ValueError:
         raise argparse.ArgumentTypeError("timeout must be greater than 0") from None
+    if not math.isfinite(number) or number <= 0:
+        raise argparse.ArgumentTypeError("timeout must be greater than 0")
+    return number
 
 
 def package_version() -> str:
@@ -3857,9 +3860,6 @@ def _write_output(text: str) -> int:
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(_normalize_argv(argv))
-    if not math.isfinite(args.timeout) or args.timeout <= 0:
-        _eprint("error: timeout must be greater than 0")
-        return 2
     if args.day is not None:
         try:
             args.day = _day_number(args.day)
