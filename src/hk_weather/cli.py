@@ -1484,7 +1484,7 @@ def build_parser() -> argparse.ArgumentParser:
         "-s",
         "--short",
         action="store_true",
-        help="Print current conditions on one line",
+        help="Print current conditions on one line (not with --json or another report)",
     )
     parser.add_argument(
         "-S",
@@ -3731,10 +3731,36 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _report_flags(args: argparse.Namespace) -> list[str]:
+    """Return report flags that were set, in the order they are defined."""
+    flags = [
+        name.replace("_", "-")
+        for name, value in vars(args).items()
+        if value is True and name not in {"json", "short"}
+    ]
+    if args.place is not None:
+        flags.append("place")
+    return flags
+
+
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     if args.timeout <= 0:
         print("error: timeout must be greater than 0", file=sys.stderr)
+        return 2
+    reports = _report_flags(args)
+    if len(reports) > 1:
+        chosen = " ".join(f"--{name}" for name in reports)
+        print(
+            f"error: pass one report flag at a time ({chosen})",
+            file=sys.stderr,
+        )
+        return 2
+    if args.short and reports:
+        print("error: --short only applies to the current report", file=sys.stderr)
+        return 2
+    if args.short and args.json:
+        print("error: --short cannot be combined with --json", file=sys.stderr)
         return 2
     try:
         if args.warnings:

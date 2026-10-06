@@ -52,6 +52,28 @@ def test_cli_rejects_non_positive_timeout(capsys):
     assert "timeout" in capsys.readouterr().err
 
 
+def test_cli_rejects_two_report_flags(monkeypatch, capsys):
+    def boom(*args, **kwargs):
+        raise AssertionError("should not fetch")
+
+    monkeypatch.setattr("hk_weather.cli.fetch_forecast", boom)
+    monkeypatch.setattr("hk_weather.cli.fetch_warnings", boom)
+    assert main(["--warnings", "--forecast"]) == 2
+    err = capsys.readouterr().err
+    assert err == "error: pass one report flag at a time (--forecast --warnings)\n"
+
+
+def test_cli_rejects_short_with_json_or_another_report(monkeypatch, capsys):
+    def boom(*args, **kwargs):
+        raise AssertionError("should not fetch")
+
+    monkeypatch.setattr("hk_weather.cli.fetch_forecast", boom)
+    assert main(["--short", "--json"]) == 2
+    assert capsys.readouterr().err == "error: --short cannot be combined with --json\n"
+    assert main(["--short", "--forecast"]) == 2
+    assert capsys.readouterr().err == "error: --short only applies to the current report\n"
+
+
 def test_cli_json_prints_one_object(monkeypatch, capsys):
     body = json.dumps(
         {
