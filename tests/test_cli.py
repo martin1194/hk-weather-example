@@ -13546,6 +13546,34 @@ def test_cli_day_can_only_be_given_once(monkeypatch, capsys):
     assert capsys.readouterr().out == "hk-weather 1.2.3\n"
 
 
+def test_cli_day_rejects_non_digit_forms(monkeypatch, capsys):
+    def boom(*args, **kwargs):
+        raise AssertionError("should not fetch")
+
+    monkeypatch.setattr("hk_weather.cli.fetch_forecast_day", boom)
+    monkeypatch.setattr("importlib.metadata.version", lambda name: "1.2.3")
+    for argv in (
+        ["--day", "+1"],
+        ["--day", "01"],
+        ["--day", "1.0"],
+        ["--day", " 2"],
+        ["--day=+1"],
+        ["--day", "+1", "--version"],
+        ["--day", "01", "--version"],
+    ):
+        with pytest.raises(SystemExit) as exc:
+            main(argv)
+        assert exc.value.code == 2
+        captured = capsys.readouterr()
+        assert captured.err == "error: day must be an integer from 1 to 9\n"
+        assert captured.out == ""
+
+    with pytest.raises(SystemExit) as exc:
+        main(["--day", "3", "--version"])
+    assert exc.value.code == 0
+    assert capsys.readouterr().out == "hk-weather 1.2.3\n"
+
+
 def test_cli_day_rejects_out_of_range(capsys):
     for argv in (
         ["--day", "0"],
