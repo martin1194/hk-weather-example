@@ -19956,6 +19956,73 @@ def test_cli_happy_valley_rain_when_missing(monkeypatch, capsys):
     }
 
 
+def test_cli_tai_mei_tuk_rain_prints_latest_day(monkeypatch, capsys):
+    seen = {}
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _text_response(
+            "年/Year,月/Month,日/Day,數值/Value,數據完整性/data Completeness\n"
+            "2026,8,29,4.0,C\n"
+            "2026,8,30,***,\n"
+            "2026,8,31,  16.0  ,C\n"
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--tai-mei-tuk-rain", "--lang", "tc"]) == 0
+    assert seen["url"].endswith("daily_PLC_RF_2026.csv")
+    assert capsys.readouterr().out == (
+        "Hong Kong daily rainfall\n"
+        "Station: 大美督\n"
+        "2026-08-31  16 mm\n"
+    )
+    assert main(["--tai-mei-tuk-rain", "--lang", "sc"]) == 0
+    assert capsys.readouterr().out == (
+        "Hong Kong daily rainfall\n"
+        "Station: 大美督\n"
+        "2026-08-31  16 mm\n"
+    )
+
+
+def test_cli_tai_mei_tuk_rain_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Year,Month,Day,Value,Completeness\n"
+            "2026,8,31,16.0,C\n"
+        ),
+    )
+    assert main(["--tai-mei-tuk-rain", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "station": "Tai Mei Tuk",
+        "date": "2026-08-31",
+        "rainfall_mm": 16.0,
+    }
+
+
+def test_cli_tai_mei_tuk_rain_when_missing(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Year,Month,Day,Value,Completeness\n"
+            "2026,8,31,***,\n"
+        ),
+    )
+    assert main(["--tai-mei-tuk-rain"]) == 0
+    assert capsys.readouterr().out == "No Tai Mei Tuk rainfall is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(""),
+    )
+    assert main(["--tai-mei-tuk-rain", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No Tai Mei Tuk rainfall is available."
+    }
+
+
 def test_cli_rainstorm_prints_reminder(monkeypatch, capsys):
     seen = {}
     message = (
