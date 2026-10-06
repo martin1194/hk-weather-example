@@ -16,6 +16,14 @@ def test_ci_runs_oldest_supported_python():
     assert "Python 3.10, 3.11, 3.12, and 3.13" in readme
 
 
+def test_ci_pins_ubuntu_2404():
+    workflow = (ROOT / ".github/workflows/ci.yml").read_text()
+    readme = (ROOT / "README.md").read_text()
+    assert "runs-on: ubuntu-24.04" in workflow
+    assert "ubuntu-latest" not in workflow
+    assert "Ubuntu 24.04" in readme
+
+
 def test_ci_uses_node24_actions():
     workflow = (ROOT / ".github/workflows/ci.yml").read_text()
     readme = (ROOT / "README.md").read_text()
