@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import math
+import os
 import sys
 
 from hk_weather.hko import (
@@ -3785,6 +3786,22 @@ def _normalize_argv(argv: list[str] | None) -> list[str]:
         normalized.append(token)
         index += 1
     return normalized
+
+
+def _write_output(text: str) -> int:
+    """Write a report. A closed pipe exits quietly instead of tracing back."""
+    try:
+        sys.stdout.write(text)
+        sys.stdout.flush()
+    except BrokenPipeError:
+        try:
+            devnull = os.open(os.devnull, os.O_WRONLY)
+            os.dup2(devnull, sys.stdout.fileno())
+            os.close(devnull)
+        except OSError:
+            pass
+        return 0
+    return 0
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -7903,5 +7920,4 @@ def main(argv: list[str] | None = None) -> int:
     except WeatherError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
-    sys.stdout.write(text)
-    return 0
+    return _write_output(text)

@@ -27,6 +27,32 @@ def test_cli_version_prints_package_metadata(monkeypatch, capsys):
     assert capsys.readouterr().out == "hk-weather 1.2.3\n"
 
 
+def test_cli_closed_pipe_exits_quietly(monkeypatch):
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_current",
+        lambda timeout, lang="en": SAMPLE_WEATHER,
+    )
+
+    def broken(text):
+        raise BrokenPipeError
+
+    seen = {}
+    monkeypatch.setattr("hk_weather.cli.sys.stdout.write", broken)
+    monkeypatch.setattr("hk_weather.cli.sys.stdout.flush", lambda: None)
+    monkeypatch.setattr("hk_weather.cli.sys.stdout.fileno", lambda: 1)
+    monkeypatch.setattr("hk_weather.cli.os.open", lambda path, flags: 7)
+    monkeypatch.setattr(
+        "hk_weather.cli.os.dup2",
+        lambda fd, target: seen.update(dup=(fd, target)),
+    )
+    monkeypatch.setattr(
+        "hk_weather.cli.os.close",
+        lambda fd: seen.update(closed=fd),
+    )
+    assert main([]) == 0
+    assert seen == {"dup": (7, 1), "closed": 7}
+
+
 def test_cli_prints_report(monkeypatch, capsys):
     monkeypatch.setattr(
         "hk_weather.cli.fetch_current",
