@@ -122,6 +122,7 @@ from hk_weather.hko import (
     fetch_nei_lak_shan_humidity,
     fetch_new_tsing_yi_humidity,
     fetch_shing_mun_valley_humidity,
+    fetch_tuen_mun_home_humidity,
     fetch_icon_time,
     fetch_icon,
     fetch_current_updated,
@@ -562,6 +563,7 @@ from hk_weather.hko import (
     format_nei_lak_shan_humidity_miss,
     format_new_tsing_yi_humidity_miss,
     format_shing_mun_valley_humidity_miss,
+    format_tuen_mun_home_humidity_miss,
     format_hour_rain,
     format_hour_rain_miss,
     format_hour_wettest,
@@ -1031,6 +1033,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--nei-lak-shan-humidity prints the latest daily mean humidity at Nei Lak Shan; "
             "--new-tsing-yi-humidity prints the latest daily mean humidity at New Tsing Yi Station; "
             "--shing-mun-valley-humidity prints the latest daily mean humidity at Tsuen Wan Shing Mun Valley; "
+            "--tuen-mun-home-humidity prints the latest daily mean humidity at Tuen Mun Children and Juvenile Home; "
             "--temps lists temperatures by place; "
             "--temp-time prints when those temperatures were recorded; "
             "--minute-temp prints the latest 1-minute mean temperature; "
@@ -3232,6 +3235,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--shing-mun-valley-humidity",
         action="store_true",
         help="Print the latest daily mean humidity at Tsuen Wan Shing Mun Valley",
+    )
+    parser.add_argument(
+        "--tuen-mun-home-humidity",
+        action="store_true",
+        help="Print the latest daily mean humidity at Tuen Mun Children and Juvenile Home",
     )
     parser.add_argument(
         "--temps",
@@ -6834,6 +6842,18 @@ def main(argv: list[str] | None = None) -> int:
                     format_json(shing_mun_valley_humidity)
                     if args.json
                     else format_mean_humidity(shing_mun_valley_humidity)
+                )
+        elif args.tuen_mun_home_humidity:
+            tuen_mun_home_humidity = fetch_tuen_mun_home_humidity(
+                timeout=args.timeout, lang=args.lang
+            )
+            if tuen_mun_home_humidity is None:
+                text = format_tuen_mun_home_humidity_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(tuen_mun_home_humidity)
+                    if args.json
+                    else format_mean_humidity(tuen_mun_home_humidity)
                 )
         elif args.temps:
             temps = fetch_temps(timeout=args.timeout, lang=args.lang)
