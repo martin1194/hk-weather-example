@@ -6572,6 +6572,26 @@ def fetch_tuen_mun_home_humidity(
     return parse_tuen_mun_home_humidity(text, lang)
 
 
+def fetch_buoy_2_humidity(timeout: float = 10, lang: str = "en") -> MeanHumidity | None:
+    """Download the latest daily mean relative humidity at weather buoy No.2."""
+    year = _hong_kong_today()[:4]
+    url = (
+        "https://data.weather.gov.hk/weatherAPI/cis/csvfile/WB2/"
+        f"{year}/daily_WB2_RH_{year}.csv"
+    )
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            raw = response.read()
+    except (urllib.error.URLError, TimeoutError) as exc:
+        raise WeatherError(f"could not reach Hong Kong Observatory: {exc}") from exc
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise WeatherError("Hong Kong Observatory returned invalid text") from exc
+    return parse_buoy_2_humidity(text, lang)
+
+
 def fetch_since_midnight(timeout: float = 10, lang: str = "en") -> SinceMidnightReport:
     """Download each station's maximum and minimum temperature since midnight."""
     url = SINCE_MIDNIGHT_URLS.get(lang, SINCE_MIDNIGHT_URLS["en"])
@@ -13059,6 +13079,44 @@ def format_tuen_mun_home_humidity_miss(*, as_json: bool = False) -> str:
     """Say that no Tuen Mun Children and Juvenile Home humidity is available."""
     return _unavailable(
         "No Tuen Mun Children and Juvenile Home humidity is available.",
+        as_json=as_json,
+    )
+
+
+_BUOY_2_HUMIDITY_STATIONS = {
+    "en": "Automatic Weather Buoy No.2 (Hong Kong International Airport, West)",
+    "tc": "自動氣象浮標2號 (香港國際機場西面)",
+    "sc": "自动气象浮标2号 (香港国际机场西面)",
+}
+
+
+def parse_buoy_2_humidity(text: str, lang: str = "en") -> MeanHumidity | None:
+    """Turn the weather buoy No.2 humidity CSV into the latest numeric day."""
+    station = _BUOY_2_HUMIDITY_STATIONS.get(lang, _BUOY_2_HUMIDITY_STATIONS["en"])
+    latest: MeanHumidity | None = None
+    rows = csv.reader(io.StringIO(text))
+    for row in rows:
+        if len(row) < 4:
+            continue
+        year = _text(row[0]).lstrip("\ufeff")
+        month = _text(row[1])
+        day = _text(row[2])
+        value = _hour_mm(row[3])
+        if not (year.isdigit() and month.isdigit() and day.isdigit()) or value is None:
+            continue
+        latest = MeanHumidity(
+            station,
+            f"{int(year):04d}-{int(month):02d}-{int(day):02d}",
+            value,
+        )
+    return latest
+
+
+def format_buoy_2_humidity_miss(*, as_json: bool = False) -> str:
+    """Say that no weather buoy No.2 humidity is available."""
+    return _unavailable(
+        "No Automatic Weather Buoy No.2 (Hong Kong International Airport, West) "
+        "humidity is available.",
         as_json=as_json,
     )
 
