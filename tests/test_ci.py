@@ -1,0 +1,16 @@
+"""Lock the CI matrix to the Python versions the package supports."""
+
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def test_ci_runs_oldest_supported_python():
+    pyproject = (ROOT / "pyproject.toml").read_text()
+    workflow = (ROOT / ".github/workflows/ci.yml").read_text()
+    readme = (ROOT / "README.md").read_text()
+    assert 'requires-python = ">=3.10"' in pyproject
+    assert 'target-version = "py310"' in pyproject
+    for version in ("3.10", "3.11", "3.12", "3.13"):
+        assert f'"{version}"' in workflow
+    assert "Python 3.10, 3.11, 3.12, and 3.13" in readme
