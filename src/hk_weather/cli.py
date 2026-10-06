@@ -242,6 +242,7 @@ from hk_weather.hko import (
     fetch_buoy_8_prevailing,
     fetch_cheung_chau_beach_prevailing,
     fetch_north_point_prevailing,
+    fetch_sha_chau_prevailing,
     fetch_mean_wind,
     fetch_cheung_wind,
     fetch_lau_fau_wind,
@@ -765,6 +766,7 @@ from hk_weather.hko import (
     format_buoy_8_prevailing_miss,
     format_cheung_chau_beach_prevailing_miss,
     format_north_point_prevailing_miss,
+    format_sha_chau_prevailing_miss,
     format_mean_wind,
     format_mean_wind_miss,
     format_cheung_wind_miss,
@@ -1137,6 +1139,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--buoy-8-prevailing prints the latest prevailing wind at Automatic Weather Buoy No.8; "
             "--cheung-chau-beach-prevailing prints the latest prevailing wind at Cheung Chau Beach; "
             "--north-point-prevailing prints the latest prevailing wind at North Point; "
+            "--sha-chau-prevailing prints the latest prevailing wind at Sha Chau; "
             "--mean-wind prints the latest daily mean wind speed; "
             "--cheung-wind prints the latest daily mean wind speed at Cheung Chau; "
             "--lau-fau-wind prints the latest daily mean wind speed at Lau Fau Shan; "
@@ -2613,6 +2616,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--north-point-prevailing",
         action="store_true",
         help="Print the latest daily prevailing wind direction at North Point",
+    )
+    parser.add_argument(
+        "--sha-chau-prevailing",
+        action="store_true",
+        help="Print the latest daily prevailing wind direction at Sha Chau",
     )
     parser.add_argument(
         "--mean-wind",
@@ -5813,6 +5821,18 @@ def main(argv: list[str] | None = None) -> int:
                     format_json(north_point_prevailing)
                     if args.json
                     else format_prevailing(north_point_prevailing)
+                )
+        elif args.sha_chau_prevailing:
+            sha_chau_prevailing = fetch_sha_chau_prevailing(
+                timeout=args.timeout, lang=args.lang
+            )
+            if sha_chau_prevailing is None:
+                text = format_sha_chau_prevailing_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(sha_chau_prevailing)
+                    if args.json
+                    else format_prevailing(sha_chau_prevailing)
                 )
         elif args.mean_wind:
             mean_wind = fetch_mean_wind(timeout=args.timeout, lang=args.lang)
