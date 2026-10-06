@@ -192,6 +192,8 @@ hk-weather --the-peak-min
 hk-weather --the-peak-min --json
 hk-weather --kat-o-min
 hk-weather --kat-o-min --json
+hk-weather --pak-tam-chung-min
+hk-weather --pak-tam-chung-min --json
 hk-weather --tai-mo-max
 hk-weather --tai-mo-max --json
 hk-weather --tseung-kwan-o-max
@@ -949,6 +951,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --the-peak-min` prints the latest daily minimum temperature at The Peak, for example `2026-08-31  24°C`. `--min-temp` still prints the Observatory minimum, and the other station minimum flags still print their own stations. `--the-peak-temp` still prints The Peak's mean temperature, and `--the-peak-max` still prints its maximum. `--the-peak-min --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `山頂` and simplified text uses `山顶`. Days marked `***` are omitted. If none remain, it says `No The Peak minimum temperature is available.`
 
 `hk-weather --kat-o-min` prints the latest daily minimum temperature at Kat O, for example `2026-08-31  25.9°C`. `--min-temp` still prints the Observatory minimum, and the other station minimum flags still print their own stations. `--kat-o-temp` still prints Kat O's mean temperature, and `--kat-o-max` still prints its maximum. `--kat-o-min --json` prints that day as one JSON object. `--lang` selects the station name. The Chinese name is `吉澳` in both traditional and simplified text. Days marked `***` are omitted. If none remain, it says `No Kat O minimum temperature is available.`
+
+`hk-weather --pak-tam-chung-min` prints the latest daily minimum temperature at Pak Tam Chung (Tsak Yue Wu), for example `2026-08-31  25°C`. `--min-temp` still prints the Observatory minimum, and the other station minimum flags still print their own stations. `--pak-tam-chung-temp` still prints Pak Tam Chung's mean temperature, and `--pak-tam-chung-max` still prints its maximum. `--pak-tam-chung-min --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `北潭涌(鯽魚湖)` and simplified text uses `北潭涌(鲫鱼湖)`. Days marked `***` are omitted. If none remain, it says `No Pak Tam Chung (Tsak Yue Wu) minimum temperature is available.`
 
 `hk-weather --tai-mo-max` prints the latest daily maximum temperature at Tai Mo Shan, for example `2026-08-31  24.1°C`. `--max-temp` still prints the Observatory maximum, `--tai-mo-temp` still prints the peak's daily mean, and `--tai-mo-min` still prints the peak's daily minimum. `--tai-mo-max --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Tai Mo Shan maximum temperature is available.`
 
