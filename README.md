@@ -8,6 +8,8 @@ Data comes from the [Hong Kong Observatory Open Data API](https://www.hko.gov.hk
 
 ## Run
 
+Pass one report flag at a time. `--json` and `--lang` combine with that flag. `--short` only shortens the current report and cannot be combined with `--json`.
+
 ```bash
 pip install -e .
 hk-weather
