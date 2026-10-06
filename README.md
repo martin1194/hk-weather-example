@@ -268,6 +268,8 @@ hk-weather --pak-tam-chung-max
 hk-weather --pak-tam-chung-max --json
 hk-weather --beas-river-max
 hk-weather --beas-river-max --json
+hk-weather --kowloon-city-max
+hk-weather --kowloon-city-max --json
 hk-weather --dew-point
 hk-weather --dew-point --json
 hk-weather --park-dew
@@ -1057,6 +1059,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --pak-tam-chung-max` prints the latest daily maximum temperature at Pak Tam Chung (Tsak Yue Wu), for example `2026-08-31  30.2°C`. `--max-temp` still prints the Observatory maximum, and the other station maximum flags still print their own stations. `--pak-tam-chung-temp` still prints Pak Tam Chung's mean temperature. `--pak-tam-chung-max --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `北潭涌(鯽魚湖)` and simplified text uses `北潭涌(鲫鱼湖)`. Days marked `***` are omitted. If none remain, it says `No Pak Tam Chung (Tsak Yue Wu) maximum temperature is available.`
 
 `hk-weather --beas-river-max` prints the latest daily maximum temperature at Beas River, for example `2026-08-31  30.7°C`. `--max-temp` still prints the Observatory maximum, and the other station maximum flags still print their own stations. `--beas-river-temp` still prints Beas River's mean temperature. `--beas-river-max --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `上水雙魚河` and simplified text uses `上水双鱼河`. Days marked `***` are omitted. If none remain, it says `No Beas River maximum temperature is available.`
+
+`hk-weather --kowloon-city-max` prints the latest daily maximum temperature at Kowloon City, for example `2026-08-31  31.4°C`. `--max-temp` still prints the Observatory maximum, and the other station maximum flags still print their own stations. `--kowloon-city-temp` still prints Kowloon City's mean temperature. `--kowloon-city-max --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `九龍城` and simplified text uses `九龙城`. Days marked `***` are omitted. If none remain, it says `No Kowloon City maximum temperature is available.`
 
 `hk-weather --dew-point` prints the latest daily mean dew point at the Observatory for the current Hong Kong year, for example `2026-08-31  25°C`. `--mean-temp` still prints the daily mean air temperature. `--dew-point --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No dew point is available.`
 
