@@ -8,7 +8,7 @@ Data comes from the [Hong Kong Observatory Open Data API](https://www.hko.gov.hk
 
 ## Run
 
-Pass one report flag at a time. `--json` and `--lang` combine with that flag. `--short` only shortens the current report and cannot be combined with `--json`. `--timeout` must be a finite number of seconds greater than 0. `--timeout -1` is rejected with that error. `--lang` accepts `en`, `tc`, or `sc` in any case. `--json` prints Chinese and other non-ASCII text as characters, not `\u` escapes.
+Pass one report flag at a time. `--json` and `--lang` combine with that flag. `--short` only shortens the current report and cannot be combined with `--json`. `--timeout` must be a finite number of seconds greater than 0. `--timeout -1` is rejected with that error. `--lang` accepts `en`, `tc`, or `sc` in any case. `--json` prints Chinese and other non-ASCII text as characters, not `\u` escapes. An unknown flag or other argument error prints one line on stderr, such as `error: unrecognized arguments: --not-a-flag`, and exits with status 2.
 
 ```bash
 pip install -e .

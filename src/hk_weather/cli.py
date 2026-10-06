@@ -1023,8 +1023,15 @@ def _language(value: str) -> str:
     return value.strip().lower()
 
 
+class _QuietParser(argparse.ArgumentParser):
+    """Report argument errors as one line, without the full flag list."""
+
+    def error(self, message: str) -> None:
+        self.exit(2, f"error: {message}\n")
+
+
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
+    parser = _QuietParser(
         prog="hk-weather",
         description=(
             "Print Hong Kong weather from Hong Kong Observatory open data. "
