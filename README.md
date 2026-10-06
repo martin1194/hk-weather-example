@@ -405,6 +405,8 @@ hk-weather --ngong-ping-prevailing
 hk-weather --ngong-ping-prevailing --json
 hk-weather --tai-mei-tuk-prevailing
 hk-weather --tai-mei-tuk-prevailing --json
+hk-weather --central-pier-prevailing
+hk-weather --central-pier-prevailing --json
 hk-weather --mean-wind
 hk-weather --mean-wind --json
 hk-weather --cheung-wind
@@ -1183,6 +1185,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --ngong-ping-prevailing` prints the latest daily prevailing wind direction at Ngong Ping, for example `2026-08-31  50°`. `--prevailing` still prints Waglan Island, and the other station prevailing-wind flags still print their own stations. `--ngong-ping-wind` still prints Ngong Ping's mean wind speed, `--ngong-ping-temp` still prints its mean temperature, `--ngong-ping-max` still prints its maximum, and `--ngong-ping-min` still prints its minimum. `--ngong-ping-reservoir-rain` still prints Ngong Ping Fresh Water Reservoir's rainfall. `--ngong-ping-prevailing --json` prints that day as one JSON object. `--lang` selects the station name. The Chinese name is `昂坪` in both traditional and simplified text. Days marked `***` are omitted. If none remain, it says `No Ngong Ping prevailing wind is available.`
 
 `hk-weather --tai-mei-tuk-prevailing` prints the latest daily prevailing wind direction at Tai Mei Tuk, for example `2026-08-31  280°`. `--prevailing` still prints Waglan Island, and the other station prevailing-wind flags still print their own stations. `--tai-mei-tuk-wind` still prints Tai Mei Tuk's mean wind speed, `--tai-mei-tuk-temp` still prints its mean temperature, and `--tai-mei-tuk-rain` still prints its rainfall. `--tai-mei-tuk-pump-rain` still prints Tai Mei Tuk Pumping Station's rainfall. `--tai-mei-tuk-prevailing --json` prints that day as one JSON object. `--lang` selects the station name. The Chinese name is `大美督` in both traditional and simplified text. Days marked `***` are omitted. If none remain, it says `No Tai Mei Tuk prevailing wind is available.`
+
+`hk-weather --central-pier-prevailing` prints the latest daily prevailing wind direction at Central Pier, for example `2026-08-31  290°`. `--prevailing` still prints Waglan Island, and the other station prevailing-wind flags still print their own stations. `--central-pier-prevailing --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `中環碼頭` and simplified text uses `中环码头`. Days marked `***` are omitted. If none remain, it says `No Central Pier prevailing wind is available.`
 
 `hk-weather --mean-wind` prints the latest daily mean wind speed at Waglan Island, for example `2026-08-31  5.9 km/h`. `--prevailing` still prints the wind direction, and `--gust` still prints the latest gusts. `--mean-wind --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No mean wind speed is available.`
 
