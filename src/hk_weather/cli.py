@@ -301,6 +301,7 @@ from hk_weather.hko import (
     fetch_runway_park_temp,
     fetch_kowloon_city_temp,
     fetch_nei_lak_shan_temp,
+    fetch_new_tsing_yi_temp,
     fetch_tai_mo_min,
     fetch_tate_min,
     fetch_sai_kung_min,
@@ -792,6 +793,7 @@ from hk_weather.hko import (
     format_runway_park_temp_miss,
     format_kowloon_city_temp_miss,
     format_nei_lak_shan_temp_miss,
+    format_new_tsing_yi_temp_miss,
     format_tai_mo_min,
     format_tai_mo_min_miss,
     format_tate_min_miss,
@@ -1125,6 +1127,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--runway-park-temp prints the latest daily mean temperature at Kai Tak Runway Park; "
             "--kowloon-city-temp prints the latest daily mean temperature at Kowloon City; "
             "--nei-lak-shan-temp prints the latest daily mean temperature at Nei Lak Shan; "
+            "--new-tsing-yi-temp prints the latest daily mean temperature at New Tsing Yi Station; "
             "--max-temp prints the latest daily maximum temperature; "
             "--min-temp prints the latest daily minimum temperature; "
             "--tai-mo-min prints the latest daily minimum temperature at Tai Mo Shan; "
@@ -1658,6 +1661,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--nei-lak-shan-temp",
         action="store_true",
         help="Print the latest daily mean temperature at Nei Lak Shan",
+    )
+    parser.add_argument(
+        "--new-tsing-yi-temp",
+        action="store_true",
+        help="Print the latest daily mean temperature at New Tsing Yi Station",
     )
     parser.add_argument(
         "--max-temp",
@@ -3926,6 +3934,18 @@ def main(argv: list[str] | None = None) -> int:
                     format_json(nei_lak_shan_temp)
                     if args.json
                     else format_tai_mo_temp(nei_lak_shan_temp)
+                )
+        elif args.new_tsing_yi_temp:
+            new_tsing_yi_temp = fetch_new_tsing_yi_temp(
+                timeout=args.timeout, lang=args.lang
+            )
+            if new_tsing_yi_temp is None:
+                text = format_new_tsing_yi_temp_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(new_tsing_yi_temp)
+                    if args.json
+                    else format_tai_mo_temp(new_tsing_yi_temp)
                 )
         elif args.max_temp:
             max_temp = fetch_max_temp(timeout=args.timeout, lang=args.lang)
