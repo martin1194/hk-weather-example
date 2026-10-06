@@ -517,6 +517,8 @@ hk-weather --central-pier-wind
 hk-weather --central-pier-wind --json
 hk-weather --nei-lak-shan-wind
 hk-weather --nei-lak-shan-wind --json
+hk-weather --buoy-2-wind
+hk-weather --buoy-2-wind --json
 hk-weather --forecast-icon
 hk-weather --forecast-icon --json
 hk-weather --quake
@@ -1377,6 +1379,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --central-pier-wind` prints the latest daily mean wind speed at Central Pier, for example `2026-08-31  8.2 km/h`. `--mean-wind` still prints Waglan Island, and the other station wind flags still print their own stations. `--central-pier-prevailing` still prints Central Pier's prevailing wind direction. A speed of zero is kept. `--central-pier-wind --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `中環碼頭` and simplified text uses `中环码头`. Days marked `***` are omitted. If none remain, it says `No Central Pier mean wind speed is available.`
 
 `hk-weather --nei-lak-shan-wind` prints the latest daily mean wind speed at Nei Lak Shan, for example `2026-08-31  14.1 km/h`. `--mean-wind` still prints Waglan Island, and the other station wind flags still print their own stations. `--nei-lak-shan-temp` still prints Nei Lak Shan's mean temperature, `--nei-lak-shan-dew` still prints its dew point, and `--nei-lak-shan-humidity` still prints its humidity. A speed of zero is kept. `--nei-lak-shan-wind --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `彌勒山` and simplified text uses `弥勒山`. Days marked `***` are omitted. If none remain, it says `No Nei Lak Shan mean wind speed is available.`
+
+`hk-weather --buoy-2-wind` prints the latest daily mean wind speed at Automatic Weather Buoy No.2 (Hong Kong International Airport, West), for example `2026-08-31  9.8 km/h`. `--mean-wind` still prints Waglan Island, and the other station wind flags still print their own stations. `--buoy-2-temp` still prints the buoy's mean temperature, `--buoy-2-max` still prints its maximum, `--buoy-2-min` still prints its minimum, `--buoy-2-dew` still prints its dew point, and `--buoy-2-humidity` still prints its humidity. A speed of zero is kept. `--buoy-2-wind --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `自動氣象浮標2號 (香港國際機場西面)` and simplified text uses `自动气象浮标2号 (香港国际机场西面)`. Days marked `***` are omitted. If none remain, it says `No Automatic Weather Buoy No.2 (Hong Kong International Airport, West) mean wind speed is available.`
 
 `hk-weather --forecast-icon` prints each day's weather icon from that forecast (`ForecastIcon`), for example `2026-10-04 Sunday  54  Sunny Intervals with Showers`. `--wind` still prints the wind. `--forecast-icon --json` prints those days as one JSON object. `--lang` applies. If no icon is present, it says `No forecast icons are available.`
 
