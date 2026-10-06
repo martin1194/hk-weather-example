@@ -242,6 +242,8 @@ hk-weather --the-peak-max
 hk-weather --the-peak-max --json
 hk-weather --kat-o-max
 hk-weather --kat-o-max --json
+hk-weather --pak-tam-chung-max
+hk-weather --pak-tam-chung-max --json
 hk-weather --dew-point
 hk-weather --dew-point --json
 hk-weather --park-dew
@@ -987,6 +989,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --the-peak-max` prints the latest daily maximum temperature at The Peak, for example `2026-08-31  28.2°C`. `--max-temp` still prints the Observatory maximum, and the other station maximum flags still print their own stations. `--the-peak-temp` still prints The Peak's mean temperature. `--the-peak-max --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `山頂` and simplified text uses `山顶`. Days marked `***` are omitted. If none remain, it says `No The Peak maximum temperature is available.`
 
 `hk-weather --kat-o-max` prints the latest daily maximum temperature at Kat O, for example `2026-08-31  29.7°C`. `--max-temp` still prints the Observatory maximum, and the other station maximum flags still print their own stations. `--kat-o-temp` still prints Kat O's mean temperature. `--kat-o-max --json` prints that day as one JSON object. `--lang` selects the station name. The Chinese name is `吉澳` in both traditional and simplified text. Days marked `***` are omitted. If none remain, it says `No Kat O maximum temperature is available.`
+
+`hk-weather --pak-tam-chung-max` prints the latest daily maximum temperature at Pak Tam Chung (Tsak Yue Wu), for example `2026-08-31  30.2°C`. `--max-temp` still prints the Observatory maximum, and the other station maximum flags still print their own stations. `--pak-tam-chung-temp` still prints Pak Tam Chung's mean temperature. `--pak-tam-chung-max --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `北潭涌(鯽魚湖)` and simplified text uses `北潭涌(鲫鱼湖)`. Days marked `***` are omitted. If none remain, it says `No Pak Tam Chung (Tsak Yue Wu) maximum temperature is available.`
 
 `hk-weather --dew-point` prints the latest daily mean dew point at the Observatory for the current Hong Kong year, for example `2026-08-31  25°C`. `--mean-temp` still prints the daily mean air temperature. `--dew-point --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No dew point is available.`
 
