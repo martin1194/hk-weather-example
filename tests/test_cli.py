@@ -80,6 +80,21 @@ def test_cli_rejects_non_finite_timeout(monkeypatch, capsys):
         assert capsys.readouterr().err == "error: timeout must be greater than 0\n"
 
 
+def test_cli_rejects_separate_negative_timeout(monkeypatch, capsys):
+    def boom(*args, **kwargs):
+        raise AssertionError("should not fetch")
+
+    monkeypatch.setattr("hk_weather.cli.fetch_current", boom)
+    for argv in (["--timeout", "-1"], ["--timeout", "-inf"], ["--timeout", "-1.5"]):
+        assert main(argv) == 2
+        assert capsys.readouterr().err == "error: timeout must be greater than 0\n"
+
+    with pytest.raises(SystemExit) as exc:
+        main(["--timeout", "--json"])
+    assert exc.value.code == 2
+    assert "expected one argument" in capsys.readouterr().err
+
+
 def test_cli_rejects_two_report_flags(monkeypatch, capsys):
     def boom(*args, **kwargs):
         raise AssertionError("should not fetch")

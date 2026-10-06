@@ -3750,8 +3750,37 @@ def _report_flags(args: argparse.Namespace) -> list[str]:
     return flags
 
 
+def _is_number_token(token: str) -> bool:
+    try:
+        float(token)
+    except ValueError:
+        return False
+    return True
+
+
+def _normalize_argv(argv: list[str] | None) -> list[str]:
+    """Keep a negative --timeout value from being parsed as another flag."""
+    tokens = list(sys.argv[1:] if argv is None else argv)
+    normalized: list[str] = []
+    index = 0
+    while index < len(tokens):
+        token = tokens[index]
+        if (
+            token == "--timeout"
+            and index + 1 < len(tokens)
+            and tokens[index + 1].startswith("-")
+            and _is_number_token(tokens[index + 1])
+        ):
+            normalized.append(f"--timeout={tokens[index + 1]}")
+            index += 2
+            continue
+        normalized.append(token)
+        index += 1
+    return normalized
+
+
 def main(argv: list[str] | None = None) -> int:
-    args = build_parser().parse_args(argv)
+    args = build_parser().parse_args(_normalize_argv(argv))
     if not math.isfinite(args.timeout) or args.timeout <= 0:
         print("error: timeout must be greater than 0", file=sys.stderr)
         return 2
