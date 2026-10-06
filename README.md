@@ -288,6 +288,8 @@ hk-weather --new-tsing-yi-max
 hk-weather --new-tsing-yi-max --json
 hk-weather --stanley-max
 hk-weather --stanley-max --json
+hk-weather --shing-mun-valley-max
+hk-weather --shing-mun-valley-max --json
 hk-weather --dew-point
 hk-weather --dew-point --json
 hk-weather --park-dew
@@ -1117,6 +1119,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --new-tsing-yi-max` prints the latest daily maximum temperature at New Tsing Yi Station, for example `2026-08-31  31.3°C`. `--max-temp` still prints the Observatory maximum, and the other station maximum flags still print their own stations. `--new-tsing-yi-temp` still prints New Tsing Yi Station's mean temperature. `--new-tsing-yi-max --json` prints that day as one JSON object. `--lang` selects the station name. The Chinese name is `新青衣站` in both traditional and simplified text. Days marked `***` are omitted. If none remain, it says `No New Tsing Yi Station maximum temperature is available.`
 
 `hk-weather --stanley-max` prints the latest daily maximum temperature at Stanley, for example `2026-08-31  31.1°C`. `--max-temp` still prints the Observatory maximum, and the other station maximum flags still print their own stations. `--stanley-temp` still prints Stanley's mean temperature. `--stanley-max --json` prints that day as one JSON object. `--lang` selects the station name. The Chinese name is `赤柱` in both traditional and simplified text. Days marked `***` are omitted. If none remain, it says `No Stanley maximum temperature is available.`
+
+`hk-weather --shing-mun-valley-max` prints the latest daily maximum temperature at Tsuen Wan Shing Mun Valley, for example `2026-08-31  31°C`. `--max-temp` still prints the Observatory maximum, and the other station maximum flags still print their own stations. `--shing-mun-valley-temp` still prints the valley's mean temperature, and `--tsuen-wan-max` still prints Tsuen Wan. `--shing-mun-valley-max --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `荃灣城門谷` and simplified text uses `荃湾城门谷`. Days marked `***` are omitted. If none remain, it says `No Tsuen Wan Shing Mun Valley maximum temperature is available.`
 
 `hk-weather --dew-point` prints the latest daily mean dew point at the Observatory for the current Hong Kong year, for example `2026-08-31  25°C`. `--mean-temp` still prints the daily mean air temperature. `--dew-point --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No dew point is available.`
 
