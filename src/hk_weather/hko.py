@@ -4280,6 +4280,26 @@ def fetch_ngong_ping_prevailing(timeout: float = 10, lang: str = "en") -> Prevai
     return parse_ngong_ping_prevailing(text, lang)
 
 
+def fetch_tai_mei_tuk_prevailing(timeout: float = 10, lang: str = "en") -> PrevailingWind | None:
+    """Download the latest daily prevailing wind direction at Tai Mei Tuk."""
+    year = _hong_kong_today()[:4]
+    url = (
+        "https://data.weather.gov.hk/weatherAPI/cis/csvfile/PLC/"
+        f"{year}/daily_PLC_PDIR_{year}.csv"
+    )
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            raw = response.read()
+    except (urllib.error.URLError, TimeoutError) as exc:
+        raise WeatherError(f"could not reach Hong Kong Observatory: {exc}") from exc
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise WeatherError("Hong Kong Observatory returned invalid text") from exc
+    return parse_tai_mei_tuk_prevailing(text, lang)
+
+
 def fetch_mean_wind(timeout: float = 10, lang: str = "en") -> MeanWind | None:
     """Download the latest daily mean wind speed at Waglan Island."""
     year = _hong_kong_today()[:4]
@@ -9365,6 +9385,44 @@ def format_ngong_ping_prevailing_miss(*, as_json: bool = False) -> str:
     """Say that no Ngong Ping prevailing wind direction is available."""
     return _unavailable(
         "No Ngong Ping prevailing wind is available.", as_json=as_json
+    )
+
+
+_TAI_MEI_TUK_PREVAILING_STATIONS = {
+    "en": "Tai Mei Tuk",
+    "tc": "大美督",
+    "sc": "大美督",
+}
+
+
+def parse_tai_mei_tuk_prevailing(text: str, lang: str = "en") -> PrevailingWind | None:
+    """Turn the Tai Mei Tuk prevailing-wind CSV into the latest numeric day."""
+    station = _TAI_MEI_TUK_PREVAILING_STATIONS.get(
+        lang, _TAI_MEI_TUK_PREVAILING_STATIONS["en"]
+    )
+    latest: PrevailingWind | None = None
+    rows = csv.reader(io.StringIO(text))
+    for row in rows:
+        if len(row) < 4:
+            continue
+        year = _text(row[0]).lstrip("\ufeff")
+        month = _text(row[1])
+        day = _text(row[2])
+        value = _hour_mm(row[3])
+        if not (year.isdigit() and month.isdigit() and day.isdigit()) or value is None:
+            continue
+        latest = PrevailingWind(
+            station,
+            f"{int(year):04d}-{int(month):02d}-{int(day):02d}",
+            value,
+        )
+    return latest
+
+
+def format_tai_mei_tuk_prevailing_miss(*, as_json: bool = False) -> str:
+    """Say that no Tai Mei Tuk prevailing wind direction is available."""
+    return _unavailable(
+        "No Tai Mei Tuk prevailing wind is available.", as_json=as_json
     )
 
 
