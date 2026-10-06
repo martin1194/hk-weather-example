@@ -13450,6 +13450,38 @@ def test_cli_day_when_the_entry_is_missing(monkeypatch, capsys):
     assert json.loads(capsys.readouterr().out) == {"message": "Forecast day 2 is not available."}
 
 
+def test_cli_day_can_only_be_given_once(monkeypatch, capsys):
+    def boom(*args, **kwargs):
+        raise AssertionError("should not fetch")
+
+    monkeypatch.setattr("hk_weather.cli.fetch_forecast_day", boom)
+    monkeypatch.setattr("importlib.metadata.version", lambda name: "1.2.3")
+    for argv in (
+        ["--day", "1", "--day", "2"],
+        ["--day", "1", "--day", "1"],
+        ["--day=1", "--day=2"],
+        ["--day", "1", "--day", "2", "--version"],
+    ):
+        with pytest.raises(SystemExit) as exc:
+            main(argv)
+        assert exc.value.code == 2
+        captured = capsys.readouterr()
+        assert captured.err == "error: --day can only be given once\n"
+        assert captured.out == ""
+
+    with pytest.raises(SystemExit) as exc:
+        main(["--day", "1", "--day", "foo"])
+    assert exc.value.code == 2
+    captured = capsys.readouterr()
+    assert captured.err == "error: day must be an integer from 1 to 9\n"
+    assert captured.out == ""
+
+    with pytest.raises(SystemExit) as exc:
+        main(["--day", "3", "--version"])
+    assert exc.value.code == 0
+    assert capsys.readouterr().out == "hk-weather 1.2.3\n"
+
+
 def test_cli_day_rejects_out_of_range(capsys):
     for argv in (
         ["--day", "0"],
