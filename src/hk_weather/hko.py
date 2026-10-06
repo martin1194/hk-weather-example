@@ -466,6 +466,13 @@ class SeaTemperature:
 
 
 @dataclass(frozen=True)
+class MorningSea:
+    station: str
+    date: str
+    sea_temperature_c: float
+
+
+@dataclass(frozen=True)
 class SoilReading:
     place: str
     depth_m: float
@@ -1412,6 +1419,26 @@ def fetch_sea_temp(
 ) -> SeaTemperature | None:
     """Download the sea temperature from the 9-day forecast (`dataType=fnd`)."""
     return parse_sea_temp(_fetch_json(_apply_lang(url, lang), timeout))
+
+
+def fetch_north_point_am_sea(timeout: float = 10, lang: str = "en") -> MorningSea | None:
+    """Download the latest daily morning sea temperature at North Point."""
+    year = _hong_kong_today()[:4]
+    url = (
+        "https://data.weather.gov.hk/weatherAPI/cis/csvfile/NPF/"
+        f"{year}/daily_NPF_SSTA_{year}.csv"
+    )
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            raw = response.read()
+    except (urllib.error.URLError, TimeoutError) as exc:
+        raise WeatherError(f"could not reach Hong Kong Observatory: {exc}") from exc
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise WeatherError("Hong Kong Observatory returned invalid text") from exc
+    return parse_north_point_am_sea(text, lang)
 
 
 def fetch_soil_temp(
@@ -8230,6 +8257,52 @@ def format_sea_temp(reading: SeaTemperature) -> str:
 def format_sea_temp_miss(*, as_json: bool = False) -> str:
     """Say that the 9-day forecast has no sea temperature."""
     return _unavailable("No sea temperature is available.", as_json=as_json)
+
+
+_NORTH_POINT_AM_SEA_STATIONS = {
+    "en": "North Point",
+    "tc": "北角",
+    "sc": "北角",
+}
+
+
+def parse_north_point_am_sea(text: str, lang: str = "en") -> MorningSea | None:
+    """Turn the North Point morning sea-temperature CSV into the latest numeric day."""
+    station = _NORTH_POINT_AM_SEA_STATIONS.get(lang, _NORTH_POINT_AM_SEA_STATIONS["en"])
+    latest: MorningSea | None = None
+    rows = csv.reader(io.StringIO(text))
+    for row in rows:
+        if len(row) < 4:
+            continue
+        year = _text(row[0]).lstrip("\ufeff")
+        month = _text(row[1])
+        day = _text(row[2])
+        value = _hour_mm(row[3])
+        if not (year.isdigit() and month.isdigit() and day.isdigit()) or value is None:
+            continue
+        latest = MorningSea(
+            station,
+            f"{int(year):04d}-{int(month):02d}-{int(day):02d}",
+            value,
+        )
+    return latest
+
+
+def format_morning_sea(reading: MorningSea) -> str:
+    """Render the latest daily morning sea temperature at North Point."""
+    return (
+        "Hong Kong morning sea temperature\n"
+        f"Station: {reading.station}\n"
+        f"{reading.date}  {_number(reading.sea_temperature_c)}°C\n"
+    )
+
+
+def format_north_point_am_sea_miss(*, as_json: bool = False) -> str:
+    """Say that no North Point morning sea temperature is available."""
+    return _unavailable(
+        "No North Point morning sea temperature is available.",
+        as_json=as_json,
+    )
 
 
 def parse_soil_temp(payload: dict) -> SoilReport | None:
