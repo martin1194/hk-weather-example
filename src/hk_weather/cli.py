@@ -314,6 +314,7 @@ from hk_weather.hko import (
     fetch_the_peak_min,
     fetch_kat_o_min,
     fetch_pak_tam_chung_min,
+    fetch_beas_river_min,
     fetch_tai_mo_max,
     fetch_tseung_kwan_o_max,
     fetch_sheung_shui_max,
@@ -779,6 +780,7 @@ from hk_weather.hko import (
     format_the_peak_min_miss,
     format_kat_o_min_miss,
     format_pak_tam_chung_min_miss,
+    format_beas_river_min_miss,
     format_tai_mo_max,
     format_tai_mo_max_miss,
     format_tseung_kwan_o_max_miss,
@@ -1087,6 +1089,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--the-peak-min prints the latest daily minimum temperature at The Peak; "
             "--kat-o-min prints the latest daily minimum temperature at Kat O; "
             "--pak-tam-chung-min prints the latest daily minimum temperature at Pak Tam Chung (Tsak Yue Wu); "
+            "--beas-river-min prints the latest daily minimum temperature at Beas River; "
             "--tai-mo-max prints the latest daily maximum temperature at Tai Mo Shan; "
             "--tseung-kwan-o-max prints the latest daily maximum temperature at Tseung Kwan O; "
             "--sheung-shui-max prints the latest daily maximum temperature at Sheung Shui; "
@@ -1710,6 +1713,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--pak-tam-chung-min",
         action="store_true",
         help="Print the latest daily minimum temperature at Pak Tam Chung (Tsak Yue Wu)",
+    )
+    parser.add_argument(
+        "--beas-river-min",
+        action="store_true",
+        help="Print the latest daily minimum temperature at Beas River",
     )
     parser.add_argument(
         "--tai-mo-max",
@@ -3941,6 +3949,16 @@ def main(argv: list[str] | None = None) -> int:
                     format_json(pak_tam_chung_min)
                     if args.json
                     else format_tai_mo_min(pak_tam_chung_min)
+                )
+        elif args.beas_river_min:
+            beas_river_min = fetch_beas_river_min(timeout=args.timeout, lang=args.lang)
+            if beas_river_min is None:
+                text = format_beas_river_min_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(beas_river_min)
+                    if args.json
+                    else format_tai_mo_min(beas_river_min)
                 )
         elif args.tai_mo_max:
             tai_mo_max = fetch_tai_mo_max(timeout=args.timeout, lang=args.lang)
