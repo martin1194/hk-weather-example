@@ -624,6 +624,8 @@ hk-weather --clear-water-bay-humidity
 hk-weather --clear-water-bay-humidity --json
 hk-weather --shau-kei-wan-humidity
 hk-weather --shau-kei-wan-humidity --json
+hk-weather --kau-sai-chau-humidity
+hk-weather --kau-sai-chau-humidity --json
 hk-weather --temps
 hk-weather --temps --json
 hk-weather --temp-time
@@ -1349,6 +1351,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --clear-water-bay-humidity` prints the latest daily mean relative humidity at Clear Water Bay, for example `2026-08-31  89%`. `--mean-humidity` still prints the Observatory reading, and the other station humidity flags still print their own stations. `--clear-water-bay-temp` still prints Clear Water Bay's mean temperature, `--clear-water-bay-max` still prints its maximum, `--clear-water-bay-min` still prints its minimum, `--clear-water-bay-rain` still prints its rainfall, and `--clear-water-bay-dew` still prints its dew point. `--clear-water-bay-humidity --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Clear Water Bay humidity is available.`
 
 `hk-weather --shau-kei-wan-humidity` prints the latest daily mean relative humidity at Shau Kei Wan, for example `2026-08-31  90%`. `--mean-humidity` still prints the Observatory reading, and the other station humidity flags still print their own stations. `--shau-kei-wan-humidity --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Shau Kei Wan humidity is available.`
+
+`hk-weather --kau-sai-chau-humidity` prints the latest daily mean relative humidity at Kau Sai Chau, for example `2026-08-31  89%`. `--mean-humidity` still prints the Observatory reading, and the other station humidity flags still print their own stations. `--kau-sai-chau-dew` still prints Kau Sai Chau's dew point, and `--kau-sai-chau-rain` still prints its rainfall. `--kau-sai-chau-humidity --json` prints that day as one JSON object. `--lang` selects the station name. The Chinese name is `滘西洲` in both traditional and simplified text. Days marked `***` are omitted. If none remain, it says `No Kau Sai Chau humidity is available.`
 
 `hk-weather --temps` prints temperature by place from the current report, with the record time when the Observatory includes it. `--temps --json` prints that list as one JSON object. If no readings are present, it says so.
 
