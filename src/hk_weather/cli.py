@@ -1018,6 +1018,11 @@ def package_version() -> str:
     return version("hk-weather")
 
 
+def _language(value: str) -> str:
+    """Normalize an Observatory language code to en, tc, or sc."""
+    return value.strip().lower()
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="hk-weather",
@@ -3725,9 +3730,10 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--lang",
+        type=_language,
         choices=("en", "tc", "sc"),
         default="en",
-        help="Observatory response language: en, tc, or sc (default: en)",
+        help="Observatory response language: en, tc, or sc, any case (default: en)",
     )
     return parser
 
