@@ -92,7 +92,25 @@ def test_cli_rejects_separate_negative_timeout(monkeypatch, capsys):
     with pytest.raises(SystemExit) as exc:
         main(["--timeout", "--json"])
     assert exc.value.code == 2
-    assert "expected one argument" in capsys.readouterr().err
+    assert capsys.readouterr().err == (
+        "error: argument --timeout: expected one argument\n"
+    )
+
+
+def test_cli_argument_errors_are_one_line(capsys):
+    cases = (
+        (["--not-a-flag"], "error: unrecognized arguments: --not-a-flag\n"),
+        (
+            ["--lang", "fr"],
+            "error: argument --lang: invalid choice: 'fr' "
+            "(choose from 'en', 'tc', 'sc')\n",
+        ),
+    )
+    for argv, expected in cases:
+        with pytest.raises(SystemExit) as exc:
+            main(argv)
+        assert exc.value.code == 2
+        assert capsys.readouterr().err == expected
 
 
 def test_cli_rejects_day_with_another_report(monkeypatch, capsys):
