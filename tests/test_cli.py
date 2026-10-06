@@ -5765,6 +5765,75 @@ def test_cli_kau_sai_chau_min_when_missing(monkeypatch, capsys):
     }
 
 
+def test_cli_kadoorie_farm_min_prints_latest_day(monkeypatch, capsys):
+    seen = {}
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _text_response(
+            "年/Year,月/Month,日/Day,數值/Value,數據完整性/data Completeness\n"
+            "2026,8,29,26.3,C\n"
+            "2026,8,30,***,\n"
+            "2026,8,31,  23.6  ,C\n"
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--kadoorie-farm-min", "--lang", "tc"]) == 0
+    assert seen["url"].endswith("daily_KFB_MINT_2026.csv")
+    assert capsys.readouterr().out == (
+        "Hong Kong daily minimum temperature\n"
+        "Station: 嘉道理農場暨植物園\n"
+        "2026-08-31  23.6°C\n"
+    )
+    assert main(["--kadoorie-farm-min", "--lang", "sc"]) == 0
+    assert capsys.readouterr().out == (
+        "Hong Kong daily minimum temperature\n"
+        "Station: 嘉道理农场暨植物园\n"
+        "2026-08-31  23.6°C\n"
+    )
+
+
+def test_cli_kadoorie_farm_min_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Year,Month,Day,Value,Completeness\n"
+            "2026,8,31,23.6,C\n"
+        ),
+    )
+    assert main(["--kadoorie-farm-min", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "station": "Kadoorie Farm and Botanic Garden",
+        "date": "2026-08-31",
+        "temperature_c": 23.6,
+    }
+
+
+def test_cli_kadoorie_farm_min_when_missing(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Year,Month,Day,Value,Completeness\n"
+            "2026,8,31,***,\n"
+        ),
+    )
+    assert main(["--kadoorie-farm-min"]) == 0
+    assert capsys.readouterr().out == (
+        "No Kadoorie Farm and Botanic Garden minimum temperature is available.\n"
+    )
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(""),
+    )
+    assert main(["--kadoorie-farm-min", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No Kadoorie Farm and Botanic Garden minimum temperature is available."
+    }
+
+
 def test_cli_tai_mo_max_prints_latest_day(monkeypatch, capsys):
     seen = {}
     monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
