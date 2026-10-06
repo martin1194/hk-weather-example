@@ -526,6 +526,8 @@ hk-weather --kat-o-rain
 hk-weather --kat-o-rain --json
 hk-weather --tap-shek-kok-rain
 hk-weather --tap-shek-kok-rain --json
+hk-weather --tsim-bei-tsui-rain
+hk-weather --tsim-bei-tsui-rain --json
 hk-weather --rainstorm
 hk-weather --rainstorm --json
 hk-weather --cyclone
@@ -1223,6 +1225,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --kat-o-rain` prints the latest daily total rainfall at Kat O, for example `2026-08-31  16 mm`. `--daily-rain` still prints the Observatory total, and the other station rainfall flags still print their own stations. A total of zero is kept. `--kat-o-rain --json` prints that day as one JSON object. `--lang` selects the station name. The Chinese name is `吉澳` in both traditional and simplified text. Days marked `***` are omitted. If none remain, it says `No Kat O rainfall is available.`
 
 `hk-weather --tap-shek-kok-rain` prints the latest daily total rainfall at Tap Shek Kok, for example `2026-08-31  22.5 mm`. `--daily-rain` still prints the Observatory total, and the other station rainfall flags still print their own stations. A total of zero is kept. `--tap-shek-kok-rain --json` prints that day as one JSON object. `--lang` selects the station name. The Chinese name is `踏石角` in both traditional and simplified text. Days marked `***` are omitted. If none remain, it says `No Tap Shek Kok rainfall is available.`
+
+`hk-weather --tsim-bei-tsui-rain` prints the latest daily total rainfall at Tsim Bei Tsui, for example `2026-08-31  49 mm`. `--daily-rain` still prints the Observatory total, and the other station rainfall flags still print their own stations. A total of zero is kept. `--tsim-bei-tsui-rain --json` prints that day as one JSON object. `--lang` selects the station name. The Chinese name is `尖鼻咀` in both traditional and simplified text. Days marked `***` are omitted. If none remain, it says `No Tsim Bei Tsui rainfall is available.`
 
 `hk-weather --lightning` lists places where the current report shows lightning. `--lightning --json` prints those places as one JSON object. If none are reported, it says so.
 
