@@ -246,6 +246,7 @@ from hk_weather.hko import (
     fetch_star_ferry_prevailing,
     fetch_tuen_mun_government_offices_prevailing,
     fetch_yi_tung_shan_prevailing,
+    fetch_tap_mun_east_prevailing,
     fetch_mean_wind,
     fetch_cheung_wind,
     fetch_lau_fau_wind,
@@ -777,6 +778,7 @@ from hk_weather.hko import (
     format_star_ferry_prevailing_miss,
     format_tuen_mun_government_offices_prevailing_miss,
     format_yi_tung_shan_prevailing_miss,
+    format_tap_mun_east_prevailing_miss,
     format_mean_wind,
     format_mean_wind_miss,
     format_cheung_wind_miss,
@@ -1158,6 +1160,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--tuen-mun-government-offices-prevailing prints the latest prevailing wind "
             "at Tuen Mun Government Offices; "
             "--yi-tung-shan-prevailing prints the latest prevailing wind at Yi Tung Shan; "
+            "--tap-mun-east-prevailing prints the latest prevailing wind at Tap Mun East; "
             "--mean-wind prints the latest daily mean wind speed; "
             "--cheung-wind prints the latest daily mean wind speed at Cheung Chau; "
             "--lau-fau-wind prints the latest daily mean wind speed at Lau Fau Shan; "
@@ -2659,6 +2662,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--yi-tung-shan-prevailing",
         action="store_true",
         help="Print the latest daily prevailing wind direction at Yi Tung Shan",
+    )
+    parser.add_argument(
+        "--tap-mun-east-prevailing",
+        action="store_true",
+        help="Print the latest daily prevailing wind direction at Tap Mun East",
     )
     parser.add_argument(
         "--mean-wind",
@@ -5929,6 +5937,18 @@ def main(argv: list[str] | None = None) -> int:
                     format_json(yi_tung_shan_prevailing)
                     if args.json
                     else format_prevailing(yi_tung_shan_prevailing)
+                )
+        elif args.tap_mun_east_prevailing:
+            tap_mun_east_prevailing = fetch_tap_mun_east_prevailing(
+                timeout=args.timeout, lang=args.lang
+            )
+            if tap_mun_east_prevailing is None:
+                text = format_tap_mun_east_prevailing_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(tap_mun_east_prevailing)
+                    if args.json
+                    else format_prevailing(tap_mun_east_prevailing)
                 )
         elif args.mean_wind:
             mean_wind = fetch_mean_wind(timeout=args.timeout, lang=args.lang)
