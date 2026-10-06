@@ -342,6 +342,7 @@ from hk_weather.hko import (
     fetch_new_tsing_yi_min,
     fetch_stanley_min,
     fetch_shing_mun_valley_min,
+    fetch_tuen_mun_home_min,
     fetch_tai_mo_max,
     fetch_tseung_kwan_o_max,
     fetch_sheung_shui_max,
@@ -850,6 +851,7 @@ from hk_weather.hko import (
     format_new_tsing_yi_min_miss,
     format_stanley_min_miss,
     format_shing_mun_valley_min_miss,
+    format_tuen_mun_home_min_miss,
     format_tai_mo_max,
     format_tai_mo_max_miss,
     format_tseung_kwan_o_max_miss,
@@ -1200,6 +1202,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--new-tsing-yi-min prints the latest daily minimum temperature at New Tsing Yi Station; "
             "--stanley-min prints the latest daily minimum temperature at Stanley; "
             "--shing-mun-valley-min prints the latest daily minimum temperature at Tsuen Wan Shing Mun Valley; "
+            "--tuen-mun-home-min prints the latest daily minimum temperature at Tuen Mun Children and Juvenile Home; "
             "--tai-mo-max prints the latest daily maximum temperature at Tai Mo Shan; "
             "--tseung-kwan-o-max prints the latest daily maximum temperature at Tseung Kwan O; "
             "--sheung-shui-max prints the latest daily maximum temperature at Sheung Shui; "
@@ -1911,6 +1914,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--shing-mun-valley-min",
         action="store_true",
         help="Print the latest daily minimum temperature at Tsuen Wan Shing Mun Valley",
+    )
+    parser.add_argument(
+        "--tuen-mun-home-min",
+        action="store_true",
+        help="Print the latest daily minimum temperature at Tuen Mun Children and Juvenile Home",
     )
     parser.add_argument(
         "--tai-mo-max",
@@ -4444,6 +4452,18 @@ def main(argv: list[str] | None = None) -> int:
                     format_json(shing_mun_valley_min)
                     if args.json
                     else format_tai_mo_min(shing_mun_valley_min)
+                )
+        elif args.tuen_mun_home_min:
+            tuen_mun_home_min = fetch_tuen_mun_home_min(
+                timeout=args.timeout, lang=args.lang
+            )
+            if tuen_mun_home_min is None:
+                text = format_tuen_mun_home_min_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(tuen_mun_home_min)
+                    if args.json
+                    else format_tai_mo_min(tuen_mun_home_min)
                 )
         elif args.tai_mo_max:
             tai_mo_max = fetch_tai_mo_max(timeout=args.timeout, lang=args.lang)
