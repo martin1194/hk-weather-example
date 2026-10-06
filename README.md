@@ -21,6 +21,8 @@ hk-weather --find tide --json
 hk-weather --short
 hk-weather --plain
 hk-weather --short --plain
+hk-weather --fahrenheit
+hk-weather --short --fahrenheit
 hk-weather --summary
 hk-weather --summary --json
 hk-weather --json
@@ -1821,6 +1823,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --find TEXT` lists flags whose name or description contains TEXT, without calling the Observatory. Matching ignores case. `--find TEXT --json` prints those flags as a JSON array. A blank search exits with `error: argument --find: search text must not be empty`.
 
 `hk-weather --plain` prints the current report without weather icons. The same flag applies to `--short` and `--summary`. `--json` is unchanged.
+
+`hk-weather --fahrenheit` (or `-F`) prints degrees Fahrenheit beside Celsius on the current report, `--short`, and `--summary`. A reading of 28°C is shown as `28°C (82°F)`. `--json` stays in Celsius.
 
 ## Exit status
 

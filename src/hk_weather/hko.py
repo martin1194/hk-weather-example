@@ -9132,7 +9132,16 @@ def parse_current_report(payload: dict) -> CurrentWeather:
     )
 
 
-def format_report(weather: CurrentWeather, *, plain: bool = False) -> str:
+def _celsius_text(celsius: float, *, fahrenheit: bool) -> str:
+    """Format a Celsius reading, optionally with Fahrenheit beside it."""
+    text = f"{_number(celsius)}°C"
+    if not fahrenheit:
+        return text
+    converted = round(celsius * 9 / 5 + 32)
+    return f"{text} ({converted}°F)"
+
+
+def format_report(weather: CurrentWeather, *, plain: bool = False, fahrenheit: bool = False) -> str:
     """Render current conditions as plain text."""
     conditions = weather.conditions if plain else conditions_with_emoji(weather.conditions)
     lines = [
@@ -9140,7 +9149,7 @@ def format_report(weather: CurrentWeather, *, plain: bool = False) -> str:
         "Source: Hong Kong Observatory open data",
         f"Updated: {weather.update_time}",
         f"Conditions: {conditions}",
-        f"Temperature: {_number(weather.temperature_c)}°C ({weather.place})",
+        f"Temperature: {_celsius_text(weather.temperature_c, fahrenheit=fahrenheit)} ({weather.place})",
         "Humidity: "
         + (
             f"{_number(weather.humidity_percent)}%"
@@ -9161,7 +9170,7 @@ def format_report(weather: CurrentWeather, *, plain: bool = False) -> str:
     return "\n".join(lines) + "\n"
 
 
-def format_summary(report: WeatherSummary, *, plain: bool = False) -> str:
+def format_summary(report: WeatherSummary, *, plain: bool = False, fahrenheit: bool = False) -> str:
     """Render a short briefing: conditions, warnings, and today's high and low."""
     conditions = report.conditions if plain else conditions_with_emoji(report.conditions)
     lines = ["Hong Kong summary", conditions]
@@ -9175,16 +9184,16 @@ def format_summary(report: WeatherSummary, *, plain: bool = False) -> str:
     else:
         parts = [report.today.date] if report.today.date else []
         if report.today.high_c is not None:
-            parts.append(f"high {_number(report.today.high_c)}°C")
+            parts.append(f"high {_celsius_text(report.today.high_c, fahrenheit=fahrenheit)}")
         if report.today.low_c is not None:
-            parts.append(f"low {_number(report.today.low_c)}°C")
+            parts.append(f"low {_celsius_text(report.today.low_c, fahrenheit=fahrenheit)}")
         if report.today.rain_chance:
             parts.append(f"rain {report.today.rain_chance}")
         lines.append("Today: " + "  ".join(parts))
     return "\n".join(lines) + "\n"
 
 
-def format_short(weather: CurrentWeather, *, plain: bool = False) -> str:
+def format_short(weather: CurrentWeather, *, plain: bool = False, fahrenheit: bool = False) -> str:
     """Render current conditions as one compact line."""
     humidity = (
         f"{_number(weather.humidity_percent)}%"
@@ -9192,7 +9201,10 @@ def format_short(weather: CurrentWeather, *, plain: bool = False) -> str:
         else "n/a"
     )
     conditions = weather.conditions if plain else conditions_with_emoji(weather.conditions)
-    line = f"{conditions}, {_number(weather.temperature_c)}°C, humidity {humidity}"
+    line = (
+        f"{conditions}, {_celsius_text(weather.temperature_c, fahrenheit=fahrenheit)}, "
+        f"humidity {humidity}"
+    )
     if weather.warnings:
         note = _brief_warning(weather.warnings[0])
         extra = len(weather.warnings) - 1
