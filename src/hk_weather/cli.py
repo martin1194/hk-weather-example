@@ -49,6 +49,7 @@ from hk_weather.hko import (
     fetch_tsim_bei_tsui_rain,
     fetch_tai_mei_tuk_pump_rain,
     fetch_ngong_ping_reservoir_rain,
+    fetch_discovery_bay_rain,
     fetch_forecast,
     fetch_outlook,
     fetch_coastal,
@@ -388,6 +389,7 @@ from hk_weather.hko import (
     format_tsim_bei_tsui_rain_miss,
     format_tai_mei_tuk_pump_rain_miss,
     format_ngong_ping_reservoir_rain_miss,
+    format_discovery_bay_rain_miss,
     format_forecast,
     format_outlook,
     format_outlook_miss,
@@ -1127,6 +1129,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--tsim-bei-tsui-rain prints the latest daily rainfall at Tsim Bei Tsui; "
             "--tai-mei-tuk-pump-rain prints the latest daily rainfall at Tai Mei Tuk Pumping Station; "
             "--ngong-ping-reservoir-rain prints the latest daily rainfall at Ngong Ping Fresh Water Reservoir; "
+            "--discovery-bay-rain prints the latest daily rainfall at Discovery Bay; "
             "--tide prints today's high and low tides; "
             "--tide-hour prints today's hourly tide heights; "
             "--tide-latest prints the latest observed tide height; "
@@ -2480,6 +2483,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--ngong-ping-reservoir-rain",
         action="store_true",
         help="Print the latest daily total rainfall at Ngong Ping Fresh Water Reservoir",
+    )
+    parser.add_argument(
+        "--discovery-bay-rain",
+        action="store_true",
+        help="Print the latest daily total rainfall at Discovery Bay",
     )
     parser.add_argument(
         "--rainstorm",
@@ -5109,6 +5117,18 @@ def main(argv: list[str] | None = None) -> int:
                     format_json(ngong_ping_reservoir_rain)
                     if args.json
                     else format_daily_rain(ngong_ping_reservoir_rain)
+                )
+        elif args.discovery_bay_rain:
+            discovery_bay_rain = fetch_discovery_bay_rain(
+                timeout=args.timeout, lang=args.lang
+            )
+            if discovery_bay_rain is None:
+                text = format_discovery_bay_rain_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(discovery_bay_rain)
+                    if args.json
+                    else format_daily_rain(discovery_bay_rain)
                 )
         elif args.rainstorm:
             rainstorm = fetch_rainstorm(timeout=args.timeout, lang=args.lang)

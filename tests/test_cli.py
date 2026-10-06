@@ -20969,6 +20969,73 @@ def test_cli_ngong_ping_reservoir_rain_when_missing(monkeypatch, capsys):
     }
 
 
+def test_cli_discovery_bay_rain_prints_latest_day(monkeypatch, capsys):
+    seen = {}
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _text_response(
+            "年/Year,月/Month,日/Day,數值/Value,數據完整性/data Completeness\n"
+            "2026,8,29,0.5,C\n"
+            "2026,8,30,***,\n"
+            "2026,8,31,  7.0  ,C\n"
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--discovery-bay-rain", "--lang", "tc"]) == 0
+    assert seen["url"].endswith("daily_R12_RF_2026.csv")
+    assert capsys.readouterr().out == (
+        "Hong Kong daily rainfall\n"
+        "Station: 愉景灣\n"
+        "2026-08-31  7 mm\n"
+    )
+    assert main(["--discovery-bay-rain", "--lang", "sc"]) == 0
+    assert capsys.readouterr().out == (
+        "Hong Kong daily rainfall\n"
+        "Station: 愉景湾\n"
+        "2026-08-31  7 mm\n"
+    )
+
+
+def test_cli_discovery_bay_rain_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Year,Month,Day,Value,Completeness\n"
+            "2026,8,31,7.0,C\n"
+        ),
+    )
+    assert main(["--discovery-bay-rain", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "station": "Discovery Bay",
+        "date": "2026-08-31",
+        "rainfall_mm": 7.0,
+    }
+
+
+def test_cli_discovery_bay_rain_when_missing(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Year,Month,Day,Value,Completeness\n"
+            "2026,8,31,***,\n"
+        ),
+    )
+    assert main(["--discovery-bay-rain"]) == 0
+    assert capsys.readouterr().out == "No Discovery Bay rainfall is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(""),
+    )
+    assert main(["--discovery-bay-rain", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No Discovery Bay rainfall is available."
+    }
+
+
 def test_cli_rainstorm_prints_reminder(monkeypatch, capsys):
     seen = {}
     message = (
