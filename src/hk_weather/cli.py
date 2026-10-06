@@ -281,6 +281,7 @@ from hk_weather.hko import (
     fetch_kau_sai_chau_temp,
     fetch_kadoorie_farm_temp,
     fetch_the_peak_temp,
+    fetch_kat_o_temp,
     fetch_tai_mo_min,
     fetch_tate_min,
     fetch_sai_kung_min,
@@ -731,6 +732,7 @@ from hk_weather.hko import (
     format_kau_sai_chau_temp_miss,
     format_kadoorie_farm_temp_miss,
     format_the_peak_temp_miss,
+    format_kat_o_temp_miss,
     format_tai_mo_min,
     format_tai_mo_min_miss,
     format_tate_min_miss,
@@ -1024,6 +1026,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--kau-sai-chau-temp prints the latest daily mean temperature at Kau Sai Chau; "
             "--kadoorie-farm-temp prints the latest daily mean temperature at Kadoorie Farm and Botanic Garden; "
             "--the-peak-temp prints the latest daily mean temperature at The Peak; "
+            "--kat-o-temp prints the latest daily mean temperature at Kat O; "
             "--max-temp prints the latest daily maximum temperature; "
             "--min-temp prints the latest daily minimum temperature; "
             "--tai-mo-min prints the latest daily minimum temperature at Tai Mo Shan; "
@@ -1493,6 +1496,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--the-peak-temp",
         action="store_true",
         help="Print the latest daily mean temperature at The Peak",
+    )
+    parser.add_argument(
+        "--kat-o-temp",
+        action="store_true",
+        help="Print the latest daily mean temperature at Kat O",
     )
     parser.add_argument(
         "--max-temp",
@@ -3509,6 +3517,16 @@ def main(argv: list[str] | None = None) -> int:
                     format_json(the_peak_temp)
                     if args.json
                     else format_tai_mo_temp(the_peak_temp)
+                )
+        elif args.kat_o_temp:
+            kat_o_temp = fetch_kat_o_temp(timeout=args.timeout, lang=args.lang)
+            if kat_o_temp is None:
+                text = format_kat_o_temp_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(kat_o_temp)
+                    if args.json
+                    else format_tai_mo_temp(kat_o_temp)
                 )
         elif args.max_temp:
             max_temp = fetch_max_temp(timeout=args.timeout, lang=args.lang)
