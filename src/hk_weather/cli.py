@@ -276,6 +276,7 @@ from hk_weather.hko import (
     fetch_north_point_wind,
     fetch_sha_chau_wind,
     fetch_star_ferry_wind,
+    fetch_tuen_mun_government_offices_wind,
     fetch_forecast_icon,
     fetch_yesterday,
     fetch_mean_temp,
@@ -803,6 +804,7 @@ from hk_weather.hko import (
     format_north_point_wind_miss,
     format_sha_chau_wind_miss,
     format_star_ferry_wind_miss,
+    format_tuen_mun_government_offices_wind_miss,
     format_forecast_icon,
     format_forecast_icon_miss,
     format_yesterday,
@@ -1177,6 +1179,8 @@ def build_parser() -> argparse.ArgumentParser:
             "--north-point-wind prints the latest daily mean wind speed at North Point; "
             "--sha-chau-wind prints the latest daily mean wind speed at Sha Chau; "
             "--star-ferry-wind prints the latest daily mean wind speed at Star Ferry(Kowloon); "
+            "--tuen-mun-government-offices-wind prints the latest daily mean wind speed "
+            "at Tuen Mun Government Offices; "
             "--forecast-icon prints each day's weather icon; "
             "--quake lists the latest earthquake message; "
             "--felt prints the locally felt earth tremor; --today prints today; "
@@ -2792,6 +2796,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--star-ferry-wind",
         action="store_true",
         help="Print the latest daily mean wind speed at Star Ferry(Kowloon)",
+    )
+    parser.add_argument(
+        "--tuen-mun-government-offices-wind",
+        action="store_true",
+        help="Print the latest daily mean wind speed at Tuen Mun Government Offices",
     )
     parser.add_argument(
         "--forecast-icon",
@@ -6183,6 +6192,18 @@ def main(argv: list[str] | None = None) -> int:
                     format_json(star_ferry_wind)
                     if args.json
                     else format_mean_wind(star_ferry_wind)
+                )
+        elif args.tuen_mun_government_offices_wind:
+            tuen_mun_government_offices_wind = fetch_tuen_mun_government_offices_wind(
+                timeout=args.timeout, lang=args.lang
+            )
+            if tuen_mun_government_offices_wind is None:
+                text = format_tuen_mun_government_offices_wind_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(tuen_mun_government_offices_wind)
+                    if args.json
+                    else format_mean_wind(tuen_mun_government_offices_wind)
                 )
         elif args.forecast_icon:
             forecast_icon = fetch_forecast_icon(timeout=args.timeout, lang=args.lang)

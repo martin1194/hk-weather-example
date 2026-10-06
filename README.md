@@ -545,6 +545,8 @@ hk-weather --sha-chau-wind
 hk-weather --sha-chau-wind --json
 hk-weather --star-ferry-wind
 hk-weather --star-ferry-wind --json
+hk-weather --tuen-mun-government-offices-wind
+hk-weather --tuen-mun-government-offices-wind --json
 hk-weather --forecast-icon
 hk-weather --forecast-icon --json
 hk-weather --quake
@@ -1435,6 +1437,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --sha-chau-wind` prints the latest daily mean wind speed at Sha Chau, for example `2026-08-31  10.2 km/h`. `--mean-wind` still prints Waglan Island, and the other station wind flags still print their own stations. `--north-point-wind` still prints North Point. A speed of zero is kept. `--sha-chau-wind --json` prints that day as one JSON object. `--lang` selects the station name. The Chinese name is `沙洲` in both traditional and simplified text. Days marked `***` are omitted. If none remain, it says `No Sha Chau mean wind speed is available.`
 
 `hk-weather --star-ferry-wind` prints the latest daily mean wind speed at Star Ferry(Kowloon), for example `2026-08-31  5.1 km/h`. `--mean-wind` still prints Waglan Island, and the other station wind flags still print their own stations. `--sha-chau-wind` still prints Sha Chau. A speed of zero is kept. `--star-ferry-wind --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `九龍天星碼頭` and simplified text uses `九龙天星码头`. Days marked `***` are omitted. If none remain, it says `No Star Ferry(Kowloon) mean wind speed is available.`
+
+`hk-weather --tuen-mun-government-offices-wind` prints the latest daily mean wind speed at Tuen Mun Government Offices, for example `2026-08-31  5.1 km/h`. `--mean-wind` still prints Waglan Island, and the other station wind flags still print their own stations. `--star-ferry-wind` still prints Star Ferry(Kowloon), and `--tuen-mun-home-temp` still prints Tuen Mun Children and Juvenile Home. A speed of zero is kept. `--tuen-mun-government-offices-wind --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `屯門政府合署` and simplified text uses `屯门政府合署`. Days marked `***` are omitted. If none remain, it says `No Tuen Mun Government Offices mean wind speed is available.`
 
 `hk-weather --forecast-icon` prints each day's weather icon from that forecast (`ForecastIcon`), for example `2026-10-04 Sunday  54  Sunny Intervals with Showers`. `--wind` still prints the wind. `--forecast-icon --json` prints those days as one JSON object. `--lang` applies. If no icon is present, it says `No forecast icons are available.`
 
