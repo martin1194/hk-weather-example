@@ -667,6 +667,7 @@ from hk_weather.hko import (
     format_summary,
     format_report,
     format_raining,
+    format_hotter,
     format_stations,
     format_strikes,
     format_strikes_miss,
@@ -1132,6 +1133,17 @@ def _find_text(value: str) -> str:
     return text
 
 
+def _celsius_threshold(value: str) -> float:
+    """Argparse type: a Celsius cutoff used by --hotter-than."""
+    try:
+        number = float(value)
+    except ValueError:
+        raise argparse.ArgumentTypeError("temperature threshold must be a number") from None
+    if not math.isfinite(number):
+        raise argparse.ArgumentTypeError("temperature threshold must be a number")
+    return number
+
+
 def _format_find(parser: argparse.ArgumentParser, query: str, *, as_json: bool) -> str:
     """List flags whose name or help contains query."""
     needle = query.casefold()
@@ -1227,6 +1239,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--live-dew estimates the dew point from the current temperature and humidity; "
             "--when adds the observation time; "
             "--raining prints yes or no; "
+            "--hotter-than C prints yes or no; "
             "Current conditions by default; --summary prints a short briefing; "
             "--forecast prints the local forecast; "
             "--outlook prints the local-forecast outlook; "
@@ -1707,6 +1720,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--raining",
         action="store_true",
         help="Print yes or no for rain, showers, drizzle, thunderstorms, or district rainfall",
+    )
+    parser.add_argument(
+        "--hotter-than",
+        type=_celsius_threshold,
+        metavar="C",
+        help="Print yes or no if the current temperature is above C",
     )
     parser.add_argument(
         "--plain",
@@ -4010,6 +4029,8 @@ def _report_flags(args: argparse.Namespace) -> list[str]:
         flags.append("place")
     if args.find is not None:
         flags.append("find")
+    if args.hotter_than is not None:
+        flags.append("hotter-than")
     return flags
 
 
@@ -8183,7 +8204,9 @@ def main(argv: list[str] | None = None) -> int:
             )
         else:
             weather = fetch_current(timeout=args.timeout, lang=args.lang)
-            if args.raining:
+            if args.hotter_than is not None:
+                text = format_hotter(weather, args.hotter_than, as_json=args.json)
+            elif args.raining:
                 text = format_raining(weather, as_json=args.json)
             elif args.json:
                 text = format_json(weather)
