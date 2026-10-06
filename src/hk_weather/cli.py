@@ -1012,6 +1012,17 @@ def _day_number(value: str) -> int:
     return number
 
 
+class _DayAction(argparse.Action):
+    """Reject a bad day while the command line is parsed."""
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        try:
+            number = _day_number(values)
+        except argparse.ArgumentTypeError as exc:
+            parser.error(str(exc))
+        setattr(namespace, self.dest, number)
+
+
 def _timeout_value(value: str) -> float:
     """Argparse type: a timeout must be a number of seconds."""
     try:
@@ -2540,6 +2551,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--day",
+        action=_DayAction,
         metavar="N",
         help="Print day N of the 9-day forecast (1 through 9; 1 is the first entry, not tomorrow)",
     )

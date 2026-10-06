@@ -13404,9 +13404,15 @@ def test_cli_day_rejects_out_of_range(capsys):
         ["--day", "foo"],
         ["--day", "-1"],
         ["--day=-2"],
+        ["--day", "foo", "--version"],
+        ["--day", "0", "--version"],
     ):
-        assert main(argv) == 2
-        assert capsys.readouterr().err == "error: day must be an integer from 1 to 9\n"
+        with pytest.raises(SystemExit) as exc:
+            main(argv)
+        assert exc.value.code == 2
+        captured = capsys.readouterr()
+        assert captured.err == "error: day must be an integer from 1 to 9\n"
+        assert captured.out == ""
 
 
 def test_cli_psr_lists_each_day(monkeypatch, capsys):
