@@ -1001,15 +1001,15 @@ from hk_weather.hko import (
 )
 
 
-def _day_number(value: str) -> int:
-    """Argparse type: forecast day 1–9, where 1 is the first list entry."""
-    try:
-        number = int(value)
-    except ValueError:
-        raise argparse.ArgumentTypeError("day must be an integer from 1 to 9") from None
-    if number < 1 or number > 9:
-        raise argparse.ArgumentTypeError("day must be an integer from 1 to 9")
-    return number
+def _day_number(value: str | int) -> int:
+    """Forecast day 1–9. A typed value must be a single digit, not +1 or 01."""
+    if isinstance(value, str):
+        if value not in {"1", "2", "3", "4", "5", "6", "7", "8", "9"}:
+            raise argparse.ArgumentTypeError("day must be an integer from 1 to 9")
+        return int(value)
+    if isinstance(value, int) and not isinstance(value, bool) and 1 <= value <= 9:
+        return value
+    raise argparse.ArgumentTypeError("day must be an integer from 1 to 9")
 
 
 class _DayAction(argparse.Action):
