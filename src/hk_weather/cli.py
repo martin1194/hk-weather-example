@@ -326,6 +326,7 @@ from hk_weather.hko import (
     fetch_kat_o_min,
     fetch_pak_tam_chung_min,
     fetch_beas_river_min,
+    fetch_kowloon_city_min,
     fetch_tai_mo_max,
     fetch_tseung_kwan_o_max,
     fetch_sheung_shui_max,
@@ -809,6 +810,7 @@ from hk_weather.hko import (
     format_kat_o_min_miss,
     format_pak_tam_chung_min_miss,
     format_beas_river_min_miss,
+    format_kowloon_city_min_miss,
     format_tai_mo_max,
     format_tai_mo_max_miss,
     format_tseung_kwan_o_max_miss,
@@ -1134,6 +1136,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--kat-o-min prints the latest daily minimum temperature at Kat O; "
             "--pak-tam-chung-min prints the latest daily minimum temperature at Pak Tam Chung (Tsak Yue Wu); "
             "--beas-river-min prints the latest daily minimum temperature at Beas River; "
+            "--kowloon-city-min prints the latest daily minimum temperature at Kowloon City; "
             "--tai-mo-max prints the latest daily maximum temperature at Tai Mo Shan; "
             "--tseung-kwan-o-max prints the latest daily maximum temperature at Tseung Kwan O; "
             "--sheung-shui-max prints the latest daily maximum temperature at Sheung Shui; "
@@ -1791,6 +1794,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--beas-river-min",
         action="store_true",
         help="Print the latest daily minimum temperature at Beas River",
+    )
+    parser.add_argument(
+        "--kowloon-city-min",
+        action="store_true",
+        help="Print the latest daily minimum temperature at Kowloon City",
     )
     parser.add_argument(
         "--tai-mo-max",
@@ -4140,6 +4148,18 @@ def main(argv: list[str] | None = None) -> int:
                     format_json(beas_river_min)
                     if args.json
                     else format_tai_mo_min(beas_river_min)
+                )
+        elif args.kowloon_city_min:
+            kowloon_city_min = fetch_kowloon_city_min(
+                timeout=args.timeout, lang=args.lang
+            )
+            if kowloon_city_min is None:
+                text = format_kowloon_city_min_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(kowloon_city_min)
+                    if args.json
+                    else format_tai_mo_min(kowloon_city_min)
                 )
         elif args.tai_mo_max:
             tai_mo_max = fetch_tai_mo_max(timeout=args.timeout, lang=args.lang)
