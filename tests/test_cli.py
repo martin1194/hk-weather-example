@@ -73,6 +73,25 @@ def test_cli_reports_fetch_errors(monkeypatch, capsys):
     assert "could not reach Hong Kong Observatory" in err
 
 
+def test_cli_exit_statuses(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_current",
+        lambda timeout, lang="en": SAMPLE_WEATHER,
+    )
+    assert main([]) == 0
+    capsys.readouterr()
+
+    def boom(timeout, lang="en"):
+        raise WeatherError("down")
+
+    monkeypatch.setattr("hk_weather.cli.fetch_current", boom)
+    assert main([]) == 1
+    assert capsys.readouterr().err == "error: down\n"
+
+    assert main(["--timeout", "0"]) == 2
+    assert "timeout" in capsys.readouterr().err
+
+
 def test_cli_accepts_lang_in_any_case(monkeypatch, capsys):
     seen = {}
 
