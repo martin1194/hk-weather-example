@@ -184,6 +184,8 @@ hk-weather --wong-tai-sin-min
 hk-weather --wong-tai-sin-min --json
 hk-weather --tsuen-wan-min
 hk-weather --tsuen-wan-min --json
+hk-weather --kau-sai-chau-min
+hk-weather --kau-sai-chau-min --json
 hk-weather --tai-mo-max
 hk-weather --tai-mo-max --json
 hk-weather --tseung-kwan-o-max
@@ -933,6 +935,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --wong-tai-sin-min` prints the latest daily minimum temperature at Wong Tai Sin, for example `2026-08-31  25.5°C`. `--min-temp` still prints the Observatory minimum, and the other station minimum flags still print their own stations. `--wong-tai-sin-temp` still prints Wong Tai Sin's mean temperature, and `--wong-tai-sin-max` still prints its maximum. `--wong-tai-sin-min --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Wong Tai Sin minimum temperature is available.`
 
 `hk-weather --tsuen-wan-min` prints the latest daily minimum temperature at Tsuen Wan, for example `2026-08-31  24.8°C`. `--min-temp` still prints the Observatory minimum, and the other station minimum flags still print their own stations. `--tsuen-wan-temp` still prints Tsuen Wan's mean temperature, and `--tsuen-wan-max` still prints its maximum. `--tsuen-wan-min --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Tsuen Wan minimum temperature is available.`
+
+`hk-weather --kau-sai-chau-min` prints the latest daily minimum temperature at Kau Sai Chau, for example `2026-08-31  25.8°C`. `--min-temp` still prints the Observatory minimum, and the other station minimum flags still print their own stations. `--kau-sai-chau-temp` still prints Kau Sai Chau's mean temperature, and `--kau-sai-chau-max` still prints its maximum. `--kau-sai-chau-min --json` prints that day as one JSON object. `--lang` selects the station name. Traditional and simplified text both use `滘西洲`. Days marked `***` are omitted. If none remain, it says `No Kau Sai Chau minimum temperature is available.`
 
 `hk-weather --tai-mo-max` prints the latest daily maximum temperature at Tai Mo Shan, for example `2026-08-31  24.1°C`. `--max-temp` still prints the Observatory maximum, `--tai-mo-temp` still prints the peak's daily mean, and `--tai-mo-min` still prints the peak's daily minimum. `--tai-mo-max --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Tai Mo Shan maximum temperature is available.`
 
