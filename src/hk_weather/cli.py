@@ -1123,6 +1123,39 @@ def _format_about(version: str, *, as_json: bool) -> str:
     return f"hk-weather {version}\n{summary}\nData: {url}\n"
 
 
+def _find_text(value: str) -> str:
+    """Argparse type: a flag search must contain something other than spaces."""
+    text = value.strip()
+    if not text:
+        raise argparse.ArgumentTypeError("search text must not be empty")
+    return text
+
+
+def _format_find(parser: argparse.ArgumentParser, query: str, *, as_json: bool) -> str:
+    """List flags whose name or help contains query."""
+    needle = query.casefold()
+    matches: list[tuple[list[str], str]] = []
+    for action in parser._actions:
+        options = list(action.option_strings)
+        if not options or "--help" in options:
+            continue
+        help_text = action.help or ""
+        haystack = f"{' '.join(options)} {help_text}"
+        if needle not in haystack.casefold():
+            continue
+        matches.append((options, help_text))
+    if as_json:
+        payload = [{"options": options, "help": help_text} for options, help_text in matches]
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    if not matches:
+        return f"No flags match {query!r}.\n"
+    lines = [
+        f"{', '.join(options)}  {help_text}" if help_text else ", ".join(options)
+        for options, help_text in matches
+    ]
+    return "\n".join(lines) + "\n"
+
+
 def _language(value: str) -> str:
     """Normalize an Observatory language code to en, tc, or sc."""
     lang = value.strip().lower()
@@ -1185,6 +1218,7 @@ def build_parser() -> argparse.ArgumentParser:
         description=(
             "Print Hong Kong weather from Hong Kong Observatory open data. "
             "--about prints this program and the open-data page; "
+            "--find TEXT lists flags whose name or description contains TEXT; "
             "Current conditions by default; --summary prints a short briefing; "
             "--forecast prints the local forecast; "
             "--outlook prints the local-forecast outlook; "
@@ -1636,6 +1670,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--about",
         action="store_true",
         help="Print what this program is and where the data comes from",
+    )
+    parser.add_argument(
+        "--find",
+        type=_find_text,
+        metavar="TEXT",
+        help="List flags whose name or description contains TEXT (must not be blank)",
     )
     parser.add_argument(
         "--timeout",
@@ -3915,6 +3955,8 @@ def _report_flags(args: argparse.Namespace) -> list[str]:
         flags.append("day")
     if args.place is not None:
         flags.append("place")
+    if args.find is not None:
+        flags.append("find")
     return flags
 
 
@@ -3990,7 +4032,8 @@ def _write_output(text: str) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
-    args = build_parser().parse_args(_normalize_argv(argv))
+    parser = build_parser()
+    args = parser.parse_args(_normalize_argv(argv))
     if args.day is not None:
         try:
             args.day = _day_number(args.day)
@@ -4004,6 +4047,8 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if args.about:
             text = _format_about(package_version(), as_json=args.json)
+        elif args.find is not None:
+            text = _format_find(parser, args.find, as_json=args.json)
         elif args.warnings:
             text = format_warnings(
                 fetch_warnings(timeout=args.timeout, lang=args.lang),

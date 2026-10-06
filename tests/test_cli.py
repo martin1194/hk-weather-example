@@ -57,6 +57,40 @@ def test_cli_about_prints_the_data_source(monkeypatch, capsys):
     assert "pass one report flag at a time (--about --forecast)" in captured.err
 
 
+def test_cli_find_lists_matching_flags(monkeypatch, capsys):
+    def fail_fetch(*args, **kwargs):
+        raise AssertionError("find must not call the Observatory")
+
+    monkeypatch.setattr("hk_weather.cli.fetch_current", fail_fetch)
+    assert main(["--find", "tide"]) == 0
+    assert capsys.readouterr().out == (
+        "-I, --tide  Print today's high and low tides at Quarry Bay\n"
+        "--tide-hour  Print today's hourly tide heights at Quarry Bay\n"
+        "--tide-latest  Print the latest observed tide height at tide stations\n"
+    )
+
+    assert main(["--find", "TIDE", "--json"]) == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert [item["options"][-1] for item in payload] == [
+        "--tide",
+        "--tide-hour",
+        "--tide-latest",
+    ]
+
+    assert main(["--find", "no-such-flag-xyz"]) == 0
+    assert capsys.readouterr().out == "No flags match 'no-such-flag-xyz'.\n"
+
+    assert main(["--find", "tide", "--forecast"]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "pass one report flag at a time (--forecast --find)" in captured.err
+
+    with pytest.raises(SystemExit) as exc:
+        main(["--find", " "])
+    assert exc.value.code == 2
+    assert "search text must not be empty" in capsys.readouterr().err
+
+
 def test_cli_version_falls_back_when_not_installed(monkeypatch, capsys):
     from importlib.metadata import PackageNotFoundError
 
