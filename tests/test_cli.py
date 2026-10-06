@@ -30,6 +30,19 @@ def test_cli_version_prints_package_metadata(monkeypatch, capsys):
     assert capsys.readouterr().out == "hk-weather 1.2.3\n"
 
 
+def test_cli_version_falls_back_when_not_installed(monkeypatch, capsys):
+    from importlib.metadata import PackageNotFoundError
+
+    def missing(name):
+        raise PackageNotFoundError(name)
+
+    monkeypatch.setattr("importlib.metadata.version", missing)
+    with pytest.raises(SystemExit) as exc:
+        main(["--version"])
+    assert exc.value.code == 0
+    assert capsys.readouterr().out == "hk-weather 0.1.0\n"
+
+
 def test_cli_closed_pipe_exits_quietly(monkeypatch):
     monkeypatch.setattr(
         "hk_weather.cli.fetch_current",
