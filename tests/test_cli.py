@@ -4172,6 +4172,73 @@ def test_cli_beas_river_temp_when_missing(monkeypatch, capsys):
     }
 
 
+def test_cli_bluff_head_temp_prints_latest_day(monkeypatch, capsys):
+    seen = {}
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _text_response(
+            "年/Year,月/Month,日/Day,數值/Value,數據完整性/data Completeness\n"
+            "2026,8,29,28.6,C\n"
+            "2026,8,30,***,\n"
+            "2026,8,31,  27.3  ,C\n"
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--bluff-head-temp", "--lang", "tc"]) == 0
+    assert seen["url"].endswith("daily_BHD_TEMP_2026.csv")
+    assert capsys.readouterr().out == (
+        "Hong Kong daily mean temperature\n"
+        "Station: 黃麻角\n"
+        "2026-08-31  27.3°C\n"
+    )
+    assert main(["--bluff-head-temp", "--lang", "sc"]) == 0
+    assert capsys.readouterr().out == (
+        "Hong Kong daily mean temperature\n"
+        "Station: 黄麻角\n"
+        "2026-08-31  27.3°C\n"
+    )
+
+
+def test_cli_bluff_head_temp_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Year,Month,Day,Value,Completeness\n"
+            "2026,8,31,27.3,C\n"
+        ),
+    )
+    assert main(["--bluff-head-temp", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "station": "Bluff Head",
+        "date": "2026-08-31",
+        "temperature_c": 27.3,
+    }
+
+
+def test_cli_bluff_head_temp_when_missing(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Year,Month,Day,Value,Completeness\n"
+            "2026,8,31,***,\n"
+        ),
+    )
+    assert main(["--bluff-head-temp"]) == 0
+    assert capsys.readouterr().out == "No Bluff Head temperature is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(""),
+    )
+    assert main(["--bluff-head-temp", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No Bluff Head temperature is available."
+    }
+
+
 def test_cli_pak_tam_chung_temp_when_missing(monkeypatch, capsys):
     monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
     monkeypatch.setattr(
