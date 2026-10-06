@@ -175,6 +175,43 @@ def test_cli_closed_stderr_keeps_fetch_error(monkeypatch):
     assert seen == {"dup": (9, 2), "closed": 9}
 
 
+def test_cli_plain_omits_weather_icons(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_current",
+        lambda timeout, lang="en": SAMPLE_WEATHER,
+    )
+    assert main([]) == 0
+    assert "Conditions: 🌧️ Rain" in capsys.readouterr().out
+
+    assert main(["--plain"]) == 0
+    plain = capsys.readouterr().out
+    assert "Conditions: Rain\n" in plain
+    assert "🌧️" not in plain
+    assert "Temperature: 28°C (Hong Kong Observatory)" in plain
+
+    assert main(["--short", "--plain"]) == 0
+    assert capsys.readouterr().out == "Rain, 28°C, humidity 85%\n"
+
+    assert main(["--plain", "--json"]) == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["conditions"] == "Rain"
+
+    from hk_weather.hko import SummaryToday, WeatherSummary
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_summary",
+        lambda timeout, lang="en": WeatherSummary(
+            conditions="Rain",
+            warnings=(),
+            today=SummaryToday("2026-10-06", 30, 25, "Medium"),
+        ),
+    )
+    assert main(["--summary", "--plain"]) == 0
+    summary = capsys.readouterr().out
+    assert summary.startswith("Hong Kong summary\nRain\n")
+    assert "🌧️" not in summary
+
+
 def test_cli_prints_report(monkeypatch, capsys):
     monkeypatch.setattr(
         "hk_weather.cli.fetch_current",

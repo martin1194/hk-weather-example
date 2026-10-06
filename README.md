@@ -19,6 +19,8 @@ hk-weather --about --json
 hk-weather --find tide
 hk-weather --find tide --json
 hk-weather --short
+hk-weather --plain
+hk-weather --short --plain
 hk-weather --summary
 hk-weather --summary --json
 hk-weather --json
@@ -928,7 +930,7 @@ Warnings:
 
 The temperature and humidity lines use the Hong Kong Observatory station when that reading is present.
 
-`hk-weather --short` (or `-s`) prints current conditions on one line, for example: `🌧️ Rain, 28°C, humidity 85% — The Thunderstorm Warning has been issued`. A known Observatory icon prefixes that line and the default report's conditions line. A missing or unmapped icon stays plain text.
+`hk-weather --short` (or `-s`) prints current conditions on one line, for example: `🌧️ Rain, 28°C, humidity 85% — The Thunderstorm Warning has been issued`. A known Observatory icon prefixes that line and the default report's conditions line. A missing or unmapped icon stays plain text. `--plain` leaves those icons off the current report, `--short`, and `--summary`.
 
 `hk-weather --summary` (or `-S`) prints a short briefing: that same conditions line, active warnings (or `Warnings: none`), and today's high, low, and rain chance from the 9-day forecast. `--summary --json` prints the briefing as one JSON object. `--lang` applies. If today's forecast is missing, the today line says `not available`.
 
@@ -1817,6 +1819,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --about` prints the program version and the Hong Kong Observatory open-data page. It does not call the Observatory. `--about --json` prints that note as one JSON object.
 
 `hk-weather --find TEXT` lists flags whose name or description contains TEXT, without calling the Observatory. Matching ignores case. `--find TEXT --json` prints those flags as a JSON array. A blank search exits with `error: argument --find: search text must not be empty`.
+
+`hk-weather --plain` prints the current report without weather icons. The same flag applies to `--short` and `--summary`. `--json` is unchanged.
 
 ## Exit status
 
