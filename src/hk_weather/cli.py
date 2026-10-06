@@ -1036,6 +1036,20 @@ def _timeout_value(value: str) -> float:
     return number
 
 
+class _TimeoutAction(argparse.Action):
+    """Reject a second --timeout while the command line is parsed."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._seen = False
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        if self._seen:
+            parser.error("--timeout can only be given once")
+        self._seen = True
+        setattr(namespace, self.dest, values)
+
+
 class _VersionAction(argparse.Action):
     """Print the version unless flags already on the command line conflict."""
 
@@ -1591,9 +1605,10 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--timeout",
+        action=_TimeoutAction,
         type=_timeout_value,
         default=10,
-        help="HTTP timeout in seconds; must be a number greater than 0 (default: 10)",
+        help="HTTP timeout in seconds; must be a number greater than 0 (default: 10; give this flag once)",
     )
     parser.add_argument(
         "--json",

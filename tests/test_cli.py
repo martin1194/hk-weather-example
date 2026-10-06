@@ -169,6 +169,38 @@ def test_cli_accepts_lang_in_any_case(monkeypatch, capsys):
         capsys.readouterr()
 
 
+def test_cli_timeout_can_only_be_given_once(monkeypatch, capsys):
+    def boom(*args, **kwargs):
+        raise AssertionError("should not fetch")
+
+    monkeypatch.setattr("hk_weather.cli.fetch_current", boom)
+    monkeypatch.setattr("importlib.metadata.version", lambda name: "1.2.3")
+    for argv in (
+        ["--timeout", "1", "--timeout", "30"],
+        ["--timeout=1", "--timeout=30"],
+        ["--timeout", "5", "--timeout", "5"],
+        ["--timeout", "1", "--timeout", "30", "--version"],
+    ):
+        with pytest.raises(SystemExit) as exc:
+            main(argv)
+        assert exc.value.code == 2
+        captured = capsys.readouterr()
+        assert captured.err == "error: --timeout can only be given once\n"
+        assert captured.out == ""
+
+    with pytest.raises(SystemExit) as exc:
+        main(["--timeout", "5", "--timeout", "0"])
+    assert exc.value.code == 2
+    captured = capsys.readouterr()
+    assert captured.err == "error: argument --timeout: timeout must be greater than 0\n"
+    assert captured.out == ""
+
+    with pytest.raises(SystemExit) as exc:
+        main(["--timeout", "5", "--version"])
+    assert exc.value.code == 0
+    assert capsys.readouterr().out == "hk-weather 1.2.3\n"
+
+
 def test_cli_rejects_non_positive_timeout(capsys):
     with pytest.raises(SystemExit) as exc:
         main(["--timeout", "0"])
