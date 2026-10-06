@@ -48,6 +48,7 @@ from hk_weather.hko import (
     fetch_tap_shek_kok_rain,
     fetch_tsim_bei_tsui_rain,
     fetch_tai_mei_tuk_pump_rain,
+    fetch_ngong_ping_reservoir_rain,
     fetch_forecast,
     fetch_outlook,
     fetch_coastal,
@@ -386,6 +387,7 @@ from hk_weather.hko import (
     format_tap_shek_kok_rain_miss,
     format_tsim_bei_tsui_rain_miss,
     format_tai_mei_tuk_pump_rain_miss,
+    format_ngong_ping_reservoir_rain_miss,
     format_forecast,
     format_outlook,
     format_outlook_miss,
@@ -1124,6 +1126,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--tap-shek-kok-rain prints the latest daily rainfall at Tap Shek Kok; "
             "--tsim-bei-tsui-rain prints the latest daily rainfall at Tsim Bei Tsui; "
             "--tai-mei-tuk-pump-rain prints the latest daily rainfall at Tai Mei Tuk Pumping Station; "
+            "--ngong-ping-reservoir-rain prints the latest daily rainfall at Ngong Ping Fresh Water Reservoir; "
             "--tide prints today's high and low tides; "
             "--tide-hour prints today's hourly tide heights; "
             "--tide-latest prints the latest observed tide height; "
@@ -2472,6 +2475,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--tai-mei-tuk-pump-rain",
         action="store_true",
         help="Print the latest daily total rainfall at Tai Mei Tuk Pumping Station",
+    )
+    parser.add_argument(
+        "--ngong-ping-reservoir-rain",
+        action="store_true",
+        help="Print the latest daily total rainfall at Ngong Ping Fresh Water Reservoir",
     )
     parser.add_argument(
         "--rainstorm",
@@ -5089,6 +5097,18 @@ def main(argv: list[str] | None = None) -> int:
                     format_json(tai_mei_tuk_pump_rain)
                     if args.json
                     else format_daily_rain(tai_mei_tuk_pump_rain)
+                )
+        elif args.ngong_ping_reservoir_rain:
+            ngong_ping_reservoir_rain = fetch_ngong_ping_reservoir_rain(
+                timeout=args.timeout, lang=args.lang
+            )
+            if ngong_ping_reservoir_rain is None:
+                text = format_ngong_ping_reservoir_rain_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(ngong_ping_reservoir_rain)
+                    if args.json
+                    else format_daily_rain(ngong_ping_reservoir_rain)
                 )
         elif args.rainstorm:
             rainstorm = fetch_rainstorm(timeout=args.timeout, lang=args.lang)
