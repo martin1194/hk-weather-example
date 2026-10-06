@@ -313,6 +313,7 @@ from hk_weather.hko import (
     fetch_shing_mun_valley_temp,
     fetch_tuen_mun_home_temp,
     fetch_buoy_2_temp,
+    fetch_buoy_8_temp,
     fetch_tai_mo_min,
     fetch_tate_min,
     fetch_sai_kung_min,
@@ -831,6 +832,7 @@ from hk_weather.hko import (
     format_shing_mun_valley_temp_miss,
     format_tuen_mun_home_temp_miss,
     format_buoy_2_temp_miss,
+    format_buoy_8_temp_miss,
     format_tai_mo_min,
     format_tai_mo_min_miss,
     format_tate_min_miss,
@@ -1190,6 +1192,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--shing-mun-valley-temp prints the latest daily mean temperature at Tsuen Wan Shing Mun Valley; "
             "--tuen-mun-home-temp prints the latest daily mean temperature at Tuen Mun Children and Juvenile Home; "
             "--buoy-2-temp prints the latest daily mean temperature at Automatic Weather Buoy No.2; "
+            "--buoy-8-temp prints the latest daily mean temperature at Automatic Weather Buoy No.8; "
             "--max-temp prints the latest daily maximum temperature; "
             "--min-temp prints the latest daily minimum temperature; "
             "--tai-mo-min prints the latest daily minimum temperature at Tai Mo Shan; "
@@ -1764,6 +1767,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--buoy-2-temp",
         action="store_true",
         help="Print the latest daily mean temperature at Automatic Weather Buoy No.2",
+    )
+    parser.add_argument(
+        "--buoy-8-temp",
+        action="store_true",
+        help="Print the latest daily mean temperature at Automatic Weather Buoy No.8",
     )
     parser.add_argument(
         "--max-temp",
@@ -4198,6 +4206,16 @@ def main(argv: list[str] | None = None) -> int:
                     format_json(buoy_2_temp)
                     if args.json
                     else format_tai_mo_temp(buoy_2_temp)
+                )
+        elif args.buoy_8_temp:
+            buoy_8_temp = fetch_buoy_8_temp(timeout=args.timeout, lang=args.lang)
+            if buoy_8_temp is None:
+                text = format_buoy_8_temp_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(buoy_8_temp)
+                    if args.json
+                    else format_tai_mo_temp(buoy_8_temp)
                 )
         elif args.max_temp:
             max_temp = fetch_max_temp(timeout=args.timeout, lang=args.lang)
