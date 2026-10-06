@@ -15289,6 +15289,75 @@ def test_cli_sha_chau_prevailing_when_missing(monkeypatch, capsys):
     }
 
 
+def test_cli_star_ferry_prevailing_prints_latest_day(monkeypatch, capsys):
+    seen = {}
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _text_response(
+            "年/Year,月/Month,日/Day,數值/Value,數據完整性/data Completeness\n"
+            "2026,8,29,280,C\n"
+            "2026,8,30,***,\n"
+            "2026,8,31,  290  ,C\n"
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--star-ferry-prevailing", "--lang", "tc"]) == 0
+    assert seen["url"].endswith("daily_SF_PDIR_2026.csv")
+    assert capsys.readouterr().out == (
+        "Hong Kong prevailing wind\n"
+        "Station: 九龍天星碼頭\n"
+        "2026-08-31  290°\n"
+    )
+    assert main(["--star-ferry-prevailing", "--lang", "sc"]) == 0
+    assert capsys.readouterr().out == (
+        "Hong Kong prevailing wind\n"
+        "Station: 九龙天星码头\n"
+        "2026-08-31  290°\n"
+    )
+
+
+def test_cli_star_ferry_prevailing_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Year,Month,Day,Value,Completeness\n"
+            "2026,8,31,290,C\n"
+        ),
+    )
+    assert main(["--star-ferry-prevailing", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "station": "Star Ferry(Kowloon)",
+        "date": "2026-08-31",
+        "direction_deg": 290.0,
+    }
+
+
+def test_cli_star_ferry_prevailing_when_missing(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Year,Month,Day,Value,Completeness\n"
+            "2026,8,31,***,\n"
+        ),
+    )
+    assert main(["--star-ferry-prevailing"]) == 0
+    assert capsys.readouterr().out == (
+        "No Star Ferry(Kowloon) prevailing wind is available.\n"
+    )
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(""),
+    )
+    assert main(["--star-ferry-prevailing", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No Star Ferry(Kowloon) prevailing wind is available."
+    }
+
+
 def test_cli_mean_wind_prints_latest_day(monkeypatch, capsys):
     seen = {}
     monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
