@@ -120,6 +120,8 @@ hk-weather --tai-mei-tuk-temp
 hk-weather --tai-mei-tuk-temp --json
 hk-weather --kau-sai-chau-temp
 hk-weather --kau-sai-chau-temp --json
+hk-weather --kadoorie-farm-temp
+hk-weather --kadoorie-farm-temp --json
 hk-weather --max-temp
 hk-weather --max-temp --json
 hk-weather --min-temp
@@ -847,6 +849,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --tai-mei-tuk-temp` prints the latest daily mean temperature at Tai Mei Tuk, for example `2026-08-31  26.1°C`. `--mean-temp` still prints the Observatory reading, and the other station temperature flags still print their own stations. `--happy-valley-temp` still prints Happy Valley's mean temperature. `--tai-mei-tuk-temp --json` prints that day as one JSON object. `--lang` selects the station name. The Chinese name is `大美督` in both traditional and simplified text. Days marked `***` are omitted. If none remain, it says `No Tai Mei Tuk temperature is available.`
 
 `hk-weather --kau-sai-chau-temp` prints the latest daily mean temperature at Kau Sai Chau, for example `2026-08-31  26.9°C`. `--mean-temp` still prints the Observatory reading, and the other station temperature flags still print their own stations. `--kau-sai-chau-humidity` still prints Kau Sai Chau's humidity, `--kau-sai-chau-dew` still prints its dew point, and `--kau-sai-chau-rain` still prints its rainfall. `--kau-sai-chau-temp --json` prints that day as one JSON object. `--lang` selects the station name. The Chinese name is `滘西洲` in both traditional and simplified text. Days marked `***` are omitted. If none remain, it says `No Kau Sai Chau temperature is available.`
+
+`hk-weather --kadoorie-farm-temp` prints the latest daily mean temperature at Kadoorie Farm and Botanic Garden, for example `2026-08-31  25.1°C`. `--mean-temp` still prints the Observatory reading, and the other station temperature flags still print their own stations. `--kadoorie-farm-rain` still prints its rainfall. `--kadoorie-farm-temp --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `嘉道理農場暨植物園` and simplified text uses `嘉道理农场暨植物园`. Days marked `***` are omitted. If none remain, it says `No Kadoorie Farm and Botanic Garden temperature is available.`
 
 `hk-weather --max-temp` prints the latest daily maximum temperature at the Observatory for that same year (`dataType=CLMMAXT`, station HKO), for example `2026-08-31  29.5°C`. `--mean-temp` still prints the daily mean. `--hottest` still prints the current warmest place. `--max-temp --json` prints that day as one JSON object. `--lang` applies. If no numeric day is present, it says `No daily maximum temperature is available.`
 
