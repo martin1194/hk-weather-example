@@ -1012,6 +1012,14 @@ def _day_number(value: str) -> int:
     return number
 
 
+def _timeout_value(value: str) -> float:
+    """Argparse type: a timeout must be a number of seconds."""
+    try:
+        return float(value)
+    except ValueError:
+        raise argparse.ArgumentTypeError("timeout must be greater than 0") from None
+
+
 def package_version() -> str:
     """Return the installed version, or the bundled version if not installed."""
     from importlib.metadata import PackageNotFoundError, version
@@ -1503,9 +1511,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--timeout",
-        type=float,
+        type=_timeout_value,
         default=10,
-        help="HTTP timeout in seconds; must be greater than 0 (default: 10)",
+        help="HTTP timeout in seconds; must be a number greater than 0 (default: 10)",
     )
     parser.add_argument(
         "--json",
