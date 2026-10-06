@@ -532,6 +532,8 @@ hk-weather --tai-mei-tuk-pump-rain
 hk-weather --tai-mei-tuk-pump-rain --json
 hk-weather --ngong-ping-reservoir-rain
 hk-weather --ngong-ping-reservoir-rain --json
+hk-weather --discovery-bay-rain
+hk-weather --discovery-bay-rain --json
 hk-weather --rainstorm
 hk-weather --rainstorm --json
 hk-weather --cyclone
@@ -1235,6 +1237,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --tai-mei-tuk-pump-rain` prints the latest daily total rainfall at Tai Mei Tuk Pumping Station, for example `2026-08-31  16.5 mm`. `--daily-rain` still prints the Observatory total, and the other station rainfall flags still print their own stations. `--tai-mei-tuk-rain` still prints Tai Mei Tuk. A total of zero is kept. `--tai-mei-tuk-pump-rain --json` prints that day as one JSON object. `--lang` selects the station name. The Chinese name is `大美督抽水站` in both traditional and simplified text. Days marked `***` are omitted. If none remain, it says `No Tai Mei Tuk Pumping Station rainfall is available.`
 
 `hk-weather --ngong-ping-reservoir-rain` prints the latest daily total rainfall at Ngong Ping Fresh Water Reservoir, for example `2026-08-31  3.5 mm`. `--daily-rain` still prints the Observatory total, and the other station rainfall flags still print their own stations. `--ngong-ping-wind` still prints Ngong Ping. A total of zero is kept. `--ngong-ping-reservoir-rain --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `昂坪食水配水庫` and simplified text uses `昂坪食水配水库`. Days marked `***` are omitted. If none remain, it says `No Ngong Ping Fresh Water Reservoir rainfall is available.`
+
+`hk-weather --discovery-bay-rain` prints the latest daily total rainfall at Discovery Bay, for example `2026-08-31  7 mm`. `--daily-rain` still prints the Observatory total, and the other station rainfall flags still print their own stations. A total of zero is kept. `--discovery-bay-rain --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `愉景灣` and simplified text uses `愉景湾`. Days marked `***` are omitted. If none remain, it says `No Discovery Bay rainfall is available.`
 
 `hk-weather --lightning` lists places where the current report shows lightning. `--lightning --json` prints those places as one JSON object. If none are reported, it says so.
 
