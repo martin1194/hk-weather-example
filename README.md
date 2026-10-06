@@ -8,7 +8,7 @@ Data comes from the [Hong Kong Observatory Open Data API](https://www.hko.gov.hk
 
 ## Run
 
-Pass one report flag at a time. `--json` and `--lang` combine with that flag. `--short` only shortens the current report and cannot be combined with `--json`. `--timeout` must be a finite number of seconds greater than 0. `--lang` accepts `en`, `tc`, or `sc` in any case.
+Pass one report flag at a time. `--json` and `--lang` combine with that flag. `--short` only shortens the current report and cannot be combined with `--json`. `--timeout` must be a finite number of seconds greater than 0. `--timeout -1` is rejected with that error. `--lang` accepts `en`, `tc`, or `sc` in any case.
 
 ```bash
 pip install -e .
