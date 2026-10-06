@@ -1219,6 +1219,7 @@ def build_parser() -> argparse.ArgumentParser:
             "Print Hong Kong weather from Hong Kong Observatory open data. "
             "--about prints this program and the open-data page; "
             "--find TEXT lists flags whose name or description contains TEXT; "
+            "--plain omits weather icons from the current report; "
             "Current conditions by default; --summary prints a short briefing; "
             "--forecast prints the local forecast; "
             "--outlook prints the local-forecast outlook; "
@@ -1694,6 +1695,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--short",
         action="store_true",
         help="Print current conditions on one line (not with --json or another report)",
+    )
+    parser.add_argument(
+        "--plain",
+        action="store_true",
+        help="Omit weather icons from the current report, --short, and --summary",
     )
     parser.add_argument(
         "-S",
@@ -3949,7 +3955,7 @@ def _report_flags(args: argparse.Namespace) -> list[str]:
     flags = [
         name.replace("_", "-")
         for name, value in vars(args).items()
-        if value is True and name not in {"json", "short"}
+        if value is True and name not in {"json", "short", "plain"}
     ]
     if args.day is not None:
         flags.append("day")
@@ -8123,15 +8129,19 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_place_miss(args.place, matched.update_time, as_json=args.json)
         elif args.summary:
             summary = fetch_summary(timeout=args.timeout, lang=args.lang)
-            text = format_json(summary) if args.json else format_summary(summary)
+            text = (
+                format_json(summary)
+                if args.json
+                else format_summary(summary, plain=args.plain)
+            )
         else:
             weather = fetch_current(timeout=args.timeout, lang=args.lang)
             if args.json:
                 text = format_json(weather)
             elif args.short:
-                text = format_short(weather)
+                text = format_short(weather, plain=args.plain)
             else:
-                text = format_report(weather)
+                text = format_report(weather, plain=args.plain)
     except WeatherError as exc:
         _eprint(f"error: {exc}")
         return 1

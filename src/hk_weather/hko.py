@@ -9132,13 +9132,14 @@ def parse_current_report(payload: dict) -> CurrentWeather:
     )
 
 
-def format_report(weather: CurrentWeather) -> str:
+def format_report(weather: CurrentWeather, *, plain: bool = False) -> str:
     """Render current conditions as plain text."""
+    conditions = weather.conditions if plain else conditions_with_emoji(weather.conditions)
     lines = [
         "Hong Kong weather",
         "Source: Hong Kong Observatory open data",
         f"Updated: {weather.update_time}",
-        f"Conditions: {conditions_with_emoji(weather.conditions)}",
+        f"Conditions: {conditions}",
         f"Temperature: {_number(weather.temperature_c)}°C ({weather.place})",
         "Humidity: "
         + (
@@ -9160,9 +9161,10 @@ def format_report(weather: CurrentWeather) -> str:
     return "\n".join(lines) + "\n"
 
 
-def format_summary(report: WeatherSummary) -> str:
+def format_summary(report: WeatherSummary, *, plain: bool = False) -> str:
     """Render a short briefing: conditions, warnings, and today's high and low."""
-    lines = ["Hong Kong summary", conditions_with_emoji(report.conditions)]
+    conditions = report.conditions if plain else conditions_with_emoji(report.conditions)
+    lines = ["Hong Kong summary", conditions]
     if report.warnings:
         lines.append("Warnings:")
         lines.extend(f"{warning.code}  {warning.description}" for warning in report.warnings)
@@ -9182,14 +9184,14 @@ def format_summary(report: WeatherSummary) -> str:
     return "\n".join(lines) + "\n"
 
 
-def format_short(weather: CurrentWeather) -> str:
+def format_short(weather: CurrentWeather, *, plain: bool = False) -> str:
     """Render current conditions as one compact line."""
     humidity = (
         f"{_number(weather.humidity_percent)}%"
         if weather.humidity_percent is not None
         else "n/a"
     )
-    conditions = conditions_with_emoji(weather.conditions)
+    conditions = weather.conditions if plain else conditions_with_emoji(weather.conditions)
     line = f"{conditions}, {_number(weather.temperature_c)}°C, humidity {humidity}"
     if weather.warnings:
         note = _brief_warning(weather.warnings[0])
