@@ -684,6 +684,8 @@ hk-weather --pak-tam-chung-humidity
 hk-weather --pak-tam-chung-humidity --json
 hk-weather --beas-river-humidity
 hk-weather --beas-river-humidity --json
+hk-weather --runway-park-humidity
+hk-weather --runway-park-humidity --json
 hk-weather --temps
 hk-weather --temps --json
 hk-weather --temp-time
@@ -1471,6 +1473,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --pak-tam-chung-humidity` prints the latest daily mean relative humidity at Pak Tam Chung (Tsak Yue Wu), for example `2026-08-31  93%`. `--mean-humidity` still prints the Observatory reading, and the other station humidity flags still print their own stations. `--pak-tam-chung-dew` still prints Pak Tam Chung's dew point, and `--pak-tam-chung-rain` still prints its rainfall. `--pak-tam-chung-humidity --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `北潭涌(鯽魚湖)` and simplified text uses `北潭涌(鲫鱼湖)`. Days marked `***` are omitted. If none remain, it says `No Pak Tam Chung (Tsak Yue Wu) humidity is available.`
 
 `hk-weather --beas-river-humidity` prints the latest daily mean relative humidity at Beas River, for example `2026-08-31  93%`. `--mean-humidity` still prints the Observatory reading, and the other station humidity flags still print their own stations. `--beas-river-dew` still prints Beas River's dew point, and `--beas-river-rain` still prints its rainfall. `--beas-river-humidity --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `上水雙魚河` and simplified text uses `上水双鱼河`. Days marked `***` are omitted. If none remain, it says `No Beas River humidity is available.`
+
+`hk-weather --runway-park-humidity` prints the latest daily mean relative humidity at Kai Tak Runway Park, for example `2026-08-31  85%`. `--mean-humidity` still prints the Observatory reading, and the other station humidity flags still print their own stations. `--runway-park-temp` still prints Kai Tak Runway Park's mean temperature, and `--runway-park-dew` still prints its dew point. `--runway-park-humidity --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `啟德跑道公園` and simplified text uses `启德跑道公园`. Days marked `***` are omitted. If none remain, it says `No Kai Tak Runway Park humidity is available.`
 
 `hk-weather --temps` prints temperature by place from the current report, with the record time when the Observatory includes it. `--temps --json` prints that list as one JSON object. If no readings are present, it says so.
 
