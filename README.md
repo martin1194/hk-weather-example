@@ -30,6 +30,8 @@ hk-weather --live-dew
 hk-weather --short --live-dew
 hk-weather --when
 hk-weather --short --when
+hk-weather --raining
+hk-weather --raining --json
 hk-weather --summary
 hk-weather --summary --json
 hk-weather --json
@@ -1840,6 +1842,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --live-dew` estimates the current dew point from the temperature and humidity. At 28°C and 85% humidity that is `Dew point: 25.2°C`. `--short --live-dew` adds the same estimate to the one-line report. This is not the daily mean from `--dew-point`. If humidity is missing, the estimate is left off. `--json` is unchanged.
 
 `hk-weather --when` adds the observation time. A Hong Kong timestamp such as `2026-10-02T23:02:00+08:00` is shown as `23:02 HKT`. `--short --when` puts that time at the end of the measurements, for example `Rain, 28°C, humidity 85% at 23:02 HKT`. If the timestamp cannot be read, the time is left off. `--json` is unchanged.
+
+`hk-weather --raining` prints `yes` or `no`. It is `yes` when the conditions mention rain, showers, drizzle, or thunderstorms, or when a district recorded rainfall above 0 in the past hour. `--raining --json` prints `{"raining": true}` or `{"raining": false}`.
 
 ## Exit status
 

@@ -9321,6 +9321,42 @@ def format_short(
     return line + "\n"
 
 
+_RAIN_WORDS = frozenset(
+    {"rain", "shower", "showers", "drizzle", "thunderstorm", "thunderstorms"}
+)
+
+
+def _condition_words(conditions: str) -> set[str]:
+    """Split a condition label into lowercase words."""
+    words: set[str] = set()
+    token: list[str] = []
+    for char in conditions.casefold():
+        if char.isalpha():
+            token.append(char)
+            continue
+        if token:
+            words.add("".join(token))
+            token = []
+    if token:
+        words.add("".join(token))
+    return words
+
+
+def _is_raining(weather: CurrentWeather) -> bool:
+    """True when conditions mention rain or a district recorded rainfall."""
+    if weather.rainfall_mm is not None and weather.rainfall_mm > 0:
+        return True
+    return bool(_condition_words(weather.conditions) & _RAIN_WORDS)
+
+
+def format_raining(weather: CurrentWeather, *, as_json: bool) -> str:
+    """Print yes or no for rain in the current report."""
+    raining = _is_raining(weather)
+    if as_json:
+        return json.dumps({"raining": raining}, indent=2) + "\n"
+    return "yes\n" if raining else "no\n"
+
+
 def _brief_warning(message: str) -> str:
     sentence = message.strip().split(". ", 1)[0].rstrip(".")
     if len(sentence) > 80:
