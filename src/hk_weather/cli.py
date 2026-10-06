@@ -184,6 +184,7 @@ from hk_weather.hko import (
     fetch_sha_lo_wan_wet,
     fetch_solar,
     fetch_global_solar,
+    fetch_kau_sai_chau_solar,
     fetch_tc_info,
     fetch_tide,
     fetch_tide_hour,
@@ -634,6 +635,7 @@ from hk_weather.hko import (
     format_solar_miss,
     format_global_solar,
     format_global_solar_miss,
+    format_kau_sai_chau_solar_miss,
     format_tide,
     format_tide_miss,
     format_tide_hour,
@@ -979,6 +981,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--sha-lo-wan-wet prints the latest daily wet-bulb temperature at Sha Lo Wan; "
             "--solar prints the latest solar radiation; "
             "--global-solar prints the latest daily global solar radiation; "
+            "--kau-sai-chau-solar prints the latest daily global solar radiation at Kau Sai Chau; "
             "--wind lists the forecast wind; "
             "--gust prints the latest 10-minute wind and gust; "
             "--prevailing prints the latest prevailing wind direction; "
@@ -3105,6 +3108,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--global-solar",
         action="store_true",
         help="Print the latest daily global solar radiation at King's Park",
+    )
+    parser.add_argument(
+        "--kau-sai-chau-solar",
+        action="store_true",
+        help="Print the latest daily global solar radiation at Kau Sai Chau",
     )
     parser.add_argument(
         "-H",
@@ -6383,6 +6391,18 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_global_solar_miss(as_json=args.json)
             else:
                 text = format_json(global_solar) if args.json else format_global_solar(global_solar)
+        elif args.kau_sai_chau_solar:
+            kau_sai_chau_solar = fetch_kau_sai_chau_solar(
+                timeout=args.timeout, lang=args.lang
+            )
+            if kau_sai_chau_solar is None:
+                text = format_kau_sai_chau_solar_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(kau_sai_chau_solar)
+                    if args.json
+                    else format_global_solar(kau_sai_chau_solar)
+                )
         elif args.hottest:
             hottest = fetch_hottest(timeout=args.timeout, lang=args.lang)
             if hottest is None:
