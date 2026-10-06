@@ -870,6 +870,8 @@ hk-weather --park-wet
 hk-weather --park-wet --json
 hk-weather --sha-lo-wan-wet
 hk-weather --sha-lo-wan-wet --json
+hk-weather --nei-lak-shan-wet
+hk-weather --nei-lak-shan-wet --json
 hk-weather --solar
 hk-weather --solar --json
 hk-weather --global-solar
@@ -1779,6 +1781,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --park-wet` prints the latest daily mean wet-bulb temperature at King's Park, for example `2026-08-31  25.6°C`. `--wet-bulb` still prints the Observatory reading, and `--airport-wet` still prints the airport. `--park-dew` still prints King's Park's dew point. `--park-wet --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No King's Park wet bulb temperature is available.`
 
 `hk-weather --sha-lo-wan-wet` prints the latest daily mean wet-bulb temperature at Sha Lo Wan, for example `2026-08-31  25.9°C`. `--wet-bulb` still prints the Observatory reading, `--airport-wet` still prints the airport, and `--park-wet` still prints King's Park. `--sha-lo-wan-wet --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Sha Lo Wan wet bulb temperature is available.`
+
+`hk-weather --nei-lak-shan-wet` prints the latest daily mean wet-bulb temperature at Nei Lak Shan, for example `2026-08-31  22.4°C`. `--wet-bulb` still prints the Observatory reading, and the other station wet-bulb flags still print their own stations. `--sha-lo-wan-wet` still prints Sha Lo Wan, and `--nei-lak-shan-temp` still prints Nei Lak Shan's mean temperature. `--nei-lak-shan-wet --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `彌勒山` and simplified text uses `弥勒山`. Days marked `***` are omitted. If none remain, it says `No Nei Lak Shan wet bulb temperature is available.`
 
 `hk-weather --solar` prints the latest 1-minute global, direct, and diffuse solar radiation, for example `Kau Sai Chau  global 1  direct 0  diffuse 1 W/m²`. Earlier minutes in the file are omitted. `--solar --json` prints that minute as one JSON object. `--lang` selects the station names. A station is omitted when any component is `N/A`. If none remain, it says `No solar radiation is available.`
 

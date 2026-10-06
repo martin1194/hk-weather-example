@@ -197,6 +197,7 @@ from hk_weather.hko import (
     fetch_airport_wet,
     fetch_park_wet,
     fetch_sha_lo_wan_wet,
+    fetch_nei_lak_shan_wet,
     fetch_solar,
     fetch_global_solar,
     fetch_kau_sai_chau_solar,
@@ -716,6 +717,7 @@ from hk_weather.hko import (
     format_airport_wet_miss,
     format_park_wet_miss,
     format_sha_lo_wan_wet_miss,
+    format_nei_lak_shan_wet_miss,
     format_solar,
     format_solar_miss,
     format_global_solar,
@@ -1129,6 +1131,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--airport-wet prints the latest daily wet-bulb temperature at the airport; "
             "--park-wet prints the latest daily wet-bulb temperature at King's Park; "
             "--sha-lo-wan-wet prints the latest daily wet-bulb temperature at Sha Lo Wan; "
+            "--nei-lak-shan-wet prints the latest daily wet-bulb temperature at Nei Lak Shan; "
             "--solar prints the latest solar radiation; "
             "--global-solar prints the latest daily global solar radiation; "
             "--kau-sai-chau-solar prints the latest daily global solar radiation at Kau Sai Chau; "
@@ -3647,6 +3650,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--sha-lo-wan-wet",
         action="store_true",
         help="Print the latest daily mean wet-bulb temperature at Sha Lo Wan",
+    )
+    parser.add_argument(
+        "--nei-lak-shan-wet",
+        action="store_true",
+        help="Print the latest daily mean wet-bulb temperature at Nei Lak Shan",
     )
     parser.add_argument(
         "--solar",
@@ -7714,6 +7722,18 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_sha_lo_wan_wet_miss(as_json=args.json)
             else:
                 text = format_json(sha_lo_wan_wet) if args.json else format_wet_bulb(sha_lo_wan_wet)
+        elif args.nei_lak_shan_wet:
+            nei_lak_shan_wet = fetch_nei_lak_shan_wet(
+                timeout=args.timeout, lang=args.lang
+            )
+            if nei_lak_shan_wet is None:
+                text = format_nei_lak_shan_wet_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(nei_lak_shan_wet)
+                    if args.json
+                    else format_wet_bulb(nei_lak_shan_wet)
+                )
         elif args.solar:
             solar = fetch_solar(timeout=args.timeout, lang=args.lang)
             if not solar.stations:
