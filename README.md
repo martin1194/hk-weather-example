@@ -234,6 +234,8 @@ hk-weather --wong-tai-sin-max
 hk-weather --wong-tai-sin-max --json
 hk-weather --tsuen-wan-max
 hk-weather --tsuen-wan-max --json
+hk-weather --kau-sai-chau-max
+hk-weather --kau-sai-chau-max --json
 hk-weather --dew-point
 hk-weather --dew-point --json
 hk-weather --park-dew
@@ -971,6 +973,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --wong-tai-sin-max` prints the latest daily maximum temperature at Wong Tai Sin, for example `2026-08-31  32.4°C`. `--max-temp` still prints the Observatory maximum, and the other station maximum flags still print their own stations. `--wong-tai-sin-temp` still prints Wong Tai Sin's mean temperature. `--wong-tai-sin-max --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Wong Tai Sin maximum temperature is available.`
 
 `hk-weather --tsuen-wan-max` prints the latest daily maximum temperature at Tsuen Wan, for example `2026-08-31  28.8°C`. `--max-temp` still prints the Observatory maximum, and the other station maximum flags still print their own stations. `--tsuen-wan-temp` still prints Tsuen Wan's mean temperature. `--tsuen-wan-max --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Tsuen Wan maximum temperature is available.`
+
+`hk-weather --kau-sai-chau-max` prints the latest daily maximum temperature at Kau Sai Chau, for example `2026-08-31  29.7°C`. `--max-temp` still prints the Observatory maximum, and the other station maximum flags still print their own stations. `--kau-sai-chau-temp` still prints Kau Sai Chau's mean temperature. `--kau-sai-chau-max --json` prints that day as one JSON object. `--lang` selects the station name. Traditional and simplified text both use `滘西洲`. Days marked `***` are omitted. If none remain, it says `No Kau Sai Chau maximum temperature is available.`
 
 `hk-weather --dew-point` prints the latest daily mean dew point at the Observatory for the current Hong Kong year, for example `2026-08-31  25°C`. `--mean-temp` still prints the daily mean air temperature. `--dew-point --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No dew point is available.`
 
