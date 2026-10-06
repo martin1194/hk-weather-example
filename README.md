@@ -538,6 +538,8 @@ hk-weather --adventist-college-rain
 hk-weather --adventist-college-rain --json
 hk-weather --wong-shiu-chi-rain
 hk-weather --wong-shiu-chi-rain --json
+hk-weather --au-tau-rain
+hk-weather --au-tau-rain --json
 hk-weather --rainstorm
 hk-weather --rainstorm --json
 hk-weather --cyclone
@@ -1247,6 +1249,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --adventist-college-rain` prints the latest daily total rainfall at Hong Kong Adventist College(Sai Kung), for example `2026-08-31  11.5 mm`. `--daily-rain` still prints the Observatory total, and the other station rainfall flags still print their own stations. `--sai-kung-temp` still prints Sai Kung. A total of zero is kept. `--adventist-college-rain --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `西貢(香港三育書院)` and simplified text uses `西贡(香港三育书院)`. Days marked `***` are omitted. If none remain, it says `No Hong Kong Adventist College(Sai Kung) rainfall is available.`
 
 `hk-weather --wong-shiu-chi-rain` prints the latest daily total rainfall at Tai Po Wong Shiu Chi Secondary School, for example `2026-08-31  12.5 mm`. `--daily-rain` still prints the Observatory total, and the other station rainfall flags still print their own stations. `--tai-po-kau-wind` still prints Tai Po Kau. A total of zero is kept. `--wong-shiu-chi-rain --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `大埔王肇枝中學` and simplified text uses `大埔王肇枝中学`. Days marked `***` are omitted. If none remain, it says `No Tai Po Wong Shiu Chi Secondary School rainfall is available.`
+
+`hk-weather --au-tau-rain` prints the latest daily total rainfall at Au Tau, for example `2026-08-31  29.5 mm`. `--daily-rain` still prints the Observatory total, and the other station rainfall flags still print their own stations. A total of zero is kept. `--au-tau-rain --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `凹頭` and simplified text uses `凹头`. Days marked `***` are omitted. If none remain, it says `No Au Tau rainfall is available.`
 
 `hk-weather --lightning` lists places where the current report shows lightning. `--lightning --json` prints those places as one JSON object. If none are reported, it says so.
 
