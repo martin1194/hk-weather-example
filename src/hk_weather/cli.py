@@ -1034,6 +1034,39 @@ def _timeout_value(value: str) -> float:
     return number
 
 
+class _VersionAction(argparse.Action):
+    """Print the version unless flags already on the command line conflict."""
+
+    def __init__(
+        self,
+        option_strings,
+        version=None,
+        dest=argparse.SUPPRESS,
+        default=argparse.SUPPRESS,
+        help="show program's version number and exit",
+    ):
+        super().__init__(
+            option_strings=option_strings,
+            dest=dest,
+            nargs=0,
+            default=default,
+            help=help,
+        )
+        self.version = version
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        conflict = _conflict_message(namespace)
+        if conflict is not None:
+            parser.error(conflict)
+        version = self.version
+        if version is None:
+            version = parser.version
+        formatter = parser._get_formatter()
+        formatter.add_text(version)
+        parser._print_message(formatter.format_help(), sys.stdout)
+        parser.exit()
+
+
 def package_version() -> str:
     """Return the installed version, or the bundled version if not installed."""
     from importlib.metadata import PackageNotFoundError, version
@@ -1520,7 +1553,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--version",
-        action="version",
+        action=_VersionAction,
         version=f"%(prog)s {package_version()}",
     )
     parser.add_argument(
@@ -3800,6 +3833,19 @@ def _report_flags(args: argparse.Namespace) -> list[str]:
     return flags
 
 
+def _conflict_message(args: argparse.Namespace) -> str | None:
+    """Return an error when more than one report, or --short, was requested."""
+    reports = _report_flags(args)
+    if len(reports) > 1:
+        chosen = " ".join(f"--{name}" for name in reports)
+        return f"pass one report flag at a time ({chosen})"
+    if args.short and reports:
+        return "--short only applies to the current report"
+    if args.short and args.json:
+        return "--short cannot be combined with --json"
+    return None
+
+
 def _is_number_token(token: str) -> bool:
     try:
         float(token)
@@ -3866,16 +3912,9 @@ def main(argv: list[str] | None = None) -> int:
         except argparse.ArgumentTypeError as exc:
             _eprint(f"error: {exc}")
             return 2
-    reports = _report_flags(args)
-    if len(reports) > 1:
-        chosen = " ".join(f"--{name}" for name in reports)
-        _eprint(f"error: pass one report flag at a time ({chosen})")
-        return 2
-    if args.short and reports:
-        _eprint("error: --short only applies to the current report")
-        return 2
-    if args.short and args.json:
-        _eprint("error: --short cannot be combined with --json")
+    conflict = _conflict_message(args)
+    if conflict is not None:
+        _eprint(f"error: {conflict}")
         return 2
     try:
         if args.warnings:

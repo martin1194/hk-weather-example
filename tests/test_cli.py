@@ -278,6 +278,41 @@ def test_cli_rejects_two_report_flags(monkeypatch, capsys):
     assert err == "error: pass one report flag at a time (--forecast --warnings)\n"
 
 
+def test_cli_rejects_conflicting_flags_before_version(monkeypatch, capsys):
+    monkeypatch.setattr("importlib.metadata.version", lambda name: "1.2.3")
+    cases = [
+        (
+            ["--forecast", "--warnings", "--version"],
+            "error: pass one report flag at a time (--forecast --warnings)\n",
+        ),
+        (
+            ["--short", "--json", "--version"],
+            "error: --short cannot be combined with --json\n",
+        ),
+        (
+            ["--short", "--forecast", "--version"],
+            "error: --short only applies to the current report\n",
+        ),
+        (
+            ["--day", "1", "--forecast", "--version"],
+            "error: pass one report flag at a time (--forecast --day)\n",
+        ),
+    ]
+    for argv, message in cases:
+        with pytest.raises(SystemExit) as exc:
+            main(argv)
+        assert exc.value.code == 2
+        captured = capsys.readouterr()
+        assert captured.err == message
+        assert captured.out == ""
+
+    for argv in (["--forecast", "--version"], ["--version", "--forecast", "--warnings"]):
+        with pytest.raises(SystemExit) as exc:
+            main(argv)
+        assert exc.value.code == 0
+        assert capsys.readouterr().out == "hk-weather 1.2.3\n"
+
+
 def test_cli_rejects_short_with_json_or_another_report(monkeypatch, capsys):
     def boom(*args, **kwargs):
         raise AssertionError("should not fetch")
