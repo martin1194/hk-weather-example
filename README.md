@@ -220,6 +220,8 @@ hk-weather --new-tsing-yi-min
 hk-weather --new-tsing-yi-min --json
 hk-weather --stanley-min
 hk-weather --stanley-min --json
+hk-weather --shing-mun-valley-min
+hk-weather --shing-mun-valley-min --json
 hk-weather --tai-mo-max
 hk-weather --tai-mo-max --json
 hk-weather --tseung-kwan-o-max
@@ -1051,6 +1053,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --new-tsing-yi-min` prints the latest daily minimum temperature at New Tsing Yi Station, for example `2026-08-31  25.6°C`. `--min-temp` still prints the Observatory minimum, and the other station minimum flags still print their own stations. `--new-tsing-yi-temp` still prints New Tsing Yi Station's mean temperature, and `--new-tsing-yi-max` still prints its maximum. `--new-tsing-yi-min --json` prints that day as one JSON object. `--lang` selects the station name. The Chinese name is `新青衣站` in both traditional and simplified text. Days marked `***` are omitted. If none remain, it says `No New Tsing Yi Station minimum temperature is available.`
 
 `hk-weather --stanley-min` prints the latest daily minimum temperature at Stanley, for example `2026-08-31  26°C`. `--min-temp` still prints the Observatory minimum, and the other station minimum flags still print their own stations. `--stanley-temp` still prints Stanley's mean temperature, and `--stanley-max` still prints its maximum. `--stanley-min --json` prints that day as one JSON object. `--lang` selects the station name. The Chinese name is `赤柱` in both traditional and simplified text. Days marked `***` are omitted. If none remain, it says `No Stanley minimum temperature is available.`
+
+`hk-weather --shing-mun-valley-min` prints the latest daily minimum temperature at Tsuen Wan Shing Mun Valley, for example `2026-08-31  25°C`. `--min-temp` still prints the Observatory minimum, and the other station minimum flags still print their own stations. `--shing-mun-valley-temp` still prints the valley's mean temperature, `--shing-mun-valley-max` still prints its maximum, and `--tsuen-wan-min` still prints Tsuen Wan. `--shing-mun-valley-min --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `荃灣城門谷` and simplified text uses `荃湾城门谷`. Days marked `***` are omitted. If none remain, it says `No Tsuen Wan Shing Mun Valley minimum temperature is available.`
 
 `hk-weather --tai-mo-max` prints the latest daily maximum temperature at Tai Mo Shan, for example `2026-08-31  24.1°C`. `--max-temp` still prints the Observatory maximum, `--tai-mo-temp` still prints the peak's daily mean, and `--tai-mo-min` still prints the peak's daily minimum. `--tai-mo-max --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Tai Mo Shan maximum temperature is available.`
 
