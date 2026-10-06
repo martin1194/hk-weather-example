@@ -98,19 +98,21 @@ def test_cli_rejects_separate_negative_timeout(monkeypatch, capsys):
 
 
 def test_cli_argument_errors_are_one_line(capsys):
-    cases = (
-        (["--not-a-flag"], "error: unrecognized arguments: --not-a-flag\n"),
-        (
-            ["--lang", "fr"],
-            "error: argument --lang: invalid choice: 'fr' "
-            "(choose from 'en', 'tc', 'sc')\n",
-        ),
-    )
-    for argv, expected in cases:
-        with pytest.raises(SystemExit) as exc:
-            main(argv)
-        assert exc.value.code == 2
-        assert capsys.readouterr().err == expected
+    with pytest.raises(SystemExit) as exc:
+        main(["--not-a-flag"])
+    assert exc.value.code == 2
+    assert capsys.readouterr().err == "error: unrecognized arguments: --not-a-flag\n"
+
+    with pytest.raises(SystemExit) as exc:
+        main(["--lang", "fr"])
+    assert exc.value.code == 2
+    err = capsys.readouterr().err
+    # CPython 3.12.14 dropped quotes around choices; earlier versions keep them.
+    assert err.count("\n") == 1
+    assert err.startswith("error: argument --lang: invalid choice: 'fr'")
+    assert "usage:" not in err
+    for code in ("en", "tc", "sc"):
+        assert code in err
 
 
 def test_cli_rejects_day_with_another_report(monkeypatch, capsys):
