@@ -203,6 +203,16 @@ def test_cli_rejects_separate_negative_timeout(monkeypatch, capsys):
     )
 
 
+def test_cli_rejects_timeout_that_is_not_a_number(capsys):
+    for argv in (["--timeout", "10s"], ["--timeout", "foo"], ["--timeout", ""]):
+        with pytest.raises(SystemExit) as exc:
+            main(argv)
+        assert exc.value.code == 2
+        assert capsys.readouterr().err == (
+            "error: argument --timeout: timeout must be greater than 0\n"
+        )
+
+
 def test_cli_argument_errors_are_one_line(capsys):
     with pytest.raises(SystemExit) as exc:
         main(["--not-a-flag"])
