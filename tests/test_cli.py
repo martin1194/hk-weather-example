@@ -21105,6 +21105,75 @@ def test_cli_adventist_college_rain_when_missing(monkeypatch, capsys):
     }
 
 
+def test_cli_wong_shiu_chi_rain_prints_latest_day(monkeypatch, capsys):
+    seen = {}
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _text_response(
+            "年/Year,月/Month,日/Day,數值/Value,數據完整性/data Completeness\n"
+            "2026,8,29,6.5,C\n"
+            "2026,8,30,***,\n"
+            "2026,8,31,  12.5  ,C\n"
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--wong-shiu-chi-rain", "--lang", "tc"]) == 0
+    assert seen["url"].endswith("daily_R23_RF_2026.csv")
+    assert capsys.readouterr().out == (
+        "Hong Kong daily rainfall\n"
+        "Station: 大埔王肇枝中學\n"
+        "2026-08-31  12.5 mm\n"
+    )
+    assert main(["--wong-shiu-chi-rain", "--lang", "sc"]) == 0
+    assert capsys.readouterr().out == (
+        "Hong Kong daily rainfall\n"
+        "Station: 大埔王肇枝中学\n"
+        "2026-08-31  12.5 mm\n"
+    )
+
+
+def test_cli_wong_shiu_chi_rain_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Year,Month,Day,Value,Completeness\n"
+            "2026,8,31,12.5,C\n"
+        ),
+    )
+    assert main(["--wong-shiu-chi-rain", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "station": "Tai Po Wong Shiu Chi Secondary School",
+        "date": "2026-08-31",
+        "rainfall_mm": 12.5,
+    }
+
+
+def test_cli_wong_shiu_chi_rain_when_missing(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Year,Month,Day,Value,Completeness\n"
+            "2026,8,31,***,\n"
+        ),
+    )
+    assert main(["--wong-shiu-chi-rain"]) == 0
+    assert capsys.readouterr().out == (
+        "No Tai Po Wong Shiu Chi Secondary School rainfall is available.\n"
+    )
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(""),
+    )
+    assert main(["--wong-shiu-chi-rain", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No Tai Po Wong Shiu Chi Secondary School rainfall is available."
+    }
+
+
 def test_cli_rainstorm_prints_reminder(monkeypatch, capsys):
     seen = {}
     message = (
