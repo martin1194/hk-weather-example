@@ -481,6 +481,8 @@ hk-weather --sha-chau-prevailing
 hk-weather --sha-chau-prevailing --json
 hk-weather --star-ferry-prevailing
 hk-weather --star-ferry-prevailing --json
+hk-weather --tuen-mun-government-offices-prevailing
+hk-weather --tuen-mun-government-offices-prevailing --json
 hk-weather --mean-wind
 hk-weather --mean-wind --json
 hk-weather --cheung-wind
@@ -1373,6 +1375,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --sha-chau-prevailing` prints the latest daily prevailing wind direction at Sha Chau, for example `2026-08-31  350°`. `--prevailing` still prints Waglan Island, and the other station prevailing-wind flags still print their own stations. `--sha-chau-wind` still prints Sha Chau's mean wind speed, and `--north-point-prevailing` still prints North Point. `--sha-chau-prevailing --json` prints that day as one JSON object. `--lang` selects the station name. The Chinese name is `沙洲` in both traditional and simplified text. Days marked `***` are omitted. If none remain, it says `No Sha Chau prevailing wind is available.`
 
 `hk-weather --star-ferry-prevailing` prints the latest daily prevailing wind direction at Star Ferry(Kowloon), for example `2026-08-31  290°`. `--prevailing` still prints Waglan Island, and the other station prevailing-wind flags still print their own stations. `--star-ferry-wind` still prints the mean wind speed, and `--sha-chau-prevailing` still prints Sha Chau. `--star-ferry-prevailing --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `九龍天星碼頭` and simplified text uses `九龙天星码头`. Days marked `***` are omitted. If none remain, it says `No Star Ferry(Kowloon) prevailing wind is available.`
+
+`hk-weather --tuen-mun-government-offices-prevailing` prints the latest daily prevailing wind direction at Tuen Mun Government Offices, for example `2026-08-31  30°`. `--prevailing` still prints Waglan Island, and the other station prevailing-wind flags still print their own stations. `--tuen-mun-government-offices-wind` still prints the mean wind speed, and `--star-ferry-prevailing` still prints Star Ferry(Kowloon). `--tuen-mun-government-offices-prevailing --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `屯門政府合署` and simplified text uses `屯门政府合署`. Days marked `***` are omitted. If none remain, it says `No Tuen Mun Government Offices prevailing wind is available.`
 
 `hk-weather --mean-wind` prints the latest daily mean wind speed at Waglan Island, for example `2026-08-31  5.9 km/h`. `--prevailing` still prints the wind direction, and `--gust` still prints the latest gusts. `--mean-wind --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No mean wind speed is available.`
 
