@@ -133,6 +133,7 @@ from hk_weather.hko import (
     fetch_nine_humidity,
     fetch_sea_temp,
     fetch_north_point_am_sea,
+    fetch_north_point_pm_sea,
     fetch_soil_temp,
     fetch_year_rain,
     fetch_noon_rain,
@@ -559,6 +560,8 @@ from hk_weather.hko import (
     format_sea_temp_miss,
     format_morning_sea,
     format_north_point_am_sea_miss,
+    format_afternoon_sea,
+    format_north_point_pm_sea_miss,
     format_soil_temp,
     format_soil_temp_miss,
     format_noon_rain,
@@ -898,6 +901,8 @@ def build_parser() -> argparse.ArgumentParser:
             "--tc-info prints tropical cyclone information from the local forecast; "
             "--nine-day prints the 9-day forecast; --sea-temp prints the sea temperature; "
             "--north-point-am-sea prints the latest daily morning sea temperature at North Point; "
+            "--north-point-pm-sea prints the latest daily afternoon sea temperature "
+            "at North Point; "
             "--soil-temp prints soil temperatures; "
             "--nine-situation prints the 9-day general situation; "
             "--nine-updated prints when the 9-day forecast was updated; "
@@ -1351,6 +1356,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--north-point-am-sea",
         action="store_true",
         help="Print the latest daily morning sea temperature at North Point",
+    )
+    parser.add_argument(
+        "--north-point-pm-sea",
+        action="store_true",
+        help="Print the latest daily afternoon sea temperature at North Point",
     )
     parser.add_argument(
         "--soil-temp",
@@ -3298,6 +3308,18 @@ def main(argv: list[str] | None = None) -> int:
                     format_json(north_point_am_sea)
                     if args.json
                     else format_morning_sea(north_point_am_sea)
+                )
+        elif args.north_point_pm_sea:
+            north_point_pm_sea = fetch_north_point_pm_sea(
+                timeout=args.timeout, lang=args.lang
+            )
+            if north_point_pm_sea is None:
+                text = format_north_point_pm_sea_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(north_point_pm_sea)
+                    if args.json
+                    else format_afternoon_sea(north_point_pm_sea)
                 )
         elif args.soil_temp:
             soil_temp = fetch_soil_temp(timeout=args.timeout, lang=args.lang)
