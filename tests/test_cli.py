@@ -149,7 +149,9 @@ def test_cli_exit_statuses(monkeypatch, capsys):
     assert main([]) == 1
     assert capsys.readouterr().err == "error: down\n"
 
-    assert main(["--timeout", "0"]) == 2
+    with pytest.raises(SystemExit) as exc:
+        main(["--timeout", "0"])
+    assert exc.value.code == 2
     assert "timeout" in capsys.readouterr().err
 
 
@@ -168,8 +170,12 @@ def test_cli_accepts_lang_in_any_case(monkeypatch, capsys):
 
 
 def test_cli_rejects_non_positive_timeout(capsys):
-    assert main(["--timeout", "0"]) == 2
-    assert "timeout" in capsys.readouterr().err
+    with pytest.raises(SystemExit) as exc:
+        main(["--timeout", "0"])
+    assert exc.value.code == 2
+    assert capsys.readouterr().err == (
+        "error: argument --timeout: timeout must be greater than 0\n"
+    )
 
 
 def test_cli_rejects_non_finite_timeout(monkeypatch, capsys):
@@ -181,9 +187,17 @@ def test_cli_rejects_non_finite_timeout(monkeypatch, capsys):
         ["--timeout", "nan"],
         ["--timeout", "inf"],
         ["--timeout=-inf"],
+        ["--timeout", "0", "--version"],
+        ["--timeout", "-1", "--version"],
     ):
-        assert main(argv) == 2
-        assert capsys.readouterr().err == "error: timeout must be greater than 0\n"
+        with pytest.raises(SystemExit) as exc:
+            main(argv)
+        assert exc.value.code == 2
+        captured = capsys.readouterr()
+        assert captured.err == (
+            "error: argument --timeout: timeout must be greater than 0\n"
+        )
+        assert captured.out == ""
 
 
 def test_cli_rejects_separate_negative_timeout(monkeypatch, capsys):
@@ -192,8 +206,12 @@ def test_cli_rejects_separate_negative_timeout(monkeypatch, capsys):
 
     monkeypatch.setattr("hk_weather.cli.fetch_current", boom)
     for argv in (["--timeout", "-1"], ["--timeout", "-inf"], ["--timeout", "-1.5"]):
-        assert main(argv) == 2
-        assert capsys.readouterr().err == "error: timeout must be greater than 0\n"
+        with pytest.raises(SystemExit) as exc:
+            main(argv)
+        assert exc.value.code == 2
+        assert capsys.readouterr().err == (
+            "error: argument --timeout: timeout must be greater than 0\n"
+        )
 
     with pytest.raises(SystemExit) as exc:
         main(["--timeout", "--json"])
