@@ -32,6 +32,13 @@ def test_ci_uses_node24_actions():
     assert "Node.js 24" in readme
 
 
+def test_ci_finishes_every_python_version():
+    workflow = (ROOT / ".github/workflows/ci.yml").read_text()
+    readme = (ROOT / "README.md").read_text()
+    assert "fail-fast: false" in workflow
+    assert "does not cancel the other versions" in readme
+
+
 def test_ci_cancels_superseded_runs():
     workflow = (ROOT / ".github/workflows/ci.yml").read_text()
     readme = (ROOT / "README.md").read_text()
