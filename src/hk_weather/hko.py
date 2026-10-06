@@ -6775,6 +6775,26 @@ def fetch_discovery_bay_rain(timeout: float = 10, lang: str = "en") -> DailyRain
     return parse_discovery_bay_rain(text, lang)
 
 
+def fetch_adventist_college_rain(timeout: float = 10, lang: str = "en") -> DailyRain | None:
+    """Download the latest daily total rainfall at Hong Kong Adventist College(Sai Kung)."""
+    year = _hong_kong_today()[:4]
+    url = (
+        "https://data.weather.gov.hk/weatherAPI/cis/csvfile/R18/"
+        f"{year}/daily_R18_RF_{year}.csv"
+    )
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            raw = response.read()
+    except (urllib.error.URLError, TimeoutError) as exc:
+        raise WeatherError(f"could not reach Hong Kong Observatory: {exc}") from exc
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise WeatherError("Hong Kong Observatory returned invalid text") from exc
+    return parse_adventist_college_rain(text, lang)
+
+
 def fetch_rainstorm(
     url: str = DEFAULT_URL, timeout: float = 10, lang: str = "en"
 ) -> RainstormReminder | None:
@@ -18039,6 +18059,45 @@ def parse_discovery_bay_rain(text: str, lang: str = "en") -> DailyRain | None:
 def format_discovery_bay_rain_miss(*, as_json: bool = False) -> str:
     """Say that no Discovery Bay rainfall is available."""
     return _unavailable("No Discovery Bay rainfall is available.", as_json=as_json)
+
+
+_ADVENTIST_COLLEGE_RAIN_STATIONS = {
+    "en": "Hong Kong Adventist College(Sai Kung)",
+    "tc": "西貢(香港三育書院)",
+    "sc": "西贡(香港三育书院)",
+}
+
+
+def parse_adventist_college_rain(text: str, lang: str = "en") -> DailyRain | None:
+    """Turn the Hong Kong Adventist College rainfall CSV into the latest numeric day."""
+    station = _ADVENTIST_COLLEGE_RAIN_STATIONS.get(
+        lang, _ADVENTIST_COLLEGE_RAIN_STATIONS["en"]
+    )
+    latest: DailyRain | None = None
+    rows = csv.reader(io.StringIO(text))
+    for row in rows:
+        if len(row) < 4:
+            continue
+        year = _text(row[0]).lstrip("\ufeff")
+        month = _text(row[1])
+        day = _text(row[2])
+        value = _hour_mm(row[3])
+        if not (year.isdigit() and month.isdigit() and day.isdigit()) or value is None:
+            continue
+        latest = DailyRain(
+            station,
+            f"{int(year):04d}-{int(month):02d}-{int(day):02d}",
+            value,
+        )
+    return latest
+
+
+def format_adventist_college_rain_miss(*, as_json: bool = False) -> str:
+    """Say that no Hong Kong Adventist College(Sai Kung) rainfall is available."""
+    return _unavailable(
+        "No Hong Kong Adventist College(Sai Kung) rainfall is available.",
+        as_json=as_json,
+    )
 
 
 def parse_rainstorm(payload: dict) -> RainstormReminder | None:
