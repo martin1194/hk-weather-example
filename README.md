@@ -706,6 +706,8 @@ hk-weather --au-tau-rain
 hk-weather --au-tau-rain --json
 hk-weather --lok-ma-chau-rain
 hk-weather --lok-ma-chau-rain --json
+hk-weather --po-pin-chau-rain
+hk-weather --po-pin-chau-rain --json
 hk-weather --lamma-island-rain
 hk-weather --lamma-island-rain --json
 hk-weather --tuen-mun-home-rain
@@ -1613,6 +1615,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --au-tau-rain` prints the latest daily total rainfall at Au Tau, for example `2026-08-31  29.5 mm`. `--daily-rain` still prints the Observatory total, and the other station rainfall flags still print their own stations. A total of zero is kept. `--au-tau-rain --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `凹頭` and simplified text uses `凹头`. Days marked `***` are omitted. If none remain, it says `No Au Tau rainfall is available.`
 
 `hk-weather --lok-ma-chau-rain` prints the latest daily total rainfall at Lok Ma Chau, for example `2026-08-31  38.5 mm`. `--daily-rain` still prints the Observatory total, and the other station rainfall flags still print their own stations. A total of zero is kept. `--lok-ma-chau-rain --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `落馬洲` and simplified text uses `落马洲`. Days marked `***` are omitted. If none remain, it says `No Lok Ma Chau rainfall is available.`
+
+`hk-weather --po-pin-chau-rain` prints the latest daily total rainfall at Po Pin Chau, for example `2026-08-31  2.1 mm`. `--daily-rain` still prints the Observatory total, and the other station rainfall flags still print their own stations. `--discovery-bay-rain` still prints Discovery Bay, and `--lok-ma-chau-rain` still prints Lok Ma Chau. A total of zero is kept. `--po-pin-chau-rain --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `破邊洲` and simplified text uses `破边洲`. Days marked `***` are omitted. If none remain, it says `No Po Pin Chau rainfall is available.`
 
 `hk-weather --lamma-island-rain` prints the latest daily total rainfall at Lamma Island, for example `2026-08-31  18 mm`. `--daily-rain` still prints the Observatory total, and the other station rainfall flags still print their own stations. A total of zero is kept. `--lamma-island-rain --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `南丫島` and simplified text uses `南丫岛`. Days marked `***` are omitted. If none remain, it says `No Lamma Island rainfall is available.`
 
