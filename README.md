@@ -520,6 +520,8 @@ hk-weather --kai-tak-rain
 hk-weather --kai-tak-rain --json
 hk-weather --sha-tau-kok-rain
 hk-weather --sha-tau-kok-rain --json
+hk-weather --beas-river-rain
+hk-weather --beas-river-rain --json
 hk-weather --rainstorm
 hk-weather --rainstorm --json
 hk-weather --cyclone
@@ -1211,6 +1213,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --kai-tak-rain` prints the latest daily total rainfall at Kai Tak, for example `2026-08-31  28 mm`. `--daily-rain` still prints the Observatory total, and the other station rainfall flags still print their own stations. A total of zero is kept. `--kai-tak-rain --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Kai Tak rainfall is available.`
 
 `hk-weather --sha-tau-kok-rain` prints the latest daily total rainfall at Sha Tau Kok, for example `2026-08-31  13.5 mm`. `--daily-rain` still prints the Observatory total, and the other station rainfall flags still print their own stations. A total of zero is kept. `--sha-tau-kok-rain --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Sha Tau Kok rainfall is available.`
+
+`hk-weather --beas-river-rain` prints the latest daily total rainfall at Beas River, for example `2026-08-31  24.5 mm`. `--daily-rain` still prints the Observatory total, and the other station rainfall flags still print their own stations. A total of zero is kept. `--beas-river-rain --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Beas River rainfall is available.`
 
 `hk-weather --lightning` lists places where the current report shows lightning. `--lightning --json` prints those places as one JSON object. If none are reported, it says so.
 
