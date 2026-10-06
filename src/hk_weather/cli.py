@@ -335,6 +335,7 @@ from hk_weather.hko import (
     fetch_wong_tai_sin_max,
     fetch_tsuen_wan_max,
     fetch_kau_sai_chau_max,
+    fetch_kadoorie_farm_max,
     fetch_max_temp,
     fetch_min_temp,
     fetch_dew_point,
@@ -791,6 +792,7 @@ from hk_weather.hko import (
     format_wong_tai_sin_max_miss,
     format_tsuen_wan_max_miss,
     format_kau_sai_chau_max_miss,
+    format_kadoorie_farm_max_miss,
     format_max_temp,
     format_max_temp_miss,
     format_min_temp,
@@ -1088,6 +1090,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--wong-tai-sin-max prints the latest daily maximum temperature at Wong Tai Sin; "
             "--tsuen-wan-max prints the latest daily maximum temperature at Tsuen Wan; "
             "--kau-sai-chau-max prints the latest daily maximum temperature at Kau Sai Chau; "
+            "--kadoorie-farm-max prints the latest daily maximum temperature at Kadoorie Farm and Botanic Garden; "
             "--dew-point prints the latest daily mean dew point; "
             "--park-dew prints the latest daily mean dew point at King's Park; "
             "--cheung-dew prints the latest daily mean dew point at Cheung Chau; "
@@ -1785,6 +1788,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--kau-sai-chau-max",
         action="store_true",
         help="Print the latest daily maximum temperature at Kau Sai Chau",
+    )
+    parser.add_argument(
+        "--kadoorie-farm-max",
+        action="store_true",
+        help="Print the latest daily maximum temperature at Kadoorie Farm and Botanic Garden",
     )
     parser.add_argument(
         "--dew-point",
@@ -4051,6 +4059,18 @@ def main(argv: list[str] | None = None) -> int:
                     format_json(kau_sai_chau_max)
                     if args.json
                     else format_tai_mo_max(kau_sai_chau_max)
+                )
+        elif args.kadoorie_farm_max:
+            kadoorie_farm_max = fetch_kadoorie_farm_max(
+                timeout=args.timeout, lang=args.lang
+            )
+            if kadoorie_farm_max is None:
+                text = format_kadoorie_farm_max_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(kadoorie_farm_max)
+                    if args.json
+                    else format_tai_mo_max(kadoorie_farm_max)
                 )
         elif args.dew_point:
             dew_point = fetch_dew_point(timeout=args.timeout, lang=args.lang)
