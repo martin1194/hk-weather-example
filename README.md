@@ -485,6 +485,8 @@ hk-weather --tuen-mun-government-offices-prevailing
 hk-weather --tuen-mun-government-offices-prevailing --json
 hk-weather --yi-tung-shan-prevailing
 hk-weather --yi-tung-shan-prevailing --json
+hk-weather --tap-mun-east-prevailing
+hk-weather --tap-mun-east-prevailing --json
 hk-weather --mean-wind
 hk-weather --mean-wind --json
 hk-weather --cheung-wind
@@ -1385,6 +1387,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --tuen-mun-government-offices-prevailing` prints the latest daily prevailing wind direction at Tuen Mun Government Offices, for example `2026-08-31  30°`. `--prevailing` still prints Waglan Island, and the other station prevailing-wind flags still print their own stations. `--tuen-mun-government-offices-wind` still prints the mean wind speed, and `--star-ferry-prevailing` still prints Star Ferry(Kowloon). `--tuen-mun-government-offices-prevailing --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `屯門政府合署` and simplified text uses `屯门政府合署`. Days marked `***` are omitted. If none remain, it says `No Tuen Mun Government Offices prevailing wind is available.`
 
 `hk-weather --yi-tung-shan-prevailing` prints the latest daily prevailing wind direction at Yi Tung Shan, for example `2026-08-31  340°`. `--prevailing` still prints Waglan Island, and the other station prevailing-wind flags still print their own stations. `--yi-tung-shan-wind` still prints the mean wind speed, and `--tuen-mun-government-offices-prevailing` still prints Tuen Mun Government Offices. `--yi-tung-shan-prevailing --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `二東山` and simplified text uses `二东山`. Days marked `***` are omitted. If none remain, it says `No Yi Tung Shan prevailing wind is available.`
+
+`hk-weather --tap-mun-east-prevailing` prints the latest daily prevailing wind direction at Tap Mun East, for example `2026-08-31  350°`. `--prevailing` still prints Waglan Island, and the other station prevailing-wind flags still print their own stations. `--tap-mun-east-wind` still prints the mean wind speed, `--yi-tung-shan-prevailing` still prints Yi Tung Shan, and `--tap-mun-temp` still prints Tap Mun. `--tap-mun-east-prevailing --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `塔門東` and simplified text uses `塔门东`. Days marked `***` are omitted. If none remain, it says `No Tap Mun East prevailing wind is available.`
 
 `hk-weather --mean-wind` prints the latest daily mean wind speed at Waglan Island, for example `2026-08-31  5.9 km/h`. `--prevailing` still prints the wind direction, and `--gust` still prints the latest gusts. `--mean-wind --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No mean wind speed is available.`
 
