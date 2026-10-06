@@ -212,6 +212,38 @@ def test_cli_plain_omits_weather_icons(monkeypatch, capsys):
     assert "🌧️" not in summary
 
 
+def test_cli_fahrenheit_prints_beside_celsius(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_current",
+        lambda timeout, lang="en": SAMPLE_WEATHER,
+    )
+    assert main(["--fahrenheit"]) == 0
+    assert "Temperature: 28°C (82°F) (Hong Kong Observatory)" in capsys.readouterr().out
+
+    assert main(["-F", "--short", "--plain"]) == 0
+    assert capsys.readouterr().out == "Rain, 28°C (82°F), humidity 85%\n"
+
+    assert main(["--fahrenheit", "--json"]) == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["temperature_c"] == 28.0
+    assert "°F" not in json.dumps(payload)
+
+    from hk_weather.hko import SummaryToday, WeatherSummary
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_summary",
+        lambda timeout, lang="en": WeatherSummary(
+            conditions="Rain",
+            warnings=(),
+            today=SummaryToday("2026-10-06", 30, 25, "Medium"),
+        ),
+    )
+    assert main(["--summary", "--fahrenheit"]) == 0
+    summary = capsys.readouterr().out
+    assert "high 30°C (86°F)" in summary
+    assert "low 25°C (77°F)" in summary
+
+
 def test_cli_prints_report(monkeypatch, capsys):
     monkeypatch.setattr(
         "hk_weather.cli.fetch_current",
