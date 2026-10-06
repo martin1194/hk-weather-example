@@ -13231,11 +13231,15 @@ def test_cli_day_when_the_entry_is_missing(monkeypatch, capsys):
 
 
 def test_cli_day_rejects_out_of_range(capsys):
-    for value in ("0", "10", "foo"):
-        with pytest.raises(SystemExit) as exc:
-            main(["--day", value])
-        assert exc.value.code == 2
-        assert "1 to 9" in capsys.readouterr().err
+    for argv in (
+        ["--day", "0"],
+        ["--day", "10"],
+        ["--day", "foo"],
+        ["--day", "-1"],
+        ["--day=-2"],
+    ):
+        assert main(argv) == 2
+        assert capsys.readouterr().err == "error: day must be an integer from 1 to 9\n"
 
 
 def test_cli_psr_lists_each_day(monkeypatch, capsys):

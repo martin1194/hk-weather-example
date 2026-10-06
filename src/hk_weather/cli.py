@@ -2506,9 +2506,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--day",
-        type=_day_number,
         metavar="N",
-        help="Print day N of the 9-day forecast (1 is the first entry, not tomorrow)",
+        help="Print day N of the 9-day forecast (1 through 9; 1 is the first entry, not tomorrow)",
     )
     parser.add_argument(
         "-P",
@@ -3759,19 +3758,19 @@ def _is_number_token(token: str) -> bool:
 
 
 def _normalize_argv(argv: list[str] | None) -> list[str]:
-    """Keep a negative --timeout value from being parsed as another flag."""
+    """Keep a leading-minus option value from being parsed as another flag."""
     tokens = list(sys.argv[1:] if argv is None else argv)
     normalized: list[str] = []
     index = 0
     while index < len(tokens):
         token = tokens[index]
         if (
-            token == "--timeout"
+            token in {"--timeout", "--day"}
             and index + 1 < len(tokens)
             and tokens[index + 1].startswith("-")
             and _is_number_token(tokens[index + 1])
         ):
-            normalized.append(f"--timeout={tokens[index + 1]}")
+            normalized.append(f"{token}={tokens[index + 1]}")
             index += 2
             continue
         normalized.append(token)
@@ -3784,6 +3783,12 @@ def main(argv: list[str] | None = None) -> int:
     if not math.isfinite(args.timeout) or args.timeout <= 0:
         print("error: timeout must be greater than 0", file=sys.stderr)
         return 2
+    if args.day is not None:
+        try:
+            args.day = _day_number(args.day)
+        except argparse.ArgumentTypeError as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            return 2
     reports = _report_flags(args)
     if len(reports) > 1:
         chosen = " ".join(f"--{name}" for name in reports)
