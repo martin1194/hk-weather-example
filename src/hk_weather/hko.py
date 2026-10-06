@@ -9467,7 +9467,7 @@ def format_warnings(warnings: tuple[WeatherWarning, ...], *, as_json: bool = Fal
     """Render active warnings as a short list, or one JSON object."""
     if as_json:
         payload = {"warnings": [asdict(warning) for warning in warnings]}
-        return json.dumps(payload, indent=2) + "\n"
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
     if not warnings:
         return "No weather warnings are in force.\n"
     lines = ["Hong Kong weather warnings"]
@@ -9563,7 +9563,7 @@ def format_warning_info(details: tuple[WarningDetail, ...], *, as_json: bool = F
                 for item in details
             ]
         }
-        return json.dumps(payload, indent=2) + "\n"
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
     if not details:
         return "No detailed warning information is available.\n"
     lines = ["Hong Kong warning information"]
@@ -10111,7 +10111,7 @@ def format_day_miss(day: int, *, as_json: bool = False) -> str:
 
 def _unavailable(message: str, *, as_json: bool) -> str:
     if as_json:
-        return json.dumps({"message": message}, indent=2) + "\n"
+        return json.dumps({"message": message}, indent=2, ensure_ascii=False) + "\n"
     return message + "\n"
 
 
@@ -15953,6 +15953,7 @@ def format_place_miss(name: str, update_time: str, *, as_json: bool) -> str:
         json.dumps(
             {"update_time": update_time, "stations": [], "message": message},
             indent=2,
+            ensure_ascii=False,
         )
         + "\n"
     )
@@ -15987,7 +15988,7 @@ def format_places(report: StationReport, *, as_json: bool = False) -> str:
     """List station names from temperature and humidity readings."""
     names = [station.place for station in report.stations]
     if as_json:
-        return json.dumps({"places": names}, indent=2) + "\n"
+        return json.dumps({"places": names}, indent=2, ensure_ascii=False) + "\n"
     return "Hong Kong places\n" + "\n".join(names) + "\n"
 
 
@@ -24561,7 +24562,7 @@ def format_json(
     | LunarDate,
 ) -> str:
     """Render the same report as one JSON object."""
-    return json.dumps(asdict(report), indent=2) + "\n"
+    return json.dumps(asdict(report), indent=2, ensure_ascii=False) + "\n"
 
 
 def _temperature(payload: dict) -> tuple[str, float]:
