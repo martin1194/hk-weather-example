@@ -395,6 +395,8 @@ hk-weather --tai-mei-tuk-wind
 hk-weather --tai-mei-tuk-wind --json
 hk-weather --lamma-island-wind
 hk-weather --lamma-island-wind --json
+hk-weather --kai-tak-wind
+hk-weather --kai-tak-wind --json
 hk-weather --forecast-icon
 hk-weather --forecast-icon --json
 hk-weather --quake
@@ -1107,6 +1109,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --tai-mei-tuk-wind` prints the latest daily mean wind speed at Tai Mei Tuk, for example `2026-08-31  5.7 km/h`. `--mean-wind` still prints Waglan Island, and the other station wind flags still print their own stations. `--tai-mei-tuk-temp` still prints Tai Mei Tuk's mean temperature, and `--tai-mei-tuk-rain` still prints its rainfall. A speed of zero is kept. `--tai-mei-tuk-wind --json` prints that day as one JSON object. `--lang` selects the station name. The Chinese name is `大美督` in both traditional and simplified text. Days marked `***` are omitted. If none remain, it says `No Tai Mei Tuk mean wind speed is available.`
 
 `hk-weather --lamma-island-wind` prints the latest daily mean wind speed at Lamma Island, for example `2026-08-31  6 km/h`. `--mean-wind` still prints Waglan Island, and the other station wind flags still print their own stations. `--lamma-island-rain` still prints Lamma Island's rainfall. A speed of zero is kept. `--lamma-island-wind --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `南丫島` and simplified text uses `南丫岛`. Days marked `***` are omitted. If none remain, it says `No Lamma Island mean wind speed is available.`
+
+`hk-weather --kai-tak-wind` prints the latest daily mean wind speed at Kai Tak, for example `2026-08-31  4.7 km/h`. `--mean-wind` still prints Waglan Island, and the other station wind flags still print their own stations. `--kai-tak-rain` still prints Kai Tak's rainfall. A speed of zero is kept. `--kai-tak-wind --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `啟德` and simplified text uses `启德`. Days marked `***` are omitted. If none remain, it says `No Kai Tak mean wind speed is available.`
 
 `hk-weather --forecast-icon` prints each day's weather icon from that forecast (`ForecastIcon`), for example `2026-10-04 Sunday  54  Sunny Intervals with Showers`. `--wind` still prints the wind. `--forecast-icon --json` prints those days as one JSON object. `--lang` applies. If no icon is present, it says `No forecast icons are available.`
 
