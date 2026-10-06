@@ -422,6 +422,7 @@ from hk_weather.hko import (
     fetch_shing_mun_valley_dew,
     fetch_tuen_mun_home_dew,
     fetch_buoy_2_dew,
+    fetch_buoy_8_dew,
     fetch_cloud,
     fetch_evaporation,
     fetch_evapotranspiration,
@@ -946,6 +947,7 @@ from hk_weather.hko import (
     format_shing_mun_valley_dew_miss,
     format_tuen_mun_home_dew_miss,
     format_buoy_2_dew_miss,
+    format_buoy_8_dew_miss,
     format_cloud,
     format_cloud_miss,
     format_evaporation,
@@ -1301,6 +1303,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--shing-mun-valley-dew prints the latest daily mean dew point at Tsuen Wan Shing Mun Valley; "
             "--tuen-mun-home-dew prints the latest daily mean dew point at Tuen Mun Children and Juvenile Home; "
             "--buoy-2-dew prints the latest daily mean dew point at Automatic Weather Buoy No.2; "
+            "--buoy-8-dew prints the latest daily mean dew point at Automatic Weather Buoy No.8; "
             "--cloud prints the latest daily mean cloud amount; "
             "--evaporation prints the latest daily evaporation; "
             "--evapotranspiration prints the latest monthly potential evapotranspiration; "
@@ -2312,6 +2315,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--buoy-2-dew",
         action="store_true",
         help="Print the latest daily mean dew point at Automatic Weather Buoy No.2",
+    )
+    parser.add_argument(
+        "--buoy-8-dew",
+        action="store_true",
+        help="Print the latest daily mean dew point at Automatic Weather Buoy No.8",
     )
     parser.add_argument(
         "--cloud",
@@ -5240,6 +5248,16 @@ def main(argv: list[str] | None = None) -> int:
                     format_json(buoy_2_dew)
                     if args.json
                     else format_dew_point(buoy_2_dew)
+                )
+        elif args.buoy_8_dew:
+            buoy_8_dew = fetch_buoy_8_dew(timeout=args.timeout, lang=args.lang)
+            if buoy_8_dew is None:
+                text = format_buoy_8_dew_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(buoy_8_dew)
+                    if args.json
+                    else format_dew_point(buoy_8_dew)
                 )
         elif args.cloud:
             cloud = fetch_cloud(timeout=args.timeout, lang=args.lang)
