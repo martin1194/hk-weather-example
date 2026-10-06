@@ -118,6 +118,7 @@ from hk_weather.hko import (
     fetch_pak_tam_chung_humidity,
     fetch_beas_river_humidity,
     fetch_runway_park_humidity,
+    fetch_kowloon_city_humidity,
     fetch_icon_time,
     fetch_icon,
     fetch_current_updated,
@@ -533,6 +534,7 @@ from hk_weather.hko import (
     format_pak_tam_chung_humidity_miss,
     format_beas_river_humidity_miss,
     format_runway_park_humidity_miss,
+    format_kowloon_city_humidity_miss,
     format_hour_rain,
     format_hour_rain_miss,
     format_hour_wettest,
@@ -977,6 +979,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--pak-tam-chung-humidity prints the latest daily mean humidity at Pak Tam Chung (Tsak Yue Wu); "
             "--beas-river-humidity prints the latest daily mean humidity at Beas River; "
             "--runway-park-humidity prints the latest daily mean humidity at Kai Tak Runway Park; "
+            "--kowloon-city-humidity prints the latest daily mean humidity at Kowloon City; "
             "--temps lists temperatures by place; "
             "--temp-time prints when those temperatures were recorded; "
             "--minute-temp prints the latest 1-minute mean temperature; "
@@ -3037,6 +3040,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--runway-park-humidity",
         action="store_true",
         help="Print the latest daily mean humidity at Kai Tak Runway Park",
+    )
+    parser.add_argument(
+        "--kowloon-city-humidity",
+        action="store_true",
+        help="Print the latest daily mean humidity at Kowloon City",
     )
     parser.add_argument(
         "--temps",
@@ -6356,6 +6364,18 @@ def main(argv: list[str] | None = None) -> int:
                     format_json(runway_park_humidity)
                     if args.json
                     else format_mean_humidity(runway_park_humidity)
+                )
+        elif args.kowloon_city_humidity:
+            kowloon_city_humidity = fetch_kowloon_city_humidity(
+                timeout=args.timeout, lang=args.lang
+            )
+            if kowloon_city_humidity is None:
+                text = format_kowloon_city_humidity_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(kowloon_city_humidity)
+                    if args.json
+                    else format_mean_humidity(kowloon_city_humidity)
                 )
         elif args.temps:
             temps = fetch_temps(timeout=args.timeout, lang=args.lang)
