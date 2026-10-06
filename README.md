@@ -1824,4 +1824,4 @@ ruff check
 pytest
 ```
 
-GitHub Actions runs the same install, `ruff check`, and `pytest` on Python 3.10, 3.11, 3.12, and 3.13 for pushes and pull requests to `main`. A new push to the same branch cancels the CI run that is still in progress. The package requires Python 3.10 or newer. Pip downloads are cached from `pyproject.toml` so later installs are faster.
+GitHub Actions runs the same install, `ruff check`, and `pytest` on Python 3.10, 3.11, 3.12, and 3.13 for pushes and pull requests to `main`. Checkout and Python setup use the current Node.js 24 actions. A new push to the same branch cancels the CI run that is still in progress. The package requires Python 3.10 or newer. Pip downloads are cached from `pyproject.toml` so later installs are faster.
