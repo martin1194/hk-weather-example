@@ -19541,6 +19541,38 @@ def test_cli_list_places_json(monkeypatch, capsys):
     assert json.loads(capsys.readouterr().out) == {"places": ["Hong Kong Observatory"]}
 
 
+def test_cli_place_can_only_be_given_once(monkeypatch, capsys):
+    def boom(*args, **kwargs):
+        raise AssertionError("should not fetch")
+
+    monkeypatch.setattr("hk_weather.cli.fetch_stations", boom)
+    monkeypatch.setattr("importlib.metadata.version", lambda name: "1.2.3")
+    for argv in (
+        ["--place", "King's Park", "--place", "Sha Tin"],
+        ["--place=King's Park", "--place=Sha Tin"],
+        ["--place", "King's Park", "--place", "King's Park"],
+        ["--place", "King's Park", "--place", "Sha Tin", "--version"],
+    ):
+        with pytest.raises(SystemExit) as exc:
+            main(argv)
+        assert exc.value.code == 2
+        captured = capsys.readouterr()
+        assert captured.err == "error: --place can only be given once\n"
+        assert captured.out == ""
+
+    with pytest.raises(SystemExit) as exc:
+        main(["--place", "King's Park", "--place", "   "])
+    assert exc.value.code == 2
+    captured = capsys.readouterr()
+    assert captured.err == "error: argument --place: place must not be empty\n"
+    assert captured.out == ""
+
+    with pytest.raises(SystemExit) as exc:
+        main(["--place", "King's Park", "--version"])
+    assert exc.value.code == 0
+    assert capsys.readouterr().out == "hk-weather 1.2.3\n"
+
+
 def test_cli_place_rejects_blank_name(monkeypatch, capsys):
     def boom(*args, **kwargs):
         raise AssertionError("should not fetch")

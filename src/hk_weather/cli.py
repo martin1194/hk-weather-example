@@ -1097,6 +1097,15 @@ def _place_name(value: str) -> str:
     return name
 
 
+class _PlaceAction(argparse.Action):
+    """Reject a second --place while the command line is parsed."""
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        if getattr(namespace, self.dest, None) is not None:
+            parser.error("--place can only be given once")
+        setattr(namespace, self.dest, values)
+
+
 class _QuietParser(argparse.ArgumentParser):
     """Report argument errors as one line, without the full flag list."""
 
@@ -3816,9 +3825,10 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--place",
+        action=_PlaceAction,
         type=_place_name,
         metavar="NAME",
-        help="Print temperature and humidity for stations matching NAME (must not be blank)",
+        help="Print temperature and humidity for stations matching NAME (must not be blank; give this flag once)",
     )
     parser.add_argument(
         "--lang",
