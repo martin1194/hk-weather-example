@@ -3837,6 +3837,26 @@ def fetch_shing_mun_valley_max(timeout: float = 10, lang: str = "en") -> TaiMoTe
     return parse_shing_mun_valley_max(text, lang)
 
 
+def fetch_tuen_mun_home_max(timeout: float = 10, lang: str = "en") -> TaiMoTemp | None:
+    """Download the latest daily maximum temperature at Tuen Mun Children and Juvenile Home."""
+    year = _hong_kong_today()[:4]
+    url = (
+        "https://data.weather.gov.hk/weatherAPI/cis/csvfile/TU1/"
+        f"{year}/daily_TU1_MAXT_{year}.csv"
+    )
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            raw = response.read()
+    except (urllib.error.URLError, TimeoutError) as exc:
+        raise WeatherError(f"could not reach Hong Kong Observatory: {exc}") from exc
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise WeatherError("Hong Kong Observatory returned invalid text") from exc
+    return parse_tuen_mun_home_max(text, lang)
+
+
 def fetch_max_temp(timeout: float = 10, lang: str = "en") -> DailyMax | None:
     """Download the latest daily maximum temperature (`dataType=CLMMAXT`, station HKO)."""
     year = _hong_kong_today()[:4]
@@ -18655,6 +18675,43 @@ def format_shing_mun_valley_max_miss(*, as_json: bool = False) -> str:
     """Say that no Tsuen Wan Shing Mun Valley maximum temperature is available."""
     return _unavailable(
         "No Tsuen Wan Shing Mun Valley maximum temperature is available.",
+        as_json=as_json,
+    )
+
+
+_TUEN_MUN_HOME_MAX_STATIONS = {
+    "en": "Tuen Mun Children and Juvenile Home",
+    "tc": "屯門兒童及青少年院",
+    "sc": "屯门儿童及青少年院",
+}
+
+
+def parse_tuen_mun_home_max(text: str, lang: str = "en") -> TaiMoTemp | None:
+    """Turn the Tuen Mun Children and Juvenile Home maximum CSV into the latest numeric day."""
+    station = _TUEN_MUN_HOME_MAX_STATIONS.get(lang, _TUEN_MUN_HOME_MAX_STATIONS["en"])
+    latest: TaiMoTemp | None = None
+    rows = csv.reader(io.StringIO(text))
+    for row in rows:
+        if len(row) < 4:
+            continue
+        year = _text(row[0]).lstrip("\ufeff")
+        month = _text(row[1])
+        day = _text(row[2])
+        value = _hour_mm(row[3])
+        if not (year.isdigit() and month.isdigit() and day.isdigit()) or value is None:
+            continue
+        latest = TaiMoTemp(
+            station,
+            f"{int(year):04d}-{int(month):02d}-{int(day):02d}",
+            value,
+        )
+    return latest
+
+
+def format_tuen_mun_home_max_miss(*, as_json: bool = False) -> str:
+    """Say that no Tuen Mun Children and Juvenile Home maximum temperature is available."""
+    return _unavailable(
+        "No Tuen Mun Children and Juvenile Home maximum temperature is available.",
         as_json=as_json,
     )
 

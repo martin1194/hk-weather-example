@@ -377,6 +377,7 @@ from hk_weather.hko import (
     fetch_new_tsing_yi_max,
     fetch_stanley_max,
     fetch_shing_mun_valley_max,
+    fetch_tuen_mun_home_max,
     fetch_max_temp,
     fetch_min_temp,
     fetch_dew_point,
@@ -885,6 +886,7 @@ from hk_weather.hko import (
     format_new_tsing_yi_max_miss,
     format_stanley_max_miss,
     format_shing_mun_valley_max_miss,
+    format_tuen_mun_home_max_miss,
     format_max_temp,
     format_max_temp_miss,
     format_min_temp,
@@ -1233,6 +1235,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--new-tsing-yi-max prints the latest daily maximum temperature at New Tsing Yi Station; "
             "--stanley-max prints the latest daily maximum temperature at Stanley; "
             "--shing-mun-valley-max prints the latest daily maximum temperature at Tsuen Wan Shing Mun Valley; "
+            "--tuen-mun-home-max prints the latest daily maximum temperature at Tuen Mun Children and Juvenile Home; "
             "--dew-point prints the latest daily mean dew point; "
             "--park-dew prints the latest daily mean dew point at King's Park; "
             "--cheung-dew prints the latest daily mean dew point at Cheung Chau; "
@@ -2083,6 +2086,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--shing-mun-valley-max",
         action="store_true",
         help="Print the latest daily maximum temperature at Tsuen Wan Shing Mun Valley",
+    )
+    parser.add_argument(
+        "--tuen-mun-home-max",
+        action="store_true",
+        help="Print the latest daily maximum temperature at Tuen Mun Children and Juvenile Home",
     )
     parser.add_argument(
         "--dew-point",
@@ -4776,6 +4784,18 @@ def main(argv: list[str] | None = None) -> int:
                     format_json(shing_mun_valley_max)
                     if args.json
                     else format_tai_mo_max(shing_mun_valley_max)
+                )
+        elif args.tuen_mun_home_max:
+            tuen_mun_home_max = fetch_tuen_mun_home_max(
+                timeout=args.timeout, lang=args.lang
+            )
+            if tuen_mun_home_max is None:
+                text = format_tuen_mun_home_max_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(tuen_mun_home_max)
+                    if args.json
+                    else format_tai_mo_max(tuen_mun_home_max)
                 )
         elif args.dew_point:
             dew_point = fetch_dew_point(timeout=args.timeout, lang=args.lang)

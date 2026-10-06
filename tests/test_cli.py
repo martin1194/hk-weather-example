@@ -9271,6 +9271,75 @@ def test_cli_shing_mun_valley_max_when_missing(monkeypatch, capsys):
     }
 
 
+def test_cli_tuen_mun_home_max_prints_latest_day(monkeypatch, capsys):
+    seen = {}
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _text_response(
+            "年/Year,月/Month,日/Day,數值/Value,數據完整性/data Completeness\n"
+            "2026,8,29,31.2,C\n"
+            "2026,8,30,***,\n"
+            "2026,8,31,  30.9  ,C\n"
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--tuen-mun-home-max", "--lang", "tc"]) == 0
+    assert seen["url"].endswith("daily_TU1_MAXT_2026.csv")
+    assert capsys.readouterr().out == (
+        "Hong Kong daily maximum temperature\n"
+        "Station: 屯門兒童及青少年院\n"
+        "2026-08-31  30.9°C\n"
+    )
+    assert main(["--tuen-mun-home-max", "--lang", "sc"]) == 0
+    assert capsys.readouterr().out == (
+        "Hong Kong daily maximum temperature\n"
+        "Station: 屯门儿童及青少年院\n"
+        "2026-08-31  30.9°C\n"
+    )
+
+
+def test_cli_tuen_mun_home_max_json_is_one_object(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Year,Month,Day,Value,Completeness\n"
+            "2026,8,31,30.9,C\n"
+        ),
+    )
+    assert main(["--tuen-mun-home-max", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "station": "Tuen Mun Children and Juvenile Home",
+        "date": "2026-08-31",
+        "temperature_c": 30.9,
+    }
+
+
+def test_cli_tuen_mun_home_max_when_missing(monkeypatch, capsys):
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Year,Month,Day,Value,Completeness\n"
+            "2026,8,31,***,\n"
+        ),
+    )
+    assert main(["--tuen-mun-home-max"]) == 0
+    assert capsys.readouterr().out == (
+        "No Tuen Mun Children and Juvenile Home maximum temperature is available.\n"
+    )
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(""),
+    )
+    assert main(["--tuen-mun-home-max", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No Tuen Mun Children and Juvenile Home maximum temperature is available."
+    }
+
+
 def test_cli_dew_point_prints_latest_day(monkeypatch, capsys):
     seen = {}
     monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
