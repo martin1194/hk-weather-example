@@ -55,6 +55,13 @@ def test_ci_stops_a_hung_job():
     assert "15 minutes" in readme
 
 
+def test_ci_can_be_started_by_hand():
+    workflow = (ROOT / ".github/workflows/ci.yml").read_text()
+    readme = (ROOT / "README.md").read_text()
+    assert "workflow_dispatch:" in workflow
+    assert "started by hand from the Actions tab" in readme
+
+
 def test_ci_cancels_superseded_runs():
     workflow = (ROOT / ".github/workflows/ci.yml").read_text()
     readme = (ROOT / "README.md").read_text()
