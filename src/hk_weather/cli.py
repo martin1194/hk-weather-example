@@ -119,6 +119,7 @@ from hk_weather.hko import (
     fetch_beas_river_humidity,
     fetch_runway_park_humidity,
     fetch_kowloon_city_humidity,
+    fetch_nei_lak_shan_humidity,
     fetch_icon_time,
     fetch_icon,
     fetch_current_updated,
@@ -537,6 +538,7 @@ from hk_weather.hko import (
     format_beas_river_humidity_miss,
     format_runway_park_humidity_miss,
     format_kowloon_city_humidity_miss,
+    format_nei_lak_shan_humidity_miss,
     format_hour_rain,
     format_hour_rain_miss,
     format_hour_wettest,
@@ -984,6 +986,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--beas-river-humidity prints the latest daily mean humidity at Beas River; "
             "--runway-park-humidity prints the latest daily mean humidity at Kai Tak Runway Park; "
             "--kowloon-city-humidity prints the latest daily mean humidity at Kowloon City; "
+            "--nei-lak-shan-humidity prints the latest daily mean humidity at Nei Lak Shan; "
             "--temps lists temperatures by place; "
             "--temp-time prints when those temperatures were recorded; "
             "--minute-temp prints the latest 1-minute mean temperature; "
@@ -3061,6 +3064,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--kowloon-city-humidity",
         action="store_true",
         help="Print the latest daily mean humidity at Kowloon City",
+    )
+    parser.add_argument(
+        "--nei-lak-shan-humidity",
+        action="store_true",
+        help="Print the latest daily mean humidity at Nei Lak Shan",
     )
     parser.add_argument(
         "--temps",
@@ -6416,6 +6424,18 @@ def main(argv: list[str] | None = None) -> int:
                     format_json(kowloon_city_humidity)
                     if args.json
                     else format_mean_humidity(kowloon_city_humidity)
+                )
+        elif args.nei_lak_shan_humidity:
+            nei_lak_shan_humidity = fetch_nei_lak_shan_humidity(
+                timeout=args.timeout, lang=args.lang
+            )
+            if nei_lak_shan_humidity is None:
+                text = format_nei_lak_shan_humidity_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(nei_lak_shan_humidity)
+                    if args.json
+                    else format_mean_humidity(nei_lak_shan_humidity)
                 )
         elif args.temps:
             temps = fetch_temps(timeout=args.timeout, lang=args.lang)
