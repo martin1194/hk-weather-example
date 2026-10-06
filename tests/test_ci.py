@@ -39,6 +39,15 @@ def test_ci_finishes_every_python_version():
     assert "does not cancel the other versions" in readme
 
 
+def test_ci_limits_token_permissions():
+    workflow = (ROOT / ".github/workflows/ci.yml").read_text()
+    readme = (ROOT / "README.md").read_text()
+    assert "contents: read" in workflow
+    assert "actions: write" in workflow
+    assert "contents: write" not in workflow
+    assert "read the repository and update the pip cache" in readme
+
+
 def test_ci_cancels_superseded_runs():
     workflow = (ROOT / ".github/workflows/ci.yml").read_text()
     readme = (ROOT / "README.md").read_text()
