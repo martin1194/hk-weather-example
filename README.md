@@ -14,6 +14,8 @@ Pass one report flag at a time. `--json` and `--lang` combine with that flag. `-
 pip install -e .
 hk-weather
 hk-weather --version
+hk-weather --about
+hk-weather --about --json
 hk-weather --short
 hk-weather --summary
 hk-weather --summary --json
@@ -1809,6 +1811,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --list-places` prints the station names from the current report (temperature and humidity), so you can see what to pass to `--place`.
 
 `hk-weather --place NAME` prints the same readings for stations whose name contains NAME (case-insensitive). `--json` and `--lang` apply. If nothing matches, it says so. A blank name, including one that is only spaces, exits with `error: argument --place: place must not be empty` while the command line is parsed, so `--place " " --version` does not print the version. Giving `--place` twice, as in `--place "King's Park" --place "Sha Tin"`, exits with `error: --place can only be given once` instead of quietly using the last name, and `--place "King's Park" --place "Sha Tin" --version` does not print the version.
+
+`hk-weather --about` prints the program version and the Hong Kong Observatory open-data page. It does not call the Observatory. `--about --json` prints that note as one JSON object.
 
 ## Exit status
 

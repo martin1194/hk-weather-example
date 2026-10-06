@@ -30,6 +30,33 @@ def test_cli_version_prints_package_metadata(monkeypatch, capsys):
     assert capsys.readouterr().out == "hk-weather 1.2.3\n"
 
 
+def test_cli_about_prints_the_data_source(monkeypatch, capsys):
+    monkeypatch.setattr("importlib.metadata.version", lambda name: "1.2.3")
+
+    def fail_fetch(*args, **kwargs):
+        raise AssertionError("about must not call the Observatory")
+
+    monkeypatch.setattr("hk_weather.cli.fetch_current", fail_fetch)
+    assert main(["--about"]) == 0
+    assert capsys.readouterr().out == (
+        "hk-weather 1.2.3\n"
+        "Current weather for Hong Kong, from the Hong Kong Observatory open data API. "
+        "No API key is required.\n"
+        "Data: https://www.hko.gov.hk/en/abouthko/opendata_intro.htm\n"
+    )
+
+    assert main(["--about", "--json"]) == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["name"] == "hk-weather"
+    assert payload["version"] == "1.2.3"
+    assert "opendata_intro.htm" in payload["data_url"]
+
+    assert main(["--about", "--forecast"]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "pass one report flag at a time (--about --forecast)" in captured.err
+
+
 def test_cli_version_falls_back_when_not_installed(monkeypatch, capsys):
     from importlib.metadata import PackageNotFoundError
 
