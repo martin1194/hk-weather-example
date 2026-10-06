@@ -116,6 +116,8 @@ hk-weather --shau-kei-wan-temp
 hk-weather --shau-kei-wan-temp --json
 hk-weather --happy-valley-temp
 hk-weather --happy-valley-temp --json
+hk-weather --tai-mei-tuk-temp
+hk-weather --tai-mei-tuk-temp --json
 hk-weather --max-temp
 hk-weather --max-temp --json
 hk-weather --min-temp
@@ -781,6 +783,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --shau-kei-wan-temp` prints the latest daily mean temperature at Shau Kei Wan, for example `2026-08-31  27.1°C`. `--mean-temp` still prints the Observatory reading, and the other station temperature flags still print their own stations. `--shau-kei-wan-humidity` still prints Shau Kei Wan's humidity, `--shau-kei-wan-dew` still prints its dew point, and `--shau-kei-wan-rain` still prints its rainfall. `--shau-kei-wan-temp --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Shau Kei Wan temperature is available.`
 
 `hk-weather --happy-valley-temp` prints the latest daily mean temperature at Happy Valley, for example `2026-08-31  28.4°C`. `--mean-temp` still prints the Observatory reading, and the other station temperature flags still print their own stations. `--heat-index` still prints the Hong Kong Heat Index, which can include Happy Valley. `--happy-valley-temp --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Happy Valley temperature is available.`
+
+`hk-weather --tai-mei-tuk-temp` prints the latest daily mean temperature at Tai Mei Tuk, for example `2026-08-31  26.1°C`. `--mean-temp` still prints the Observatory reading, and the other station temperature flags still print their own stations. `--happy-valley-temp` still prints Happy Valley's mean temperature. `--tai-mei-tuk-temp --json` prints that day as one JSON object. `--lang` selects the station name. The Chinese name is `大美督` in both traditional and simplified text. Days marked `***` are omitted. If none remain, it says `No Tai Mei Tuk temperature is available.`
 
 `hk-weather --max-temp` prints the latest daily maximum temperature at the Observatory for that same year (`dataType=CLMMAXT`, station HKO), for example `2026-08-31  29.5°C`. `--mean-temp` still prints the daily mean. `--hottest` still prints the current warmest place. `--max-temp --json` prints that day as one JSON object. `--lang` applies. If no numeric day is present, it says `No daily maximum temperature is available.`
 
