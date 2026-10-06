@@ -16,6 +16,8 @@ hk-weather
 hk-weather --version
 hk-weather --about
 hk-weather --about --json
+hk-weather --find tide
+hk-weather --find tide --json
 hk-weather --short
 hk-weather --summary
 hk-weather --summary --json
@@ -1813,6 +1815,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --place NAME` prints the same readings for stations whose name contains NAME (case-insensitive). `--json` and `--lang` apply. If nothing matches, it says so. A blank name, including one that is only spaces, exits with `error: argument --place: place must not be empty` while the command line is parsed, so `--place " " --version` does not print the version. Giving `--place` twice, as in `--place "King's Park" --place "Sha Tin"`, exits with `error: --place can only be given once` instead of quietly using the last name, and `--place "King's Park" --place "Sha Tin" --version` does not print the version.
 
 `hk-weather --about` prints the program version and the Hong Kong Observatory open-data page. It does not call the Observatory. `--about --json` prints that note as one JSON object.
+
+`hk-weather --find TEXT` lists flags whose name or description contains TEXT, without calling the Observatory. Matching ignores case. `--find TEXT --json` prints those flags as a JSON array. A blank search exits with `error: argument --find: search text must not be empty`.
 
 ## Exit status
 
