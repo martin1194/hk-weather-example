@@ -666,6 +666,7 @@ from hk_weather.hko import (
     format_situation_miss,
     format_summary,
     format_report,
+    format_raining,
     format_stations,
     format_strikes,
     format_strikes_miss,
@@ -1225,6 +1226,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--where adds the station name to the one-line report; "
             "--live-dew estimates the dew point from the current temperature and humidity; "
             "--when adds the observation time; "
+            "--raining prints yes or no; "
             "Current conditions by default; --summary prints a short briefing; "
             "--forecast prints the local forecast; "
             "--outlook prints the local-forecast outlook; "
@@ -1700,6 +1702,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--short",
         action="store_true",
         help="Print current conditions on one line (not with --json or another report)",
+    )
+    parser.add_argument(
+        "--raining",
+        action="store_true",
+        help="Print yes or no for rain, showers, drizzle, thunderstorms, or district rainfall",
     )
     parser.add_argument(
         "--plain",
@@ -8176,7 +8183,9 @@ def main(argv: list[str] | None = None) -> int:
             )
         else:
             weather = fetch_current(timeout=args.timeout, lang=args.lang)
-            if args.json:
+            if args.raining:
+                text = format_raining(weather, as_json=args.json)
+            elif args.json:
                 text = format_json(weather)
             elif args.short:
                 text = format_short(

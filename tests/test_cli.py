@@ -424,6 +424,48 @@ def test_cli_when_shows_the_observation_time(monkeypatch, capsys):
     assert "HKT" not in json.dumps(payload)
 
 
+def test_cli_raining_answers_yes_or_no(monkeypatch, capsys):
+    current = {"weather": SAMPLE_WEATHER}
+
+    def fetch(timeout, lang="en"):
+        return current["weather"]
+
+    monkeypatch.setattr("hk_weather.cli.fetch_current", fetch)
+    assert main(["--raining"]) == 0
+    assert capsys.readouterr().out == "yes\n"
+
+    current["weather"] = replace(SAMPLE_WEATHER, conditions="Sunny", rainfall_mm=None)
+    assert main(["--raining"]) == 0
+    assert capsys.readouterr().out == "no\n"
+
+    current["weather"] = replace(
+        SAMPLE_WEATHER, conditions="Sunny Periods with A Few Showers", rainfall_mm=None
+    )
+    assert main(["--raining"]) == 0
+    assert capsys.readouterr().out == "yes\n"
+
+    current["weather"] = replace(SAMPLE_WEATHER, conditions="Sunny", rainfall_mm=0.0)
+    assert main(["--raining"]) == 0
+    assert capsys.readouterr().out == "no\n"
+
+    current["weather"] = replace(SAMPLE_WEATHER, conditions="Sunny", rainfall_mm=0.4)
+    assert main(["--raining"]) == 0
+    assert capsys.readouterr().out == "yes\n"
+
+    current["weather"] = replace(SAMPLE_WEATHER, conditions="Rainbow", rainfall_mm=None)
+    assert main(["--raining"]) == 0
+    assert capsys.readouterr().out == "no\n"
+
+    current["weather"] = SAMPLE_WEATHER
+    assert main(["--raining", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {"raining": True}
+
+    assert main(["--raining", "--forecast"]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "pass one report flag at a time (--raining --forecast)" in captured.err
+
+
 def test_cli_prints_report(monkeypatch, capsys):
     monkeypatch.setattr(
         "hk_weather.cli.fetch_current",
