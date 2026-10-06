@@ -349,6 +349,8 @@ hk-weather --tai-mo-prevailing
 hk-weather --tai-mo-prevailing --json
 hk-weather --airport-prevailing
 hk-weather --airport-prevailing --json
+hk-weather --kai-tak-prevailing
+hk-weather --kai-tak-prevailing --json
 hk-weather --mean-wind
 hk-weather --mean-wind --json
 hk-weather --cheung-wind
@@ -1063,6 +1065,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --tai-mo-prevailing` prints the latest daily prevailing wind direction at Tai Mo Shan, for example `2026-08-31  20°`. `--prevailing` still prints Waglan Island, `--cheung-prevailing` still prints Cheung Chau, `--ping-chau-prevailing` still prints Ping Chau, `--tai-mo-to-prevailing` still prints Tai Mo To, `--tai-po-kau-prevailing` still prints Tai Po Kau, `--park-prevailing` still prints King's Park, `--lau-fau-prevailing` still prints Lau Fau Shan, `--sha-lo-wan-prevailing` still prints Sha Lo Wan, `--wong-chuk-hang-prevailing` still prints Wong Chuk Hang, `--sai-kung-prevailing` still prints Sai Kung, `--tseung-kwan-o-prevailing` still prints Tseung Kwan O, `--shek-kong-prevailing` still prints Shek Kong, `--sha-tin-prevailing` still prints Sha Tin, `--ta-kwu-ling-prevailing` still prints Ta Kwu Ling, `--wetland-prevailing` still prints Wetland Park, and `--tai-mo-wind` still prints Tai Mo Shan's mean wind speed. `--tai-mo-prevailing --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Tai Mo Shan prevailing wind is available.`
 
 `hk-weather --airport-prevailing` prints the latest daily prevailing wind direction at Hong Kong International Airport, for example `2026-07-31  90°`. The published airport series currently ends in July. `--prevailing` still prints Waglan Island, and the other station prevailing-wind flags still print their own stations. `--airport-wind` still prints the airport mean wind speed, `--airport-temp` still prints its mean temperature, `--airport-dew` still prints its dew point, `--airport-humidity` still prints its humidity, `--airport-rain` still prints its rainfall, `--airport-pressure` still prints its pressure, and `--airport-wet` still prints its wet-bulb temperature. `--airport-prevailing --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No airport prevailing wind is available.`
+
+`hk-weather --kai-tak-prevailing` prints the latest daily prevailing wind direction at Kai Tak, for example `2026-08-31  140°`. `--prevailing` still prints Waglan Island, and the other station prevailing-wind flags still print their own stations. `--kai-tak-wind` still prints Kai Tak's mean wind speed, and `--kai-tak-rain` still prints its rainfall. `--kai-tak-prevailing --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `啟德` and simplified text uses `启德`. Days marked `***` are omitted. If none remain, it says `No Kai Tak prevailing wind is available.`
 
 `hk-weather --mean-wind` prints the latest daily mean wind speed at Waglan Island, for example `2026-08-31  5.9 km/h`. `--prevailing` still prints the wind direction, and `--gust` still prints the latest gusts. `--mean-wind --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No mean wind speed is available.`
 
