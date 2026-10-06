@@ -292,6 +292,7 @@ from hk_weather.hko import (
     fetch_pak_tam_chung_temp,
     fetch_beas_river_temp,
     fetch_bluff_head_temp,
+    fetch_runway_park_temp,
     fetch_tai_mo_min,
     fetch_tate_min,
     fetch_sai_kung_min,
@@ -769,6 +770,7 @@ from hk_weather.hko import (
     format_pak_tam_chung_temp_miss,
     format_beas_river_temp_miss,
     format_bluff_head_temp_miss,
+    format_runway_park_temp_miss,
     format_tai_mo_min,
     format_tai_mo_min_miss,
     format_tate_min_miss,
@@ -1088,6 +1090,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--pak-tam-chung-temp prints the latest daily mean temperature at Pak Tam Chung (Tsak Yue Wu); "
             "--beas-river-temp prints the latest daily mean temperature at Beas River; "
             "--bluff-head-temp prints the latest daily mean temperature at Bluff Head; "
+            "--runway-park-temp prints the latest daily mean temperature at Kai Tak Runway Park; "
             "--max-temp prints the latest daily maximum temperature; "
             "--min-temp prints the latest daily minimum temperature; "
             "--tai-mo-min prints the latest daily minimum temperature at Tai Mo Shan; "
@@ -1601,6 +1604,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--bluff-head-temp",
         action="store_true",
         help="Print the latest daily mean temperature at Bluff Head",
+    )
+    parser.add_argument(
+        "--runway-park-temp",
+        action="store_true",
+        help="Print the latest daily mean temperature at Kai Tak Runway Park",
     )
     parser.add_argument(
         "--max-temp",
@@ -3778,6 +3786,18 @@ def main(argv: list[str] | None = None) -> int:
                     format_json(bluff_head_temp)
                     if args.json
                     else format_tai_mo_temp(bluff_head_temp)
+                )
+        elif args.runway_park_temp:
+            runway_park_temp = fetch_runway_park_temp(
+                timeout=args.timeout, lang=args.lang
+            )
+            if runway_park_temp is None:
+                text = format_runway_park_temp_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(runway_park_temp)
+                    if args.json
+                    else format_tai_mo_temp(runway_park_temp)
                 )
         elif args.max_temp:
             max_temp = fetch_max_temp(timeout=args.timeout, lang=args.lang)
