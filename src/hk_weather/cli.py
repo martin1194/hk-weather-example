@@ -311,6 +311,7 @@ from hk_weather.hko import (
     fetch_tsuen_wan_min,
     fetch_kau_sai_chau_min,
     fetch_kadoorie_farm_min,
+    fetch_the_peak_min,
     fetch_tai_mo_max,
     fetch_tseung_kwan_o_max,
     fetch_sheung_shui_max,
@@ -773,6 +774,7 @@ from hk_weather.hko import (
     format_tsuen_wan_min_miss,
     format_kau_sai_chau_min_miss,
     format_kadoorie_farm_min_miss,
+    format_the_peak_min_miss,
     format_tai_mo_max,
     format_tai_mo_max_miss,
     format_tseung_kwan_o_max_miss,
@@ -1078,6 +1080,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--tsuen-wan-min prints the latest daily minimum temperature at Tsuen Wan; "
             "--kau-sai-chau-min prints the latest daily minimum temperature at Kau Sai Chau; "
             "--kadoorie-farm-min prints the latest daily minimum temperature at Kadoorie Farm and Botanic Garden; "
+            "--the-peak-min prints the latest daily minimum temperature at The Peak; "
             "--tai-mo-max prints the latest daily maximum temperature at Tai Mo Shan; "
             "--tseung-kwan-o-max prints the latest daily maximum temperature at Tseung Kwan O; "
             "--sheung-shui-max prints the latest daily maximum temperature at Sheung Shui; "
@@ -1686,6 +1689,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--kadoorie-farm-min",
         action="store_true",
         help="Print the latest daily minimum temperature at Kadoorie Farm and Botanic Garden",
+    )
+    parser.add_argument(
+        "--the-peak-min",
+        action="store_true",
+        help="Print the latest daily minimum temperature at The Peak",
     )
     parser.add_argument(
         "--tai-mo-max",
@@ -3889,6 +3897,16 @@ def main(argv: list[str] | None = None) -> int:
                     format_json(kadoorie_farm_min)
                     if args.json
                     else format_tai_mo_min(kadoorie_farm_min)
+                )
+        elif args.the_peak_min:
+            the_peak_min = fetch_the_peak_min(timeout=args.timeout, lang=args.lang)
+            if the_peak_min is None:
+                text = format_the_peak_min_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(the_peak_min)
+                    if args.json
+                    else format_tai_mo_min(the_peak_min)
                 )
         elif args.tai_mo_max:
             tai_mo_max = fetch_tai_mo_max(timeout=args.timeout, lang=args.lang)
