@@ -514,6 +514,8 @@ hk-weather --pak-tam-chung-rain
 hk-weather --pak-tam-chung-rain --json
 hk-weather --ching-pak-house-rain
 hk-weather --ching-pak-house-rain --json
+hk-weather --kau-sai-chau-rain
+hk-weather --kau-sai-chau-rain --json
 hk-weather --rainstorm
 hk-weather --rainstorm --json
 hk-weather --cyclone
@@ -1199,6 +1201,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --pak-tam-chung-rain` prints the latest daily total rainfall at Pak Tam Chung (Tsak Yue Wu), for example `2026-08-31  4 mm`. `--daily-rain` still prints the Observatory total, and the other station rainfall flags still print their own stations. A total of zero is kept. `--pak-tam-chung-rain --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Pak Tam Chung (Tsak Yue Wu) rainfall is available.`
 
 `hk-weather --ching-pak-house-rain` prints the latest daily total rainfall at Ching Pak House(Tsing Yi), for example `2026-08-31  50.5 mm`. `--daily-rain` still prints the Observatory total, and the other station rainfall flags still print their own stations. A total of zero is kept. `--ching-pak-house-rain --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Ching Pak House(Tsing Yi) rainfall is available.`
+
+`hk-weather --kau-sai-chau-rain` prints the latest daily total rainfall at Kau Sai Chau, for example `2026-08-31  1.5 mm`. `--daily-rain` still prints the Observatory total, and the other station rainfall flags still print their own stations. A total of zero is kept. `--kau-sai-chau-rain --json` prints that day as one JSON object. `--lang` selects the station name. The Chinese name is `滘西洲` in both traditional and simplified text. Days marked `***` are omitted. If none remain, it says `No Kau Sai Chau rainfall is available.`
 
 `hk-weather --lightning` lists places where the current report shows lightning. `--lightning --json` prints those places as one JSON object. If none are reported, it says so.
 
