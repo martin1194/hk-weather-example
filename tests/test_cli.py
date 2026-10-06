@@ -506,6 +506,19 @@ def test_cli_forecast_period_json_is_one_object(monkeypatch, capsys):
     }
 
 
+def test_cli_json_keeps_non_ascii_text(monkeypatch, capsys):
+    period = "本港地區今日天氣預測"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"forecastPeriod": period}),
+    )
+    assert main(["--forecast-period", "--json"]) == 0
+    out = capsys.readouterr().out
+    assert period in out
+    assert "\\u" not in out
+    assert json.loads(out)["period"] == period
+
+
 def test_cli_forecast_period_when_missing(monkeypatch, capsys):
     monkeypatch.setattr(
         "hk_weather.hko.urllib.request.urlopen",
