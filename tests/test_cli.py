@@ -295,6 +295,48 @@ def test_cli_ago_says_how_old_the_reading_is(monkeypatch, capsys):
     assert "ago" not in skipped
 
 
+def test_cli_where_names_the_station_on_the_short_report(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_current",
+        lambda timeout, lang="en": SAMPLE_WEATHER,
+    )
+    assert main(["--short", "--plain"]) == 0
+    assert capsys.readouterr().out == "Rain, 28°C, humidity 85%\n"
+
+    assert main(["--short", "--where", "--plain"]) == 0
+    assert capsys.readouterr().out == "Rain, 28°C at Hong Kong Observatory, humidity 85%\n"
+
+    warned = replace(
+        SAMPLE_WEATHER,
+        warnings=("The Thunderstorm Warning has been issued.",),
+    )
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_current",
+        lambda timeout, lang="en": warned,
+    )
+    assert main(["--short", "--where", "--plain"]) == 0
+    assert capsys.readouterr().out == (
+        "Rain, 28°C at Hong Kong Observatory, humidity 85% — "
+        "The Thunderstorm Warning has been issued\n"
+    )
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_current",
+        lambda timeout, lang="en": replace(SAMPLE_WEATHER, place="  "),
+    )
+    assert main(["--short", "--where", "--plain"]) == 0
+    assert capsys.readouterr().out == "Rain, 28°C, humidity 85%\n"
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_current",
+        lambda timeout, lang="en": SAMPLE_WEATHER,
+    )
+    assert main(["--where", "--json"]) == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["place"] == "Hong Kong Observatory"
+    assert "at Hong Kong Observatory" not in json.dumps(payload)
+
+
 def test_cli_prints_report(monkeypatch, capsys):
     monkeypatch.setattr(
         "hk_weather.cli.fetch_current",

@@ -9227,7 +9227,12 @@ def format_summary(report: WeatherSummary, *, plain: bool = False, fahrenheit: b
 
 
 def format_short(
-    weather: CurrentWeather, *, plain: bool = False, fahrenheit: bool = False, ago: bool = False
+    weather: CurrentWeather,
+    *,
+    plain: bool = False,
+    fahrenheit: bool = False,
+    ago: bool = False,
+    where: bool = False,
 ) -> str:
     """Render current conditions as one compact line."""
     humidity = (
@@ -9236,10 +9241,11 @@ def format_short(
         else "n/a"
     )
     conditions = weather.conditions if plain else conditions_with_emoji(weather.conditions)
-    line = (
-        f"{conditions}, {_celsius_text(weather.temperature_c, fahrenheit=fahrenheit)}, "
-        f"humidity {humidity}"
-    )
+    temperature = _celsius_text(weather.temperature_c, fahrenheit=fahrenheit)
+    place = weather.place.strip()
+    if where and place:
+        temperature = f"{temperature} at {place}"
+    line = f"{conditions}, {temperature}, humidity {humidity}"
     if weather.warnings:
         note = _brief_warning(weather.warnings[0])
         extra = len(weather.warnings) - 1
