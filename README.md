@@ -264,6 +264,8 @@ hk-weather --tsuen-wan-dew
 hk-weather --tsuen-wan-dew --json
 hk-weather --shau-kei-wan-dew
 hk-weather --shau-kei-wan-dew --json
+hk-weather --kau-sai-chau-dew
+hk-weather --kau-sai-chau-dew --json
 hk-weather --cloud
 hk-weather --cloud --json
 hk-weather --evaporation
@@ -985,6 +987,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --tsuen-wan-dew` prints the latest daily mean dew point at Tsuen Wan, for example `2026-08-31  24.8°C`. `--dew-point` still prints the Observatory reading, and the other station dew-point flags still print their own stations. `--tsuen-wan-temp` still prints Tsuen Wan's mean temperature, `--tsuen-wan-max` still prints its maximum, `--tsuen-wan-min` still prints its minimum, and `--tsuen-wan-rain` still prints its rainfall. `--tsuen-wan-dew --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Tsuen Wan dew point is available.`
 
 `hk-weather --shau-kei-wan-dew` prints the latest daily mean dew point at Shau Kei Wan, for example `2026-08-31  25.2°C`. `--dew-point` still prints the Observatory reading, and the other station dew-point flags still print their own stations. `--shau-kei-wan-humidity` still prints Shau Kei Wan's humidity. `--shau-kei-wan-dew --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Shau Kei Wan dew point is available.`
+
+`hk-weather --kau-sai-chau-dew` prints the latest daily mean dew point at Kau Sai Chau, for example `2026-08-31  25°C`. `--dew-point` still prints the Observatory reading, and the other station dew-point flags still print their own stations. `--kau-sai-chau-rain` still prints Kau Sai Chau's rainfall. `--kau-sai-chau-dew --json` prints that day as one JSON object. `--lang` selects the station name. The Chinese name is `滘西洲` in both traditional and simplified text. Days marked `***` are omitted. If none remain, it says `No Kau Sai Chau dew point is available.`
 
 `hk-weather --cloud` prints the latest daily mean cloud amount at the Observatory for the current Hong Kong year, for example `2026-08-31  88%`. `--dew-point` still prints the dew point. `--cloud --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No cloud amount is available.`
 
