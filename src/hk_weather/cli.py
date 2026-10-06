@@ -115,6 +115,7 @@ from hk_weather.hko import (
     fetch_clear_water_bay_humidity,
     fetch_shau_kei_wan_humidity,
     fetch_kau_sai_chau_humidity,
+    fetch_pak_tam_chung_humidity,
     fetch_icon_time,
     fetch_icon,
     fetch_current_updated,
@@ -515,6 +516,7 @@ from hk_weather.hko import (
     format_clear_water_bay_humidity_miss,
     format_shau_kei_wan_humidity_miss,
     format_kau_sai_chau_humidity_miss,
+    format_pak_tam_chung_humidity_miss,
     format_hour_rain,
     format_hour_rain_miss,
     format_hour_wettest,
@@ -939,6 +941,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--clear-water-bay-humidity prints the latest daily mean humidity at Clear Water Bay; "
             "--shau-kei-wan-humidity prints the latest daily mean humidity at Shau Kei Wan; "
             "--kau-sai-chau-humidity prints the latest daily mean humidity at Kau Sai Chau; "
+            "--pak-tam-chung-humidity prints the latest daily mean humidity at Pak Tam Chung (Tsak Yue Wu); "
             "--temps lists temperatures by place; "
             "--temp-time prints when those temperatures were recorded; "
             "--minute-temp prints the latest 1-minute mean temperature; "
@@ -2919,6 +2922,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--kau-sai-chau-humidity",
         action="store_true",
         help="Print the latest daily mean humidity at Kau Sai Chau",
+    )
+    parser.add_argument(
+        "--pak-tam-chung-humidity",
+        action="store_true",
+        help="Print the latest daily mean humidity at Pak Tam Chung (Tsak Yue Wu)",
     )
     parser.add_argument(
         "--temps",
@@ -6067,6 +6075,18 @@ def main(argv: list[str] | None = None) -> int:
                     format_json(kau_sai_chau_humidity)
                     if args.json
                     else format_mean_humidity(kau_sai_chau_humidity)
+                )
+        elif args.pak_tam_chung_humidity:
+            pak_tam_chung_humidity = fetch_pak_tam_chung_humidity(
+                timeout=args.timeout, lang=args.lang
+            )
+            if pak_tam_chung_humidity is None:
+                text = format_pak_tam_chung_humidity_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(pak_tam_chung_humidity)
+                    if args.json
+                    else format_mean_humidity(pak_tam_chung_humidity)
                 )
         elif args.temps:
             temps = fetch_temps(timeout=args.timeout, lang=args.lang)
