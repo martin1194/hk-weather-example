@@ -351,6 +351,8 @@ hk-weather --airport-prevailing
 hk-weather --airport-prevailing --json
 hk-weather --kai-tak-prevailing
 hk-weather --kai-tak-prevailing --json
+hk-weather --green-island-prevailing
+hk-weather --green-island-prevailing --json
 hk-weather --mean-wind
 hk-weather --mean-wind --json
 hk-weather --cheung-wind
@@ -1067,6 +1069,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --airport-prevailing` prints the latest daily prevailing wind direction at Hong Kong International Airport, for example `2026-07-31  90°`. The published airport series currently ends in July. `--prevailing` still prints Waglan Island, and the other station prevailing-wind flags still print their own stations. `--airport-wind` still prints the airport mean wind speed, `--airport-temp` still prints its mean temperature, `--airport-dew` still prints its dew point, `--airport-humidity` still prints its humidity, `--airport-rain` still prints its rainfall, `--airport-pressure` still prints its pressure, and `--airport-wet` still prints its wet-bulb temperature. `--airport-prevailing --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No airport prevailing wind is available.`
 
 `hk-weather --kai-tak-prevailing` prints the latest daily prevailing wind direction at Kai Tak, for example `2026-08-31  140°`. `--prevailing` still prints Waglan Island, and the other station prevailing-wind flags still print their own stations. `--kai-tak-wind` still prints Kai Tak's mean wind speed, and `--kai-tak-rain` still prints its rainfall. `--kai-tak-prevailing --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `啟德` and simplified text uses `启德`. Days marked `***` are omitted. If none remain, it says `No Kai Tak prevailing wind is available.`
+
+`hk-weather --green-island-prevailing` prints the latest daily prevailing wind direction at Green Island, for example `2026-08-31  350°`. `--prevailing` still prints Waglan Island, and the other station prevailing-wind flags still print their own stations. `--green-island-wind` still prints Green Island's mean wind speed, and `--green-island-rain` still prints its rainfall. `--green-island-prevailing --json` prints that day as one JSON object. `--lang` selects the station name. The Chinese name is `青洲` in both traditional and simplified text. Days marked `***` are omitted. If none remain, it says `No Green Island prevailing wind is available.`
 
 `hk-weather --mean-wind` prints the latest daily mean wind speed at Waglan Island, for example `2026-08-31  5.9 km/h`. `--prevailing` still prints the wind direction, and `--gust` still prints the latest gusts. `--mean-wind --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No mean wind speed is available.`
 
