@@ -239,6 +239,7 @@ from hk_weather.hko import (
     fetch_central_pier_prevailing,
     fetch_nei_lak_shan_prevailing,
     fetch_buoy_2_prevailing,
+    fetch_buoy_8_prevailing,
     fetch_mean_wind,
     fetch_cheung_wind,
     fetch_lau_fau_wind,
@@ -756,6 +757,7 @@ from hk_weather.hko import (
     format_central_pier_prevailing_miss,
     format_nei_lak_shan_prevailing_miss,
     format_buoy_2_prevailing_miss,
+    format_buoy_8_prevailing_miss,
     format_mean_wind,
     format_mean_wind_miss,
     format_cheung_wind_miss,
@@ -1122,6 +1124,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--central-pier-prevailing prints the latest prevailing wind at Central Pier; "
             "--nei-lak-shan-prevailing prints the latest prevailing wind at Nei Lak Shan; "
             "--buoy-2-prevailing prints the latest prevailing wind at Automatic Weather Buoy No.2; "
+            "--buoy-8-prevailing prints the latest prevailing wind at Automatic Weather Buoy No.8; "
             "--mean-wind prints the latest daily mean wind speed; "
             "--cheung-wind prints the latest daily mean wind speed at Cheung Chau; "
             "--lau-fau-wind prints the latest daily mean wind speed at Lau Fau Shan; "
@@ -2580,6 +2583,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--buoy-2-prevailing",
         action="store_true",
         help="Print the latest daily prevailing wind direction at Automatic Weather Buoy No.2",
+    )
+    parser.add_argument(
+        "--buoy-8-prevailing",
+        action="store_true",
+        help="Print the latest daily prevailing wind direction at Automatic Weather Buoy No.8",
     )
     parser.add_argument(
         "--mean-wind",
@@ -5729,6 +5737,18 @@ def main(argv: list[str] | None = None) -> int:
                     format_json(buoy_2_prevailing)
                     if args.json
                     else format_prevailing(buoy_2_prevailing)
+                )
+        elif args.buoy_8_prevailing:
+            buoy_8_prevailing = fetch_buoy_8_prevailing(
+                timeout=args.timeout, lang=args.lang
+            )
+            if buoy_8_prevailing is None:
+                text = format_buoy_8_prevailing_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(buoy_8_prevailing)
+                    if args.json
+                    else format_prevailing(buoy_8_prevailing)
                 )
         elif args.mean_wind:
             mean_wind = fetch_mean_wind(timeout=args.timeout, lang=args.lang)
