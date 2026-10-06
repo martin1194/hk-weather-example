@@ -217,6 +217,7 @@ from hk_weather.hko import (
     fetch_tai_mo_prevailing,
     fetch_airport_prevailing,
     fetch_kai_tak_prevailing,
+    fetch_green_island_prevailing,
     fetch_mean_wind,
     fetch_cheung_wind,
     fetch_lau_fau_wind,
@@ -654,6 +655,7 @@ from hk_weather.hko import (
     format_tai_mo_prevailing_miss,
     format_airport_prevailing_miss,
     format_kai_tak_prevailing_miss,
+    format_green_island_prevailing_miss,
     format_mean_wind,
     format_mean_wind_miss,
     format_cheung_wind_miss,
@@ -942,6 +944,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--tai-mo-prevailing prints the latest prevailing wind at Tai Mo Shan; "
             "--airport-prevailing prints the latest prevailing wind at the airport; "
             "--kai-tak-prevailing prints the latest prevailing wind at Kai Tak; "
+            "--green-island-prevailing prints the latest prevailing wind at Green Island; "
             "--mean-wind prints the latest daily mean wind speed; "
             "--cheung-wind prints the latest daily mean wind speed at Cheung Chau; "
             "--lau-fau-wind prints the latest daily mean wind speed at Lau Fau Shan; "
@@ -2043,6 +2046,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--kai-tak-prevailing",
         action="store_true",
         help="Print the latest daily prevailing wind direction at Kai Tak",
+    )
+    parser.add_argument(
+        "--green-island-prevailing",
+        action="store_true",
+        help="Print the latest daily prevailing wind direction at Green Island",
     )
     parser.add_argument(
         "--mean-wind",
@@ -4432,6 +4440,18 @@ def main(argv: list[str] | None = None) -> int:
                     format_json(kai_tak_prevailing)
                     if args.json
                     else format_prevailing(kai_tak_prevailing)
+                )
+        elif args.green_island_prevailing:
+            green_island_prevailing = fetch_green_island_prevailing(
+                timeout=args.timeout, lang=args.lang
+            )
+            if green_island_prevailing is None:
+                text = format_green_island_prevailing_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(green_island_prevailing)
+                    if args.json
+                    else format_prevailing(green_island_prevailing)
                 )
         elif args.mean_wind:
             mean_wind = fetch_mean_wind(timeout=args.timeout, lang=args.lang)
