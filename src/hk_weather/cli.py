@@ -41,6 +41,7 @@ from hk_weather.hko import (
     fetch_pak_tam_chung_rain,
     fetch_ching_pak_house_rain,
     fetch_kau_sai_chau_rain,
+    fetch_kai_tak_rain,
     fetch_forecast,
     fetch_outlook,
     fetch_coastal,
@@ -372,6 +373,7 @@ from hk_weather.hko import (
     format_pak_tam_chung_rain_miss,
     format_ching_pak_house_rain_miss,
     format_kau_sai_chau_rain_miss,
+    format_kai_tak_rain_miss,
     format_forecast,
     format_outlook,
     format_outlook_miss,
@@ -1103,6 +1105,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--pak-tam-chung-rain prints the latest daily rainfall at Pak Tam Chung (Tsak Yue Wu); "
             "--ching-pak-house-rain prints the latest daily rainfall at Ching Pak House(Tsing Yi); "
             "--kau-sai-chau-rain prints the latest daily rainfall at Kau Sai Chau; "
+            "--kai-tak-rain prints the latest daily rainfall at Kai Tak; "
             "--tide prints today's high and low tides; "
             "--tide-hour prints today's hourly tide heights; "
             "--tide-latest prints the latest observed tide height; "
@@ -2416,6 +2419,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--kau-sai-chau-rain",
         action="store_true",
         help="Print the latest daily total rainfall at Kau Sai Chau",
+    )
+    parser.add_argument(
+        "--kai-tak-rain",
+        action="store_true",
+        help="Print the latest daily total rainfall at Kai Tak",
     )
     parser.add_argument(
         "--rainstorm",
@@ -4955,6 +4963,16 @@ def main(argv: list[str] | None = None) -> int:
                     format_json(kau_sai_chau_rain)
                     if args.json
                     else format_daily_rain(kau_sai_chau_rain)
+                )
+        elif args.kai_tak_rain:
+            kai_tak_rain = fetch_kai_tak_rain(timeout=args.timeout, lang=args.lang)
+            if kai_tak_rain is None:
+                text = format_kai_tak_rain_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(kai_tak_rain)
+                    if args.json
+                    else format_daily_rain(kai_tak_rain)
                 )
         elif args.rainstorm:
             rainstorm = fetch_rainstorm(timeout=args.timeout, lang=args.lang)
