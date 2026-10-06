@@ -336,6 +336,7 @@ from hk_weather.hko import (
     fetch_tsuen_wan_max,
     fetch_kau_sai_chau_max,
     fetch_kadoorie_farm_max,
+    fetch_the_peak_max,
     fetch_max_temp,
     fetch_min_temp,
     fetch_dew_point,
@@ -793,6 +794,7 @@ from hk_weather.hko import (
     format_tsuen_wan_max_miss,
     format_kau_sai_chau_max_miss,
     format_kadoorie_farm_max_miss,
+    format_the_peak_max_miss,
     format_max_temp,
     format_max_temp_miss,
     format_min_temp,
@@ -1091,6 +1093,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--tsuen-wan-max prints the latest daily maximum temperature at Tsuen Wan; "
             "--kau-sai-chau-max prints the latest daily maximum temperature at Kau Sai Chau; "
             "--kadoorie-farm-max prints the latest daily maximum temperature at Kadoorie Farm and Botanic Garden; "
+            "--the-peak-max prints the latest daily maximum temperature at The Peak; "
             "--dew-point prints the latest daily mean dew point; "
             "--park-dew prints the latest daily mean dew point at King's Park; "
             "--cheung-dew prints the latest daily mean dew point at Cheung Chau; "
@@ -1793,6 +1796,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--kadoorie-farm-max",
         action="store_true",
         help="Print the latest daily maximum temperature at Kadoorie Farm and Botanic Garden",
+    )
+    parser.add_argument(
+        "--the-peak-max",
+        action="store_true",
+        help="Print the latest daily maximum temperature at The Peak",
     )
     parser.add_argument(
         "--dew-point",
@@ -4071,6 +4079,16 @@ def main(argv: list[str] | None = None) -> int:
                     format_json(kadoorie_farm_max)
                     if args.json
                     else format_tai_mo_max(kadoorie_farm_max)
+                )
+        elif args.the_peak_max:
+            the_peak_max = fetch_the_peak_max(timeout=args.timeout, lang=args.lang)
+            if the_peak_max is None:
+                text = format_the_peak_max_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(the_peak_max)
+                    if args.json
+                    else format_tai_mo_max(the_peak_max)
                 )
         elif args.dew_point:
             dew_point = fetch_dew_point(timeout=args.timeout, lang=args.lang)
