@@ -14,3 +14,11 @@ def test_ci_runs_oldest_supported_python():
     for version in ("3.10", "3.11", "3.12", "3.13"):
         assert f'"{version}"' in workflow
     assert "Python 3.10, 3.11, 3.12, and 3.13" in readme
+
+
+def test_ci_cancels_superseded_runs():
+    workflow = (ROOT / ".github/workflows/ci.yml").read_text()
+    readme = (ROOT / "README.md").read_text()
+    assert "cancel-in-progress: true" in workflow
+    assert "group: ci-${{ github.workflow }}-${{ github.ref }}" in workflow
+    assert "cancels the CI run that is still in progress" in readme
