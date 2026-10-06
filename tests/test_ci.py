@@ -48,6 +48,13 @@ def test_ci_limits_token_permissions():
     assert "read the repository and update the pip cache" in readme
 
 
+def test_ci_stops_a_hung_job():
+    workflow = (ROOT / ".github/workflows/ci.yml").read_text()
+    readme = (ROOT / "README.md").read_text()
+    assert "timeout-minutes: 15" in workflow
+    assert "15 minutes" in readme
+
+
 def test_ci_cancels_superseded_runs():
     workflow = (ROOT / ".github/workflows/ci.yml").read_text()
     readme = (ROOT / "README.md").read_text()
