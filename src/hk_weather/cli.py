@@ -274,6 +274,7 @@ from hk_weather.hko import (
     fetch_cheung_chau_beach_wind,
     fetch_north_point_wind,
     fetch_sha_chau_wind,
+    fetch_star_ferry_wind,
     fetch_forecast_icon,
     fetch_yesterday,
     fetch_mean_temp,
@@ -799,6 +800,7 @@ from hk_weather.hko import (
     format_cheung_chau_beach_wind_miss,
     format_north_point_wind_miss,
     format_sha_chau_wind_miss,
+    format_star_ferry_wind_miss,
     format_forecast_icon,
     format_forecast_icon_miss,
     format_yesterday,
@@ -1171,6 +1173,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--cheung-chau-beach-wind prints the latest daily mean wind speed at Cheung Chau Beach; "
             "--north-point-wind prints the latest daily mean wind speed at North Point; "
             "--sha-chau-wind prints the latest daily mean wind speed at Sha Chau; "
+            "--star-ferry-wind prints the latest daily mean wind speed at Star Ferry(Kowloon); "
             "--forecast-icon prints each day's weather icon; "
             "--quake lists the latest earthquake message; "
             "--felt prints the locally felt earth tremor; --today prints today; "
@@ -2776,6 +2779,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--sha-chau-wind",
         action="store_true",
         help="Print the latest daily mean wind speed at Sha Chau",
+    )
+    parser.add_argument(
+        "--star-ferry-wind",
+        action="store_true",
+        help="Print the latest daily mean wind speed at Star Ferry(Kowloon)",
     )
     parser.add_argument(
         "--forecast-icon",
@@ -6145,6 +6153,16 @@ def main(argv: list[str] | None = None) -> int:
                     format_json(sha_chau_wind)
                     if args.json
                     else format_mean_wind(sha_chau_wind)
+                )
+        elif args.star_ferry_wind:
+            star_ferry_wind = fetch_star_ferry_wind(timeout=args.timeout, lang=args.lang)
+            if star_ferry_wind is None:
+                text = format_star_ferry_wind_miss(as_json=args.json)
+            else:
+                text = (
+                    format_json(star_ferry_wind)
+                    if args.json
+                    else format_mean_wind(star_ferry_wind)
                 )
         elif args.forecast_icon:
             forecast_icon = fetch_forecast_icon(timeout=args.timeout, lang=args.lang)
