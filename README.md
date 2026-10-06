@@ -553,6 +553,8 @@ hk-weather --tuen-mun-government-offices-wind
 hk-weather --tuen-mun-government-offices-wind --json
 hk-weather --yi-tung-shan-wind
 hk-weather --yi-tung-shan-wind --json
+hk-weather --tap-mun-east-wind
+hk-weather --tap-mun-east-wind --json
 hk-weather --forecast-icon
 hk-weather --forecast-icon --json
 hk-weather --quake
@@ -1451,6 +1453,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --tuen-mun-government-offices-wind` prints the latest daily mean wind speed at Tuen Mun Government Offices, for example `2026-08-31  5.1 km/h`. `--mean-wind` still prints Waglan Island, and the other station wind flags still print their own stations. `--star-ferry-wind` still prints Star Ferry(Kowloon), and `--tuen-mun-home-temp` still prints Tuen Mun Children and Juvenile Home. A speed of zero is kept. `--tuen-mun-government-offices-wind --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `屯門政府合署` and simplified text uses `屯门政府合署`. Days marked `***` are omitted. If none remain, it says `No Tuen Mun Government Offices mean wind speed is available.`
 
 `hk-weather --yi-tung-shan-wind` prints the latest daily mean wind speed at Yi Tung Shan, for example `2026-08-31  16.6 km/h`. `--mean-wind` still prints Waglan Island, and the other station wind flags still print their own stations. `--tuen-mun-government-offices-wind` still prints Tuen Mun Government Offices. A speed of zero is kept. `--yi-tung-shan-wind --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `二東山` and simplified text uses `二东山`. Days marked `***` are omitted. If none remain, it says `No Yi Tung Shan mean wind speed is available.`
+
+`hk-weather --tap-mun-east-wind` prints the latest daily mean wind speed at Tap Mun East, for example `2026-08-31  6 km/h`. `--mean-wind` still prints Waglan Island, and the other station wind flags still print their own stations. `--yi-tung-shan-wind` still prints Yi Tung Shan, and `--tap-mun-temp` still prints Tap Mun. A speed of zero is kept. `--tap-mun-east-wind --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `塔門東` and simplified text uses `塔门东`. Days marked `***` are omitted. If none remain, it says `No Tap Mun East mean wind speed is available.`
 
 `hk-weather --forecast-icon` prints each day's weather icon from that forecast (`ForecastIcon`), for example `2026-10-04 Sunday  54  Sunny Intervals with Showers`. `--wind` still prints the wind. `--forecast-icon --json` prints those days as one JSON object. `--lang` applies. If no icon is present, it says `No forecast icons are available.`
 
