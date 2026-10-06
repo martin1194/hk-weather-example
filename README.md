@@ -300,6 +300,8 @@ hk-weather --shing-mun-valley-max
 hk-weather --shing-mun-valley-max --json
 hk-weather --tuen-mun-home-max
 hk-weather --tuen-mun-home-max --json
+hk-weather --buoy-2-max
+hk-weather --buoy-2-max --json
 hk-weather --dew-point
 hk-weather --dew-point --json
 hk-weather --park-dew
@@ -1151,6 +1153,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --shing-mun-valley-max` prints the latest daily maximum temperature at Tsuen Wan Shing Mun Valley, for example `2026-08-31  31°C`. `--max-temp` still prints the Observatory maximum, and the other station maximum flags still print their own stations. `--shing-mun-valley-temp` still prints the valley's mean temperature, and `--tsuen-wan-max` still prints Tsuen Wan. `--shing-mun-valley-max --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `荃灣城門谷` and simplified text uses `荃湾城门谷`. Days marked `***` are omitted. If none remain, it says `No Tsuen Wan Shing Mun Valley maximum temperature is available.`
 
 `hk-weather --tuen-mun-home-max` prints the latest daily maximum temperature at Tuen Mun Children and Juvenile Home, for example `2026-08-31  30.9°C`. `--max-temp` still prints the Observatory maximum, and the other station maximum flags still print their own stations. `--tuen-mun-home-temp` still prints the home's mean temperature. `--tuen-mun-home-max --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `屯門兒童及青少年院` and simplified text uses `屯门儿童及青少年院`. Days marked `***` are omitted. If none remain, it says `No Tuen Mun Children and Juvenile Home maximum temperature is available.`
+
+`hk-weather --buoy-2-max` prints the latest daily maximum temperature at Automatic Weather Buoy No.2 (Hong Kong International Airport, West), for example `2026-08-31  28.7°C`. `--max-temp` still prints the Observatory maximum, and the other station maximum flags still print their own stations. `--buoy-2-temp` still prints the buoy's mean temperature. `--buoy-2-max --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `自動氣象浮標2號 (香港國際機場西面)` and simplified text uses `自动气象浮标2号 (香港国际机场西面)`. Days marked `***` are omitted. If none remain, it says `No Automatic Weather Buoy No.2 (Hong Kong International Airport, West) maximum temperature is available.`
 
 `hk-weather --dew-point` prints the latest daily mean dew point at the Observatory for the current Hong Kong year, for example `2026-08-31  25°C`. `--mean-temp` still prints the daily mean air temperature. `--dew-point --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No dew point is available.`
 
