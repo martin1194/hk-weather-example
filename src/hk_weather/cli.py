@@ -1221,6 +1221,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--find TEXT lists flags whose name or description contains TEXT; "
             "--plain omits weather icons from the current report; "
             "--fahrenheit adds °F beside °C; "
+            "--ago says how long ago the current reading was updated; "
             "Current conditions by default; --summary prints a short briefing; "
             "--forecast prints the local forecast; "
             "--outlook prints the local-forecast outlook; "
@@ -1707,6 +1708,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--fahrenheit",
         action="store_true",
         help="Print degrees Fahrenheit beside Celsius on the current report, --short, and --summary",
+    )
+    parser.add_argument(
+        "--ago",
+        action="store_true",
+        help="Say how long ago the current reading was updated",
     )
     parser.add_argument(
         "-S",
@@ -3962,7 +3968,7 @@ def _report_flags(args: argparse.Namespace) -> list[str]:
     flags = [
         name.replace("_", "-")
         for name, value in vars(args).items()
-        if value is True and name not in {"json", "short", "plain", "fahrenheit"}
+        if value is True and name not in {"json", "short", "plain", "fahrenheit", "ago"}
     ]
     if args.day is not None:
         flags.append("day")
@@ -8146,9 +8152,13 @@ def main(argv: list[str] | None = None) -> int:
             if args.json:
                 text = format_json(weather)
             elif args.short:
-                text = format_short(weather, plain=args.plain, fahrenheit=args.fahrenheit)
+                text = format_short(
+                    weather, plain=args.plain, fahrenheit=args.fahrenheit, ago=args.ago
+                )
             else:
-                text = format_report(weather, plain=args.plain, fahrenheit=args.fahrenheit)
+                text = format_report(
+                    weather, plain=args.plain, fahrenheit=args.fahrenheit, ago=args.ago
+                )
     except WeatherError as exc:
         _eprint(f"error: {exc}")
         return 1
