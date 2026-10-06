@@ -533,6 +533,8 @@ hk-weather --buoy-8-wind
 hk-weather --buoy-8-wind --json
 hk-weather --cheung-chau-beach-wind
 hk-weather --cheung-chau-beach-wind --json
+hk-weather --north-point-wind
+hk-weather --north-point-wind --json
 hk-weather --forecast-icon
 hk-weather --forecast-icon --json
 hk-weather --quake
@@ -1411,6 +1413,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --buoy-8-wind` prints the latest daily mean wind speed at Automatic Weather Buoy No.8 (Hong Kong International Airport, East), for example `2026-08-31  5.2 km/h`. `--mean-wind` still prints Waglan Island, and the other station wind flags still print their own stations. `--buoy-8-temp` still prints the buoy's mean temperature, `--buoy-8-dew` still prints its dew point, `--buoy-8-humidity` still prints its humidity, and `--buoy-2-wind` still prints Automatic Weather Buoy No.2. A speed of zero is kept. `--buoy-8-wind --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `自動氣象浮標8號 (香港國際機場東面)` and simplified text uses `自动气象浮标8号 (香港国际机场东面)`. Days marked `***` are omitted. If none remain, it says `No Automatic Weather Buoy No.8 (Hong Kong International Airport, East) mean wind speed is available.`
 
 `hk-weather --cheung-chau-beach-wind` prints the latest daily mean wind speed at Cheung Chau Beach, for example `2026-08-31  6.5 km/h`. `--mean-wind` still prints Waglan Island, and the other station wind flags still print their own stations. `--cheung-wind` still prints Cheung Chau, and `--buoy-8-wind` still prints Automatic Weather Buoy No.8. A speed of zero is kept. `--cheung-chau-beach-wind --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `長洲泳灘` and simplified text uses `长洲泳滩`. Days marked `***` are omitted. If none remain, it says `No Cheung Chau Beach mean wind speed is available.`
+
+`hk-weather --north-point-wind` prints the latest daily mean wind speed at North Point, for example `2026-08-31  2.3 km/h`. `--mean-wind` still prints Waglan Island, and the other station wind flags still print their own stations. `--north-point-am-sea` still prints the morning sea temperature, `--north-point-pm-sea` still prints the afternoon sea temperature, and `--cheung-chau-beach-wind` still prints Cheung Chau Beach. A speed of zero is kept. `--north-point-wind --json` prints that day as one JSON object. `--lang` selects the station name. The Chinese name is `北角` in both traditional and simplified text. Days marked `***` are omitted. If none remain, it says `No North Point mean wind speed is available.`
 
 `hk-weather --forecast-icon` prints each day's weather icon from that forecast (`ForecastIcon`), for example `2026-10-04 Sunday  54  Sunny Intervals with Showers`. `--wind` still prints the wind. `--forecast-icon --json` prints those days as one JSON object. `--lang` applies. If no icon is present, it says `No forecast icons are available.`
 
