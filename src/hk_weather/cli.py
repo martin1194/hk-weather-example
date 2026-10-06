@@ -1087,6 +1087,14 @@ def _language(value: str) -> str:
     return lang
 
 
+def _place_name(value: str) -> str:
+    """Argparse type: a place name must contain something other than spaces."""
+    name = value.strip()
+    if not name:
+        raise argparse.ArgumentTypeError("place must not be empty")
+    return name
+
+
 class _QuietParser(argparse.ArgumentParser):
     """Report argument errors as one line, without the full flag list."""
 
@@ -3806,8 +3814,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--place",
+        type=_place_name,
         metavar="NAME",
-        help="Print temperature and humidity for stations matching NAME",
+        help="Print temperature and humidity for stations matching NAME (must not be blank)",
     )
     parser.add_argument(
         "--lang",
@@ -7981,18 +7990,14 @@ def main(argv: list[str] | None = None) -> int:
             places = fetch_stations(timeout=args.timeout, lang=args.lang)
             text = format_places(places, as_json=args.json)
         elif args.place is not None:
-            query = args.place.strip()
-            if not query:
-                _eprint("error: place must not be empty")
-                return 2
             matched = filter_stations(
                 fetch_stations(timeout=args.timeout, lang=args.lang),
-                query,
+                args.place,
             )
             if matched.stations:
                 text = format_json(matched) if args.json else format_stations(matched)
             else:
-                text = format_place_miss(query, matched.update_time, as_json=args.json)
+                text = format_place_miss(args.place, matched.update_time, as_json=args.json)
         elif args.summary:
             summary = fetch_summary(timeout=args.timeout, lang=args.lang)
             text = format_json(summary) if args.json else format_summary(summary)

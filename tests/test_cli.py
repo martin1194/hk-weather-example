@@ -19509,9 +19509,31 @@ def test_cli_list_places_json(monkeypatch, capsys):
     assert json.loads(capsys.readouterr().out) == {"places": ["Hong Kong Observatory"]}
 
 
-def test_cli_place_rejects_blank_name(capsys):
-    assert main(["--place", "   "]) == 2
-    assert "place must not be empty" in capsys.readouterr().err
+def test_cli_place_rejects_blank_name(monkeypatch, capsys):
+    def boom(*args, **kwargs):
+        raise AssertionError("should not fetch")
+
+    monkeypatch.setattr("hk_weather.cli.fetch_stations", boom)
+    for argv in (
+        ["--place", "   "],
+        ["--place", ""],
+        ["--place", "   ", "--version"],
+        ["--place", "", "--version"],
+    ):
+        with pytest.raises(SystemExit) as exc:
+            main(argv)
+        assert exc.value.code == 2
+        captured = capsys.readouterr()
+        assert captured.err == "error: argument --place: place must not be empty\n"
+        assert captured.out == ""
+
+    monkeypatch.setattr("importlib.metadata.version", lambda name: "1.2.3")
+    with pytest.raises(SystemExit) as exc:
+        main(["--place", " King's Park ", "--version"])
+    assert exc.value.code == 0
+    captured = capsys.readouterr()
+    assert captured.out == "hk-weather 1.2.3\n"
+    assert captured.err == ""
 
 
 def test_cli_stations_missing_readings_is_an_error(monkeypatch, capsys):
