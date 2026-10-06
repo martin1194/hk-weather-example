@@ -8831,6 +8831,26 @@ def fetch_tuen_mun_reservior_rain(timeout: float = 10, lang: str = "en") -> Dail
     return parse_tuen_mun_reservior_rain(text, lang)
 
 
+def fetch_tai_tan_camp_rain(timeout: float = 10, lang: str = "en") -> DailyRain | None:
+    """Download the latest daily total rainfall at Tai Tan Camp."""
+    year = _hong_kong_today()[:4]
+    url = (
+        "https://data.weather.gov.hk/weatherAPI/cis/csvfile/TTC/"
+        f"{year}/daily_TTC_RF_{year}.csv"
+    )
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            raw = response.read()
+    except (urllib.error.URLError, TimeoutError) as exc:
+        raise WeatherError(f"could not reach Hong Kong Observatory: {exc}") from exc
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise WeatherError("Hong Kong Observatory returned invalid text") from exc
+    return parse_tai_tan_camp_rain(text, lang)
+
+
 def fetch_lamma_island_rain(timeout: float = 10, lang: str = "en") -> DailyRain | None:
     """Download the latest daily total rainfall at Lamma Island."""
     year = _hong_kong_today()[:4]
@@ -23850,6 +23870,40 @@ def parse_tuen_mun_reservior_rain(text: str, lang: str = "en") -> DailyRain | No
 def format_tuen_mun_reservior_rain_miss(*, as_json: bool = False) -> str:
     """Say that no Tuen Mun Reservior rainfall is available."""
     return _unavailable("No Tuen Mun Reservior rainfall is available.", as_json=as_json)
+
+
+_TAI_TAN_CAMP_RAIN_STATIONS = {
+    "en": "Tai Tan Camp",
+    "tc": "大灘訓練營",
+    "sc": "大滩训练营",
+}
+
+
+def parse_tai_tan_camp_rain(text: str, lang: str = "en") -> DailyRain | None:
+    """Turn the Tai Tan Camp rainfall CSV into the latest numeric day."""
+    station = _TAI_TAN_CAMP_RAIN_STATIONS.get(lang, _TAI_TAN_CAMP_RAIN_STATIONS["en"])
+    latest: DailyRain | None = None
+    rows = csv.reader(io.StringIO(text))
+    for row in rows:
+        if len(row) < 4:
+            continue
+        year = _text(row[0]).lstrip("\ufeff")
+        month = _text(row[1])
+        day = _text(row[2])
+        value = _hour_mm(row[3])
+        if not (year.isdigit() and month.isdigit() and day.isdigit()) or value is None:
+            continue
+        latest = DailyRain(
+            station,
+            f"{int(year):04d}-{int(month):02d}-{int(day):02d}",
+            value,
+        )
+    return latest
+
+
+def format_tai_tan_camp_rain_miss(*, as_json: bool = False) -> str:
+    """Say that no Tai Tan Camp rainfall is available."""
+    return _unavailable("No Tai Tan Camp rainfall is available.", as_json=as_json)
 
 
 _LAMMA_ISLAND_RAIN_STATIONS = {
