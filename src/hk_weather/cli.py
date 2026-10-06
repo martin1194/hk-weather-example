@@ -3744,6 +3744,8 @@ def _report_flags(args: argparse.Namespace) -> list[str]:
         for name, value in vars(args).items()
         if value is True and name not in {"json", "short"}
     ]
+    if args.day is not None:
+        flags.append("day")
     if args.place is not None:
         flags.append("place")
     return flags
