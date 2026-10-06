@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import math
 import os
+import re
 import sys
 
 from hk_weather.hko import (
@@ -1025,12 +1026,14 @@ class _DayAction(argparse.Action):
         setattr(namespace, self.dest, number)
 
 
+_PLAIN_TIMEOUT = re.compile(r"(?:\d+(?:\.\d*)?|\.\d+)\Z")
+
+
 def _timeout_value(value: str) -> float:
-    """Argparse type: a timeout must be a number of seconds greater than 0."""
-    try:
-        number = float(value)
-    except ValueError:
-        raise argparse.ArgumentTypeError("timeout must be greater than 0") from None
+    """Argparse type: seconds written as digits, optional decimal, greater than 0."""
+    if _PLAIN_TIMEOUT.fullmatch(value) is None:
+        raise argparse.ArgumentTypeError("timeout must be greater than 0")
+    number = float(value)
     if not math.isfinite(number) or number <= 0:
         raise argparse.ArgumentTypeError("timeout must be greater than 0")
     return number
