@@ -81,6 +81,7 @@ def test_cli_find_lists_matching_flags(monkeypatch, capsys):
         "-I, --tide  Print today's high and low tides at Quarry Bay\n"
         "--tide-hour  Print today's hourly tide heights at Quarry Bay\n"
         "--tide-latest  Print the latest observed tide height at tide stations\n"
+        "--next-tide  Print how long until the next high or low tide at Quarry Bay\n"
     )
 
     assert main(["--find", "TIDE", "--json"]) == 0
@@ -89,6 +90,7 @@ def test_cli_find_lists_matching_flags(monkeypatch, capsys):
         "--tide",
         "--tide-hour",
         "--tide-latest",
+        "--next-tide",
     ]
 
     assert main(["--find", "no-such-flag-xyz"]) == 0
