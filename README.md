@@ -973,6 +973,8 @@ hk-weather --since-midnight
 hk-weather --since-midnight --json
 hk-weather --midnight-span
 hk-weather --midnight-span --json
+hk-weather --so-far
+hk-weather --so-far --json
 hk-weather --pressure
 hk-weather --pressure --json
 hk-weather --high-pressure
@@ -2040,6 +2042,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --since-midnight` prints each automatic station's maximum and minimum air temperature since midnight, for example `Chek Lap Kok  high 28.2°C  low 27.8°C`. `--minute-temp` still prints the latest 1-minute temperature. `--max-temp` and `--min-temp` still print the Observatory daily climate series. `--since-midnight --json` prints those stations as one JSON object. `--lang` selects the station names. A station is omitted when both readings are missing. If none remain, it says `No temperatures since midnight are available.`
 
 `hk-weather --midnight-span` prints the station with the widest of those ranges, for example `Widest since midnight: 2026-10-04 01:50  Chek Lap Kok  0.4°C, from 27.8°C to 28.2°C`. `--since-midnight` still lists every station. When several stations share that span, each one is named with its own low and high. `--midnight-span --json` prints the winning stations as one JSON object. `--lang` selects the station names. A station needs both a high and a low. If none remain, it says `No temperature range since midnight is available.`
+
+`hk-weather --so-far` compares the current temperature with the Observatory high since midnight. At 26°C, with a high so far of 28.8°C, that is `26°C is 2.8°C below today's high so far of 28.8°C at HK Observatory.` A warmer reading says above, and a matching reading says it matches. `--past-high` still compares the current temperature with yesterday's high. `--since-midnight` still lists every station. `--so-far --json` prints the current temperature, today's high, the place, the time, the gap, and that phrase. `--lang` applies. If the reading is missing, it says `No temperature reading is available.` If the Observatory high is missing, it says `No Observatory high since midnight is available.`
 
 `hk-weather --pressure` prints the latest 1-minute mean sea level pressure at automatic stations, for example `Chek Lap Kok  1011.9 hPa`. `--pressure --json` prints those stations as one JSON object. `--lang` selects the English, Traditional Chinese, or Simplified Chinese station names. Stations marked `N/A` are omitted. If none remain, it says `No sea level pressure is available.`
 

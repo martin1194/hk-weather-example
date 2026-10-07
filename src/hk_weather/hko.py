@@ -16865,6 +16865,54 @@ def format_midnight_span(report: SinceMidnightReport, *, as_json: bool) -> str:
     return phrase + "\n"
 
 
+def format_so_far(
+    temperature_c: float | None,
+    report: SinceMidnightReport | None,
+    *,
+    as_json: bool,
+) -> str:
+    """Compare the current temperature with the Observatory high since midnight."""
+    if temperature_c is None:
+        return _unavailable("No temperature reading is available.", as_json=as_json)
+    reading = None
+    if report is not None:
+        reading = next(
+            (item for item in report.stations if item.place in _OBSERVATORY_TEMP_NAMES),
+            None,
+        )
+    if reading is None or reading.temp_high_c is None:
+        return _unavailable(
+            "No Observatory high since midnight is available.", as_json=as_json
+        )
+    gap = round(temperature_c - reading.temp_high_c, 1)
+    temperature = _number(temperature_c)
+    high = _number(reading.temp_high_c)
+    if gap > 0:
+        phrase = (
+            f"{temperature}°C is {_number(gap)}°C above today's high so far of {high}°C "
+            f"at {reading.place}."
+        )
+    elif gap < 0:
+        phrase = (
+            f"{temperature}°C is {_number(abs(gap))}°C below today's high so far of {high}°C "
+            f"at {reading.place}."
+        )
+    else:
+        phrase = f"{temperature}°C matches today's high so far of {high}°C at {reading.place}."
+    obs_time = "" if report is None else report.obs_time
+    if as_json:
+        payload = {
+            "temperature_c": temperature_c,
+            "high_c": reading.temp_high_c,
+            "place": reading.place,
+            "time": obs_time,
+            "gap_c": gap,
+            "phrase": phrase,
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
+
+
 def parse_pressure(text: str) -> PressureReport:
     """Turn the regional sea-level pressure CSV into one row per station."""
     stations: list[PressureReading] = []
