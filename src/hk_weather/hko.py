@@ -19255,6 +19255,39 @@ def format_yest_high(
     return phrase + "\n"
 
 
+def format_past_high(
+    temperature_c: float | None, yesterday: YesterdayReport | None, *, as_json: bool
+) -> str:
+    """Compare the current temperature with yesterday's Observatory high."""
+    if temperature_c is None:
+        return _unavailable("No temperature reading is available.", as_json=as_json)
+    if yesterday is None or yesterday.temp_high_c is None:
+        return _unavailable("No yesterday high is available.", as_json=as_json)
+    gap = round(temperature_c - yesterday.temp_high_c, 1)
+    temperature = _number(temperature_c)
+    prior = _number(yesterday.temp_high_c)
+    if gap > 0:
+        phrase = (
+            f"{temperature}°C is {_number(gap)}°C above yesterday's high of {prior}°C."
+        )
+    elif gap < 0:
+        phrase = (
+            f"{temperature}°C is {_number(abs(gap))}°C below yesterday's high of {prior}°C."
+        )
+    else:
+        phrase = f"{temperature}°C matches yesterday's high of {prior}°C."
+    if as_json:
+        payload = {
+            "temperature_c": temperature_c,
+            "yesterday_c": yesterday.temp_high_c,
+            "date": yesterday.date,
+            "gap_c": gap,
+            "phrase": phrase,
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
+
+
 def parse_mean_temp(payload: dict) -> DailyMean | None:
     """Turn a `CLMTEMP` table into the latest numeric daily mean."""
     raw = payload.get("data")

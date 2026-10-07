@@ -4586,6 +4586,79 @@ def test_cli_yest_high_compares_yesterdays_high_with_the_forecast(monkeypatch, c
     assert "(--yesterday --yest-high)" in capsys.readouterr().err
 
 
+def test_cli_past_high_compares_the_current_temperature_with_yesterdays_high(
+    monkeypatch, capsys
+):
+    seen = {}
+    yesterday = YesterdayReport("2026-10-06", 28.2, 23.3, 0, 70, 53)
+
+    def fake_current(timeout, lang="en"):
+        seen["current_lang"] = lang
+        return replace(SAMPLE_WEATHER, temperature_c=26)
+
+    def fake_yesterday(timeout, lang="en"):
+        seen["lang"] = lang
+        return yesterday
+
+    monkeypatch.setattr("hk_weather.cli.fetch_current", fake_current)
+    monkeypatch.setattr("hk_weather.cli.fetch_yesterday", fake_yesterday)
+    phrase = "26°C is 2.2°C below yesterday's high of 28.2°C."
+    assert main(["--past-high", "--lang", "tc"]) == 0
+    assert seen["current_lang"] == "tc"
+    assert seen["lang"] == "tc"
+    assert capsys.readouterr().out == phrase + "\n"
+    assert main(["--past-high", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "temperature_c": 26,
+        "yesterday_c": 28.2,
+        "date": "2026-10-06",
+        "gap_c": -2.2,
+        "phrase": phrase,
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_current",
+        lambda timeout, lang="en": replace(SAMPLE_WEATHER, temperature_c=30),
+    )
+    assert main(["--past-high"]) == 0
+    assert capsys.readouterr().out == (
+        "30°C is 1.8°C above yesterday's high of 28.2°C.\n"
+    )
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_current",
+        lambda timeout, lang="en": replace(SAMPLE_WEATHER, temperature_c=28.2),
+    )
+    assert main(["--past-high"]) == 0
+    assert capsys.readouterr().out == "28.2°C matches yesterday's high of 28.2°C.\n"
+
+    def fail_yesterday(timeout, lang="en"):
+        raise AssertionError("must not fetch yesterday")
+
+    monkeypatch.setattr("hk_weather.cli.fetch_yesterday", fail_yesterday)
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_current",
+        lambda timeout, lang="en": replace(SAMPLE_WEATHER, temperature_c=None),
+    )
+    assert main(["--past-high"]) == 0
+    assert capsys.readouterr().out == "No temperature reading is available.\n"
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_current",
+        lambda timeout, lang="en": replace(SAMPLE_WEATHER, temperature_c=26),
+    )
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_yesterday",
+        lambda timeout, lang="en": YesterdayReport("2026-10-06", None, 23.3, 0, 70, 53),
+    )
+    assert main(["--past-high", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No yesterday high is available."
+    }
+
+    assert main(["--yest-high", "--past-high"]) == 2
+    assert "(--yest-high --past-high)" in capsys.readouterr().err
+
+
 def test_cli_mean_temp_prints_latest_day(monkeypatch, capsys):
     seen = {}
     monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")

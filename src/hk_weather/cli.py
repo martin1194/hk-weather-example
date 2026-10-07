@@ -913,6 +913,7 @@ from hk_weather.hko import (
     format_yesterday,
     format_yesterday_miss,
     format_yest_high,
+    format_past_high,
     format_mean_temp,
     format_mean_temp_miss,
     format_tai_mo_temp,
@@ -1562,6 +1563,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--today-humidity prints today's forecast humidity; "
             "--yesterday prints yesterday's Observatory summary; "
             "--yest-high compares that high with the next forecast high; "
+            "--past-high compares the current temperature with yesterday's high; "
             "--mean-temp prints the latest daily mean temperature; "
             "--tai-mo-temp prints the latest daily mean temperature at Tai Mo Shan; "
             "--tate-temp prints the latest daily mean temperature at Tate's Cairn; "
@@ -2167,6 +2169,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--yest-high",
         action="store_true",
         help="Compare yesterday's high with the next forecast high",
+    )
+    parser.add_argument(
+        "--past-high",
+        action="store_true",
+        help="Compare the current temperature with yesterday's high",
     )
     parser.add_argument(
         "--mean-temp",
@@ -5000,6 +5007,14 @@ def main(argv: list[str] | None = None) -> int:
             if yesterday is not None and yesterday.temp_high_c is not None:
                 report = fetch_nine_temp(timeout=args.timeout, lang=args.lang)
             text = format_yest_high(yesterday, report, as_json=args.json)
+        elif args.past_high:
+            weather = fetch_current(timeout=args.timeout, lang=args.lang)
+            yesterday = None
+            if weather.temperature_c is not None:
+                yesterday = fetch_yesterday(timeout=args.timeout, lang=args.lang)
+            text = format_past_high(
+                weather.temperature_c, yesterday, as_json=args.json
+            )
         elif args.mean_temp:
             mean_temp = fetch_mean_temp(timeout=args.timeout, lang=args.lang)
             if mean_temp is None:
