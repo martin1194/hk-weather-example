@@ -909,6 +909,7 @@ from hk_weather.hko import (
     format_today_icon,
     format_yesterday,
     format_yesterday_miss,
+    format_yest_high,
     format_mean_temp,
     format_mean_temp_miss,
     format_tai_mo_temp,
@@ -1557,6 +1558,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--today-weather prints today's forecast weather; "
             "--today-humidity prints today's forecast humidity; "
             "--yesterday prints yesterday's Observatory summary; "
+            "--yest-high compares that high with the next forecast high; "
             "--mean-temp prints the latest daily mean temperature; "
             "--tai-mo-temp prints the latest daily mean temperature at Tai Mo Shan; "
             "--tate-temp prints the latest daily mean temperature at Tate's Cairn; "
@@ -2155,6 +2157,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--yesterday",
         action="store_true",
         help="Print yesterday's temperature, rainfall, and humidity at the Observatory",
+    )
+    parser.add_argument(
+        "--yest-high",
+        action="store_true",
+        help="Compare yesterday's high with the next forecast high",
     )
     parser.add_argument(
         "--mean-temp",
@@ -4972,6 +4979,12 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_yesterday_miss(as_json=args.json)
             else:
                 text = format_json(yesterday) if args.json else format_yesterday(yesterday)
+        elif args.yest_high:
+            yesterday = fetch_yesterday(timeout=args.timeout, lang=args.lang)
+            report = None
+            if yesterday is not None and yesterday.temp_high_c is not None:
+                report = fetch_nine_temp(timeout=args.timeout, lang=args.lang)
+            text = format_yest_high(yesterday, report, as_json=args.json)
         elif args.mean_temp:
             mean_temp = fetch_mean_temp(timeout=args.timeout, lang=args.lang)
             if mean_temp is None:

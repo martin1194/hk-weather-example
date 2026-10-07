@@ -19167,6 +19167,44 @@ def format_yesterday_miss(*, as_json: bool = False) -> str:
     return _unavailable("Yesterday's Observatory summary is not available.", as_json=as_json)
 
 
+def format_yest_high(
+    yesterday: YesterdayReport | None, report: NineTemp | None, *, as_json: bool
+) -> str:
+    """Compare yesterday's Observatory high with the next forecast high."""
+    if yesterday is None or yesterday.temp_high_c is None:
+        return _unavailable("No yesterday high is available.", as_json=as_json)
+    day = None
+    if report is not None:
+        day = next((item for item in report.days if item.temp_high_c is not None), None)
+    if day is None or day.temp_high_c is None:
+        return _unavailable("No forecast high is available.", as_json=as_json)
+    gap = round(day.temp_high_c - yesterday.temp_high_c, 1)
+    high = _number(day.temp_high_c)
+    prior = _number(yesterday.temp_high_c)
+    label = _forecast_day_label(day)
+    if gap > 0:
+        phrase = (
+            f"{label}'s high of {high}°C is {_number(gap)}°C above yesterday's {prior}°C."
+        )
+    elif gap < 0:
+        phrase = (
+            f"{label}'s high of {high}°C is {_number(abs(gap))}°C below yesterday's {prior}°C."
+        )
+    else:
+        phrase = f"{label}'s high of {high}°C matches yesterday's {prior}°C."
+    if as_json:
+        payload = {
+            "yesterday_c": yesterday.temp_high_c,
+            "date": day.date,
+            "week": day.week,
+            "high_c": day.temp_high_c,
+            "gap_c": gap,
+            "phrase": phrase,
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
+
+
 def parse_mean_temp(payload: dict) -> DailyMean | None:
     """Turn a `CLMTEMP` table into the latest numeric daily mean."""
     raw = payload.get("data")
