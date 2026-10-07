@@ -13,6 +13,7 @@ from hk_weather.hko import (
     CurrentWeather,
     ForecastIconDay,
     ForecastIcons,
+    Moon,
     Sunrise,
     TomorrowForecast,
     WeatherError,
@@ -19762,6 +19763,53 @@ def test_cli_sunrise_when_no_times(monkeypatch, capsys):
     assert capsys.readouterr().out == "No sunrise times are available.\n"
     assert main(["--sunrise", "--json"]) == 0
     assert json.loads(capsys.readouterr().out) == {"message": "No sunrise times are available."}
+
+
+def test_cli_until_moonset_says_how_long(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_moon",
+        lambda timeout, lang="en": Moon("2026-10-03", "02:51", "09:26", "15:54"),
+    )
+    monkeypatch.setattr(
+        "hk_weather.hko._clock",
+        lambda: datetime.fromisoformat("2026-10-03T00:00:00+00:00"),
+    )
+    assert main(["--until-moonset"]) == 0
+    assert capsys.readouterr().out == "Moonset in 7 hours 54 min\n"
+    monkeypatch.setattr(
+        "hk_weather.hko._clock",
+        lambda: datetime.fromisoformat("2026-10-03T10:00:00+00:00"),
+    )
+    assert main(["--until-moonset"]) == 0
+    assert capsys.readouterr().out == "Moonset was 2 hours 6 min ago\n"
+    monkeypatch.setattr(
+        "hk_weather.hko._clock",
+        lambda: datetime.fromisoformat("2026-10-03T07:54:30+00:00"),
+    )
+    assert main(["--until-moonset"]) == 0
+    assert capsys.readouterr().out == "Moonset now\n"
+    monkeypatch.setattr(
+        "hk_weather.hko._clock",
+        lambda: datetime.fromisoformat("2026-10-03T00:00:00+00:00"),
+    )
+    assert main(["--until-moonset", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "moonset": "15:54",
+        "until": "Moonset in 7 hours 54 min",
+    }
+    assert main(["--until-moonset", "--moon"]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "pass one report flag at a time (--moon --until-moonset)" in captured.err
+    monkeypatch.setattr("hk_weather.cli.fetch_moon", lambda timeout, lang="en": None)
+    assert main(["--until-moonset"]) == 0
+    assert capsys.readouterr().out == "No moonset time is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_moon",
+        lambda timeout, lang="en": Moon("2026-10-03", "02:51", "09:26", ""),
+    )
+    assert main(["--until-moonset"]) == 0
+    assert capsys.readouterr().out == "No moonset time is available.\n"
 
 
 def test_cli_moon_prints_times(monkeypatch, capsys):
