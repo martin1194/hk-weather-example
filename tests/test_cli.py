@@ -24738,6 +24738,127 @@ def test_cli_minute_temp_when_missing(monkeypatch, capsys):
     }
 
 
+def test_cli_temp_gap_prints_the_largest_difference(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _text_response(
+            "Date time,Automatic Weather Station,Air Temperature(degree Celsius)\n"
+            "202610071930,Chek Lap Kok,26.6\n"
+            "202610071930,Clear Water Bay,N/A\n"
+            "202610071930,HK Observatory,26.5\n"
+            "202610071930,Tai Mo Shan,16.9\n"
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--temp-gap", "--lang", "tc"]) == 0
+    assert seen["url"].endswith("latest_1min_temperature_uc.csv")
+    assert capsys.readouterr().out == (
+        "Temperature at Tai Mo Shan is 16.9°C, 9.6 below the Observatory's 26.5.\n"
+    )
+
+    assert main(["--temp-gap", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "time": "2026-10-07 19:30",
+        "places": ["Tai Mo Shan"],
+        "temperature_c": 16.9,
+        "observatory_c": 26.5,
+        "gap": -9.6,
+        "phrase": "Temperature at Tai Mo Shan is 16.9°C, 9.6 below the Observatory's 26.5.",
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Date time,Station,Temperature\n"
+            "202610071930,天文台,26.5\n"
+            "202610071930,赤鱲角,27.4\n"
+            "202610071930,京士柏,26.8\n"
+        ),
+    )
+    assert main(["--temp-gap"]) == 0
+    assert capsys.readouterr().out == (
+        "Temperature at 赤鱲角 is 27.4°C, 0.9 above the Observatory's 26.5.\n"
+    )
+
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Date time,Station,Temperature\n"
+            "202610071930,Chek Lap Kok,26.5\n"
+            "202610071930,HK Observatory,26.5\n"
+            "202610071930,Sha Tin,26.5\n"
+        ),
+    )
+    assert main(["--temp-gap"]) == 0
+    assert capsys.readouterr().out == (
+        "Temperature at Chek Lap Kok and Sha Tin matches the Observatory's 26.5°C.\n"
+    )
+
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Date time,Station,Temperature\n"
+            "202610071930,Ngong Ping,19.8\n"
+            "202610071930,HK Observatory,26.5\n"
+            "202610071930,Tai Mo Shan,16.9\n"
+            "202610071930,Tate's Cairn,16.9\n"
+        ),
+    )
+    assert main(["--temp-gap"]) == 0
+    assert capsys.readouterr().out == (
+        "Temperature at Tai Mo Shan and Tate's Cairn is 16.9°C, "
+        "9.6 below the Observatory's 26.5.\n"
+    )
+
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Date time,Station,Temperature\n"
+            "202610071930,Chek Lap Kok,36.1\n"
+            "202610071930,HK Observatory,26.5\n"
+            "202610071930,Tai Mo Shan,16.9\n"
+        ),
+    )
+    assert main(["--temp-gap"]) == 0
+    assert capsys.readouterr().out == (
+        "Temperature at Chek Lap Kok is 36.1°C, 9.6 above the Observatory's 26.5.\n"
+    )
+
+    assert main(["--minute-temp", "--temp-gap"]) == 2
+    assert "(--minute-temp --temp-gap)" in capsys.readouterr().err
+
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Date time,Station,Temperature\n"
+            "202610071930,Tai Mo Shan,16.9\n"
+        ),
+    )
+    assert main(["--temp-gap"]) == 0
+    assert capsys.readouterr().out == "No Observatory temperature is available.\n"
+
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Date time,Station,Temperature\n"
+            "202610071930,HK Observatory,26.5\n"
+        ),
+    )
+    assert main(["--temp-gap"]) == 0
+    assert capsys.readouterr().out == "No temperature comparison is available.\n"
+
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response("Date time,Station,Temperature\n"),
+    )
+    assert main(["--temp-gap", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No 1-minute temperatures are available."
+    }
+
+
 def test_cli_minute_humidity_prints_latest_stations(monkeypatch, capsys):
     seen = {}
 

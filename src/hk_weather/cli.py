@@ -718,6 +718,7 @@ from hk_weather.hko import (
     format_temp_time_miss,
     format_minute_temp,
     format_minute_temp_miss,
+    format_temp_gap,
     format_since_midnight,
     format_since_midnight_miss,
     format_midnight_span,
@@ -1416,6 +1417,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--temps lists temperatures by place; "
             "--temp-time prints when those temperatures were recorded; "
             "--minute-temp prints the latest 1-minute mean temperature; "
+            "--temp-gap prints where those readings differ most from the Observatory; "
             "--since-midnight prints each station's high and low since midnight; "
             "--midnight-span prints the station with the widest of those ranges; "
             "--pressure prints the latest 1-minute sea level pressure; "
@@ -4219,6 +4221,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--minute-temp",
         action="store_true",
         help="Print the latest 1-minute mean temperature at automatic stations",
+    )
+    parser.add_argument(
+        "--temp-gap",
+        action="store_true",
+        help="Print where the 1-minute temperature differs most from the Observatory",
     )
     parser.add_argument(
         "--since-midnight",
@@ -8662,6 +8669,11 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_minute_temp_miss(as_json=args.json)
             else:
                 text = format_json(minute_temp) if args.json else format_minute_temp(minute_temp)
+        elif args.temp_gap:
+            text = format_temp_gap(
+                fetch_minute_temp(timeout=args.timeout, lang=args.lang),
+                as_json=args.json,
+            )
         elif args.since_midnight:
             since_midnight = fetch_since_midnight(timeout=args.timeout, lang=args.lang)
             if not since_midnight.stations:
