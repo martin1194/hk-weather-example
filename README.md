@@ -233,6 +233,8 @@ hk-weather --max-temp
 hk-weather --max-temp --json
 hk-weather --min-temp
 hk-weather --min-temp --json
+hk-weather --day-span
+hk-weather --day-span --json
 hk-weather --tai-mo-min
 hk-weather --tai-mo-min --json
 hk-weather --tate-min
@@ -1302,6 +1304,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --max-temp` prints the latest daily maximum temperature at the Observatory for that same year (`dataType=CLMMAXT`, station HKO), for example `2026-08-31  29.5°C`. `--mean-temp` still prints the daily mean. `--hottest` still prints the current warmest place. `--max-temp --json` prints that day as one JSON object. `--lang` applies. If no numeric day is present, it says `No daily maximum temperature is available.`
 
 `hk-weather --min-temp` prints the latest daily minimum temperature at the Observatory for that same year (`dataType=CLMMINT`, station HKO), for example `2026-08-31  26.2°C`. `--max-temp` still prints the daily maximum. `--coldest` still prints the current coolest place. `--min-temp --json` prints that day as one JSON object. `--lang` applies. If no numeric day is present, it says `No daily minimum temperature is available.`
+
+`hk-weather --day-span` compares that daily maximum with the daily minimum on the same day. On 2026-08-31 the high is 29.5°C and the low is 26.2°C, so the line is `On 2026-08-31, Hong Kong Observatory high of 29.5°C is 3.3°C above the low of 26.2°C.` A lower high says below, and equal readings say the high matches the low. `--max-temp` and `--min-temp` still print each reading on its own. `--midnight-span` still finds the widest range since midnight. `--day-span --json` prints both readings, the station, the date, the span, and the phrase. `--lang` selects the station name. The minimum is fetched only when a maximum exists. If the maximum is missing, it says `No daily maximum temperature is available.` If the minimum is missing, it says `No daily minimum temperature is available.` If the dates differ, it says `No shared temperature day is available.` Passing `--min-temp` with `--day-span` is an error.
 
 `hk-weather --tai-mo-min` prints the latest daily minimum temperature at Tai Mo Shan, for example `2026-08-31  19.5°C`. `--min-temp` still prints the Observatory minimum, and `--tai-mo-temp` still prints the peak's daily mean. `--tai-mo-min --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Tai Mo Shan minimum temperature is available.`
 
