@@ -3487,6 +3487,68 @@ def test_cli_in_humidity_compares_current_humidity_with_the_next_range(monkeypat
     }
 
 
+def test_cli_next_range_prints_the_first_forecast_span(monkeypatch, capsys):
+    seen = {}
+    report = NineTemp(
+        "2026-10-07T15:50:00+08:00",
+        (
+            NineTempDay("2026-10-07", "Wednesday", None, 26),
+            NineTempDay("2026-10-08", "Thursday", 30, 25),
+            NineTempDay("2026-10-09", "Friday", 31, 26),
+        ),
+    )
+
+    def fake_fetch(timeout, lang="en"):
+        seen["lang"] = lang
+        return report
+
+    monkeypatch.setattr("hk_weather.cli.fetch_nine_temp", fake_fetch)
+    assert main(["--next-range", "--lang", "tc"]) == 0
+    assert seen["lang"] == "tc"
+    assert capsys.readouterr().out == (
+        "2026-10-08 Thursday's range is 5°C, from 25°C to 30°C.\n"
+    )
+
+    assert main(["--next-range", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "date": "2026-10-08",
+        "week": "Thursday",
+        "low_c": 25,
+        "high_c": 30,
+        "range_c": 5,
+        "phrase": "2026-10-08 Thursday's range is 5°C, from 25°C to 30°C.",
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_nine_temp",
+        lambda timeout, lang="en": NineTemp(
+            "",
+            (
+                NineTempDay("2026-10-08", "Thursday", 24, 30),
+                NineTempDay("2026-10-09", "Friday", 31, 31),
+            ),
+        ),
+    )
+    assert main(["--next-range"]) == 0
+    assert capsys.readouterr().out == (
+        "2026-10-09 Friday's range is 0°C, from 31°C to 31°C.\n"
+    )
+
+    assert main(["--next-range", "--today-range"]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "pass one report flag at a time (--today-range --next-range)" in captured.err
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_nine_temp",
+        lambda timeout, lang="en": NineTemp("", (NineTempDay("2026-10-08", "Thursday", None, 25),)),
+    )
+    assert main(["--next-range"]) == 0
+    assert capsys.readouterr().out == "No forecast range is available.\n"
+    assert main(["--next-range", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {"message": "No forecast range is available."}
+
+
 def test_cli_today_range_prints_the_high_low_span(monkeypatch, capsys):
     today = TomorrowForecast(
         "updated",
