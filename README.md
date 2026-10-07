@@ -657,6 +657,8 @@ hk-weather --fifteen-uv
 hk-weather --fifteen-uv --json
 hk-weather --uv-level
 hk-weather --uv-level --json
+hk-weather --uv-gap
+hk-weather --uv-gap --json
 hk-weather --icon-time
 hk-weather --icon-time --json
 hk-weather --icon
@@ -1612,6 +1614,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --fifteen-uv` prints the latest 15-minute mean UV index at King's Park, for example `2026-10-04 08:15  1`. `--uv` still prints the hourly index from the current report. A reading of zero is kept. `--fifteen-uv --json` prints that reading as one JSON object. `--lang` selects the station name. Rows that are not numeric are omitted. If none remain, it says `No 15-minute UV index is available.`
 
 `hk-weather --uv-level` prints the exposure band for that same 15-minute index. Below 3 is `UV low, 2`, 3 to 5 is moderate, 6 to 7 is `UV high, 6`, 8 to 10 is very high, and 11 or above is extreme. A reading of zero stays low. `--uv` still prints the hourly index and the Observatory's own description. `--uv-level --json` prints the station, time, index, and band. If the index is missing, it says `No 15-minute UV index is available.`
+
+`hk-weather --uv-gap` compares that 15-minute index with the hourly UV. `15-minute UV is 2 above the hourly index of 6` means the latest quarter-hour reading is two points higher. A matching pair says `15-minute UV matches the hourly index of 6`, and a lower reading says `15-minute UV is 1 below the hourly index of 6`. `--uv-gap --json` prints both indexes, the signed gap, and that phrase. If either index is missing, it says `No UV comparison is available.`
 
 `hk-weather --icon-time` (or `-i`) prints when the current weather icon was last updated (`iconUpdateTime`). `--icon-time --json` prints that timestamp as one JSON object. `--lang` applies. If the field is missing or blank, it says `No icon update time is available.`
 

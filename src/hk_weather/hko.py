@@ -16642,6 +16642,38 @@ def format_uv_level(reading: FifteenUv | None, *, as_json: bool) -> str:
     return phrase + "\n"
 
 
+def format_uv_gap(
+    hourly: UvIndex | None, fifteen: FifteenUv | None, *, as_json: bool
+) -> str:
+    """Print how far the latest 15-minute UV is from the hourly index."""
+    hourly_value = hourly.value if hourly is not None else None
+    fifteen_value = fifteen.uv_index if fifteen is not None else None
+    if hourly_value is None or fifteen_value is None:
+        return _unavailable("No UV comparison is available.", as_json=as_json)
+    gap = round(fifteen_value - hourly_value, 1)
+    if gap == 0:
+        phrase = f"15-minute UV matches the hourly index of {_number(hourly_value)}"
+    elif gap > 0:
+        phrase = (
+            f"15-minute UV is {_number(gap)} above the hourly index of "
+            f"{_number(hourly_value)}"
+        )
+    else:
+        phrase = (
+            f"15-minute UV is {_number(abs(gap))} below the hourly index of "
+            f"{_number(hourly_value)}"
+        )
+    if as_json:
+        payload = {
+            "fifteen": fifteen_value,
+            "hourly": hourly_value,
+            "gap": gap,
+            "phrase": phrase,
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
+
+
 def parse_icon_time(payload: dict) -> IconUpdate | None:
     """Turn the `rhrread` icon update time into one timestamp."""
     text = _text(payload.get("iconUpdateTime"))

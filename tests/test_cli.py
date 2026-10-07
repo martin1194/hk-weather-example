@@ -26,6 +26,7 @@ from hk_weather.hko import (
     VisibilityReading,
     VisibilityReport,
     WeatherError,
+    UvIndex,
     WarningTime,
     WarningTimeReport,
 )
@@ -20643,6 +20644,76 @@ def test_cli_uv_level_prints_the_fifteen_minute_band(monkeypatch, capsys):
     monkeypatch.setattr("hk_weather.cli.fetch_fifteen_uv", lambda timeout, lang="en": None)
     assert main(["--uv-level"]) == 0
     assert capsys.readouterr().out == "No 15-minute UV index is available.\n"
+
+
+def test_cli_uv_gap_compares_fifteen_minute_and_hourly(monkeypatch, capsys):
+    seen = {}
+
+    def fake_hourly(timeout, lang="en"):
+        seen["hourly_lang"] = lang
+        return UvIndex("2026-10-07T11:02:00+08:00", "King's Park", 6, "high", "During the past hour")
+
+    def fake_fifteen(timeout, lang="en"):
+        seen["fifteen_lang"] = lang
+        return FifteenUv("King's Park", "2026-10-07 11:30", 8)
+
+    monkeypatch.setattr("hk_weather.cli.fetch_uv", fake_hourly)
+    monkeypatch.setattr("hk_weather.cli.fetch_fifteen_uv", fake_fifteen)
+    assert main(["--uv-gap", "--lang", "tc"]) == 0
+    assert seen == {"hourly_lang": "tc", "fifteen_lang": "tc"}
+    assert capsys.readouterr().out == "15-minute UV is 2 above the hourly index of 6\n"
+
+    assert main(["--uv-gap", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "fifteen": 8,
+        "hourly": 6,
+        "gap": 2,
+        "phrase": "15-minute UV is 2 above the hourly index of 6",
+    }
+
+    cases = (
+        (6, 6, "15-minute UV matches the hourly index of 6\n"),
+        (6, 5, "15-minute UV is 1 below the hourly index of 6\n"),
+    )
+    for hourly_value, fifteen_value, expected in cases:
+        monkeypatch.setattr(
+            "hk_weather.cli.fetch_uv",
+            lambda timeout, lang="en", value=hourly_value: UvIndex(
+                "2026-10-07T11:02:00+08:00", "King's Park", value, "high", None
+            ),
+        )
+        monkeypatch.setattr(
+            "hk_weather.cli.fetch_fifteen_uv",
+            lambda timeout, lang="en", value=fifteen_value: FifteenUv(
+                "King's Park", "2026-10-07 11:30", value
+            ),
+        )
+        assert main(["--uv-gap"]) == 0
+        assert capsys.readouterr().out == expected
+
+    assert main(["--uv-gap", "--uv"]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "pass one report flag at a time (--uv --uv-gap)" in captured.err
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_uv",
+        lambda timeout, lang="en": UvIndex(
+            "2026-10-07T11:02:00+08:00", "King's Park", None, None, None
+        ),
+    )
+    assert main(["--uv-gap"]) == 0
+    assert capsys.readouterr().out == "No UV comparison is available.\n"
+
+    monkeypatch.setattr("hk_weather.cli.fetch_fifteen_uv", lambda timeout, lang="en": None)
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_uv",
+        lambda timeout, lang="en": UvIndex(
+            "2026-10-07T11:02:00+08:00", "King's Park", 6, "high", None
+        ),
+    )
+    assert main(["--uv-gap"]) == 0
+    assert capsys.readouterr().out == "No UV comparison is available.\n"
 
 
 def test_cli_icon_time_prints_timestamp(monkeypatch, capsys):
