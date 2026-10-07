@@ -11773,6 +11773,79 @@ def format_wind(report: WindForecast) -> str:
     return "\n".join(lines) + "\n"
 
 
+def _max_force(text: str) -> int | None:
+    """Highest Beaufort number in an English or Chinese wind sentence."""
+    found: list[int] = []
+    lower = text.lower()
+    start = 0
+    while True:
+        index = lower.find("force", start)
+        if index < 0:
+            break
+        rest = text[index + len("force") :].lstrip()
+        digits = ""
+        for char in rest:
+            if char.isdigit():
+                digits += char
+            elif digits or not char.isspace():
+                break
+        if digits:
+            found.append(int(digits))
+        start = index + len("force")
+    for mark in ("級", "级"):
+        start = 0
+        while True:
+            index = text.find(mark, start)
+            if index < 0:
+                break
+            digits = ""
+            cursor = index - 1
+            while cursor >= 0 and text[cursor].isdigit():
+                digits = text[cursor] + digits
+                cursor -= 1
+            if digits:
+                found.append(int(digits))
+            start = index + len(mark)
+    if not found:
+        return None
+    return max(found)
+
+
+def format_wind_ease(report: WindForecast, *, as_json: bool) -> str:
+    """Print the first forecast day whose strongest force is lighter."""
+    previous: int | None = None
+    chosen: tuple[WindDay, int, int] | None = None
+    for day in report.days:
+        force = _max_force(day.wind)
+        if force is None:
+            continue
+        if previous is not None and force < previous:
+            chosen = (day, previous, force)
+            break
+        previous = force
+    if chosen is None:
+        return _unavailable("No lighter wind day is in the forecast.", as_json=as_json)
+    day, before, after = chosen
+    heading = " ".join(part for part in (day.date, day.week) if part)
+    if heading:
+        phrase = (
+            f"Wind eases on {heading}, from force {before} to force {after}: {day.wind}"
+        )
+    else:
+        phrase = f"Wind eases from force {before} to force {after}: {day.wind}"
+    if as_json:
+        payload = {
+            "date": day.date,
+            "week": day.week,
+            "wind": day.wind,
+            "from_force": before,
+            "to_force": after,
+            "phrase": phrase,
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
+
+
 def parse_gust(text: str) -> GustReport:
     """Turn the regional 10-minute wind CSV into one row per station."""
     stations: list[GustReading] = []
