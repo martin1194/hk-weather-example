@@ -10590,6 +10590,59 @@ def format_nine_humidity_miss(*, as_json: bool = False) -> str:
     return _unavailable("No 9-day humidity is available.", as_json=as_json)
 
 
+def _next_humidity_day(report: NineHumidity | None) -> NineHumidityDay | None:
+    """Return the first forecast day with a low and a high humidity."""
+    if report is None:
+        return None
+    for day in report.days:
+        low = day.humidity_low_percent
+        high = day.humidity_high_percent
+        if low is None or high is None or high < low:
+            continue
+        return day
+    return None
+
+
+def format_in_humidity(
+    report: NineHumidity | None,
+    humidity_percent: float | None,
+    *,
+    as_json: bool,
+) -> str:
+    """Say whether the current humidity is inside the next forecast range."""
+    day = _next_humidity_day(report)
+    if day is None:
+        return _unavailable("No forecast humidity range is available.", as_json=as_json)
+    if humidity_percent is None:
+        return _unavailable("No humidity reading is available.", as_json=as_json)
+    low = day.humidity_low_percent
+    high = day.humidity_high_percent
+    span = f"{_number(low)}-{_number(high)}%"
+    label = _forecast_day_label(day)
+    reading = _number(humidity_percent)
+    if humidity_percent < low:
+        phrase = f"Humidity {reading}% is below {label}'s range of {span}."
+        inside = False
+    elif humidity_percent > high:
+        phrase = f"Humidity {reading}% is above {label}'s range of {span}."
+        inside = False
+    else:
+        phrase = f"Humidity {reading}% is inside {label}'s range of {span}."
+        inside = True
+    if as_json:
+        payload = {
+            "humidity_percent": humidity_percent,
+            "date": day.date,
+            "week": day.week,
+            "low_percent": low,
+            "high_percent": high,
+            "inside": inside,
+            "phrase": phrase,
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
+
+
 def format_psr(report: PsrForecast) -> str:
     """Render the chance of significant rain, one day per line."""
     lines = ["Hong Kong chance of significant rain"]

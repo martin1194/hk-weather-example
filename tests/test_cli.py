@@ -23,6 +23,8 @@ from hk_weather.hko import (
     QuakeReport,
     GustReport,
     Moon,
+    NineHumidity,
+    NineHumidityDay,
     NineTemp,
     NineTempDay,
     NineWeather,
@@ -3285,6 +3287,131 @@ def test_cli_high_gap_compares_current_with_todays_high(monkeypatch, capsys):
     monkeypatch.setattr("hk_weather.cli.fetch_today", lambda timeout, lang="en": None)
     assert main(["--high-gap"]) == 0
     assert capsys.readouterr().out == "No forecast high is available.\n"
+
+
+def test_cli_in_humidity_compares_current_humidity_with_the_next_range(monkeypatch, capsys):
+    seen = {}
+    report = NineHumidity(
+        "2026-10-07T15:00:00+08:00",
+        (
+            NineHumidityDay("2026-10-07", "Wednesday", None, 60),
+            NineHumidityDay("2026-10-08", "Thursday", 75, 50),
+            NineHumidityDay("2026-10-09", "Friday", 60, 40),
+        ),
+    )
+
+    def fake_humidity(timeout, lang="en"):
+        seen["lang"] = lang
+        return report
+
+    def fake_current(timeout, lang="en"):
+        seen["current_lang"] = lang
+        return CurrentWeather(
+            update_time="2026-10-07T15:00:00+08:00",
+            conditions="Sunny",
+            place="Hong Kong Observatory",
+            temperature_c=28,
+            humidity_percent=57,
+            rainfall_mm=0,
+            rainfall_place="Central & Western District",
+            lightning_places=(),
+            warnings=(),
+        )
+
+    monkeypatch.setattr("hk_weather.cli.fetch_nine_humidity", fake_humidity)
+    monkeypatch.setattr("hk_weather.cli.fetch_current", fake_current)
+    assert main(["--in-humidity", "--lang", "tc"]) == 0
+    assert seen["lang"] == "tc"
+    assert seen["current_lang"] == "tc"
+    assert capsys.readouterr().out == (
+        "Humidity 57% is inside 2026-10-08 Thursday's range of 50-75%.\n"
+    )
+
+    assert main(["--in-humidity", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "humidity_percent": 57,
+        "date": "2026-10-08",
+        "week": "Thursday",
+        "low_percent": 50,
+        "high_percent": 75,
+        "inside": True,
+        "phrase": "Humidity 57% is inside 2026-10-08 Thursday's range of 50-75%.",
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_current",
+        lambda timeout, lang="en": CurrentWeather(
+            update_time="",
+            conditions="Sunny",
+            place="Hong Kong Observatory",
+            temperature_c=28,
+            humidity_percent=40,
+            rainfall_mm=None,
+            rainfall_place=None,
+            lightning_places=(),
+            warnings=(),
+        ),
+    )
+    assert main(["--in-humidity"]) == 0
+    assert capsys.readouterr().out == (
+        "Humidity 40% is below 2026-10-08 Thursday's range of 50-75%.\n"
+    )
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_current",
+        lambda timeout, lang="en": CurrentWeather(
+            update_time="",
+            conditions="Sunny",
+            place="Hong Kong Observatory",
+            temperature_c=28,
+            humidity_percent=80,
+            rainfall_mm=None,
+            rainfall_place=None,
+            lightning_places=(),
+            warnings=(),
+        ),
+    )
+    assert main(["--in-humidity"]) == 0
+    assert capsys.readouterr().out == (
+        "Humidity 80% is above 2026-10-08 Thursday's range of 50-75%.\n"
+    )
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_current",
+        lambda timeout, lang="en": CurrentWeather(
+            update_time="",
+            conditions="Sunny",
+            place="Hong Kong Observatory",
+            temperature_c=28,
+            humidity_percent=None,
+            rainfall_mm=None,
+            rainfall_place=None,
+            lightning_places=(),
+            warnings=(),
+        ),
+    )
+    assert main(["--in-humidity"]) == 0
+    assert capsys.readouterr().out == "No humidity reading is available.\n"
+
+    assert main(["--in-humidity", "--nine-humidity"]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "pass one report flag at a time (--nine-humidity --in-humidity)" in captured.err
+
+    def fail_current(timeout, lang="en"):
+        raise AssertionError("current weather should not be fetched")
+
+    monkeypatch.setattr("hk_weather.cli.fetch_current", fail_current)
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_nine_humidity",
+        lambda timeout, lang="en": NineHumidity("", ()),
+    )
+    assert main(["--in-humidity"]) == 0
+    assert capsys.readouterr().out == "No forecast humidity range is available.\n"
+    assert main(["--in-humidity", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No forecast humidity range is available."
+    }
 
 
 def test_cli_today_range_prints_the_high_low_span(monkeypatch, capsys):

@@ -651,6 +651,7 @@ from hk_weather.hko import (
     format_high_step,
     format_nine_humidity,
     format_nine_humidity_miss,
+    format_in_humidity,
     format_sea_temp,
     format_sea_temp_miss,
     format_morning_sea,
@@ -1317,6 +1318,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--hottest-day prints the hottest day in that forecast; "
             "--high-step compares the first forecast high with the next one; "
             "--nine-humidity prints each day's humidity from the 9-day forecast; "
+            "--in-humidity says whether the current humidity is inside the next range; "
             "--warnings lists active warnings; "
             "--warning-count prints how many warnings are in force; "
             "--warning-time prints when active warnings were issued; "
@@ -2003,6 +2005,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--nine-humidity",
         action="store_true",
         help="Print each day's humidity range from the 9-day forecast",
+    )
+    parser.add_argument(
+        "--in-humidity",
+        action="store_true",
+        help="Say whether the current humidity is inside the next forecast range",
     )
     parser.add_argument(
         "-Y",
@@ -4657,6 +4664,23 @@ def main(argv: list[str] | None = None) -> int:
             else:
                 text = (
                     format_json(nine_humidity) if args.json else format_nine_humidity(nine_humidity)
+                )
+        elif args.in_humidity:
+            nine_humidity = fetch_nine_humidity(timeout=args.timeout, lang=args.lang)
+            ready = any(
+                day.humidity_low_percent is not None
+                and day.humidity_high_percent is not None
+                and day.humidity_high_percent >= day.humidity_low_percent
+                for day in nine_humidity.days
+            )
+            if not ready:
+                text = format_in_humidity(nine_humidity, None, as_json=args.json)
+            else:
+                weather = fetch_current(timeout=args.timeout, lang=args.lang)
+                text = format_in_humidity(
+                    nine_humidity,
+                    weather.humidity_percent,
+                    as_json=args.json,
                 )
         elif args.today:
             today = fetch_today(timeout=args.timeout, lang=args.lang)
