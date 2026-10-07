@@ -33,6 +33,7 @@ hk-weather --short --when
 hk-weather --raining
 hk-weather --raining --json
 hk-weather --hotter-than 30
+hk-weather --feels-like
 hk-weather --summary
 hk-weather --summary --json
 hk-weather --json
@@ -1851,6 +1852,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --raining` prints `yes` or `no`. It is `yes` when the conditions mention rain, showers, drizzle, or thunderstorms, or when a district recorded rainfall above 0 in the past hour. `--raining --json` prints `{"raining": true}` or `{"raining": false}`.
 
 `hk-weather --hotter-than C` prints `yes` when the current temperature is above C, and `no` otherwise. At 28°C, `--hotter-than 30` is `no` and `--hotter-than 20` is `yes`. A temperature equal to C is `no`. `--hotter-than 30 --json` prints that answer with the threshold and the temperature.
+
+`hk-weather --feels-like` estimates how warm the air feels from the current temperature and humidity. At 28°C and 85% humidity that is `Feels like 40.6°C`. `--feels-like -F` prints `40.6°C (105°F)`. This is not the Observatory reading from `--heat-index`. `--feels-like --json` prints the estimate with the temperature and humidity, still in Celsius. If humidity is missing, it says `No feels-like temperature is available.`
 
 ## Exit status
 

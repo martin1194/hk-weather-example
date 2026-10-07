@@ -495,6 +495,33 @@ def test_cli_hotter_than_answers_yes_or_no(monkeypatch, capsys):
     assert "temperature threshold must be a number" in capsys.readouterr().err
 
 
+def test_cli_feels_like_estimates_humidex(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_current",
+        lambda timeout, lang="en": SAMPLE_WEATHER,
+    )
+    assert main(["--feels-like"]) == 0
+    assert capsys.readouterr().out == "Feels like 40.6°C\n"
+    assert main(["--feels-like", "-F"]) == 0
+    assert capsys.readouterr().out == "Feels like 40.6°C (105°F)\n"
+    assert main(["--feels-like", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "feels_like_c": 40.6,
+        "temperature_c": 28,
+        "humidity_percent": 85,
+    }
+    assert main(["--feels-like", "--forecast"]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "pass one report flag at a time (--feels-like --forecast)" in captured.err
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_current",
+        lambda timeout, lang="en": replace(SAMPLE_WEATHER, humidity_percent=None),
+    )
+    assert main(["--feels-like"]) == 0
+    assert capsys.readouterr().out == "No feels-like temperature is available.\n"
+
+
 def test_cli_prints_report(monkeypatch, capsys):
     monkeypatch.setattr(
         "hk_weather.cli.fetch_current",

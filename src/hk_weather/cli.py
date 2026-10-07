@@ -668,6 +668,7 @@ from hk_weather.hko import (
     format_report,
     format_raining,
     format_hotter,
+    format_feels_like,
     format_stations,
     format_strikes,
     format_strikes_miss,
@@ -1241,6 +1242,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--when adds the observation time; "
             "--raining prints yes or no; "
             "--hotter-than C prints yes or no; "
+            "--feels-like estimates how warm it feels; "
             "Current conditions by default; --summary prints a short briefing; "
             "--forecast prints the local forecast; "
             "--outlook prints the local-forecast outlook; "
@@ -1728,6 +1730,11 @@ def build_parser() -> argparse.ArgumentParser:
         type=_celsius_threshold,
         metavar="C",
         help="Print yes or no if the current temperature is above C",
+    )
+    parser.add_argument(
+        "--feels-like",
+        action="store_true",
+        help="Estimate how warm it feels from the current temperature and humidity",
     )
     parser.add_argument(
         "--plain",
@@ -8216,7 +8223,11 @@ def main(argv: list[str] | None = None) -> int:
             )
         else:
             weather = fetch_current(timeout=args.timeout, lang=args.lang)
-            if args.hotter_than is not None:
+            if args.feels_like:
+                text = format_feels_like(
+                    weather, as_json=args.json, fahrenheit=args.fahrenheit
+                )
+            elif args.hotter_than is not None:
                 text = format_hotter(weather, args.hotter_than, as_json=args.json)
             elif args.raining:
                 text = format_raining(weather, as_json=args.json)
