@@ -2622,6 +2622,36 @@ def test_cli_high_gap_compares_current_with_todays_high(monkeypatch, capsys):
     assert capsys.readouterr().out == "No forecast high is available.\n"
 
 
+def test_cli_today_range_prints_the_high_low_span(monkeypatch, capsys):
+    today = TomorrowForecast(
+        "updated",
+        "2026-10-03",
+        "Saturday",
+        "Sunny",
+        31,
+        27,
+        None,
+        None,
+        None,
+        None,
+    )
+    monkeypatch.setattr("hk_weather.cli.fetch_today", lambda timeout, lang="en": today)
+    assert main(["--today-range"]) == 0
+    assert capsys.readouterr().out == "Today's range is 4°C\n"
+    assert main(["--today-range", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {"low_c": 27, "high_c": 31, "range_c": 4.0}
+    assert main(["--today-range", "--high-gap"]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "pass one report flag at a time (--high-gap --today-range)" in captured.err
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_today",
+        lambda timeout, lang="en": replace(today, temp_low_c=None),
+    )
+    assert main(["--today-range"]) == 0
+    assert capsys.readouterr().out == "No forecast range is available.\n"
+
+
 def test_cli_today_prints_the_hong_kong_day(monkeypatch, capsys):
     seen = {}
     monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
