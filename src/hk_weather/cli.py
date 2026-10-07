@@ -765,6 +765,7 @@ from hk_weather.hko import (
     format_fifteen_uv,
     format_fifteen_uv_miss,
     format_uv_level,
+    format_uv_gap,
     format_visibility,
     format_least_vis,
     format_reduced_vis,
@@ -1296,6 +1297,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--uv prints the UV index; "
             "--fifteen-uv prints the latest 15-minute mean UV index; "
             "--uv-level prints whether that 15-minute index is low through extreme; "
+            "--uv-gap prints how far that 15-minute index is from the hourly UV; "
             "--icon-time prints when the weather icon changed; "
             "--icon prints the current weather icon; "
             "--current-updated prints when the current weather report was updated; "
@@ -3388,6 +3390,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--uv-level",
         action="store_true",
         help="Print the exposure band for the latest 15-minute UV index",
+    )
+    parser.add_argument(
+        "--uv-gap",
+        action="store_true",
+        help="Print how far the latest 15-minute UV is from the hourly index",
     )
     parser.add_argument(
         "-i",
@@ -7081,6 +7088,12 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_json(fifteen_uv) if args.json else format_fifteen_uv(fifteen_uv)
         elif args.uv_level:
             text = format_uv_level(
+                fetch_fifteen_uv(timeout=args.timeout, lang=args.lang),
+                as_json=args.json,
+            )
+        elif args.uv_gap:
+            text = format_uv_gap(
+                fetch_uv(timeout=args.timeout, lang=args.lang),
                 fetch_fifteen_uv(timeout=args.timeout, lang=args.lang),
                 as_json=args.json,
             )
