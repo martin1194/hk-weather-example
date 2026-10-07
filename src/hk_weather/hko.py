@@ -10420,6 +10420,19 @@ def format_today_wind(day: TomorrowForecast | None, *, as_json: bool) -> str:
     return f"Wind: {wind}\n"
 
 
+def format_today_weather(day: TomorrowForecast | None, *, as_json: bool) -> str:
+    """Print today's forecast weather."""
+    weather = "" if day is None else day.weather.strip()
+    if day is None or not weather:
+        return _unavailable("No forecast weather is available for today.", as_json=as_json)
+    if as_json:
+        return (
+            json.dumps({"date": day.date, "weather": weather}, indent=2, ensure_ascii=False)
+            + "\n"
+        )
+    return f"Weather: {weather}\n"
+
+
 def format_day_miss(day: int, *, as_json: bool = False) -> str:
     """Say that forecast day N is not in the 9-day list."""
     return _unavailable(f"Forecast day {day} is not available.", as_json=as_json)
