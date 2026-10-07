@@ -632,6 +632,8 @@ hk-weather --next-tide
 hk-weather --next-tide --json
 hk-weather --aqhi
 hk-weather --aqhi --json
+hk-weather --aqhi-mix
+hk-weather --aqhi-mix --json
 hk-weather --sunrise
 hk-weather --sunrise --json
 hk-weather --until-sunset
@@ -1596,6 +1598,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --next-tide` prints how long until the next high or low tide at Quarry Bay. A lower tide between two higher ones is a low tide, so at 10:00, with the next turn at 13:16 and 0.77 m, that is `Low tide in 3 hours 16 min, 0.77 m`. Within that minute it says `Low tide now, 0.77 m`. After the last tide of the day it says how long ago that tide was. `--tide` still lists every high and low. `--next-tide --json` prints the kind, time, height, and that phrase. If none are available, it says `No tide readings are available.`
 
 `hk-weather --aqhi` (or `-A`) prints the current Air Quality Health Index at each monitoring station, for example `Central/Western  General Stations  3  Low`. `--aqhi --json` prints that list as one JSON object. `--lang` chooses the English, Traditional Chinese, or Simplified Chinese feed. If none are present, it says so.
+
+`hk-weather --aqhi-mix` counts those stations by health-risk band, with the more serious band first. Right now that is `AQHI: 16 Moderate, 2 Low`. One band on its own is `AQHI: 18 Moderate`. Chinese labels such as 中 and 低 stay in the same order. `--aqhi` still lists every station. `--aqhi-mix --json` prints the counts and that phrase. If no risk labels are present, it says `No AQHI readings are available.`
 
 `hk-weather --sunrise` (or `-U`) prints today's sunrise, sun transit, and sunset (`opendata.php`, `dataType=SRS`), for example `Rise: 06:15` and `Set: 18:09`. `--sunrise --json` prints that day as one JSON object. `--lang` applies. If the times are missing, it says so.
 

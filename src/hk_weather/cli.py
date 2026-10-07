@@ -454,6 +454,7 @@ from hk_weather.hko import (
     filter_stations,
     format_aqhi,
     format_aqhi_miss,
+    format_aqhi_mix,
     format_day_miss,
     format_driest,
     format_driest_miss,
@@ -1724,6 +1725,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--tide-span prints the gap between the lowest and highest of those tides; "
             "--next-tide prints how long until the next high or low tide; "
             "--aqhi prints the air quality health index; "
+            "--aqhi-mix prints how many stations are in each health-risk band; "
             "--sunrise prints today's sunrise and sunset; "
             "--until-sunset prints how long until today's sunset; "
             "--since-sunrise prints how long it has been since today's sunrise; "
@@ -3328,6 +3330,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--aqhi",
         action="store_true",
         help="Print the current Air Quality Health Index by station",
+    )
+    parser.add_argument(
+        "--aqhi-mix",
+        action="store_true",
+        help="Print how many stations are in each AQHI health-risk band",
     )
     parser.add_argument(
         "-U",
@@ -7077,6 +7084,11 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_aqhi_miss(as_json=args.json)
             else:
                 text = format_json(aqhi) if args.json else format_aqhi(aqhi)
+        elif args.aqhi_mix:
+            text = format_aqhi_mix(
+                fetch_aqhi(timeout=args.timeout, lang=args.lang),
+                as_json=args.json,
+            )
         elif args.sunrise:
             sunrise = fetch_sunrise(timeout=args.timeout, lang=args.lang)
             if sunrise is None:
