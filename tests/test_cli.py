@@ -27145,6 +27145,126 @@ def test_cli_high_pressure_prints_the_highest_station(monkeypatch, capsys):
     }
 
 
+def test_cli_pressure_gap_prints_the_largest_difference(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _text_response(
+            "Date time,Automatic Weather Station,Mean Sea Level Pressure(hPa)\n"
+            "202610071900,Chek Lap Kok,1017.7\n"
+            "202610071900,HK Observatory,1017.7\n"
+            "202610071900,Sheung Shui,1017.3\n"
+            "202610071900,Tai Po,1018.6\n"
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--pressure-gap", "--lang", "tc"]) == 0
+    assert seen["url"].endswith("latest_1min_pressure_uc.csv")
+    assert capsys.readouterr().out == (
+        "Pressure at Tai Po is 1018.6 hPa, 0.9 above the Observatory's 1017.7.\n"
+    )
+
+    assert main(["--pressure-gap", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "time": "2026-10-07 19:00",
+        "places": ["Tai Po"],
+        "pressure_hpa": 1018.6,
+        "observatory_hpa": 1017.7,
+        "gap": 0.9,
+        "phrase": "Pressure at Tai Po is 1018.6 hPa, 0.9 above the Observatory's 1017.7.",
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Date time,Station,Pressure\n"
+            "202610071900,天文台,1017.7\n"
+            "202610071900,上水,1016.5\n"
+            "202610071900,大埔,1018.0\n"
+        ),
+    )
+    assert main(["--pressure-gap"]) == 0
+    assert capsys.readouterr().out == (
+        "Pressure at 上水 is 1016.5 hPa, 1.2 below the Observatory's 1017.7.\n"
+    )
+
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Date time,Station,Pressure\n"
+            "202610071900,Chek Lap Kok,1017.7\n"
+            "202610071900,HK Observatory,1017.7\n"
+            "202610071900,Sha Tin,1017.7\n"
+        ),
+    )
+    assert main(["--pressure-gap"]) == 0
+    assert capsys.readouterr().out == (
+        "Pressure at Chek Lap Kok and Sha Tin matches the Observatory's 1017.7 hPa.\n"
+    )
+
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Date time,Station,Pressure\n"
+            "202610071900,Sha Tin,1018.4\n"
+            "202610071900,HK Observatory,1017.7\n"
+            "202610071900,Tai Po,1018.4\n"
+            "202610071900,Sheung Shui,1017.0\n"
+        ),
+    )
+    assert main(["--pressure-gap"]) == 0
+    assert capsys.readouterr().out == (
+        "Pressure at Sha Tin and Tai Po is 1018.4 hPa, 0.7 above the Observatory's 1017.7.\n"
+    )
+
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Date time,Station,Pressure\n"
+            "202610071900,Tai Po,1018.6\n"
+            "202610071900,HK Observatory,1017.7\n"
+            "202610071900,Sheung Shui,1016.8\n"
+        ),
+    )
+    assert main(["--pressure-gap"]) == 0
+    assert capsys.readouterr().out == (
+        "Pressure at Tai Po is 1018.6 hPa, 0.9 above the Observatory's 1017.7.\n"
+    )
+
+    assert main(["--high-pressure", "--pressure-gap"]) == 2
+    assert "(--high-pressure --pressure-gap)" in capsys.readouterr().err
+
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Date time,Station,Pressure\n"
+            "202610071900,Tai Po,1018.6\n"
+        ),
+    )
+    assert main(["--pressure-gap"]) == 0
+    assert capsys.readouterr().out == "No Observatory pressure is available.\n"
+
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Date time,Station,Pressure\n"
+            "202610071900,HK Observatory,1017.7\n"
+        ),
+    )
+    assert main(["--pressure-gap"]) == 0
+    assert capsys.readouterr().out == "No pressure comparison is available.\n"
+
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response("Date time,Station,Pressure\n"),
+    )
+    assert main(["--pressure-gap", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No sea level pressure is available."
+    }
+
+
 def test_cli_pressure_json_is_one_object(monkeypatch, capsys):
     monkeypatch.setattr(
         "hk_weather.hko.urllib.request.urlopen",

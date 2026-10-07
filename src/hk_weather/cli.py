@@ -723,6 +723,7 @@ from hk_weather.hko import (
     format_pressure,
     format_pressure_miss,
     format_high_pressure,
+    format_pressure_gap,
     format_mean_pressure,
     format_mean_pressure_miss,
     format_park_pressure_miss,
@@ -1416,6 +1417,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--midnight-span prints the station with the widest of those ranges; "
             "--pressure prints the latest 1-minute sea level pressure; "
             "--high-pressure prints the station with the highest of those readings; "
+            "--pressure-gap prints where those readings differ most from the Observatory; "
             "--mean-pressure prints the latest daily mean pressure; "
             "--park-pressure prints the latest daily mean pressure at King's Park; "
             "--sha-tin-pressure prints the latest daily mean pressure at Sha Tin; "
@@ -4228,6 +4230,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--high-pressure",
         action="store_true",
         help="Print the station with the highest latest sea level pressure",
+    )
+    parser.add_argument(
+        "--pressure-gap",
+        action="store_true",
+        help="Print where sea level pressure differs most from the Observatory",
     )
     parser.add_argument(
         "--mean-pressure",
@@ -8657,6 +8664,11 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_json(pressure) if args.json else format_pressure(pressure)
         elif args.high_pressure:
             text = format_high_pressure(
+                fetch_pressure(timeout=args.timeout, lang=args.lang),
+                as_json=args.json,
+            )
+        elif args.pressure_gap:
+            text = format_pressure_gap(
                 fetch_pressure(timeout=args.timeout, lang=args.lang),
                 as_json=args.json,
             )

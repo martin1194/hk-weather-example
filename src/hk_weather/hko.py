@@ -16742,6 +16742,67 @@ def format_high_pressure(report: PressureReport, *, as_json: bool) -> str:
     return phrase + "\n"
 
 
+_OBSERVATORY_PRESSURE_NAMES = frozenset({"HK Observatory", "天文台"})
+
+
+def format_pressure_gap(report: PressureReport, *, as_json: bool) -> str:
+    """Print the station whose sea level pressure differs most from the Observatory."""
+    if not report.stations:
+        return _unavailable("No sea level pressure is available.", as_json=as_json)
+    observatory = next(
+        (
+            reading
+            for reading in report.stations
+            if reading.place in _OBSERVATORY_PRESSURE_NAMES
+        ),
+        None,
+    )
+    if observatory is None:
+        return _unavailable("No Observatory pressure is available.", as_json=as_json)
+    base = round(observatory.pressure_hpa, 1)
+    ranked = [
+        (
+            round(reading.pressure_hpa - observatory.pressure_hpa, 1),
+            reading.place,
+            round(reading.pressure_hpa, 1),
+        )
+        for reading in report.stations
+        if reading.place and reading.place not in _OBSERVATORY_PRESSURE_NAMES
+    ]
+    if not ranked:
+        return _unavailable("No pressure comparison is available.", as_json=as_json)
+    widest = max(abs(item[0]) for item in ranked)
+    first = next(item for item in ranked if abs(item[0]) == widest)
+    chosen = [item for item in ranked if item[0] == first[0] and item[2] == first[2]]
+    gap, _place, pressure = first
+    places = _pressure_places([item[1] for item in chosen])
+    height = _number(pressure)
+    base_text = _number(base)
+    if gap > 0:
+        phrase = (
+            f"Pressure at {places} is {height} hPa, "
+            f"{_number(gap)} above the Observatory's {base_text}."
+        )
+    elif gap < 0:
+        phrase = (
+            f"Pressure at {places} is {height} hPa, "
+            f"{_number(abs(gap))} below the Observatory's {base_text}."
+        )
+    else:
+        phrase = f"Pressure at {places} matches the Observatory's {base_text} hPa."
+    if as_json:
+        payload = {
+            "time": report.obs_time,
+            "places": [item[1] for item in chosen],
+            "pressure_hpa": pressure,
+            "observatory_hpa": base,
+            "gap": gap,
+            "phrase": phrase,
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
+
+
 _MEAN_PRESSURE_STATIONS = {
     "en": "Hong Kong Observatory",
     "tc": "香港天文台",
