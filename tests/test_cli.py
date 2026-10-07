@@ -15,6 +15,8 @@ from hk_weather.hko import (
     ForecastIconDay,
     ForecastIcons,
     Moon,
+    NineTemp,
+    NineTempDay,
     Sunrise,
     TideEvent,
     TideReport,
@@ -2600,6 +2602,65 @@ def test_cli_nine_temp_when_missing(monkeypatch, capsys):
     )
     assert main(["--nine-temp", "--json"]) == 0
     assert json.loads(capsys.readouterr().out) == {"message": "No 9-day temperatures are available."}
+
+
+def test_cli_hottest_day_prints_the_highest_forecast_day(monkeypatch, capsys):
+    seen = {}
+    report = NineTemp(
+        "2026-10-07T07:50:00+08:00",
+        (
+            NineTempDay("2026-10-09", "Friday", 31, 26),
+            NineTempDay("2026-10-13", "Tuesday", 32, 27),
+            NineTempDay("2026-10-14", "Wednesday", 32, 27),
+            NineTempDay("2026-10-15", "Thursday", None, 27),
+        ),
+    )
+
+    def fake_fetch(timeout, lang="en"):
+        seen["lang"] = lang
+        return report
+
+    monkeypatch.setattr("hk_weather.cli.fetch_nine_temp", fake_fetch)
+    assert main(["--hottest-day", "--lang", "tc"]) == 0
+    assert seen["lang"] == "tc"
+    assert capsys.readouterr().out == (
+        "Hottest days: 2026-10-13 Tuesday and 2026-10-14 Wednesday, 32°C\n"
+    )
+
+    assert main(["--hottest-day", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "high_c": 32,
+        "days": [
+            {"date": "2026-10-13", "week": "Tuesday"},
+            {"date": "2026-10-14", "week": "Wednesday"},
+        ],
+        "phrase": "Hottest days: 2026-10-13 Tuesday and 2026-10-14 Wednesday, 32°C",
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_nine_temp",
+        lambda timeout, lang="en": NineTemp(
+            "",
+            (NineTempDay("2026-10-09", "Friday", 31, 26),),
+        ),
+    )
+    assert main(["--hottest-day"]) == 0
+    assert capsys.readouterr().out == "Hottest day: 2026-10-09 Friday, 31°C\n"
+
+    assert main(["--hottest-day", "--nine-temp"]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "pass one report flag at a time (--nine-temp --hottest-day)" in captured.err
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_nine_temp",
+        lambda timeout, lang="en": NineTemp(
+            "",
+            (NineTempDay("2026-10-15", "Thursday", None, 27),),
+        ),
+    )
+    assert main(["--hottest-day"]) == 0
+    assert capsys.readouterr().out == "No forecast high is available.\n"
 
 
 def test_cli_nine_humidity_lists_each_day(monkeypatch, capsys):
