@@ -668,6 +668,8 @@ hk-weather --warning-time
 hk-weather --warning-time --json
 hk-weather --warning-ago
 hk-weather --warning-ago --json
+hk-weather --warning-level
+hk-weather --warning-level --json
 hk-weather --warning-info
 hk-weather --uv
 hk-weather --uv --json
@@ -1642,6 +1644,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --warning-time` prints the issue, update, and expiry times for those active warnings (`issueTime`, `updateTime`, and `expireTime` on `dataType=warnsum`). `--warnings` still prints the codes and names. `--warning-time --json` prints those times as one JSON object. `--lang` applies. Cancelled warnings are omitted. If none are in force, it says `No weather warnings are in force.`
 
 `hk-weather --warning-ago` prints how long each active warning has been in force, for example `Fire Danger Warning for 2 hours 32 min`. A warning issued within the last minute says `Fire Danger Warning, issued just now`. `--warning-time` still prints the issue, update, and expiry timestamps. `--warning-ago --json` prints each code, name, issue time, and that span. If none are in force, it says `No weather warnings are in force.` If a warning has no usable issue time, it says `No warning issue time is available.`
+
+`hk-weather --warning-level` prints the level of each active warning, for example `Fire Danger Warning is Red`. A warning with no level says `Thunderstorm Warning is in force`. `--warnings` still prints the code and name. `--warning-level --json` prints each code, name, level, and that phrase. Cancelled warnings are omitted. If none are in force, it says `No weather warnings are in force.`
 
 `hk-weather --warning-info` (or `-W`) prints each detailed warning message from `dataType=warningInfo`. `--json` and `--lang` apply. If none are present, it says so.
 

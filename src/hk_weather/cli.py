@@ -221,6 +221,7 @@ from hk_weather.hko import (
     fetch_warning_info,
     fetch_warnings,
     fetch_warning_time,
+    fetch_warning_level,
     fetch_weekend,
     fetch_wind,
     fetch_gust,
@@ -787,6 +788,7 @@ from hk_weather.hko import (
     format_warning_time,
     format_warning_time_miss,
     format_warning_ago,
+    format_warning_level,
     format_weekend,
     format_weekend_miss,
     format_wind,
@@ -1306,6 +1308,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--warning-count prints how many warnings are in force; "
             "--warning-time prints when active warnings were issued; "
             "--warning-ago prints how long each warning has been in force; "
+            "--warning-level prints the level of each active warning; "
             "--uv prints the UV index; "
             "--fifteen-uv prints the latest 15-minute mean UV index; "
             "--uv-level prints whether that 15-minute index is low through extreme; "
@@ -3434,6 +3437,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Print how long each active warning has been in force",
     )
     parser.add_argument(
+        "--warning-level",
+        action="store_true",
+        help="Print the level of each active weather warning",
+    )
+    parser.add_argument(
         "-W",
         "--warning-info",
         action="store_true",
@@ -4385,6 +4393,11 @@ def main(argv: list[str] | None = None) -> int:
         elif args.warning_ago:
             text = format_warning_ago(
                 fetch_warning_time(timeout=args.timeout, lang=args.lang),
+                as_json=args.json,
+            )
+        elif args.warning_level:
+            text = format_warning_level(
+                fetch_warning_level(timeout=args.timeout, lang=args.lang),
                 as_json=args.json,
             )
         elif args.warning_info:

@@ -383,6 +383,13 @@ class WarningTime:
 
 
 @dataclass(frozen=True)
+class WarningLevel:
+    code: str
+    description: str
+    level: str
+
+
+@dataclass(frozen=True)
 class WarningTimeReport:
     warnings: tuple[WarningTime, ...]
 
@@ -1413,6 +1420,13 @@ def fetch_warning_time(
 ) -> WarningTimeReport:
     """Download issue and expiry times for active warnings (`dataType=warnsum`)."""
     return parse_warning_time(_fetch_json(_apply_lang(url, lang), timeout))
+
+
+def fetch_warning_level(
+    url: str = WARNINGS_URL, timeout: float = 10, lang: str = "en"
+) -> tuple[WarningLevel, ...]:
+    """Download the level of each active warning (`dataType=warnsum`)."""
+    return parse_warning_level(_fetch_json(_apply_lang(url, lang), timeout))
 
 
 def fetch_warning_info(
@@ -9810,6 +9824,51 @@ def format_warning_time(report: WarningTimeReport) -> str:
 def format_warning_time_miss(*, as_json: bool = False) -> str:
     """Say that no weather warnings are in force."""
     return _unavailable("No weather warnings are in force.", as_json=as_json)
+
+
+def parse_warning_level(payload: dict) -> tuple[WarningLevel, ...]:
+    """Turn a `warnsum` document into the level of each active warning."""
+    warnings: list[WarningLevel] = []
+    for key, item in payload.items():
+        if not isinstance(item, dict):
+            continue
+        action = _text(item.get("actionCode")).upper()
+        if action in _CANCELLED:
+            continue
+        code = _text(item.get("code")) or _text(key)
+        description = _text(item.get("name"))
+        if not code or not description:
+            continue
+        warnings.append(WarningLevel(code, description, _text(item.get("type"))))
+    return tuple(warnings)
+
+
+def _warning_level_phrase(warning: WarningLevel) -> str:
+    """One sentence for a warning level, or that it is simply in force."""
+    if warning.level:
+        return f"{warning.description} is {warning.level}"
+    return f"{warning.description} is in force"
+
+
+def format_warning_level(warnings: tuple[WarningLevel, ...], *, as_json: bool) -> str:
+    """Print the level of each active weather warning."""
+    if not warnings:
+        return _unavailable("No weather warnings are in force.", as_json=as_json)
+    phrases = [_warning_level_phrase(warning) for warning in warnings]
+    if as_json:
+        payload = {
+            "warnings": [
+                {
+                    "code": warning.code,
+                    "description": warning.description,
+                    "level": warning.level,
+                    "phrase": phrase,
+                }
+                for warning, phrase in zip(warnings, phrases)
+            ]
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return "".join(phrase + "\n" for phrase in phrases)
 
 
 def _warning_ago(issue_time: str, now: datetime) -> str | None:
