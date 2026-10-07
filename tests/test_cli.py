@@ -30,6 +30,8 @@ from hk_weather.hko import (
     NineTempDay,
     NineWeather,
     NineWeatherDay,
+    CloudStrikes,
+    DailyStrikes,
     YesterdayReport,
     SeaTemperature,
     SoilReading,
@@ -24962,6 +24964,92 @@ def test_cli_cloud_strikes_when_missing(monkeypatch, capsys):
     assert json.loads(capsys.readouterr().out) == {
         "message": "No cloud-to-cloud lightning count is available."
     }
+
+
+def test_cli_flash_gap_compares_cloud_and_ground_lightning(monkeypatch, capsys):
+    seen = {}
+
+    def fake_ground(timeout, lang="en"):
+        seen["ground_lang"] = lang
+        return DailyStrikes("2026-08-31", 42)
+
+    def fake_cloud(timeout, lang="en"):
+        seen["cloud_lang"] = lang
+        return CloudStrikes("2026-08-31", 158)
+
+    monkeypatch.setattr("hk_weather.cli.fetch_daily_strikes", fake_ground)
+    monkeypatch.setattr("hk_weather.cli.fetch_cloud_strikes", fake_cloud)
+    phrase = (
+        "On 2026-08-31, cloud-to-cloud lightning is 116 above "
+        "the cloud-to-ground count of 42."
+    )
+    assert main(["--flash-gap", "--lang", "tc"]) == 0
+    assert seen["ground_lang"] == "tc"
+    assert seen["cloud_lang"] == "tc"
+    assert capsys.readouterr().out == phrase + "\n"
+    assert main(["--flash-gap", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "date": "2026-08-31",
+        "ground": 42,
+        "cloud": 158,
+        "gap": 116,
+        "phrase": phrase,
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_daily_strikes",
+        lambda timeout, lang="en": DailyStrikes("2026-08-31", 15),
+    )
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_cloud_strikes",
+        lambda timeout, lang="en": CloudStrikes("2026-08-31", 10),
+    )
+    assert main(["--flash-gap"]) == 0
+    assert capsys.readouterr().out == (
+        "On 2026-08-31, cloud-to-ground lightning is 5 above "
+        "the cloud-to-cloud count of 10.\n"
+    )
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_daily_strikes",
+        lambda timeout, lang="en": DailyStrikes("2026-08-31", 0),
+    )
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_cloud_strikes",
+        lambda timeout, lang="en": CloudStrikes("2026-08-31", 0),
+    )
+    assert main(["--flash-gap"]) == 0
+    assert capsys.readouterr().out == (
+        "On 2026-08-31, cloud-to-cloud lightning matches the cloud-to-ground count of 0.\n"
+    )
+
+    def fail_cloud(timeout, lang="en"):
+        raise AssertionError("must not fetch cloud-to-cloud lightning")
+
+    monkeypatch.setattr("hk_weather.cli.fetch_cloud_strikes", fail_cloud)
+    monkeypatch.setattr("hk_weather.cli.fetch_daily_strikes", lambda timeout, lang="en": None)
+    assert main(["--flash-gap"]) == 0
+    assert capsys.readouterr().out == "No daily lightning count is available.\n"
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_daily_strikes",
+        lambda timeout, lang="en": DailyStrikes("2026-08-31", 42),
+    )
+    monkeypatch.setattr("hk_weather.cli.fetch_cloud_strikes", lambda timeout, lang="en": None)
+    assert main(["--flash-gap", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No cloud-to-cloud lightning count is available."
+    }
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_cloud_strikes",
+        lambda timeout, lang="en": CloudStrikes("2026-08-30", 158),
+    )
+    assert main(["--flash-gap", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No shared lightning day is available."
+    }
+
+    assert main(["--cloud-strikes", "--flash-gap"]) == 2
+    assert "(--cloud-strikes --flash-gap)" in capsys.readouterr().err
 
 
 def test_cli_humidity_lists_places(monkeypatch, capsys):
