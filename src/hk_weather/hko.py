@@ -10305,6 +10305,47 @@ def format_soil_gap(
     return phrase + "\n"
 
 
+def format_soil_span(report: SoilReport | None, *, as_json: bool) -> str:
+    """Compare the deepest soil temperature with the shallowest."""
+    readings = () if report is None else report.readings
+    depths = {reading.depth_m for reading in readings}
+    if len(depths) < 2:
+        return _unavailable("No deeper soil temperature is available.", as_json=as_json)
+    shallow = next(reading for reading in readings if reading.depth_m == min(depths))
+    deep = next(reading for reading in readings if reading.depth_m == max(depths))
+    gap = round(deep.temperature_c - shallow.temperature_c, 1)
+    deep_m = _number(deep.depth_m)
+    shallow_m = _number(shallow.depth_m)
+    if deep.place == shallow.place:
+        where = f"at {deep.place}"
+        other = f"the {shallow_m} m soil"
+        places = [deep.place]
+    else:
+        where = f"at {deep.place}"
+        other = f"the {shallow_m} m soil at {shallow.place}"
+        places = [shallow.place, deep.place]
+    if gap > 0:
+        phrase = f"The {deep_m} m soil {where} is {_number(gap)}°C warmer than {other}."
+    elif gap < 0:
+        phrase = (
+            f"The {deep_m} m soil {where} is {_number(abs(gap))}°C cooler than {other}."
+        )
+    else:
+        phrase = f"The {deep_m} m soil {where} matches {other}."
+    if as_json:
+        payload = {
+            "shallow_m": shallow.depth_m,
+            "deep_m": deep.depth_m,
+            "shallow_c": shallow.temperature_c,
+            "deep_c": deep.temperature_c,
+            "gap_c": gap,
+            "places": places,
+            "phrase": phrase,
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
+
+
 def format_nine_situation(report: GeneralSituation) -> str:
     """Render the general situation from the 9-day forecast."""
     return f"Hong Kong 9-day situation\n{report.situation}\n"

@@ -2637,6 +2637,85 @@ def test_cli_soil_gap_compares_shallow_soil_with_air(monkeypatch, capsys):
     }
 
 
+def test_cli_soil_span_compares_deepest_soil_with_shallowest(monkeypatch, capsys):
+    seen = {}
+    report = SoilReport(
+        (
+            SoilReading("Hong Kong Observatory", 0.5, 29.5, "2026-10-07T07:00:00+08:00"),
+            SoilReading("Hong Kong Observatory", 1, 30.2, "2026-10-07T07:00:00+08:00"),
+        )
+    )
+
+    def fake_soil(timeout, lang="en"):
+        seen["lang"] = lang
+        return report
+
+    monkeypatch.setattr("hk_weather.cli.fetch_soil_temp", fake_soil)
+    assert main(["--soil-span", "--lang", "tc"]) == 0
+    assert seen["lang"] == "tc"
+    assert capsys.readouterr().out == (
+        "The 1 m soil at Hong Kong Observatory is 0.7°C warmer than the 0.5 m soil.\n"
+    )
+
+    assert main(["--soil-span", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "shallow_m": 0.5,
+        "deep_m": 1,
+        "shallow_c": 29.5,
+        "deep_c": 30.2,
+        "gap_c": 0.7,
+        "places": ["Hong Kong Observatory"],
+        "phrase": (
+            "The 1 m soil at Hong Kong Observatory is 0.7°C warmer than the 0.5 m soil."
+        ),
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_soil_temp",
+        lambda timeout, lang="en": SoilReport(
+            (
+                SoilReading("Hong Kong Observatory", 0.5, 30, "2026-10-07T07:00:00+08:00"),
+                SoilReading("King's Park", 1, 28, "2026-10-07T07:00:00+08:00"),
+            )
+        ),
+    )
+    assert main(["--soil-span"]) == 0
+    assert capsys.readouterr().out == (
+        "The 1 m soil at King's Park is 2°C cooler than the 0.5 m soil "
+        "at Hong Kong Observatory.\n"
+    )
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_soil_temp",
+        lambda timeout, lang="en": SoilReport(
+            (
+                SoilReading("Hong Kong Observatory", 0.5, 29, "2026-10-07T07:00:00+08:00"),
+                SoilReading("Hong Kong Observatory", 1, 29, "2026-10-07T07:00:00+08:00"),
+            )
+        ),
+    )
+    assert main(["--soil-span"]) == 0
+    assert capsys.readouterr().out == (
+        "The 1 m soil at Hong Kong Observatory matches the 0.5 m soil.\n"
+    )
+
+    assert main(["--soil-span", "--soil-gap"]) == 2
+    assert "(--soil-gap --soil-span)" in capsys.readouterr().err
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_soil_temp",
+        lambda timeout, lang="en": SoilReport(
+            (SoilReading("Hong Kong Observatory", 0.5, 29.5, "2026-10-07T07:00:00+08:00"),)
+        ),
+    )
+    assert main(["--soil-span"]) == 0
+    assert capsys.readouterr().out == "No deeper soil temperature is available.\n"
+    assert main(["--soil-span", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No deeper soil temperature is available."
+    }
+
+
 def test_cli_nine_situation_prints_paragraph(monkeypatch, capsys):
     seen = {}
     message = (
