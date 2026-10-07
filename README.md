@@ -626,6 +626,8 @@ hk-weather --tide-hour
 hk-weather --tide-hour --json
 hk-weather --tide-latest
 hk-weather --tide-latest --json
+hk-weather --tide-span
+hk-weather --tide-span --json
 hk-weather --next-tide
 hk-weather --next-tide --json
 hk-weather --aqhi
@@ -1588,6 +1590,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --tide-hour` prints today's hourly astronomical tide heights at Quarry Bay (`dataType=HHOT`), for example `2026-10-03  01:00  2.44 m`. `--tide` still prints the high and low times. `--tide-hour --json` prints those hours as one JSON object. `--lang` applies. Hours without a numeric height are omitted. If none remain, it says `No hourly tide heights are available.`
 
 `hk-weather --tide-latest` prints the latest observed tide height at each tide station, for example `Quarry Bay  2.34 m`. `--tide` still prints today's high and low times, and `--tide-hour` still prints today's hourly forecast heights. Earlier times in the file are omitted. `--tide-latest --json` prints that time as one JSON object. `--lang` selects the station names. Stations marked `----` are omitted. If none remain, it says `No latest tide heights are available.`
+
+`hk-weather --tide-span` prints the gap between the lowest and highest of those latest heights. Shek Pik at 1 m and Tsim Bei Tsui at 1.38 m is `Tide span: 2026-10-07 12:10  0.38 m, from Shek Pik 1 m to Tsim Bei Tsui 1.38 m`. Stations that share the low or the high are listed together. When every station matches, it says the tides match. `--tide-latest` still lists every station. `--tide-span --json` prints the span, both heights, the stations, and that phrase. If fewer than two stations remain, it says `No tide span is available.`
 
 `hk-weather --next-tide` prints how long until the next high or low tide at Quarry Bay. A lower tide between two higher ones is a low tide, so at 10:00, with the next turn at 13:16 and 0.77 m, that is `Low tide in 3 hours 16 min, 0.77 m`. Within that minute it says `Low tide now, 0.77 m`. After the last tide of the day it says how long ago that tide was. `--tide` still lists every high and low. `--next-tide --json` prints the kind, time, height, and that phrase. If none are available, it says `No tide readings are available.`
 

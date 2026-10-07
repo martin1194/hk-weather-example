@@ -11180,6 +11180,53 @@ def format_tide_latest_miss(*, as_json: bool = False) -> str:
     return _unavailable("No latest tide heights are available.", as_json=as_json)
 
 
+def _tide_places(readings: tuple[LatestTideReading, ...]) -> str:
+    places = [reading.place for reading in readings]
+    if len(places) == 1:
+        return places[0]
+    if len(places) == 2:
+        return f"{places[0]} and {places[1]}"
+    return ", ".join(places[:-1]) + f", and {places[-1]}"
+
+
+def format_tide_span(report: LatestTideReport, *, as_json: bool) -> str:
+    """Print the gap between the lowest and highest latest tide heights."""
+    if len(report.stations) < 2:
+        return _unavailable("No tide span is available.", as_json=as_json)
+    low = min(round(reading.height_m, 2) for reading in report.stations)
+    high = max(round(reading.height_m, 2) for reading in report.stations)
+    lowest = tuple(
+        reading for reading in report.stations if round(reading.height_m, 2) == low
+    )
+    highest = tuple(
+        reading for reading in report.stations if round(reading.height_m, 2) == high
+    )
+    span = round(high - low, 2)
+    if span == 0:
+        detail = f"tides match at {_number(high)} m"
+    else:
+        detail = (
+            f"{_number(span)} m, from {_tide_places(lowest)} {_number(low)} m "
+            f"to {_tide_places(highest)} {_number(high)} m"
+        )
+    if report.obs_time:
+        phrase = f"Tide span: {report.obs_time}  {detail}"
+    else:
+        phrase = f"Tide span: {detail}"
+    if as_json:
+        payload = {
+            "recorded": report.obs_time,
+            "span_m": span,
+            "low_m": low,
+            "high_m": high,
+            "low_stations": [reading.place for reading in lowest],
+            "high_stations": [reading.place for reading in highest],
+            "phrase": phrase,
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
+
+
 def _aqhi_description(text: str) -> tuple[str, str, str, str, str] | None:
     """Split `Station - Area: 3 Low - updated` into its fields."""
     parts = [part.strip() for part in text.split(" - ")]
