@@ -997,6 +997,8 @@ hk-weather --nei-lak-shan-pressure
 hk-weather --nei-lak-shan-pressure --json
 hk-weather --minute-grass
 hk-weather --minute-grass --json
+hk-weather --grass-gap
+hk-weather --grass-gap --json
 hk-weather --daily-grass
 hk-weather --daily-grass --json
 hk-weather --obs-grass
@@ -2044,6 +2046,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --nei-lak-shan-pressure` prints the latest daily mean pressure at Nei Lak Shan, for example `2026-08-31  1000.5 hPa`. `--mean-pressure` still prints the Observatory reading, and the other station pressure flags still print their own stations. `--nei-lak-shan-temp` still prints Nei Lak Shan's mean temperature, `--nei-lak-shan-dew` still prints its dew point, `--nei-lak-shan-humidity` still prints its humidity, `--nei-lak-shan-wind` still prints its wind speed, and `--nei-lak-shan-prevailing` still prints its prevailing wind. `--nei-lak-shan-pressure --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `彌勒山` and simplified text uses `弥勒山`. Days marked `***` are omitted. If none remain, it says `No Nei Lak Shan pressure is available.`
 
 `hk-weather --minute-grass` prints the latest 1-minute mean grass temperature at automatic stations, for example `King's Park  25.9°C`. `--grass` still prints yesterday's grass minimum at the Observatory. `--minute-grass --json` prints those stations as one JSON object. `--lang` selects the station names. Stations marked `N/A` are omitted. If none remain, it says `No 1-minute grass temperatures are available.`
+
+`hk-weather --grass-gap` prints where that grass temperature differs most from the air at the same place, for example `Grass at Tai Mo Shan is 18.5°C, 1.8 above the 16.7°C air.` A cooler reading says `below`, and a matching reading says it matches. Stations that share that gap are listed together. `--minute-grass` still lists every grass station, and `--minute-temp` still lists the air temperatures. `--grass-gap --json` prints the time, the station names, both temperatures, the gap, and that phrase. `--lang` selects the station names. If the grass readings are missing, it says `No 1-minute grass temperatures are available.` If the air readings are missing, it says `No 1-minute temperatures are available.` If the stations do not overlap, it says `No grass temperature comparison is available.`
 
 `hk-weather --daily-grass` prints the latest daily grass minimum at King's Park, for example `2026-08-31  23.9°C`. `--grass` still prints yesterday's Observatory minimum, and `--minute-grass` still prints the 1-minute readings. A reading of zero is kept. `--daily-grass --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No daily grass temperature is available.`
 

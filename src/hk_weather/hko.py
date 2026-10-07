@@ -17496,6 +17496,67 @@ def format_minute_grass_miss(*, as_json: bool = False) -> str:
     return _unavailable("No 1-minute grass temperatures are available.", as_json=as_json)
 
 
+def format_grass_gap(
+    grass: MinuteGrassReport | None,
+    air: MinuteTempReport | None,
+    *,
+    as_json: bool,
+) -> str:
+    """Print where the grass temperature differs most from the air at the same place."""
+    grass_stations = () if grass is None else grass.stations
+    air_stations = () if air is None else air.stations
+    if not grass_stations:
+        return _unavailable("No 1-minute grass temperatures are available.", as_json=as_json)
+    if not air_stations:
+        return _unavailable("No 1-minute temperatures are available.", as_json=as_json)
+    air_by_place = {
+        reading.place: reading.temperature_c for reading in air_stations if reading.place
+    }
+    ranked: list[tuple[float, str, float, float]] = []
+    for reading in grass_stations:
+        if not reading.place or reading.place not in air_by_place:
+            continue
+        air_c = air_by_place[reading.place]
+        gap = round(reading.grass_c - air_c, 1)
+        ranked.append((gap, reading.place, round(reading.grass_c, 1), round(air_c, 1)))
+    if not ranked:
+        return _unavailable("No grass temperature comparison is available.", as_json=as_json)
+    widest = max(abs(item[0]) for item in ranked)
+    first = next(item for item in ranked if abs(item[0]) == widest)
+    chosen = [
+        item
+        for item in ranked
+        if item[0] == first[0] and item[2] == first[2] and item[3] == first[3]
+    ]
+    gap, _place, grass_c, air_c = first
+    places = _join_headings([item[1] for item in chosen])
+    grass_text = _number(grass_c)
+    air_text = _number(air_c)
+    if gap > 0:
+        phrase = (
+            f"Grass at {places} is {grass_text}°C, "
+            f"{_number(gap)} above the {air_text}°C air."
+        )
+    elif gap < 0:
+        phrase = (
+            f"Grass at {places} is {grass_text}°C, "
+            f"{_number(abs(gap))} below the {air_text}°C air."
+        )
+    else:
+        phrase = f"Grass at {places} matches the {air_text}°C air."
+    if as_json:
+        payload = {
+            "time": grass.obs_time if grass is not None else "",
+            "places": [item[1] for item in chosen],
+            "grass_c": grass_c,
+            "air_c": air_c,
+            "gap": gap,
+            "phrase": phrase,
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
+
+
 _DAILY_GRASS_STATIONS = {
     "en": "King's Park",
     "tc": "京士柏",
