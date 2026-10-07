@@ -108,6 +108,7 @@ def test_cli_find_lists_matching_flags(monkeypatch, capsys):
         "--tide-latest  Print the latest observed tide height at tide stations\n"
         "--tide-span  Print the gap between the lowest and highest latest tide heights\n"
         "--next-tide  Print how long until the next high or low tide at Quarry Bay\n"
+        "--tide-swing  Print how the first Quarry Bay tide changes to the next one\n"
     )
 
     assert main(["--find", "TIDE", "--json"]) == 0
@@ -119,6 +120,7 @@ def test_cli_find_lists_matching_flags(monkeypatch, capsys):
         "--tide-latest",
         "--tide-span",
         "--next-tide",
+        "--tide-swing",
     ]
 
     assert main(["--find", "no-such-flag-xyz"]) == 0
@@ -21697,6 +21699,87 @@ def test_cli_next_tide_prints_the_next_high_or_low(monkeypatch, capsys):
     )
     assert main(["--next-tide"]) == 0
     assert capsys.readouterr().out == "No tide readings are available.\n"
+
+
+def test_cli_tide_swing_prints_the_first_tide_change(monkeypatch, capsys):
+    seen = {}
+
+    def fake_fetch(timeout, lang="en"):
+        seen["lang"] = lang
+        return TideReport(
+            "Quarry Bay",
+            (
+                TideEvent("2026-10-07", "06:27", 2.36),
+                TideEvent("2026-10-07", "13:16", 0.77),
+                TideEvent("2026-10-07", "20:24", 1.86),
+            ),
+        )
+
+    monkeypatch.setattr("hk_weather.cli.fetch_tide", fake_fetch)
+    phrase = "The tide falls 1.59 m, from 2.36 m at 06:27 to 0.77 m at 13:16."
+    assert main(["--tide-swing", "--lang", "tc"]) == 0
+    assert seen["lang"] == "tc"
+    assert capsys.readouterr().out == phrase + "\n"
+    assert main(["--tide-swing", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "from_date": "2026-10-07",
+        "from_time": "06:27",
+        "from_height_m": 2.36,
+        "to_date": "2026-10-07",
+        "to_time": "13:16",
+        "to_height_m": 0.77,
+        "gap_m": -1.59,
+        "phrase": phrase,
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_tide",
+        lambda timeout, lang="en": TideReport(
+            "Quarry Bay",
+            (
+                TideEvent("2026-10-07", "13:16", 0.77),
+                TideEvent("2026-10-07", "20:24", 1.86),
+            ),
+        ),
+    )
+    assert main(["--tide-swing"]) == 0
+    assert capsys.readouterr().out == (
+        "The tide rises 1.09 m, from 0.77 m at 13:16 to 1.86 m at 20:24.\n"
+    )
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_tide",
+        lambda timeout, lang="en": TideReport(
+            "Quarry Bay",
+            (
+                TideEvent("2026-10-07", "06:27", 1.2),
+                TideEvent("2026-10-08", "00:10", 1.2),
+            ),
+        ),
+    )
+    assert main(["--tide-swing"]) == 0
+    assert capsys.readouterr().out == (
+        "The tide holds at 1.2 m, from 2026-10-07 06:27 to 2026-10-08 00:10.\n"
+    )
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_tide",
+        lambda timeout, lang="en": TideReport(
+            "Quarry Bay",
+            (TideEvent("2026-10-07", "06:27", 2.36),),
+        ),
+    )
+    assert main(["--tide-swing"]) == 0
+    assert capsys.readouterr().out == "No following tide is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_tide",
+        lambda timeout, lang="en": TideReport("Quarry Bay", ()),
+    )
+    assert main(["--tide-swing", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {"message": "No tide readings are available."}
+
+    assert main(["--tide-swing", "--next-tide"]) == 2
+    assert "(--next-tide --tide-swing)" in capsys.readouterr().err
 
 
 def test_cli_aqhi_lists_stations(monkeypatch, capsys):

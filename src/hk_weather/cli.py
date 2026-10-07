@@ -775,6 +775,7 @@ from hk_weather.hko import (
     format_tide_latest_miss,
     format_tide_span,
     format_next_tide,
+    format_tide_swing,
     format_tc_info,
     format_tc_info_miss,
     format_tips,
@@ -1781,6 +1782,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--tide-latest prints the latest observed tide height; "
             "--tide-span prints the gap between the lowest and highest of those tides; "
             "--next-tide prints how long until the next high or low tide; "
+            "--tide-swing prints how the first tide changes to the next one; "
             "--aqhi prints the air quality health index; "
             "--aqhi-mix prints how many stations are in each health-risk band; "
             "--sunrise prints today's sunrise and sunset; "
@@ -3474,6 +3476,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--next-tide",
         action="store_true",
         help="Print how long until the next high or low tide at Quarry Bay",
+    )
+    parser.add_argument(
+        "--tide-swing",
+        action="store_true",
+        help="Print how the first Quarry Bay tide changes to the next one",
     )
     parser.add_argument(
         "-A",
@@ -7394,6 +7401,11 @@ def main(argv: list[str] | None = None) -> int:
             )
         elif args.next_tide:
             text = format_next_tide(
+                fetch_tide(timeout=args.timeout, lang=args.lang),
+                as_json=args.json,
+            )
+        elif args.tide_swing:
+            text = format_tide_swing(
                 fetch_tide(timeout=args.timeout, lang=args.lang),
                 as_json=args.json,
             )

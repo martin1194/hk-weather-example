@@ -666,6 +666,8 @@ hk-weather --tide-span
 hk-weather --tide-span --json
 hk-weather --next-tide
 hk-weather --next-tide --json
+hk-weather --tide-swing
+hk-weather --tide-swing --json
 hk-weather --aqhi
 hk-weather --aqhi --json
 hk-weather --aqhi-mix
@@ -1688,6 +1690,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --tide-span` prints the gap between the lowest and highest of those latest heights. Shek Pik at 1 m and Tsim Bei Tsui at 1.38 m is `Tide span: 2026-10-07 12:10  0.38 m, from Shek Pik 1 m to Tsim Bei Tsui 1.38 m`. Stations that share the low or the high are listed together. When every station matches, it says the tides match. `--tide-latest` still lists every station. `--tide-span --json` prints the span, both heights, the stations, and that phrase. If fewer than two stations remain, it says `No tide span is available.`
 
 `hk-weather --next-tide` prints how long until the next high or low tide at Quarry Bay. A lower tide between two higher ones is a low tide, so at 10:00, with the next turn at 13:16 and 0.77 m, that is `Low tide in 3 hours 16 min, 0.77 m`. Within that minute it says `Low tide now, 0.77 m`. After the last tide of the day it says how long ago that tide was. `--tide` still lists every high and low. `--next-tide --json` prints the kind, time, height, and that phrase. If none are available, it says `No tide readings are available.`
+
+`hk-weather --tide-swing` prints how the first of those tides changes to the next one. A morning high of 2.36 m and an afternoon low of 0.77 m is `The tide falls 1.59 m, from 2.36 m at 06:27 to 0.77 m at 13:16.` A higher second tide says the tide rises, and equal heights say it holds. `--next-tide` still says how long until the next turn. `--tide-swing --json` prints both times, both heights, the gap, and that phrase. If only one tide is listed, it says `No following tide is available.`
 
 `hk-weather --aqhi` (or `-A`) prints the current Air Quality Health Index at each monitoring station, for example `Central/Western  General Stations  3  Low`. `--aqhi --json` prints that list as one JSON object. `--lang` chooses the English, Traditional Chinese, or Simplified Chinese feed. If none are present, it says so.
 
