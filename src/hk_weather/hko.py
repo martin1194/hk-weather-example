@@ -12341,8 +12341,8 @@ def format_wind(report: WindForecast) -> str:
     return "\n".join(lines) + "\n"
 
 
-def _max_force(text: str) -> int | None:
-    """Highest Beaufort number in an English or Chinese wind sentence."""
+def _forces(text: str) -> list[int]:
+    """Beaufort numbers in an English or Chinese wind sentence."""
     found: list[int] = []
     lower = text.lower()
     start = 0
@@ -12360,7 +12360,7 @@ def _max_force(text: str) -> int | None:
         if digits:
             found.append(int(digits))
         start = index + len("force")
-    for mark in ("級", "级"):
+    for mark in ("級", "级", "至"):
         start = 0
         while True:
             index = text.find(mark, start)
@@ -12374,6 +12374,12 @@ def _max_force(text: str) -> int | None:
             if digits:
                 found.append(int(digits))
             start = index + len(mark)
+    return found
+
+
+def _max_force(text: str) -> int | None:
+    """Highest Beaufort number in an English or Chinese wind sentence."""
+    found = _forces(text)
     if not found:
         return None
     return max(found)
@@ -12408,6 +12414,39 @@ def format_wind_ease(report: WindForecast, *, as_json: bool) -> str:
             "wind": day.wind,
             "from_force": before,
             "to_force": after,
+            "phrase": phrase,
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
+
+
+def format_wind_span(report: WindForecast, *, as_json: bool) -> str:
+    """Print the first forecast day whose wind sentence states a force range."""
+    chosen: tuple[WindDay, int, int] | None = None
+    for day in report.days:
+        forces = _forces(day.wind)
+        if len(set(forces)) < 2:
+            continue
+        chosen = (day, min(forces), max(forces))
+        break
+    if chosen is None:
+        return _unavailable("No forecast wind range is available.", as_json=as_json)
+    day, low, high = chosen
+    heading = " ".join(part for part in (day.date, day.week) if part)
+    if heading:
+        phrase = (
+            f"The forecast wind spans force {low} to force {high} on {heading}: {day.wind}"
+        )
+    else:
+        phrase = f"The forecast wind spans force {low} to force {high}: {day.wind}"
+    if as_json:
+        payload = {
+            "date": day.date,
+            "week": day.week,
+            "wind": day.wind,
+            "low_force": low,
+            "high_force": high,
+            "span": high - low,
             "phrase": phrase,
         }
         return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"

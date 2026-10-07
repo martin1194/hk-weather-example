@@ -812,6 +812,7 @@ from hk_weather.hko import (
     format_weekend_miss,
     format_wind,
     format_wind_ease,
+    format_wind_span,
     format_gust,
     format_gust_miss,
     format_strongest_gust,
@@ -1439,6 +1440,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--kau-sai-chau-solar prints the latest daily global solar radiation at Kau Sai Chau; "
             "--wind lists the forecast wind; "
             "--wind-ease prints the first day that wind becomes lighter; "
+            "--wind-span prints the first day whose wind covers a force range; "
             "--gust prints the latest 10-minute wind and gust; "
             "--strongest-gust prints the station with the strongest gust; "
             "--gust-gap prints where the gust exceeds the mean wind by the most; "
@@ -3025,6 +3027,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--wind-ease",
         action="store_true",
         help="Print the first 9-day forecast day when the wind becomes lighter",
+    )
+    parser.add_argument(
+        "--wind-span",
+        action="store_true",
+        help="Print the first 9-day forecast day whose wind covers a force range",
     )
     parser.add_argument(
         "--gust",
@@ -6527,6 +6534,11 @@ def main(argv: list[str] | None = None) -> int:
             text = format_json(wind) if args.json else format_wind(wind)
         elif args.wind_ease:
             text = format_wind_ease(
+                fetch_wind(timeout=args.timeout, lang=args.lang),
+                as_json=args.json,
+            )
+        elif args.wind_span:
+            text = format_wind_span(
                 fetch_wind(timeout=args.timeout, lang=args.lang),
                 as_json=args.json,
             )

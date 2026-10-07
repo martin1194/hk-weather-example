@@ -16039,6 +16039,101 @@ def test_cli_wind_ease_prints_the_first_lighter_day(monkeypatch, capsys):
     assert "(--wind --wind-ease)" in capsys.readouterr().err
 
 
+def test_cli_wind_span_prints_the_first_force_range(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response(
+            {
+                "weatherForecast": [
+                    {
+                        "forecastDate": "20261007",
+                        "week": "Wednesday",
+                        "forecastWind": "East force 4.",
+                    },
+                    {
+                        "forecastDate": "20261008",
+                        "week": "Thursday",
+                        "forecastWind": (
+                            "East to northeast force 4 to 5, occasionally force 6 "
+                            "offshore and on high ground at first."
+                        ),
+                    },
+                    {
+                        "forecastDate": "20261009",
+                        "week": "Friday",
+                        "forecastWind": "East to northeast force 3 to 4.",
+                    },
+                ]
+            }
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--wind-span", "--lang", "tc"]) == 0
+    assert "dataType=fnd" in seen["url"]
+    assert "lang=tc" in seen["url"]
+    wind = (
+        "East to northeast force 4 to 5, occasionally force 6 "
+        "offshore and on high ground at first."
+    )
+    phrase = (
+        "The forecast wind spans force 4 to force 6 on 2026-10-08 Thursday: " + wind
+    )
+    assert capsys.readouterr().out == phrase + "\n"
+
+    assert main(["--wind-span", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "date": "2026-10-08",
+        "week": "Thursday",
+        "wind": wind,
+        "low_force": 4,
+        "high_force": 6,
+        "span": 2,
+        "phrase": phrase,
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {
+                "weatherForecast": [
+                    {"forecastDate": "20261008", "week": "星期四", "forecastWind": "東北風4至5級，間中6級。"},
+                ]
+            }
+        ),
+    )
+    assert main(["--wind-span"]) == 0
+    assert capsys.readouterr().out == (
+        "The forecast wind spans force 4 to force 6 on 2026-10-08 星期四: 東北風4至5級，間中6級。\n"
+    )
+
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {
+                "weatherForecast": [
+                    {"forecastDate": "20261008", "week": "Thursday", "forecastWind": "East force 4."},
+                    {"forecastDate": "20261009", "week": "Friday", "forecastWind": "North force 3."},
+                ]
+            }
+        ),
+    )
+    assert main(["--wind-span"]) == 0
+    assert capsys.readouterr().out == "No forecast wind range is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"weatherForecast": []}),
+    )
+    assert main(["--wind-span", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No forecast wind range is available."
+    }
+
+    assert main(["--wind-span", "--wind-ease"]) == 2
+    assert "(--wind-ease --wind-span)" in capsys.readouterr().err
+
+
 def test_cli_wind_json_is_one_object(monkeypatch, capsys):
     monkeypatch.setattr(
         "hk_weather.hko.urllib.request.urlopen",
