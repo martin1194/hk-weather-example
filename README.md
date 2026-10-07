@@ -719,6 +719,8 @@ hk-weather --uv-level
 hk-weather --uv-level --json
 hk-weather --uv-gap
 hk-weather --uv-gap --json
+hk-weather --max-uv-gap
+hk-weather --max-uv-gap --json
 hk-weather --icon-time
 hk-weather --icon-time --json
 hk-weather --icon-ago
@@ -1748,6 +1750,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --uv-level` prints the exposure band for that same 15-minute index. Below 3 is `UV low, 2`, 3 to 5 is moderate, 6 to 7 is `UV high, 6`, 8 to 10 is very high, and 11 or above is extreme. A reading of zero stays low. `--uv` still prints the hourly index and the Observatory's own description. `--uv-level --json` prints the station, time, index, and band. If the index is missing, it says `No 15-minute UV index is available.`
 
 `hk-weather --uv-gap` compares that 15-minute index with the hourly UV. `15-minute UV is 2 above the hourly index of 6` means the latest quarter-hour reading is two points higher. A matching pair says `15-minute UV matches the hourly index of 6`, and a lower reading says `15-minute UV is 1 below the hourly index of 6`. `--uv-gap --json` prints both indexes, the signed gap, and that phrase. If either index is missing, it says `No UV comparison is available.`
+
+`hk-weather --max-uv-gap` compares that hourly UV with yesterday's maximum at King's Park. `UV 0.1 is 5.9 below 2026-10-06's maximum of 6` means the current index is 5.9 points under that day's peak. A higher reading says `UV 7 is 1 above 2026-10-06's maximum of 6`, and an equal reading says `UV 6 matches 2026-10-06's maximum of 6`. `--max-uv` still prints yesterday's maximum on its own, and `--uv-gap` still compares the 15-minute index with the hourly one. `--max-uv-gap --json` prints the hourly index, the date, the maximum, the signed gap, and that phrase. If the hourly index is missing, it says `No UV index is available.` If yesterday's maximum is missing, it says `No maximum UV index is available.`
 
 `hk-weather --icon-time` (or `-i`) prints when the current weather icon was last updated (`iconUpdateTime`). `--icon-time --json` prints that timestamp as one JSON object. `--lang` applies. If the field is missing or blank, it says `No icon update time is available.`
 

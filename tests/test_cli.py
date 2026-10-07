@@ -23044,6 +23044,83 @@ def test_cli_uv_gap_compares_fifteen_minute_and_hourly(monkeypatch, capsys):
     assert capsys.readouterr().out == "No UV comparison is available.\n"
 
 
+def test_cli_max_uv_gap_compares_hourly_with_yesterdays_maximum(monkeypatch, capsys):
+    from hk_weather.hko import MaxUv
+
+    seen = {}
+
+    def fake_hourly(timeout, lang="en"):
+        seen["hourly_lang"] = lang
+        return UvIndex(
+            "2026-10-07T17:02:00+08:00", "King's Park", 0.9, "low", "During the past hour"
+        )
+
+    def fake_max(timeout, lang="en"):
+        seen["max_lang"] = lang
+        return MaxUv("King's Park", "2026-10-06", 6)
+
+    monkeypatch.setattr("hk_weather.cli.fetch_uv", fake_hourly)
+    monkeypatch.setattr("hk_weather.cli.fetch_max_uv", fake_max)
+    assert main(["--max-uv-gap", "--lang", "tc"]) == 0
+    assert seen == {"hourly_lang": "tc", "max_lang": "tc"}
+    assert capsys.readouterr().out == "UV 0.9 is 5.1 below 2026-10-06's maximum of 6\n"
+
+    assert main(["--max-uv-gap", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "uv": 0.9,
+        "date": "2026-10-06",
+        "maximum": 6.0,
+        "gap": -5.1,
+        "phrase": "UV 0.9 is 5.1 below 2026-10-06's maximum of 6",
+    }
+
+    cases = (
+        (6, "UV 6 matches 2026-10-06's maximum of 6\n"),
+        (7, "UV 7 is 1 above 2026-10-06's maximum of 6\n"),
+    )
+    for hourly_value, expected in cases:
+        monkeypatch.setattr(
+            "hk_weather.cli.fetch_uv",
+            lambda timeout, lang="en", value=hourly_value: UvIndex(
+                "2026-10-07T17:02:00+08:00", "King's Park", value, "high", None
+            ),
+        )
+        assert main(["--max-uv-gap"]) == 0
+        assert capsys.readouterr().out == expected
+
+    assert main(["--max-uv-gap", "--uv-gap"]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "pass one report flag at a time (--uv-gap --max-uv-gap)" in captured.err
+
+    def fail_max(*args, **kwargs):
+        raise AssertionError("maximum must not be fetched")
+
+    monkeypatch.setattr("hk_weather.cli.fetch_max_uv", fail_max)
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_uv",
+        lambda timeout, lang="en": UvIndex(
+            "2026-10-07T17:02:00+08:00", "King's Park", None, None, None
+        ),
+    )
+    assert main(["--max-uv-gap"]) == 0
+    assert capsys.readouterr().out == "No UV index is available.\n"
+    assert main(["--max-uv-gap", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No UV index is available."
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_uv",
+        lambda timeout, lang="en": UvIndex(
+            "2026-10-07T17:02:00+08:00", "King's Park", 0.9, "low", None
+        ),
+    )
+    monkeypatch.setattr("hk_weather.cli.fetch_max_uv", lambda timeout, lang="en": None)
+    assert main(["--max-uv-gap"]) == 0
+    assert capsys.readouterr().out == "No maximum UV index is available.\n"
+
+
 def test_cli_icon_time_prints_timestamp(monkeypatch, capsys):
     seen = {}
 
