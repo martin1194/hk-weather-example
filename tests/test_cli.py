@@ -20350,6 +20350,47 @@ def test_cli_since_sunrise_says_how_long(monkeypatch, capsys):
     assert capsys.readouterr().out == "No sunrise time is available.\n"
 
 
+def test_cli_sun_up_says_whether_the_sun_is_above_the_horizon(monkeypatch, capsys):
+    seen = {}
+
+    def fake_fetch(timeout, lang="en"):
+        seen["lang"] = lang
+        return Sunrise("2026-10-03", "06:15", "12:12", "18:09")
+
+    monkeypatch.setattr("hk_weather.cli.fetch_sunrise", fake_fetch)
+    monkeypatch.setattr(
+        "hk_weather.hko._clock",
+        lambda: datetime.fromisoformat("2026-10-03T02:00:00+00:00"),
+    )
+    assert main(["--sun-up", "--lang", "tc"]) == 0
+    assert seen["lang"] == "tc"
+    assert capsys.readouterr().out == "The sun is up\n"
+
+    assert main(["--sun-up", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "up": True,
+        "rise": "06:15",
+        "set": "18:09",
+        "phrase": "The sun is up",
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.hko._clock",
+        lambda: datetime.fromisoformat("2026-10-02T17:00:00+00:00"),
+    )
+    assert main(["--sun-up"]) == 0
+    assert capsys.readouterr().out == "The sun is down\n"
+
+    assert main(["--sun-up", "--since-sunrise"]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "pass one report flag at a time (--since-sunrise --sun-up)" in captured.err
+
+    monkeypatch.setattr("hk_weather.cli.fetch_sunrise", lambda timeout, lang="en": None)
+    assert main(["--sun-up"]) == 0
+    assert capsys.readouterr().out == "No sun times are available.\n"
+
+
 def test_cli_until_transit_says_how_long(monkeypatch, capsys):
     monkeypatch.setattr(
         "hk_weather.cli.fetch_sunrise",
