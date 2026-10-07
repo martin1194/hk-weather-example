@@ -635,6 +635,7 @@ from hk_weather.hko import (
     format_moon_miss,
     format_until_moonset,
     format_moon_up,
+    format_moonlight,
     format_month_rain,
     format_month_rain_miss,
     format_year_rain,
@@ -1790,6 +1791,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--moon prints today's moonrise and moonset; "
             "--until-moonset prints how long until today's moonset; "
             "--moon-up says whether the moon is above the horizon; "
+            "--moonlight prints how long the moon is up; "
             "--lunar prints today's lunar date; "
             "--rainstorm prints the rainstorm reminder; "
             "--cyclone prints the tropical cyclone message; "
@@ -3528,6 +3530,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--moon-up",
         action="store_true",
         help="Say whether the moon is above the horizon",
+    )
+    parser.add_argument(
+        "--moonlight",
+        action="store_true",
+        help="Print how long the moon is above the horizon",
     )
     parser.add_argument(
         "--lunar",
@@ -7443,6 +7450,11 @@ def main(argv: list[str] | None = None) -> int:
             )
         elif args.moon_up:
             text = format_moon_up(
+                fetch_moon(timeout=args.timeout, lang=args.lang),
+                as_json=args.json,
+            )
+        elif args.moonlight:
+            text = format_moonlight(
                 fetch_moon(timeout=args.timeout, lang=args.lang),
                 as_json=args.json,
             )

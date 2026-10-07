@@ -22156,6 +22156,48 @@ def test_cli_moon_up_says_whether_the_moon_is_above_the_horizon(monkeypatch, cap
     assert capsys.readouterr().out == "No moon times are available.\n"
 
 
+def test_cli_moonlight_prints_how_long_the_moon_is_up(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_moon",
+        lambda timeout, lang="en": Moon("2026-10-07", "02:51", "09:26", "15:54"),
+    )
+    phrase = "The moon is up for 13 hours 3 min, from 02:51 to 15:54."
+    assert main(["--moonlight"]) == 0
+    assert capsys.readouterr().out == phrase + "\n"
+    assert main(["--moonlight", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "date": "2026-10-07",
+        "rise": "02:51",
+        "set": "15:54",
+        "minutes": 783,
+        "phrase": phrase,
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_moon",
+        lambda timeout, lang="en": Moon("2026-10-03", "23:39", "05:42", "12:48"),
+    )
+    assert main(["--moonlight"]) == 0
+    assert capsys.readouterr().out == (
+        "The moon is up for 13 hours 9 min, from 23:39 to 12:48.\n"
+    )
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_moon",
+        lambda timeout, lang="en": Moon("2026-10-07", "02:51", "09:26", ""),
+    )
+    assert main(["--moonlight"]) == 0
+    assert capsys.readouterr().out == "No moonlight length is available.\n"
+    monkeypatch.setattr("hk_weather.cli.fetch_moon", lambda timeout, lang="en": None)
+    assert main(["--moonlight", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No moonlight length is available."
+    }
+
+    assert main(["--moonlight", "--moon-up"]) == 2
+    assert "(--moon-up --moonlight)" in capsys.readouterr().err
+
+
 def test_cli_moon_prints_times(monkeypatch, capsys):
     seen = {}
 
