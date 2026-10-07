@@ -14113,6 +14113,90 @@ def test_cli_avg_rain_when_missing(monkeypatch, capsys):
     assert json.loads(capsys.readouterr().out) == {"message": "No average rainfall is available."}
 
 
+def test_cli_rain_vs_normal_compares_total_with_normal(monkeypatch, capsys):
+    seen = {}
+    monkeypatch.setattr("hk_weather.hko._hong_kong_yesterday", lambda now=None: "2026-10-06")
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response(
+            {
+                "HKOReadingsAccumRainfall": "100.5",
+                "HKOReadingsAvgRainfall": "80",
+                "ReportTimeInfoDate": "20261006",
+            }
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--rain-vs-normal", "--lang", "tc"]) == 0
+    assert "dataType=RYES" in seen["url"]
+    assert "station=HKO" in seen["url"]
+    assert "date=20261006" in seen["url"]
+    assert "lang=tc" in seen["url"]
+    assert capsys.readouterr().out == (
+        "Through 2026-10-06, rainfall is 20.5 mm above the normal of 80 mm\n"
+    )
+
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {
+                "HKOReadingsAccumRainfall": "100.5",
+                "HKOReadingsAvgRainfall": "80",
+                "ReportTimeInfoDate": "20261006",
+            }
+        ),
+    )
+    assert main(["--rain-vs-normal", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "date": "2026-10-06",
+        "accumulated_mm": 100.5,
+        "normal_mm": 80.0,
+        "difference_mm": 20.5,
+        "phrase": "Through 2026-10-06, rainfall is 20.5 mm above the normal of 80 mm",
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {"HKOReadingsAccumRainfall": "10", "HKOReadingsAvgRainfall": "25.5"}
+        ),
+    )
+    assert main(["--rain-vs-normal"]) == 0
+    assert capsys.readouterr().out == (
+        "Through 2026-10-06, rainfall is 15.5 mm below the normal of 25.5 mm\n"
+    )
+
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {"HKOReadingsAccumRainfall": "80", "HKOReadingsAvgRainfall": "80.0"}
+        ),
+    )
+    assert main(["--rain-vs-normal"]) == 0
+    assert capsys.readouterr().out == (
+        "Through 2026-10-06, rainfall matches the normal of 80 mm\n"
+    )
+
+    assert main(["--rain-vs-normal", "--avg-rain"]) == 2
+    assert "(--avg-rain --rain-vs-normal)" in capsys.readouterr().err
+
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"HKOReadingsAccumRainfall": "100.5"}),
+    )
+    assert main(["--rain-vs-normal"]) == 0
+    assert capsys.readouterr().out == "No rainfall comparison is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({}),
+    )
+    assert main(["--rain-vs-normal", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No rainfall comparison is available."
+    }
+
+
 def test_cli_radiation_prints_yesterday_report(monkeypatch, capsys):
     seen = {}
     monkeypatch.setattr("hk_weather.hko._hong_kong_yesterday", lambda now=None: "2026-10-02")

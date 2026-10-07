@@ -931,6 +931,13 @@ class AverageRainfall:
 
 
 @dataclass(frozen=True)
+class RainComparison:
+    date: str
+    accumulated_mm: float
+    normal_mm: float
+
+
+@dataclass(frozen=True)
 class RadiationReport:
     date: str
     report: str
@@ -4848,6 +4855,16 @@ def fetch_avg_rain(timeout: float = 10, lang: str = "en") -> AverageRainfall | N
         f"?dataType=RYES&rformat=json&date={day.replace('-', '')}&station=HKO&lang=en"
     )
     return parse_avg_rain(_fetch_json(_apply_lang(url, lang), timeout), day)
+
+
+def fetch_rain_vs_normal(timeout: float = 10, lang: str = "en") -> RainComparison | None:
+    """Download accumulated rainfall and its normal (`dataType=RYES`, station HKO)."""
+    day = _hong_kong_yesterday()
+    url = (
+        "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php"
+        f"?dataType=RYES&rformat=json&date={day.replace('-', '')}&station=HKO&lang=en"
+    )
+    return parse_rain_vs_normal(_fetch_json(_apply_lang(url, lang), timeout), day)
 
 
 def fetch_radiation(timeout: float = 10, lang: str = "en") -> RadiationReport | None:
@@ -23389,6 +23406,52 @@ def format_avg_rain(reading: AverageRainfall) -> str:
 def format_avg_rain_miss(*, as_json: bool = False) -> str:
     """Say that the climatological rainfall normal is not available."""
     return _unavailable("No average rainfall is available.", as_json=as_json)
+
+
+def parse_rain_vs_normal(payload: dict, date: str) -> RainComparison | None:
+    """Turn a `RYES` document into accumulated rainfall against its normal."""
+    accumulated = _hour_mm(payload.get("HKOReadingsAccumRainfall"))
+    normal = _hour_mm(payload.get("HKOReadingsAvgRainfall"))
+    if accumulated is None or normal is None:
+        return None
+    reported = _text(payload.get("ReportTimeInfoDate"))
+    if len(reported) == 8 and reported.isdigit():
+        date = f"{reported[:4]}-{reported[4:6]}-{reported[6:8]}"
+    return RainComparison(date, accumulated, normal)
+
+
+def _rain_vs_normal_phrase(accumulated_mm: float, normal_mm: float) -> tuple[float, str]:
+    """Signed millimetres from normal, and the clause that states it."""
+    gap = round(accumulated_mm - normal_mm, 1)
+    normal = f"{_number(normal_mm)} mm"
+    if gap > 0:
+        relation = f"is {_number(gap)} mm above the normal of {normal}"
+    elif gap < 0:
+        relation = f"is {_number(abs(gap))} mm below the normal of {normal}"
+    else:
+        relation = f"matches the normal of {normal}"
+    return gap, relation
+
+
+def format_rain_vs_normal(reading: RainComparison | None, *, as_json: bool) -> str:
+    """Print how far accumulated rainfall is from the climatological normal."""
+    if reading is None:
+        return _unavailable("No rainfall comparison is available.", as_json=as_json)
+    gap, relation = _rain_vs_normal_phrase(reading.accumulated_mm, reading.normal_mm)
+    if reading.date:
+        phrase = f"Through {reading.date}, rainfall {relation}"
+    else:
+        phrase = f"Rainfall {relation}"
+    if as_json:
+        payload = {
+            "date": reading.date,
+            "accumulated_mm": reading.accumulated_mm,
+            "normal_mm": reading.normal_mm,
+            "difference_mm": gap,
+            "phrase": phrase,
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
 
 
 def parse_radiation(payload: dict, date: str) -> RadiationReport | None:
