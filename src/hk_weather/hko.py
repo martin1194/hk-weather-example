@@ -23783,6 +23783,56 @@ def format_min_temp_miss(*, as_json: bool = False) -> str:
     return _unavailable("No daily minimum temperature is available.", as_json=as_json)
 
 
+_DAY_SPAN_STATIONS = {
+    "en": "Hong Kong Observatory",
+    "tc": "香港天文台",
+    "sc": "香港天文台",
+}
+
+
+def format_day_span(
+    high: DailyMax | None,
+    low: DailyMin | None,
+    *,
+    as_json: bool,
+    lang: str = "en",
+) -> str:
+    """Compare the Observatory daily maximum with the daily minimum on the same day."""
+    if high is None:
+        return _unavailable("No daily maximum temperature is available.", as_json=as_json)
+    if low is None:
+        return _unavailable("No daily minimum temperature is available.", as_json=as_json)
+    if high.date != low.date:
+        return _unavailable("No shared temperature day is available.", as_json=as_json)
+    station = _DAY_SPAN_STATIONS.get(lang, _DAY_SPAN_STATIONS["en"])
+    span = round(high.temperature_c - low.temperature_c, 1)
+    high_text = _number(high.temperature_c)
+    low_text = _number(low.temperature_c)
+    if span > 0:
+        phrase = (
+            f"On {high.date}, {station} high of {high_text}°C is {_number(span)}°C "
+            f"above the low of {low_text}°C."
+        )
+    elif span < 0:
+        phrase = (
+            f"On {high.date}, {station} high of {high_text}°C is {_number(abs(span))}°C "
+            f"below the low of {low_text}°C."
+        )
+    else:
+        phrase = f"On {high.date}, {station} high matches the low of {low_text}°C."
+    if as_json:
+        payload = {
+            "date": high.date,
+            "station": station,
+            "high_c": high.temperature_c,
+            "low_c": low.temperature_c,
+            "span_c": span,
+            "phrase": phrase,
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
+
+
 _DEW_STATIONS = {
     "en": "Hong Kong Observatory",
     "tc": "香港天文台",

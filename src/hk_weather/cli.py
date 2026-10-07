@@ -1047,6 +1047,7 @@ from hk_weather.hko import (
     format_max_temp_miss,
     format_min_temp,
     format_min_temp_miss,
+    format_day_span,
     format_dew_point,
     format_dew_point_miss,
     format_park_dew_miss,
@@ -1623,6 +1624,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--buoy-8-temp prints the latest daily mean temperature at Automatic Weather Buoy No.8; "
             "--max-temp prints the latest daily maximum temperature; "
             "--min-temp prints the latest daily minimum temperature; "
+            "--day-span compares that minimum with the daily maximum; "
             "--tai-mo-min prints the latest daily minimum temperature at Tai Mo Shan; "
             "--tate-min prints the latest daily minimum temperature at Tate's Cairn; "
             "--sai-kung-min prints the latest daily minimum temperature at Sai Kung; "
@@ -2431,6 +2433,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--min-temp",
         action="store_true",
         help="Print the latest daily minimum temperature at the Observatory",
+    )
+    parser.add_argument(
+        "--day-span",
+        action="store_true",
+        help="Compare the Observatory daily maximum with the daily minimum on the same day",
     )
     parser.add_argument(
         "--tai-mo-min",
@@ -5547,6 +5554,12 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_min_temp_miss(as_json=args.json)
             else:
                 text = format_json(min_temp) if args.json else format_min_temp(min_temp)
+        elif args.day_span:
+            high = fetch_max_temp(timeout=args.timeout, lang=args.lang)
+            low = None
+            if high is not None:
+                low = fetch_min_temp(timeout=args.timeout, lang=args.lang)
+            text = format_day_span(high, low, as_json=args.json, lang=args.lang)
         elif args.tai_mo_min:
             tai_mo_min = fetch_tai_mo_min(timeout=args.timeout, lang=args.lang)
             if tai_mo_min is None:

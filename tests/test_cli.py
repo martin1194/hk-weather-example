@@ -12,6 +12,8 @@ from hk_weather.cli import main
 from hk_weather.hko import (
     CloudAmount,
     CurrentWeather,
+    DailyMax,
+    DailyMin,
     DailyRain,
     DewPoint,
     DailySun,
@@ -7767,6 +7769,94 @@ def test_cli_min_temp_when_missing(monkeypatch, capsys):
     assert json.loads(capsys.readouterr().out) == {
         "message": "No daily minimum temperature is available."
     }
+
+
+def test_cli_day_span_compares_observatory_high_with_low(monkeypatch, capsys):
+    seen = {}
+
+    def fake_max(timeout, lang="en"):
+        seen["max_lang"] = lang
+        return DailyMax("2026-08-31", 29.5)
+
+    def fake_min(timeout, lang="en"):
+        seen["min_lang"] = lang
+        return DailyMin("2026-08-31", 26.2)
+
+    monkeypatch.setattr("hk_weather.cli.fetch_max_temp", fake_max)
+    monkeypatch.setattr("hk_weather.cli.fetch_min_temp", fake_min)
+    phrase = (
+        "On 2026-08-31, 香港天文台 high of 29.5°C is 3.3°C above the low of 26.2°C."
+    )
+    assert main(["--day-span", "--lang", "tc"]) == 0
+    assert seen["max_lang"] == "tc"
+    assert seen["min_lang"] == "tc"
+    assert capsys.readouterr().out == phrase + "\n"
+    assert main(["--day-span", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "date": "2026-08-31",
+        "station": "Hong Kong Observatory",
+        "high_c": 29.5,
+        "low_c": 26.2,
+        "span_c": 3.3,
+        "phrase": (
+            "On 2026-08-31, Hong Kong Observatory high of 29.5°C is 3.3°C "
+            "above the low of 26.2°C."
+        ),
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_max_temp",
+        lambda timeout, lang="en": DailyMax("2026-08-31", 24),
+    )
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_min_temp",
+        lambda timeout, lang="en": DailyMin("2026-08-31", 25.5),
+    )
+    assert main(["--day-span"]) == 0
+    assert capsys.readouterr().out == (
+        "On 2026-08-31, Hong Kong Observatory high of 24°C is 1.5°C below the low of 25.5°C.\n"
+    )
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_max_temp",
+        lambda timeout, lang="en": DailyMax("2026-08-31", 26),
+    )
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_min_temp",
+        lambda timeout, lang="en": DailyMin("2026-08-31", 26),
+    )
+    assert main(["--day-span"]) == 0
+    assert capsys.readouterr().out == (
+        "On 2026-08-31, Hong Kong Observatory high matches the low of 26°C.\n"
+    )
+
+    def fail_min(timeout, lang="en"):
+        raise AssertionError("must not fetch the minimum")
+
+    monkeypatch.setattr("hk_weather.cli.fetch_min_temp", fail_min)
+    monkeypatch.setattr("hk_weather.cli.fetch_max_temp", lambda timeout, lang="en": None)
+    assert main(["--day-span"]) == 0
+    assert capsys.readouterr().out == "No daily maximum temperature is available.\n"
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_max_temp",
+        lambda timeout, lang="en": DailyMax("2026-08-31", 29.5),
+    )
+    monkeypatch.setattr("hk_weather.cli.fetch_min_temp", lambda timeout, lang="en": None)
+    assert main(["--day-span", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No daily minimum temperature is available."
+    }
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_min_temp",
+        lambda timeout, lang="en": DailyMin("2026-08-30", 26.2),
+    )
+    assert main(["--day-span", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No shared temperature day is available."
+    }
+
+    assert main(["--min-temp", "--day-span"]) == 2
+    assert "(--min-temp --day-span)" in capsys.readouterr().err
 
 
 def test_cli_tai_mo_min_prints_latest_day(monkeypatch, capsys):
