@@ -10934,6 +10934,49 @@ def format_humid_floor(report: NineHumidity, *, as_json: bool) -> str:
     return phrase + "\n"
 
 
+def format_humid_ceil(report: NineHumidity, *, as_json: bool) -> str:
+    """Print the first day the forecast maximum humidity changes."""
+    ranked = [day for day in report.days if day.humidity_high_percent is not None]
+    chosen: tuple[NineHumidityDay, NineHumidityDay] | None = None
+    for earlier, later in zip(ranked, ranked[1:]):
+        if round(later.humidity_high_percent - earlier.humidity_high_percent, 1) != 0:
+            chosen = (earlier, later)
+            break
+    if chosen is None:
+        return _unavailable(
+            "No humidity ceiling change is in the forecast.", as_json=as_json
+        )
+    before, after = chosen
+    gap = round(after.humidity_high_percent - before.humidity_high_percent, 1)
+    start = _number(before.humidity_high_percent)
+    end = _number(after.humidity_high_percent)
+    after_label = _humidity_day_label(after)
+    before_label = _humidity_day_label(before)
+    if gap > 0:
+        phrase = (
+            f"The humidity ceiling rises on {after_label}, "
+            f"from {start}% on {before_label} to {end}%."
+        )
+    else:
+        phrase = (
+            f"The humidity ceiling falls on {after_label}, "
+            f"from {start}% on {before_label} to {end}%."
+        )
+    if as_json:
+        payload = {
+            "from_date": before.date,
+            "from_week": before.week,
+            "from_percent": before.humidity_high_percent,
+            "to_date": after.date,
+            "to_week": after.week,
+            "to_percent": after.humidity_high_percent,
+            "gap": gap,
+            "phrase": phrase,
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
+
+
 def format_psr(report: PsrForecast) -> str:
     """Render the chance of significant rain, one day per line."""
     lines = ["Hong Kong chance of significant rain"]
