@@ -15,6 +15,8 @@ from hk_weather.hko import (
     ForecastIcons,
     Moon,
     Sunrise,
+    TideEvent,
+    TideReport,
     TomorrowForecast,
     WeatherError,
     WarningTime,
@@ -19647,6 +19649,65 @@ _AQHI_XML = """<?xml version="1.0" encoding="UTF-8"?>
 <item><title>Skip</title><description><![CDATA[not a reading]]></description></item>
 </channel></rss>
 """
+
+
+def test_cli_next_tide_prints_the_next_high_or_low(monkeypatch, capsys):
+    seen = {}
+    report = TideReport(
+        "Quarry Bay",
+        (
+            TideEvent("2026-10-07", "06:27", 2.36),
+            TideEvent("2026-10-07", "13:16", 0.77),
+            TideEvent("2026-10-07", "20:24", 1.86),
+        ),
+    )
+
+    def fake_fetch(timeout, lang="en"):
+        seen["lang"] = lang
+        return report
+
+    monkeypatch.setattr("hk_weather.cli.fetch_tide", fake_fetch)
+    monkeypatch.setattr(
+        "hk_weather.hko._clock",
+        lambda: datetime.fromisoformat("2026-10-07T02:00:00+00:00"),
+    )
+    assert main(["--next-tide", "--lang", "tc"]) == 0
+    assert seen["lang"] == "tc"
+    assert capsys.readouterr().out == "Low tide in 3 hours 16 min, 0.77 m\n"
+
+    assert main(["--next-tide", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "kind": "low",
+        "time": "13:16",
+        "height_m": 0.77,
+        "phrase": "Low tide in 3 hours 16 min, 0.77 m",
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.hko._clock",
+        lambda: datetime.fromisoformat("2026-10-07T05:16:20+00:00"),
+    )
+    assert main(["--next-tide"]) == 0
+    assert capsys.readouterr().out == "Low tide now, 0.77 m\n"
+
+    monkeypatch.setattr(
+        "hk_weather.hko._clock",
+        lambda: datetime.fromisoformat("2026-10-07T13:00:00+00:00"),
+    )
+    assert main(["--next-tide"]) == 0
+    assert capsys.readouterr().out == "High tide was 36 min ago, 1.86 m\n"
+
+    assert main(["--next-tide", "--tide"]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "pass one report flag at a time (--tide --next-tide)" in captured.err
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_tide",
+        lambda timeout, lang="en": TideReport("Quarry Bay", ()),
+    )
+    assert main(["--next-tide"]) == 0
+    assert capsys.readouterr().out == "No tide readings are available.\n"
 
 
 def test_cli_aqhi_lists_stations(monkeypatch, capsys):

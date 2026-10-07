@@ -10861,6 +10861,67 @@ def format_tide_miss(*, as_json: bool = False) -> str:
     return _unavailable("No tide readings are available.", as_json=as_json)
 
 
+def _tide_kind(events: tuple[TideEvent, ...], index: int) -> str | None:
+    """Label a tide high or low by comparing it with the tides beside it."""
+    height = events[index].height_m
+    neighbors: list[float] = []
+    if index > 0:
+        neighbors.append(events[index - 1].height_m)
+    if index + 1 < len(events):
+        neighbors.append(events[index + 1].height_m)
+    if not neighbors:
+        return None
+    if all(height > other for other in neighbors):
+        return "high"
+    if all(height < other for other in neighbors):
+        return "low"
+    return None
+
+
+def _next_tide_phrase(kind: str | None, seconds: int, height_m: float) -> str:
+    """Say whether the chosen tide is ahead, now, or already past."""
+    label = {"high": "High tide", "low": "Low tide"}.get(kind or "", "Tide")
+    height = f"{_number(height_m)} m"
+    if abs(seconds) < 60:
+        return f"{label} now, {height}"
+    span = _span_phrase(abs(seconds) // 60)
+    if seconds > 0:
+        return f"{label} in {span}, {height}"
+    return f"{label} was {span} ago, {height}"
+
+
+def format_next_tide(report: TideReport, *, as_json: bool) -> str:
+    """Print how long until the next high or low tide."""
+    now = _clock()
+    upcoming: tuple[int, TideEvent, int] | None = None
+    recent: tuple[int, TideEvent, int] | None = None
+    for index, event in enumerate(report.events):
+        moment = _clock_moment(event.date, event.time)
+        if moment is None:
+            continue
+        seconds = int((moment - now).total_seconds())
+        if seconds >= -59:
+            if upcoming is None or seconds < upcoming[2]:
+                upcoming = (index, event, seconds)
+        elif recent is None or seconds > recent[2]:
+            recent = (index, event, seconds)
+    chosen = upcoming if upcoming is not None else recent
+    if chosen is None:
+        return _unavailable("No tide readings are available.", as_json=as_json)
+    index, event, seconds = chosen
+    kind = _tide_kind(report.events, index)
+    phrase = _next_tide_phrase(kind, seconds, event.height_m)
+    if as_json:
+        payload = {
+            "kind": kind,
+            "time": event.time,
+            "height_m": event.height_m,
+            "phrase": phrase,
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
+
+
 def parse_tide_hour(payload: dict, year: int) -> HourlyTideReport:
     """Turn an `HHOT` document into one height per hour."""
     fields = payload.get("fields")
