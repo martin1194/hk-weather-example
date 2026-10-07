@@ -24894,6 +24894,47 @@ def format_evaporation_miss(*, as_json: bool = False) -> str:
     return _unavailable("No evaporation is available.", as_json=as_json)
 
 
+def format_evap_gap(
+    evaporation: Evaporation | None, rain: DailyRain | None, *, as_json: bool
+) -> str:
+    """Compare King's Park rainfall with evaporation on the same day."""
+    if evaporation is None:
+        return _unavailable("No evaporation is available.", as_json=as_json)
+    if rain is None:
+        return _unavailable("No King's Park rainfall is available.", as_json=as_json)
+    if evaporation.date != rain.date:
+        return _unavailable("No shared evaporation day is available.", as_json=as_json)
+    gap = round(rain.rainfall_mm - evaporation.evaporation_mm, 1)
+    station = rain.station
+    rainfall = _number(rain.rainfall_mm)
+    evaporated = _number(evaporation.evaporation_mm)
+    if gap > 0:
+        phrase = (
+            f"On {rain.date}, {station} rainfall of {rainfall} mm is {_number(gap)} mm "
+            f"above evaporation of {evaporated} mm."
+        )
+    elif gap < 0:
+        phrase = (
+            f"On {rain.date}, {station} evaporation of {evaporated} mm is "
+            f"{_number(abs(gap))} mm above rainfall of {rainfall} mm."
+        )
+    else:
+        phrase = (
+            f"On {rain.date}, {station} rainfall matches evaporation of {evaporated} mm."
+        )
+    if as_json:
+        payload = {
+            "date": rain.date,
+            "station": station,
+            "rainfall_mm": rain.rainfall_mm,
+            "evaporation_mm": evaporation.evaporation_mm,
+            "gap_mm": gap,
+            "phrase": phrase,
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
+
+
 _EVAPOTRANSPIRATION_STATIONS = {
     "en": "King's Park",
     "tc": "京士柏",
