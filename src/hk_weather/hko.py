@@ -10433,6 +10433,28 @@ def format_today_weather(day: TomorrowForecast | None, *, as_json: bool) -> str:
     return f"Weather: {weather}\n"
 
 
+def format_today_humidity(day: TomorrowForecast | None, *, as_json: bool) -> str:
+    """Print today's forecast humidity."""
+    low = None if day is None else day.humidity_low_percent
+    high = None if day is None else day.humidity_high_percent
+    if day is None or (low is None and high is None):
+        return _unavailable("No forecast humidity is available for today.", as_json=as_json)
+    if as_json:
+        payload: dict[str, object] = {"date": day.date}
+        if low is not None:
+            payload["humidity_low_percent"] = low
+        if high is not None:
+            payload["humidity_high_percent"] = high
+        return json.dumps(payload, indent=2) + "\n"
+    if low is not None and high is not None:
+        text = f"{_number(low)}-{_number(high)}%"
+    elif low is not None:
+        text = f"{_number(low)}%"
+    else:
+        text = f"{_number(high)}%"
+    return f"Humidity: {text}\n"
+
+
 def format_day_miss(day: int, *, as_json: bool = False) -> str:
     """Say that forecast day N is not in the 9-day list."""
     return _unavailable(f"Forecast day {day} is not available.", as_json=as_json)

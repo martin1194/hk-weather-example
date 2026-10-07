@@ -2748,6 +2748,40 @@ def test_cli_today_weather_prints_todays_forecast_weather(monkeypatch, capsys):
     assert capsys.readouterr().out == "No forecast weather is available for today.\n"
 
 
+def test_cli_today_humidity_prints_todays_forecast_humidity(monkeypatch, capsys):
+    today = TomorrowForecast(
+        "updated",
+        "2026-10-03",
+        "Saturday",
+        "Fine and dry.",
+        31,
+        27,
+        75,
+        40,
+        "Low",
+        "North force 4.",
+    )
+    monkeypatch.setattr("hk_weather.cli.fetch_today", lambda timeout, lang="en": today)
+    assert main(["--today-humidity"]) == 0
+    assert capsys.readouterr().out == "Humidity: 40-75%\n"
+    assert main(["--today-humidity", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "date": "2026-10-03",
+        "humidity_low_percent": 40,
+        "humidity_high_percent": 75,
+    }
+    assert main(["--today-humidity", "--nine-humidity"]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "pass one report flag at a time (--nine-humidity --today-humidity)" in captured.err
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_today",
+        lambda timeout, lang="en": replace(today, humidity_low_percent=None, humidity_high_percent=None),
+    )
+    assert main(["--today-humidity"]) == 0
+    assert capsys.readouterr().out == "No forecast humidity is available for today.\n"
+
+
 def test_cli_today_prints_the_hong_kong_day(monkeypatch, capsys):
     seen = {}
     monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
