@@ -9,7 +9,14 @@ from urllib.error import URLError
 import pytest
 
 from hk_weather.cli import main
-from hk_weather.hko import CurrentWeather, Sunrise, TomorrowForecast, WeatherError
+from hk_weather.hko import (
+    CurrentWeather,
+    ForecastIconDay,
+    ForecastIcons,
+    Sunrise,
+    TomorrowForecast,
+    WeatherError,
+)
 
 SAMPLE_WEATHER = CurrentWeather(
     update_time="2026-10-02T23:02:00+08:00",
@@ -19049,6 +19056,42 @@ def test_cli_forecast_icon_when_missing(monkeypatch, capsys):
     )
     assert main(["--forecast-icon", "--json"]) == 0
     assert json.loads(capsys.readouterr().out) == {"message": "No forecast icons are available."}
+
+
+def test_cli_today_icon_prints_todays_forecast_icon(monkeypatch, capsys):
+    report = ForecastIcons(
+        "updated",
+        (
+            ForecastIconDay("2026-10-03", "Saturday", 81, "Dry"),
+            ForecastIconDay("2026-10-04", "Sunday", 50, "Sunny"),
+        ),
+    )
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_forecast_icon",
+        lambda timeout, lang="en": report,
+    )
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
+    assert main(["--today-icon"]) == 0
+    assert capsys.readouterr().out == "Icon: 81 Dry\n"
+    assert main(["--today-icon", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "date": "2026-10-03",
+        "icon": 81,
+        "label": "Dry",
+    }
+    assert main(["--today-icon", "--forecast-icon"]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "pass one report flag at a time (--forecast-icon --today-icon)" in captured.err
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_forecast_icon",
+        lambda timeout, lang="en": ForecastIcons(
+            "updated",
+            (ForecastIconDay("2026-10-04", "Sunday", 50, "Sunny"),),
+        ),
+    )
+    assert main(["--today-icon"]) == 0
+    assert capsys.readouterr().out == "No forecast icon is available for today.\n"
 
 
 def test_cli_quake_lists_latest_message(monkeypatch, capsys):

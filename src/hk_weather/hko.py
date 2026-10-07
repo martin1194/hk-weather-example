@@ -16139,6 +16139,24 @@ def format_forecast_icon_miss(*, as_json: bool = False) -> str:
     return _unavailable("No forecast icons are available.", as_json=as_json)
 
 
+def format_today_icon(report: ForecastIcons, *, as_json: bool) -> str:
+    """Print today's forecast weather icon."""
+    today = _hong_kong_today()
+    day = next((item for item in report.days if item.date == today), None)
+    if day is None:
+        return _unavailable("No forecast icon is available for today.", as_json=as_json)
+    if as_json:
+        return (
+            json.dumps(
+                {"date": day.date, "icon": day.icon, "label": day.label},
+                indent=2,
+                ensure_ascii=False,
+            )
+            + "\n"
+        )
+    return f"Icon: {day.icon} {day.label}\n"
+
+
 def parse_uv(payload: dict) -> UvIndex:
     """Turn the `uvindex` field of an `rhrread` document into a short report."""
     update_time = _text(payload.get("updateTime")) or "unknown"
