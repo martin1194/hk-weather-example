@@ -11163,6 +11163,36 @@ def format_until_moonset(reading: Moon | None, *, as_json: bool) -> str:
     return phrase + "\n"
 
 
+def _moon_is_up(rise: str, set_clock: str, now: datetime) -> bool | None:
+    """True when the moon is up, using today's rise and set clocks."""
+    rise_min = _clock_minutes(rise)
+    set_min = _clock_minutes(set_clock)
+    if rise_min is None or set_min is None or rise_min == set_min:
+        return None
+    moment = now.astimezone(_HKT)
+    now_min = moment.hour * 60 + moment.minute
+    if set_min > rise_min:
+        return rise_min <= now_min < set_min
+    return now_min >= rise_min or now_min < set_min
+
+
+def format_moon_up(reading: Moon | None, *, as_json: bool) -> str:
+    """Say whether the moon is above the horizon."""
+    up = _moon_is_up(reading.rise, reading.set, _clock()) if reading is not None else None
+    if reading is None or up is None:
+        return _unavailable("No moon times are available.", as_json=as_json)
+    phrase = "The moon is up" if up else "The moon is down"
+    if as_json:
+        return (
+            json.dumps(
+                {"up": up, "rise": reading.rise, "set": reading.set},
+                indent=2,
+            )
+            + "\n"
+        )
+    return phrase + "\n"
+
+
 def parse_lunar(payload: dict, date: str) -> LunarDate | None:
     """Turn a lunar-date document into today's Gregorian and lunar labels."""
     lunar_year = _text(payload.get("LunarYear"))
