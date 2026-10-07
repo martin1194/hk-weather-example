@@ -703,6 +703,7 @@ from hk_weather.hko import (
     format_minute_temp_miss,
     format_since_midnight,
     format_since_midnight_miss,
+    format_midnight_span,
     format_pressure,
     format_pressure_miss,
     format_high_pressure,
@@ -1372,6 +1373,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--temp-time prints when those temperatures were recorded; "
             "--minute-temp prints the latest 1-minute mean temperature; "
             "--since-midnight prints each station's high and low since midnight; "
+            "--midnight-span prints the station with the widest of those ranges; "
             "--pressure prints the latest 1-minute sea level pressure; "
             "--high-pressure prints the station with the highest of those readings; "
             "--mean-pressure prints the latest daily mean pressure; "
@@ -4047,6 +4049,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--since-midnight",
         action="store_true",
         help="Print each station's maximum and minimum temperature since midnight",
+    )
+    parser.add_argument(
+        "--midnight-span",
+        action="store_true",
+        help="Print the station with the widest temperature range since midnight",
     )
     parser.add_argument(
         "--pressure",
@@ -8313,6 +8320,9 @@ def main(argv: list[str] | None = None) -> int:
                     if args.json
                     else format_since_midnight(since_midnight)
                 )
+        elif args.midnight_span:
+            since_midnight = fetch_since_midnight(timeout=args.timeout, lang=args.lang)
+            text = format_midnight_span(since_midnight, as_json=args.json)
         elif args.pressure:
             pressure = fetch_pressure(timeout=args.timeout, lang=args.lang)
             if not pressure.stations:

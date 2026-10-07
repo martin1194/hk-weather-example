@@ -907,6 +907,8 @@ hk-weather --minute-temp
 hk-weather --minute-temp --json
 hk-weather --since-midnight
 hk-weather --since-midnight --json
+hk-weather --midnight-span
+hk-weather --midnight-span --json
 hk-weather --pressure
 hk-weather --pressure --json
 hk-weather --high-pressure
@@ -1892,6 +1894,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --minute-temp` prints the latest 1-minute mean air temperature at automatic stations, for example `Chek Lap Kok  27.9°C`. `--temps` still prints temperatures from the current weather report. `--minute-temp --json` prints those stations as one JSON object. `--lang` selects the English, Traditional Chinese, or Simplified Chinese station names. Stations marked `N/A` are omitted. If none remain, it says `No 1-minute temperatures are available.`
 
 `hk-weather --since-midnight` prints each automatic station's maximum and minimum air temperature since midnight, for example `Chek Lap Kok  high 28.2°C  low 27.8°C`. `--minute-temp` still prints the latest 1-minute temperature. `--max-temp` and `--min-temp` still print the Observatory daily climate series. `--since-midnight --json` prints those stations as one JSON object. `--lang` selects the station names. A station is omitted when both readings are missing. If none remain, it says `No temperatures since midnight are available.`
+
+`hk-weather --midnight-span` prints the station with the widest of those ranges, for example `Widest since midnight: 2026-10-04 01:50  Chek Lap Kok  0.4°C, from 27.8°C to 28.2°C`. `--since-midnight` still lists every station. When several stations share that span, each one is named with its own low and high. `--midnight-span --json` prints the winning stations as one JSON object. `--lang` selects the station names. A station needs both a high and a low. If none remain, it says `No temperature range since midnight is available.`
 
 `hk-weather --pressure` prints the latest 1-minute mean sea level pressure at automatic stations, for example `Chek Lap Kok  1011.9 hPa`. `--pressure --json` prints those stations as one JSON object. `--lang` selects the English, Traditional Chinese, or Simplified Chinese station names. Stations marked `N/A` are omitted. If none remain, it says `No sea level pressure is available.`
 
