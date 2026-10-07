@@ -16888,6 +16888,44 @@ def format_heat_index_miss(*, as_json: bool = False) -> str:
     return _unavailable("No heat index is available.", as_json=as_json)
 
 
+def format_heat_gap(
+    report: HeatIndexReport | None,
+    place: str,
+    air_c: float,
+    *,
+    as_json: bool,
+) -> str:
+    """Compare one station's heat index with the current air temperature."""
+    if report is None or not report.stations:
+        return _unavailable("No heat index is available.", as_json=as_json)
+    match = next((reading for reading in report.stations if reading.place == place), None)
+    if match is None:
+        return _unavailable(f"No heat index is available for {place}.", as_json=as_json)
+    gap = round(match.heat_index - air_c, 1)
+    index = _number(match.heat_index)
+    air = _number(air_c)
+    if gap > 0:
+        phrase = (
+            f"Heat index at {place} is {index}, {_number(gap)} above the {air}°C air."
+        )
+    elif gap < 0:
+        phrase = (
+            f"Heat index at {place} is {index}, {_number(abs(gap))} below the {air}°C air."
+        )
+    else:
+        phrase = f"Heat index at {place} matches the {air}°C air."
+    if as_json:
+        payload = {
+            "place": place,
+            "heat_index": match.heat_index,
+            "temperature_c": air_c,
+            "gap": gap,
+            "phrase": phrase,
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
+
+
 _DAILY_HEAT_STATIONS = {
     "en": "King's Park",
     "tc": "京士柏",

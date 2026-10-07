@@ -965,6 +965,8 @@ hk-weather --temp-shift
 hk-weather --temp-shift --json
 hk-weather --heat-index
 hk-weather --heat-index --json
+hk-weather --heat-gap
+hk-weather --heat-gap --json
 hk-weather --daily-heat
 hk-weather --daily-heat --json
 hk-weather --mean-heat
@@ -1962,6 +1964,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --temp-shift` counts those changes, for example `At 2026-10-07 14:10, 11 stations are cooler than 24 hours ago, and 26 are warmer.` `--temp-diff` still lists every station. A change of zero is unchanged and stays out of that sentence. `--temp-shift --json` prints the cooler, warmer, and unchanged counts as one JSON object. `--lang` selects the bulletin language. If no numeric changes remain, it says `No 24-hour temperature changes are available.`
 
 `hk-weather --heat-index` prints the latest 10-minute mean Hong Kong Heat Index at automatic stations, for example `Happy Valley  25.8`. Earlier minutes in the file are omitted. `--heat-index --json` prints that minute as one JSON object. `--lang` selects the station names. Stations marked `N/A` are omitted. If none remain, it says `No heat index is available.`
+
+`hk-weather --heat-gap` compares that index at the current temperature's station with the air, for example `Heat index at Hong Kong Observatory is 24.4, 3.6 below the 28°C air.` A higher index says above, and the same number says it matches. `--heat-index` still lists every station, and `--feels-like` still estimates a temperature from humidity. `--heat-gap --json` prints the place, the index, the air temperature, the gap, and that phrase. `--lang` applies. If no index is present, it says `No heat index is available.` If that station is missing from the index, it names the station.
 
 `hk-weather --daily-heat` prints the latest daily maximum Hong Kong Heat Index at King's Park, for example `2026-08-31  29.2`. `--heat-index` still prints the latest 10-minute readings. `--daily-heat --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No daily maximum heat index is available.`
 

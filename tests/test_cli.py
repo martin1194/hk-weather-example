@@ -11,6 +11,8 @@ import pytest
 from hk_weather.cli import main
 from hk_weather.hko import (
     CurrentWeather,
+    HeatIndexReading,
+    HeatIndexReport,
     FifteenUv,
     ForecastIconDay,
     ForecastIcons,
@@ -27177,6 +27179,117 @@ def test_cli_heat_index_when_missing(monkeypatch, capsys):
         lambda request, timeout: _text_response(""),
     )
     assert main(["--heat-index", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {"message": "No heat index is available."}
+
+
+def test_cli_heat_gap_compares_station_index_with_air(monkeypatch, capsys):
+    seen = {}
+    report = HeatIndexReport(
+        "2026-10-07 14:50",
+        (
+            HeatIndexReading("Wong Chuk Hang", 26.1),
+            HeatIndexReading("Hong Kong Observatory", 24.4),
+            HeatIndexReading("Beas River", 30),
+        ),
+    )
+
+    def fake_heat(timeout, lang="en"):
+        seen["lang"] = lang
+        return report
+
+    def fake_current(timeout, lang="en"):
+        seen["current_lang"] = lang
+        return CurrentWeather(
+            update_time="2026-10-07T14:00:00+08:00",
+            conditions="Sunny",
+            place="Hong Kong Observatory",
+            temperature_c=27,
+            humidity_percent=57,
+            rainfall_mm=0,
+            rainfall_place="Central & Western District",
+            lightning_places=(),
+            warnings=(),
+        )
+
+    monkeypatch.setattr("hk_weather.cli.fetch_heat_index", fake_heat)
+    monkeypatch.setattr("hk_weather.cli.fetch_current", fake_current)
+    assert main(["--heat-gap", "--lang", "tc"]) == 0
+    assert seen["lang"] == "tc"
+    assert seen["current_lang"] == "tc"
+    assert capsys.readouterr().out == (
+        "Heat index at Hong Kong Observatory is 24.4, 2.6 below the 27°C air.\n"
+    )
+
+    assert main(["--heat-gap", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "place": "Hong Kong Observatory",
+        "heat_index": 24.4,
+        "temperature_c": 27,
+        "gap": -2.6,
+        "phrase": "Heat index at Hong Kong Observatory is 24.4, 2.6 below the 27°C air.",
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_heat_index",
+        lambda timeout, lang="en": HeatIndexReport(
+            "",
+            (HeatIndexReading("Hong Kong Observatory", 29),),
+        ),
+    )
+    assert main(["--heat-gap"]) == 0
+    assert capsys.readouterr().out == (
+        "Heat index at Hong Kong Observatory is 29, 2 above the 27°C air.\n"
+    )
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_heat_index",
+        lambda timeout, lang="en": HeatIndexReport(
+            "",
+            (HeatIndexReading("Hong Kong Observatory", 27),),
+        ),
+    )
+    assert main(["--heat-gap"]) == 0
+    assert capsys.readouterr().out == (
+        "Heat index at Hong Kong Observatory matches the 27°C air.\n"
+    )
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_current",
+        lambda timeout, lang="en": CurrentWeather(
+            update_time="",
+            conditions="Sunny",
+            place="King's Park",
+            temperature_c=27,
+            humidity_percent=57,
+            rainfall_mm=None,
+            rainfall_place=None,
+            lightning_places=(),
+            warnings=(),
+        ),
+    )
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_heat_index",
+        lambda timeout, lang="en": HeatIndexReport("", (HeatIndexReading("Happy Valley", 25.8),)),
+    )
+    assert main(["--heat-gap"]) == 0
+    assert capsys.readouterr().out == "No heat index is available for King's Park.\n"
+
+    assert main(["--heat-gap", "--heat-index"]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "pass one report flag at a time (--heat-index --heat-gap)" in captured.err
+
+    def fail_current(timeout, lang="en"):
+        raise AssertionError("current weather should not be fetched")
+
+    monkeypatch.setattr("hk_weather.cli.fetch_current", fail_current)
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_heat_index",
+        lambda timeout, lang="en": HeatIndexReport("", ()),
+    )
+    assert main(["--heat-gap"]) == 0
+    assert capsys.readouterr().out == "No heat index is available.\n"
+    assert main(["--heat-gap", "--json"]) == 0
     assert json.loads(capsys.readouterr().out) == {"message": "No heat index is available."}
 
 
