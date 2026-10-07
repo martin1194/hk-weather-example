@@ -10348,6 +10348,34 @@ def format_today_miss(*, as_json: bool = False) -> str:
     return _unavailable("Today's forecast is not available.", as_json=as_json)
 
 
+def format_high_gap(temperature_c: float, high_c: float | None, *, as_json: bool) -> str:
+    """Say how far the current temperature is from today's forecast high."""
+    if high_c is None:
+        return _unavailable("No forecast high is available.", as_json=as_json)
+    gap = round(high_c - temperature_c, 1)
+    high_text = _number(high_c)
+    if gap == 0:
+        phrase = f"At today's high of {high_text}°C"
+    elif gap > 0:
+        phrase = f"{_number(gap)}°C below today's high of {high_text}°C"
+    else:
+        phrase = f"{_number(abs(gap))}°C above today's high of {high_text}°C"
+    if as_json:
+        return (
+            json.dumps(
+                {
+                    "temperature_c": temperature_c,
+                    "high_c": high_c,
+                    "gap_c": gap,
+                    "phrase": phrase,
+                },
+                indent=2,
+            )
+            + "\n"
+        )
+    return phrase + "\n"
+
+
 def format_day_miss(day: int, *, as_json: bool = False) -> str:
     """Say that forecast day N is not in the 9-day list."""
     return _unavailable(f"Forecast day {day} is not available.", as_json=as_json)

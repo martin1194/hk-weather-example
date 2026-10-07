@@ -9,7 +9,7 @@ from urllib.error import URLError
 import pytest
 
 from hk_weather.cli import main
-from hk_weather.hko import CurrentWeather, Sunrise, WeatherError
+from hk_weather.hko import CurrentWeather, Sunrise, TomorrowForecast, WeatherError
 
 SAMPLE_WEATHER = CurrentWeather(
     update_time="2026-10-02T23:02:00+08:00",
@@ -2572,6 +2572,54 @@ def test_cli_nine_humidity_when_missing(monkeypatch, capsys):
     )
     assert main(["--nine-humidity", "--json"]) == 0
     assert json.loads(capsys.readouterr().out) == {"message": "No 9-day humidity is available."}
+
+
+def test_cli_high_gap_compares_current_with_todays_high(monkeypatch, capsys):
+    today = TomorrowForecast(
+        "updated",
+        "2026-10-03",
+        "Saturday",
+        "Sunny",
+        31,
+        27,
+        None,
+        None,
+        None,
+        None,
+    )
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_current",
+        lambda timeout, lang="en": SAMPLE_WEATHER,
+    )
+    monkeypatch.setattr("hk_weather.cli.fetch_today", lambda timeout, lang="en": today)
+    assert main(["--high-gap"]) == 0
+    assert capsys.readouterr().out == "3°C below today's high of 31°C\n"
+    assert main(["--high-gap", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "temperature_c": 28,
+        "high_c": 31,
+        "gap_c": 3.0,
+        "phrase": "3°C below today's high of 31°C",
+    }
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_today",
+        lambda timeout, lang="en": replace(today, temp_high_c=28),
+    )
+    assert main(["--high-gap"]) == 0
+    assert capsys.readouterr().out == "At today's high of 28°C\n"
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_today",
+        lambda timeout, lang="en": replace(today, temp_high_c=26),
+    )
+    assert main(["--high-gap"]) == 0
+    assert capsys.readouterr().out == "2°C above today's high of 26°C\n"
+    assert main(["--high-gap", "--today"]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "pass one report flag at a time (--today --high-gap)" in captured.err
+    monkeypatch.setattr("hk_weather.cli.fetch_today", lambda timeout, lang="en": None)
+    assert main(["--high-gap"]) == 0
+    assert capsys.readouterr().out == "No forecast high is available.\n"
 
 
 def test_cli_today_prints_the_hong_kong_day(monkeypatch, capsys):
