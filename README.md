@@ -87,6 +87,8 @@ hk-weather --today-range
 hk-weather --today-range --json
 hk-weather --today-psr
 hk-weather --today-psr --json
+hk-weather --today-wind
+hk-weather --today-wind --json
 hk-weather --yesterday
 hk-weather --yesterday --json
 hk-weather --mean-temp
@@ -1010,6 +1012,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --today-range` prints the span from today's forecast low to its forecast high. A low of 27°C and a high of 31°C is `Today's range is 4°C`. `--today-range --json` prints the low, the high, and that span. If today or either temperature is missing, it says `No forecast range is available.`
 
 `hk-weather --today-psr` prints today's chance of significant rain from that same forecast. A PSR of Low is `Rain chance: Low`. `--psr` still prints the chance for every day. `--today-psr --json` prints the date and that chance. If it is missing, it says `No rain chance is available.`
+
+`hk-weather --today-wind` prints today's forecast wind, for example `Wind: North force 4, occasionally force 5 offshore, becoming east later.` `--wind` still prints every day of the 9-day forecast. `--today-wind --json` prints the date and that wind. If it is missing, it says `No forecast wind is available for today.`
 
 `hk-weather --yesterday` prints yesterday's Observatory summary (`dataType=RYES`, station HKO): high, low, rainfall, and humidity. `--yesterday --json` prints that summary as one JSON object. `--lang` applies. If the summary is missing, it says `Yesterday's Observatory summary is not available.`
 
