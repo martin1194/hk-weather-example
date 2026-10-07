@@ -10711,6 +10711,53 @@ def format_in_humidity(
     return phrase + "\n"
 
 
+def _humidity_day_label(day: NineHumidityDay) -> str:
+    return " ".join(part for part in (day.date, day.week) if part) or "unknown"
+
+
+def format_humid_floor(report: NineHumidity, *, as_json: bool) -> str:
+    """Print the first day the forecast minimum humidity changes."""
+    ranked = [day for day in report.days if day.humidity_low_percent is not None]
+    chosen: tuple[NineHumidityDay, NineHumidityDay] | None = None
+    for earlier, later in zip(ranked, ranked[1:]):
+        if round(later.humidity_low_percent - earlier.humidity_low_percent, 1) != 0:
+            chosen = (earlier, later)
+            break
+    if chosen is None:
+        return _unavailable(
+            "No humidity floor change is in the forecast.", as_json=as_json
+        )
+    before, after = chosen
+    gap = round(after.humidity_low_percent - before.humidity_low_percent, 1)
+    start = _number(before.humidity_low_percent)
+    end = _number(after.humidity_low_percent)
+    after_label = _humidity_day_label(after)
+    before_label = _humidity_day_label(before)
+    if gap > 0:
+        phrase = (
+            f"The humidity floor rises on {after_label}, "
+            f"from {start}% on {before_label} to {end}%."
+        )
+    else:
+        phrase = (
+            f"The humidity floor falls on {after_label}, "
+            f"from {start}% on {before_label} to {end}%."
+        )
+    if as_json:
+        payload = {
+            "from_date": before.date,
+            "from_week": before.week,
+            "from_percent": before.humidity_low_percent,
+            "to_date": after.date,
+            "to_week": after.week,
+            "to_percent": after.humidity_low_percent,
+            "gap": gap,
+            "phrase": phrase,
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
+
+
 def format_psr(report: PsrForecast) -> str:
     """Render the chance of significant rain, one day per line."""
     lines = ["Hong Kong chance of significant rain"]
