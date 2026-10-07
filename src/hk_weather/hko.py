@@ -16628,6 +16628,51 @@ def format_temp_diff_miss(*, as_json: bool = False) -> str:
     return _unavailable("No 24-hour temperature changes are available.", as_json=as_json)
 
 
+def _cooler_clause(count: int) -> str:
+    if count == 0:
+        return "no station is cooler than 24 hours ago"
+    if count == 1:
+        return "1 station is cooler than 24 hours ago"
+    return f"{count} stations are cooler than 24 hours ago"
+
+
+def _warmer_clause(count: int) -> str:
+    if count == 0:
+        return "none are warmer"
+    if count == 1:
+        return "1 is warmer"
+    return f"{count} are warmer"
+
+
+def format_temp_shift(report: TempDiffReport, *, as_json: bool) -> str:
+    """Count stations that are cooler or warmer than 24 hours ago."""
+    if not report.stations:
+        return _unavailable(
+            "No 24-hour temperature changes are available.", as_json=as_json
+        )
+    cooler = sum(reading.change_c < 0 for reading in report.stations)
+    warmer = sum(reading.change_c > 0 for reading in report.stations)
+    unchanged = len(report.stations) - cooler - warmer
+    if cooler == 0 and warmer == 0:
+        body = "no station has changed temperature in 24 hours"
+    else:
+        body = f"{_cooler_clause(cooler)}, and {_warmer_clause(warmer)}"
+    if report.obs_time:
+        phrase = f"At {report.obs_time}, {body}."
+    else:
+        phrase = body[0].upper() + body[1:] + "."
+    if as_json:
+        payload = {
+            "time": report.obs_time,
+            "cooler": cooler,
+            "warmer": warmer,
+            "unchanged": unchanged,
+            "phrase": phrase,
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
+
+
 def parse_heat_index(text: str) -> HeatIndexReport:
     """Turn the heat-index CSV into the latest minute, one row per station."""
     stations: list[HeatIndexReading] = []

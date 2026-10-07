@@ -953,6 +953,8 @@ hk-weather --obs-grass
 hk-weather --obs-grass --json
 hk-weather --temp-diff
 hk-weather --temp-diff --json
+hk-weather --temp-shift
+hk-weather --temp-shift --json
 hk-weather --heat-index
 hk-weather --heat-index --json
 hk-weather --daily-heat
@@ -1940,6 +1942,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --obs-grass` prints the latest daily grass minimum at the Observatory, for example `2026-08-31  26.6°C`. `--daily-grass` still prints the King's Park reading. `--obs-grass --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Observatory grass temperature is available.`
 
 `hk-weather --temp-diff` prints the past 24-hour air-temperature change at automatic stations, for example `Chek Lap Kok  -0.6°C` and `HK Observatory  +0.4°C`. `--minute-temp` still prints the latest 1-minute temperature. `--temp-diff --json` prints those stations as one JSON object. `--lang` selects the station names. Stations marked `N/A` are omitted. If none remain, it says `No 24-hour temperature changes are available.`
+
+`hk-weather --temp-shift` counts those changes, for example `At 2026-10-07 14:10, 11 stations are cooler than 24 hours ago, and 26 are warmer.` `--temp-diff` still lists every station. A change of zero is unchanged and stays out of that sentence. `--temp-shift --json` prints the cooler, warmer, and unchanged counts as one JSON object. `--lang` selects the bulletin language. If no numeric changes remain, it says `No 24-hour temperature changes are available.`
 
 `hk-weather --heat-index` prints the latest 10-minute mean Hong Kong Heat Index at automatic stations, for example `Happy Valley  25.8`. Earlier minutes in the file are omitted. `--heat-index --json` prints that minute as one JSON object. `--lang` selects the station names. Stations marked `N/A` are omitted. If none remain, it says `No heat index is available.`
 

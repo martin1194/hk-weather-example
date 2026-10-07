@@ -26681,6 +26681,82 @@ def test_cli_temp_diff_when_missing(monkeypatch, capsys):
     }
 
 
+def test_cli_temp_shift_counts_cooler_and_warmer(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _text_response(
+            "Date time,Station,Past 24-hour Temperature Difference(degree Celsius)\n"
+            "202610040240,Chek Lap Kok,  -0.6  \n"
+            "202610040240,Clear Water Bay,N/A\n"
+            "202610040240,HK Observatory,+0.4\n"
+            "202610040240,Peng Chau,0\n"
+            "202610040240,Sha Tin,+1.2\n"
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--temp-shift", "--lang", "tc"]) == 0
+    assert seen["url"].endswith("latest_past24_temperature_diff_uc.csv")
+    assert capsys.readouterr().out == (
+        "At 2026-10-04 02:40, 1 station is cooler than 24 hours ago, and 2 are warmer.\n"
+    )
+
+    assert main(["--temp-shift", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "time": "2026-10-04 02:40",
+        "cooler": 1,
+        "warmer": 2,
+        "unchanged": 1,
+        "phrase": (
+            "At 2026-10-04 02:40, 1 station is cooler than 24 hours ago, and 2 are warmer."
+        ),
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Date time,Station,Difference\n"
+            "202610040240,Chek Lap Kok,+0.4\n"
+            "202610040240,Sha Tin,+1\n"
+        ),
+    )
+    assert main(["--temp-shift"]) == 0
+    assert capsys.readouterr().out == (
+        "At 2026-10-04 02:40, no station is cooler than 24 hours ago, and 2 are warmer.\n"
+    )
+
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Date time,Station,Difference\n"
+            "202610040240,Peng Chau,0\n"
+            "202610040240,Sha Tin,+0\n"
+        ),
+    )
+    assert main(["--temp-shift"]) == 0
+    assert capsys.readouterr().out == (
+        "At 2026-10-04 02:40, no station has changed temperature in 24 hours.\n"
+    )
+
+    assert main(["--temp-shift", "--temp-diff"]) == 2
+    assert "(--temp-diff --temp-shift)" in capsys.readouterr().err
+
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Date time,Station,Difference\n"
+            "202610040240,Clear Water Bay,N/A\n"
+        ),
+    )
+    assert main(["--temp-shift"]) == 0
+    assert capsys.readouterr().out == "No 24-hour temperature changes are available.\n"
+    assert main(["--temp-shift", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No 24-hour temperature changes are available."
+    }
+
+
 def test_cli_heat_index_prints_latest_minute(monkeypatch, capsys):
     seen = {}
 
