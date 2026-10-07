@@ -2476,6 +2476,90 @@ def test_cli_warm_soil_prints_the_warmest_depth(monkeypatch, capsys):
     assert capsys.readouterr().out == "No soil temperature is available.\n"
 
 
+def test_cli_soil_gap_compares_shallow_soil_with_air(monkeypatch, capsys):
+    seen = {}
+    report = SoilReport(
+        (
+            SoilReading("Hong Kong Observatory", 0.5, 29.5, "2026-10-07T07:00:00+08:00"),
+            SoilReading("Hong Kong Observatory", 1, 30.2, "2026-10-07T07:00:00+08:00"),
+        )
+    )
+
+    def fake_soil(timeout, lang="en"):
+        seen["lang"] = lang
+        return report
+
+    def fake_current(timeout, lang="en"):
+        seen["current_lang"] = lang
+        return CurrentWeather(
+            update_time="2026-10-07T14:00:00+08:00",
+            conditions="Sunny",
+            place="Hong Kong Observatory",
+            temperature_c=27,
+            humidity_percent=57,
+            rainfall_mm=0,
+            rainfall_place="Central & Western District",
+            lightning_places=(),
+            warnings=(),
+        )
+
+    monkeypatch.setattr("hk_weather.cli.fetch_soil_temp", fake_soil)
+    monkeypatch.setattr("hk_weather.cli.fetch_current", fake_current)
+    assert main(["--soil-gap", "--lang", "tc"]) == 0
+    assert seen["lang"] == "tc"
+    assert seen["current_lang"] == "tc"
+    assert capsys.readouterr().out == (
+        "Soil at Hong Kong Observatory 0.5 m is 2.5°C warmer than the 27°C air.\n"
+    )
+
+    assert main(["--soil-gap", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "depth_m": 0.5,
+        "soil_c": 29.5,
+        "air_c": 27,
+        "gap_c": 2.5,
+        "places": ["Hong Kong Observatory"],
+        "phrase": "Soil at Hong Kong Observatory 0.5 m is 2.5°C warmer than the 27°C air.",
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_soil_temp",
+        lambda timeout, lang="en": SoilReport(
+            (SoilReading("Hong Kong Observatory", 0.5, 24, "2026-10-07T07:00:00+08:00"),)
+        ),
+    )
+    assert main(["--soil-gap"]) == 0
+    assert capsys.readouterr().out == (
+        "Soil at Hong Kong Observatory 0.5 m is 3°C cooler than the 27°C air.\n"
+    )
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_soil_temp",
+        lambda timeout, lang="en": SoilReport(
+            (SoilReading("Hong Kong Observatory", 0.5, 27, "2026-10-07T07:00:00+08:00"),)
+        ),
+    )
+    assert main(["--soil-gap"]) == 0
+    assert capsys.readouterr().out == (
+        "Soil at Hong Kong Observatory 0.5 m matches the 27°C air.\n"
+    )
+
+    assert main(["--soil-gap", "--warm-soil"]) == 2
+    assert "(--warm-soil --soil-gap)" in capsys.readouterr().err
+
+    def fail_current(*args, **kwargs):
+        raise AssertionError("missing soil must not fetch the current report")
+
+    monkeypatch.setattr("hk_weather.cli.fetch_current", fail_current)
+    monkeypatch.setattr("hk_weather.cli.fetch_soil_temp", lambda timeout, lang="en": None)
+    assert main(["--soil-gap"]) == 0
+    assert capsys.readouterr().out == "No soil temperature is available.\n"
+    assert main(["--soil-gap", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No soil temperature is available."
+    }
+
+
 def test_cli_nine_situation_prints_paragraph(monkeypatch, capsys):
     seen = {}
     message = (
