@@ -462,6 +462,7 @@ from hk_weather.hko import (
     format_driest_miss,
     format_nowcast,
     format_nowcast_miss,
+    format_nowcast_peak,
     format_daily_rain,
     format_daily_rain_miss,
     format_lau_fau_rain_miss,
@@ -1687,6 +1688,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--wettest prints the wettest district; "
             "--driest prints the driest district; "
             "--nowcast prints the heaviest rainfall-nowcast cell in each half-hour; "
+            "--nowcast-peak prints the half-hour with the heaviest nowcast rainfall; "
             "--daily-rain prints the latest daily rainfall total; "
             "--lau-fau-rain prints the latest daily rainfall at Lau Fau Shan; "
             "--shek-kong-rain prints the latest daily rainfall at Shek Kong; "
@@ -3558,6 +3560,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--nowcast",
         action="store_true",
         help="Print the heaviest cell in each half-hour of the rainfall nowcast",
+    )
+    parser.add_argument(
+        "--nowcast-peak",
+        action="store_true",
+        help="Print the half-hour with the heaviest rainfall in the nowcast",
     )
     parser.add_argument(
         "--daily-rain",
@@ -7332,6 +7339,9 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_nowcast_miss(as_json=args.json)
             else:
                 text = format_json(nowcast) if args.json else format_nowcast(nowcast)
+        elif args.nowcast_peak:
+            nowcast = fetch_nowcast(timeout=args.timeout, lang=args.lang)
+            text = format_nowcast_peak(nowcast, as_json=args.json)
         elif args.daily_rain:
             daily_rain = fetch_daily_rain(timeout=args.timeout, lang=args.lang)
             if daily_rain is None:
