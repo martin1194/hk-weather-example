@@ -745,6 +745,7 @@ from hk_weather.hko import (
     format_nei_lak_shan_pressure_miss,
     format_minute_grass,
     format_minute_grass_miss,
+    format_grass_gap,
     format_daily_grass,
     format_daily_grass_miss,
     format_obs_grass_miss,
@@ -1440,6 +1441,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--airport-pressure prints the latest daily mean pressure at the airport; "
             "--nei-lak-shan-pressure prints the latest daily mean pressure at Nei Lak Shan; "
             "--minute-grass prints the latest 1-minute grass temperature; "
+            "--grass-gap prints where that temperature differs most from the air; "
             "--daily-grass prints the latest daily grass minimum; "
             "--obs-grass prints the latest daily grass minimum at the Observatory; "
             "--temp-diff prints the past 24-hour temperature change; "
@@ -4336,6 +4338,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--minute-grass",
         action="store_true",
         help="Print the latest 1-minute mean grass temperature at automatic stations",
+    )
+    parser.add_argument(
+        "--grass-gap",
+        action="store_true",
+        help="Print where the grass temperature differs most from the air",
     )
     parser.add_argument(
         "--daily-grass",
@@ -8881,6 +8888,12 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_minute_grass_miss(as_json=args.json)
             else:
                 text = format_json(minute_grass) if args.json else format_minute_grass(minute_grass)
+        elif args.grass_gap:
+            minute_grass = fetch_minute_grass(timeout=args.timeout, lang=args.lang)
+            minute_temp = None
+            if minute_grass.stations:
+                minute_temp = fetch_minute_temp(timeout=args.timeout, lang=args.lang)
+            text = format_grass_gap(minute_grass, minute_temp, as_json=args.json)
         elif args.daily_grass:
             daily_grass = fetch_daily_grass(timeout=args.timeout, lang=args.lang)
             if daily_grass is None:
