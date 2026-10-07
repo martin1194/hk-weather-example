@@ -1632,6 +1632,84 @@ def test_cli_warning_count_prints_how_many_are_in_force(monkeypatch, capsys):
     assert capsys.readouterr().out == "No weather warnings are in force.\n"
 
 
+def test_cli_warning_level_prints_each_warning_level(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response(
+            {
+                "WFIRE": {
+                    "name": "Fire Danger Warning",
+                    "code": "WFIRER",
+                    "type": "Red",
+                    "actionCode": "ISSUE",
+                },
+                "WHOT": {
+                    "name": "Very Hot Weather Warning",
+                    "code": "WHOT",
+                    "actionCode": "CANCEL",
+                },
+            }
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--warning-level", "--lang", "tc"]) == 0
+    assert "dataType=warnsum" in seen["url"]
+    assert "lang=tc" in seen["url"]
+    assert capsys.readouterr().out == "Fire Danger Warning is Red\n"
+
+    assert main(["--warning-level", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "warnings": [
+            {
+                "code": "WFIRER",
+                "description": "Fire Danger Warning",
+                "level": "Red",
+                "phrase": "Fire Danger Warning is Red",
+            }
+        ]
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {
+                "WRAIN": {
+                    "name": "Rainstorm Warning",
+                    "code": "WRAINA",
+                    "type": "Amber",
+                    "actionCode": "ISSUE",
+                },
+                "WTS": {
+                    "name": "Thunderstorm Warning",
+                    "code": "WTS",
+                    "actionCode": "ISSUE",
+                },
+            }
+        ),
+    )
+    assert main(["--warning-level"]) == 0
+    assert capsys.readouterr().out == (
+        "Rainstorm Warning is Amber\n"
+        "Thunderstorm Warning is in force\n"
+    )
+
+    assert main(["--warning-level", "--warning-ago"]) == 2
+    assert "(--warning-ago --warning-level)" in capsys.readouterr().err
+
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({}),
+    )
+    assert main(["--warning-level"]) == 0
+    assert capsys.readouterr().out == "No weather warnings are in force.\n"
+    assert main(["--warning-level", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No weather warnings are in force."
+    }
+
+
 def test_cli_warnings_lists_active_codes(monkeypatch, capsys):
     seen = {}
 
