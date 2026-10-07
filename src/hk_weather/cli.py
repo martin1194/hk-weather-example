@@ -644,6 +644,7 @@ from hk_weather.hko import (
     format_nine_weather,
     format_nine_weather_miss,
     format_cloud_day,
+    format_hot_day,
     format_nine_temp,
     format_nine_temp_miss,
     format_hottest_day,
@@ -1307,6 +1308,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--nine-updated prints when the 9-day forecast was updated; "
             "--nine-weather prints each day's weather from the 9-day forecast; "
             "--cloud-day prints the first 9-day forecast day with cloud or rain; "
+            "--hot-day prints the first 9-day forecast day that says hot; "
             "--nine-temp prints each day's high and low from the 9-day forecast; "
             "--hottest-day prints the hottest day in that forecast; "
             "--nine-humidity prints each day's humidity from the 9-day forecast; "
@@ -1965,6 +1967,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--cloud-day",
         action="store_true",
         help="Print the first 9-day forecast day that mentions cloud or rain",
+    )
+    parser.add_argument(
+        "--hot-day",
+        action="store_true",
+        help="Print the first 9-day forecast day whose weather says hot",
     )
     parser.add_argument(
         "--nine-temp",
@@ -4589,6 +4596,11 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_json(nine_weather) if args.json else format_nine_weather(nine_weather)
         elif args.cloud_day:
             text = format_cloud_day(
+                fetch_nine_weather(timeout=args.timeout, lang=args.lang),
+                as_json=args.json,
+            )
+        elif args.hot_day:
+            text = format_hot_day(
                 fetch_nine_weather(timeout=args.timeout, lang=args.lang),
                 as_json=args.json,
             )

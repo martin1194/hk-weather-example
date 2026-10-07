@@ -10345,6 +10345,43 @@ def format_cloud_day(report: NineWeather, *, as_json: bool) -> str:
     return phrase + "\n"
 
 
+def _mentions_hot(weather: str) -> bool:
+    """True when the forecast sentence says hot, including 炎熱 and 热."""
+    if "熱" in weather or "热" in weather:
+        return True
+    folded = weather.casefold()
+    start = 0
+    while True:
+        index = folded.find("hot", start)
+        if index < 0:
+            return False
+        before = folded[index - 1] if index else ""
+        if not before.isalpha():
+            return True
+        start = index + 1
+
+
+def format_hot_day(report: NineWeather, *, as_json: bool) -> str:
+    """Print the first forecast day whose weather sentence says hot."""
+    match = next((day for day in report.days if _mentions_hot(day.weather)), None)
+    if match is None:
+        return _unavailable("No hot day is in the forecast.", as_json=as_json)
+    heading = " ".join(part for part in (match.date, match.week) if part)
+    if heading:
+        phrase = f"First hot day: {heading}  {match.weather}"
+    else:
+        phrase = f"First hot day: {match.weather}"
+    if as_json:
+        payload = {
+            "date": match.date,
+            "week": match.week,
+            "weather": match.weather,
+            "phrase": phrase,
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
+
+
 def parse_nine_temp(payload: dict) -> NineTemp:
     """Turn `fnd` forecast high and low fields into one line per day."""
     raw_days = payload.get("weatherForecast")
