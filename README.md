@@ -628,6 +628,8 @@ hk-weather --tide
 hk-weather --tide --json
 hk-weather --tide-hour
 hk-weather --tide-hour --json
+hk-weather --tide-turn
+hk-weather --tide-turn --json
 hk-weather --tide-latest
 hk-weather --tide-latest --json
 hk-weather --tide-span
@@ -1600,6 +1602,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --tide` (or `-I`) prints today's astronomical high and low tides at Quarry Bay (`opendata.php`, `dataType=HLT`), for example `2026-10-03  01:05  2.44 m`. `--tide --json` prints that list as one JSON object. `--lang` applies. If none are present, it says so.
 
 `hk-weather --tide-hour` prints today's hourly astronomical tide heights at Quarry Bay (`dataType=HHOT`), for example `2026-10-03  01:00  2.44 m`. `--tide` still prints the high and low times. `--tide-hour --json` prints those hours as one JSON object. `--lang` applies. Hours without a numeric height are omitted. If none remain, it says `No hourly tide heights are available.`
+
+`hk-weather --tide-turn` says whether that tide is rising or falling across the current hour. At 12:34, with 0.92 m at 12:00 and 0.78 m at 13:00, it prints `Tide is falling at Quarry Bay: 2026-10-07 12:00 0.92 m to 13:00 0.78 m`. A higher later hour says `rising`. Equal heights say `steady`. `--tide-hour` still lists every hour. `--tide-turn --json` prints the two hours, the direction, and that phrase. If fewer than two hours can be read, it says `No tide turn is available.`
 
 `hk-weather --tide-latest` prints the latest observed tide height at each tide station, for example `Quarry Bay  2.34 m`. `--tide` still prints today's high and low times, and `--tide-hour` still prints today's hourly forecast heights. Earlier times in the file are omitted. `--tide-latest --json` prints that time as one JSON object. `--lang` selects the station names. Stations marked `----` are omitted. If none remain, it says `No latest tide heights are available.`
 

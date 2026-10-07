@@ -750,6 +750,7 @@ from hk_weather.hko import (
     format_tide_miss,
     format_tide_hour,
     format_tide_hour_miss,
+    format_tide_turn,
     format_tide_latest,
     format_tide_latest_miss,
     format_tide_span,
@@ -1727,6 +1728,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--tuen-mun-home-rain prints the latest daily rainfall at Tuen Mun Children and Juvenile Home; "
             "--tide prints today's high and low tides; "
             "--tide-hour prints today's hourly tide heights; "
+            "--tide-turn prints whether that tide is rising or falling; "
             "--tide-latest prints the latest observed tide height; "
             "--tide-span prints the gap between the lowest and highest of those tides; "
             "--next-tide prints how long until the next high or low tide; "
@@ -3326,6 +3328,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--tide-hour",
         action="store_true",
         help="Print today's hourly tide heights at Quarry Bay",
+    )
+    parser.add_argument(
+        "--tide-turn",
+        action="store_true",
+        help="Print whether the Quarry Bay tide is rising or falling this hour",
     )
     parser.add_argument(
         "--tide-latest",
@@ -7094,6 +7101,11 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_tide_hour_miss(as_json=args.json)
             else:
                 text = format_json(tide_hour) if args.json else format_tide_hour(tide_hour)
+        elif args.tide_turn:
+            text = format_tide_turn(
+                fetch_tide_hour(timeout=args.timeout, lang=args.lang),
+                as_json=args.json,
+            )
         elif args.tide_latest:
             tide_latest = fetch_tide_latest(timeout=args.timeout, lang=args.lang)
             if not tide_latest.stations:

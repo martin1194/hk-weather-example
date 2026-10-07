@@ -11205,6 +11205,78 @@ def format_tide_hour_miss(*, as_json: bool = False) -> str:
     return _unavailable("No hourly tide heights are available.", as_json=as_json)
 
 
+def _tide_minutes(hour: str) -> int | None:
+    """Minutes after midnight for an hourly tide label, including 24:00."""
+    text = hour.strip()
+    if len(text) != 5 or text[2] != ":":
+        return None
+    hours, minutes = text[:2], text[3:]
+    if not hours.isdigit() or not minutes.isdigit():
+        return None
+    return int(hours) * 60 + int(minutes)
+
+
+def _tide_turn_pair(
+    hours: tuple[HourlyTideReading, ...], now: datetime
+) -> tuple[HourlyTideReading, HourlyTideReading] | None:
+    """The hourly step that contains now, or the nearest end pair."""
+    usable = []
+    for reading in hours:
+        minutes = _tide_minutes(reading.hour)
+        if minutes is None:
+            continue
+        usable.append((minutes, reading))
+    if len(usable) < 2:
+        return None
+    usable.sort(key=lambda item: item[0])
+    moment = now if now.tzinfo is not None else now.replace(tzinfo=_HKT)
+    local = moment.astimezone(_HKT)
+    minute = local.hour * 60 + local.minute
+    for index in range(len(usable) - 1):
+        if usable[index][0] <= minute < usable[index + 1][0]:
+            return usable[index][1], usable[index + 1][1]
+    if minute < usable[0][0]:
+        return usable[0][1], usable[1][1]
+    return usable[-2][1], usable[-1][1]
+
+
+def format_tide_turn(report: HourlyTideReport, *, as_json: bool) -> str:
+    """Print whether the Quarry Bay tide is rising or falling this hour."""
+    pair = _tide_turn_pair(report.hours, _clock())
+    if pair is None:
+        return _unavailable("No tide turn is available.", as_json=as_json)
+    start, end = pair
+    gap = round(end.height_m - start.height_m, 2)
+    if gap > 0:
+        turn = "rising"
+    elif gap < 0:
+        turn = "falling"
+    else:
+        turn = "steady"
+    station = report.station or "the tide station"
+    span = (
+        f"{start.hour} {_number(start.height_m)} m to "
+        f"{end.hour} {_number(end.height_m)} m"
+    )
+    if report.date:
+        phrase = f"Tide is {turn} at {station}: {report.date} {span}"
+    else:
+        phrase = f"Tide is {turn} at {station}: {span}"
+    if as_json:
+        payload = {
+            "station": report.station,
+            "date": report.date,
+            "from": start.hour,
+            "to": end.hour,
+            "from_m": start.height_m,
+            "to_m": end.height_m,
+            "turn": turn,
+            "phrase": phrase,
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
+
+
 def _tide_stamp(date: str, clock: str) -> str:
     """Return `YYYY-MM-DD HH:MM` when both parts look like a tide timestamp."""
     day = date.replace("-", "")
