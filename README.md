@@ -1047,6 +1047,8 @@ hk-weather --airport-wet
 hk-weather --airport-wet --json
 hk-weather --park-wet
 hk-weather --park-wet --json
+hk-weather --wet-dew
+hk-weather --wet-dew --json
 hk-weather --sha-lo-wan-wet
 hk-weather --sha-lo-wan-wet --json
 hk-weather --nei-lak-shan-wet
@@ -2116,6 +2118,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --airport-wet` prints the latest daily mean wet-bulb temperature at Hong Kong International Airport, for example `2026-07-31  24.4°C`. `--wet-bulb` still prints the Observatory reading. `--airport-wet --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No airport wet bulb temperature is available.`
 
 `hk-weather --park-wet` prints the latest daily mean wet-bulb temperature at King's Park, for example `2026-08-31  25.6°C`. `--wet-bulb` still prints the Observatory reading, and `--airport-wet` still prints the airport. `--park-dew` still prints King's Park's dew point. `--park-wet --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No King's Park wet bulb temperature is available.`
+
+`hk-weather --wet-dew` compares that wet-bulb temperature with King's Park dew point on the same day. On 2026-08-31, a wet-bulb of 25.6°C and a dew point of 24.7°C is `On 2026-08-31, King's Park wet-bulb of 25.6°C is 0.9°C above the dew point of 24.7°C.` A cooler wet-bulb says below, and a match says it matches. `--dew-gap` still compares the current temperature with the estimated dew point. `--park-wet` and `--park-dew` still print each reading on its own. `--wet-dew --json` prints both readings, the station, the date, the gap, and that phrase. `--lang` applies. If the wet-bulb temperature is missing, it says `No King's Park wet bulb temperature is available.` If the dew point is missing, it says `No King's Park dew point is available.` If the dates differ, it says `No shared wet-bulb day is available.`
 
 `hk-weather --sha-lo-wan-wet` prints the latest daily mean wet-bulb temperature at Sha Lo Wan, for example `2026-08-31  25.9°C`. `--wet-bulb` still prints the Observatory reading, `--airport-wet` still prints the airport, and `--park-wet` still prints King's Park. `--sha-lo-wan-wet --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No Sha Lo Wan wet bulb temperature is available.`
 

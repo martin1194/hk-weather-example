@@ -13,6 +13,7 @@ from hk_weather.hko import (
     CloudAmount,
     CurrentWeather,
     DailyRain,
+    DewPoint,
     DailySun,
     Evaporation,
     GlobalSolar,
@@ -51,6 +52,7 @@ from hk_weather.hko import (
     TideReport,
     TomorrowForecast,
     VisibilityReading,
+    WetBulb,
     VisibilityReport,
     WeatherError,
     UvIndex,
@@ -30561,6 +30563,92 @@ def test_cli_park_wet_when_missing(monkeypatch, capsys):
     assert json.loads(capsys.readouterr().out) == {
         "message": "No King's Park wet bulb temperature is available."
     }
+
+
+def test_cli_wet_dew_compares_kings_park_wet_bulb_with_dew_point(monkeypatch, capsys):
+    seen = {}
+
+    def fake_wet(timeout, lang="en"):
+        seen["wet_lang"] = lang
+        return WetBulb("京士柏" if lang == "tc" else "King's Park", "2026-08-31", 25.6)
+
+    def fake_dew(timeout, lang="en"):
+        seen["dew_lang"] = lang
+        return DewPoint("京士柏" if lang == "tc" else "King's Park", "2026-08-31", 24.7)
+
+    monkeypatch.setattr("hk_weather.cli.fetch_park_wet", fake_wet)
+    monkeypatch.setattr("hk_weather.cli.fetch_park_dew", fake_dew)
+    phrase = "On 2026-08-31, 京士柏 wet-bulb of 25.6°C is 0.9°C above the dew point of 24.7°C."
+    assert main(["--wet-dew", "--lang", "tc"]) == 0
+    assert seen["wet_lang"] == "tc"
+    assert seen["dew_lang"] == "tc"
+    assert capsys.readouterr().out == phrase + "\n"
+    assert main(["--wet-dew", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "date": "2026-08-31",
+        "station": "King's Park",
+        "wet_bulb_c": 25.6,
+        "dew_point_c": 24.7,
+        "gap_c": 0.9,
+        "phrase": (
+            "On 2026-08-31, King's Park wet-bulb of 25.6°C is 0.9°C "
+            "above the dew point of 24.7°C."
+        ),
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_park_wet",
+        lambda timeout, lang="en": WetBulb("King's Park", "2026-08-31", 24),
+    )
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_park_dew",
+        lambda timeout, lang="en": DewPoint("King's Park", "2026-08-31", 25.5),
+    )
+    assert main(["--wet-dew"]) == 0
+    assert capsys.readouterr().out == (
+        "On 2026-08-31, King's Park wet-bulb of 24°C is 1.5°C below the dew point of 25.5°C.\n"
+    )
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_park_wet",
+        lambda timeout, lang="en": WetBulb("King's Park", "2026-08-31", 25),
+    )
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_park_dew",
+        lambda timeout, lang="en": DewPoint("King's Park", "2026-08-31", 25),
+    )
+    assert main(["--wet-dew"]) == 0
+    assert capsys.readouterr().out == (
+        "On 2026-08-31, King's Park wet-bulb matches the dew point of 25°C.\n"
+    )
+
+    def fail_dew(timeout, lang="en"):
+        raise AssertionError("must not fetch the dew point")
+
+    monkeypatch.setattr("hk_weather.cli.fetch_park_dew", fail_dew)
+    monkeypatch.setattr("hk_weather.cli.fetch_park_wet", lambda timeout, lang="en": None)
+    assert main(["--wet-dew"]) == 0
+    assert capsys.readouterr().out == "No King's Park wet bulb temperature is available.\n"
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_park_wet",
+        lambda timeout, lang="en": WetBulb("King's Park", "2026-08-31", 25.6),
+    )
+    monkeypatch.setattr("hk_weather.cli.fetch_park_dew", lambda timeout, lang="en": None)
+    assert main(["--wet-dew", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No King's Park dew point is available."
+    }
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_park_dew",
+        lambda timeout, lang="en": DewPoint("King's Park", "2026-08-30", 24.7),
+    )
+    assert main(["--wet-dew", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No shared wet-bulb day is available."
+    }
+
+    assert main(["--park-wet", "--wet-dew"]) == 2
+    assert "(--park-wet --wet-dew)" in capsys.readouterr().err
 
 
 def test_cli_sha_lo_wan_wet_prints_latest_day(monkeypatch, capsys):
