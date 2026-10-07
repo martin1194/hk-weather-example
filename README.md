@@ -451,6 +451,8 @@ hk-weather --cloud
 hk-weather --cloud --json
 hk-weather --evaporation
 hk-weather --evaporation --json
+hk-weather --evap-gap
+hk-weather --evap-gap --json
 hk-weather --evapotranspiration
 hk-weather --evapotranspiration --json
 hk-weather --grass
@@ -1510,6 +1512,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --cloud` prints the latest daily mean cloud amount at the Observatory for the current Hong Kong year, for example `2026-08-31  88%`. `--dew-point` still prints the dew point. `--cloud --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No cloud amount is available.`
 
 `hk-weather --evaporation` prints the latest daily total evaporation at King's Park for the current Hong Kong year, for example `2026-08-31  2.5 mm`. `--cloud` still prints the cloud amount. `--evaporation --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No evaporation is available.`
+
+`hk-weather --evap-gap` compares that evaporation with King's Park rainfall on the same day. On 2026-08-31, 33.1 mm of rain against 2.5 mm of evaporation is `On 2026-08-31, King's Park rainfall of 33.1 mm is 30.6 mm above evaporation of 2.5 mm.` A drier day says evaporation is above rainfall. A match says rainfall matches evaporation. `--evaporation` and `--park-rain` still print each total on its own. `--evap-gap --json` prints both totals, the station, the date, the signed gap, and that phrase. `--lang` applies. If evaporation is missing, it says `No evaporation is available.` If rainfall is missing, it says `No King's Park rainfall is available.` If the dates differ, it says `No shared evaporation day is available.`
 
 `hk-weather --evapotranspiration` prints the latest monthly potential evapotranspiration at King's Park, for example `2026-08  43.6 mm`. `--evaporation` still prints the daily total. `--evapotranspiration --json` prints that month as one JSON object. `--lang` selects the station name. Months marked `***` are omitted. If none remain, it says `No potential evapotranspiration is available.`
 

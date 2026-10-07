@@ -11,6 +11,8 @@ import pytest
 from hk_weather.cli import main
 from hk_weather.hko import (
     CurrentWeather,
+    DailyRain,
+    Evaporation,
     HeatIndexReading,
     HeatIndexReport,
     FifteenUv,
@@ -14715,6 +14717,94 @@ def test_cli_evaporation_when_missing(monkeypatch, capsys):
     )
     assert main(["--evaporation", "--json"]) == 0
     assert json.loads(capsys.readouterr().out) == {"message": "No evaporation is available."}
+
+
+def test_cli_evap_gap_compares_kings_park_rainfall_with_evaporation(monkeypatch, capsys):
+    seen = {}
+
+    def fake_evaporation(timeout, lang="en"):
+        seen["evap_lang"] = lang
+        return Evaporation("京士柏" if lang == "tc" else "King's Park", "2026-08-31", 2.5)
+
+    def fake_rain(timeout, lang="en"):
+        seen["rain_lang"] = lang
+        return DailyRain("京士柏" if lang == "tc" else "King's Park", "2026-08-31", 33.1)
+
+    monkeypatch.setattr("hk_weather.cli.fetch_evaporation", fake_evaporation)
+    monkeypatch.setattr("hk_weather.cli.fetch_park_rain", fake_rain)
+    phrase = (
+        "On 2026-08-31, 京士柏 rainfall of 33.1 mm is 30.6 mm above evaporation of 2.5 mm."
+    )
+    assert main(["--evap-gap", "--lang", "tc"]) == 0
+    assert seen["evap_lang"] == "tc"
+    assert seen["rain_lang"] == "tc"
+    assert capsys.readouterr().out == phrase + "\n"
+    assert main(["--evap-gap", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "date": "2026-08-31",
+        "station": "King's Park",
+        "rainfall_mm": 33.1,
+        "evaporation_mm": 2.5,
+        "gap_mm": 30.6,
+        "phrase": (
+            "On 2026-08-31, King's Park rainfall of 33.1 mm is 30.6 mm "
+            "above evaporation of 2.5 mm."
+        ),
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_evaporation",
+        lambda timeout, lang="en": Evaporation("King's Park", "2026-08-31", 4),
+    )
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_park_rain",
+        lambda timeout, lang="en": DailyRain("King's Park", "2026-08-31", 2.5),
+    )
+    assert main(["--evap-gap"]) == 0
+    assert capsys.readouterr().out == (
+        "On 2026-08-31, King's Park evaporation of 4 mm is 1.5 mm above rainfall of 2.5 mm.\n"
+    )
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_evaporation",
+        lambda timeout, lang="en": Evaporation("King's Park", "2026-08-31", 0),
+    )
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_park_rain",
+        lambda timeout, lang="en": DailyRain("King's Park", "2026-08-31", 0),
+    )
+    assert main(["--evap-gap"]) == 0
+    assert capsys.readouterr().out == (
+        "On 2026-08-31, King's Park rainfall matches evaporation of 0 mm.\n"
+    )
+
+    def fail_rain(timeout, lang="en"):
+        raise AssertionError("must not fetch King's Park rainfall")
+
+    monkeypatch.setattr("hk_weather.cli.fetch_park_rain", fail_rain)
+    monkeypatch.setattr("hk_weather.cli.fetch_evaporation", lambda timeout, lang="en": None)
+    assert main(["--evap-gap"]) == 0
+    assert capsys.readouterr().out == "No evaporation is available.\n"
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_evaporation",
+        lambda timeout, lang="en": Evaporation("King's Park", "2026-08-31", 2.5),
+    )
+    monkeypatch.setattr("hk_weather.cli.fetch_park_rain", lambda timeout, lang="en": None)
+    assert main(["--evap-gap", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No King's Park rainfall is available."
+    }
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_park_rain",
+        lambda timeout, lang="en": DailyRain("King's Park", "2026-08-30", 33.1),
+    )
+    assert main(["--evap-gap", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No shared evaporation day is available."
+    }
+
+    assert main(["--evaporation", "--evap-gap"]) == 2
+    assert "(--evaporation --evap-gap)" in capsys.readouterr().err
 
 
 def test_cli_evapotranspiration_prints_latest_month(monkeypatch, capsys):
