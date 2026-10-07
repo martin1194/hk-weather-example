@@ -17,6 +17,8 @@ from hk_weather.hko import (
     GustReading,
     AqhiReading,
     AqhiReport,
+    Earthquake,
+    QuakeReport,
     GustReport,
     Moon,
     NineTemp,
@@ -19694,6 +19696,78 @@ def test_cli_quake_when_none_reported(monkeypatch, capsys):
     )
     assert main(["--quake"]) == 0
     assert capsys.readouterr().out == "No recent earthquake is reported.\n"
+
+
+def test_cli_quake_ago_prints_how_long_since_the_earthquake(monkeypatch, capsys):
+    seen = {}
+    report = QuakeReport(
+        (
+            Earthquake(
+                "2026-10-03T00:34:00+08:00",
+                "off east coast of Kamchatka",
+                6,
+                51.79,
+                159.6,
+                "2026-10-03T00:50:00+08:00",
+            ),
+        )
+    )
+
+    def fake_fetch(timeout, lang="en"):
+        seen["lang"] = lang
+        return report
+
+    monkeypatch.setattr("hk_weather.cli.fetch_quakes", fake_fetch)
+    monkeypatch.setattr(
+        "hk_weather.hko._clock",
+        lambda: datetime.fromisoformat("2026-10-07T04:34:00+00:00"),
+    )
+    assert main(["--quake-ago", "--lang", "tc"]) == 0
+    assert seen["lang"] == "tc"
+    assert capsys.readouterr().out == (
+        "Latest earthquake was 4 days 12 hours ago: M6 off east coast of Kamchatka\n"
+    )
+
+    assert main(["--quake-ago", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "time": "2026-10-03T00:34:00+08:00",
+        "magnitude": 6,
+        "region": "off east coast of Kamchatka",
+        "ago": "4 days 12 hours",
+        "phrase": (
+            "Latest earthquake was 4 days 12 hours ago: M6 off east coast of Kamchatka"
+        ),
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.hko._clock",
+        lambda: datetime.fromisoformat("2026-10-03T00:34:30+08:00"),
+    )
+    assert main(["--quake-ago"]) == 0
+    assert capsys.readouterr().out == (
+        "Latest earthquake just now: M6 off east coast of Kamchatka\n"
+    )
+
+    assert main(["--quake-ago", "--quake"]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "pass one report flag at a time (--quake --quake-ago)" in captured.err
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_quakes",
+        lambda timeout, lang="en": QuakeReport(()),
+    )
+    assert main(["--quake-ago"]) == 0
+    assert capsys.readouterr().out == "No recent earthquake is reported.\n"
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_quakes",
+        lambda timeout, lang="en": QuakeReport(
+            (Earthquake("", "near Cheung Chau", 2.1, None, None, ""),)
+        ),
+    )
+    assert main(["--quake-ago"]) == 0
+    assert capsys.readouterr().out == "No earthquake time is available.\n"
 
 
 def test_cli_felt_prints_tremor(monkeypatch, capsys):

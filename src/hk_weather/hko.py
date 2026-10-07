@@ -10801,6 +10801,61 @@ def format_quakes(report: QuakeReport) -> str:
     return "\n".join(lines) + "\n"
 
 
+def _quake_ago(when: str, now: datetime) -> str | None:
+    """How long ago an earthquake time was, or None if it cannot be used."""
+    text = when.strip()
+    if not text:
+        return None
+    try:
+        moment = datetime.fromisoformat(text)
+    except ValueError:
+        return None
+    if moment.tzinfo is None:
+        moment = moment.replace(tzinfo=_HKT)
+    seconds = int((now - moment).total_seconds())
+    if seconds < 0:
+        return None
+    if seconds < 60:
+        return "just now"
+    minutes = seconds // 60
+    if minutes < 24 * 60:
+        return _span_phrase(minutes)
+    days, rest = divmod(minutes, 24 * 60)
+    day_text = "1 day" if days == 1 else f"{days} days"
+    hours = rest // 60
+    if hours == 0:
+        return day_text
+    hour_text = "1 hour" if hours == 1 else f"{hours} hours"
+    return f"{day_text} {hour_text}"
+
+
+def format_quake_ago(report: QuakeReport, *, as_json: bool) -> str:
+    """Print how long ago the latest earthquake happened."""
+    if not report.quakes:
+        return _unavailable("No recent earthquake is reported.", as_json=as_json)
+    now = _clock()
+    quake = next((item for item in report.quakes if _quake_ago(item.time, now)), None)
+    ago = _quake_ago(quake.time, now) if quake is not None else None
+    if quake is None or ago is None:
+        return _unavailable("No earthquake time is available.", as_json=as_json)
+    magnitude = f"M{_number(quake.magnitude)}" if quake.magnitude is not None else "M?"
+    region = quake.region or "unknown region"
+    if ago == "just now":
+        phrase = f"Latest earthquake just now: {magnitude} {region}"
+    else:
+        phrase = f"Latest earthquake was {ago} ago: {magnitude} {region}"
+    if as_json:
+        payload = {
+            "time": quake.time,
+            "magnitude": quake.magnitude,
+            "region": quake.region,
+            "ago": ago,
+            "phrase": phrase,
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
+
+
 def parse_felt(payload: dict) -> FeltTremor | None:
     """Turn a locally felt tremor report into one event, or none."""
     region = _text(payload.get("region"))

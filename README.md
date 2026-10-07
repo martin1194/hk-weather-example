@@ -612,6 +612,8 @@ hk-weather --today-icon
 hk-weather --today-icon --json
 hk-weather --quake
 hk-weather --quake --json
+hk-weather --quake-ago
+hk-weather --quake-ago --json
 hk-weather --felt
 hk-weather --felt --json
 hk-weather --visibility
@@ -1580,6 +1582,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --today-icon` prints only today's forecast icon, for example `Icon: 81 Dry`. `--forecast-icon` still prints every day, and `--icon` still prints the current weather icon. `--today-icon --json` prints the date, icon number, and label. If today is missing from the forecast, it says `No forecast icon is available for today.`
 
 `hk-weather --quake` lists the latest quick earthquake message from the Observatory earthquake feed (`earthquake.php`, `dataType=qem`), for example `2026-10-03T00:34:00+08:00  M6  off east coast of Kamchatka (51.79, 159.6)`. `--quake --json` prints that list as one JSON object. `--lang` applies. If none is reported, it says so.
+
+`hk-weather --quake-ago` prints how long ago that earthquake happened. An event at 00:34 on 3 October, read at 12:34 on 7 October, is `Latest earthquake was 4 days 12 hours ago: M6 off east coast of Kamchatka`. Within the first minute it says `Latest earthquake just now`. Shorter gaps use hours and minutes. `--quake` still prints the coordinates. `--quake-ago --json` prints the time, magnitude, region, and that phrase. If none is reported, it says `No recent earthquake is reported.` If the time cannot be read, it says `No earthquake time is available.`
 
 `hk-weather --felt` (or `-q`) prints the latest locally felt earth tremor (`dataType=feltearthquake`), including time, magnitude, place, and intensity when the Observatory sends them. `--felt --json` prints that report as one JSON object. `--lang` applies. If none is reported, it says `No locally felt earth tremor is reported.`
 

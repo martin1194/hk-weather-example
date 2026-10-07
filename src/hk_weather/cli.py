@@ -661,6 +661,7 @@ from hk_weather.hko import (
     format_places,
     format_psr,
     format_quakes,
+    format_quake_ago,
     format_rain,
     format_rain_period,
     format_rain_period_miss,
@@ -1470,6 +1471,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--forecast-icon prints each day's weather icon; "
             "--today-icon prints today's forecast icon; "
             "--quake lists the latest earthquake message; "
+            "--quake-ago prints how long ago that earthquake happened; "
             "--felt prints the locally felt earth tremor; --today prints today; "
             "--high-gap prints how far the current temperature is from today's forecast high; "
             "--today-range prints the span from today's forecast low to its high; "
@@ -3278,6 +3280,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--quake",
         action="store_true",
         help="List the latest Observatory quick earthquake message",
+    )
+    parser.add_argument(
+        "--quake-ago",
+        action="store_true",
+        help="Print how long ago the latest earthquake happened",
     )
     parser.add_argument(
         "-q",
@@ -7037,6 +7044,11 @@ def main(argv: list[str] | None = None) -> int:
         elif args.quake:
             quakes = fetch_quakes(timeout=args.timeout, lang=args.lang)
             text = format_json(quakes) if args.json else format_quakes(quakes)
+        elif args.quake_ago:
+            text = format_quake_ago(
+                fetch_quakes(timeout=args.timeout, lang=args.lang),
+                as_json=args.json,
+            )
         elif args.felt:
             felt = fetch_felt(timeout=args.timeout, lang=args.lang)
             if felt is None:
