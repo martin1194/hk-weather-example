@@ -10,6 +10,7 @@ import pytest
 
 from hk_weather.cli import main
 from hk_weather.hko import (
+    CloudAmount,
     CurrentWeather,
     DailyRain,
     DailySun,
@@ -14660,6 +14661,98 @@ def test_cli_cloud_when_missing(monkeypatch, capsys):
     )
     assert main(["--cloud", "--json"]) == 0
     assert json.loads(capsys.readouterr().out) == {"message": "No cloud amount is available."}
+
+
+def test_cli_cloud_rain_compares_cloud_amount_with_rainfall(monkeypatch, capsys):
+    seen = {}
+
+    def fake_cloud(timeout, lang="en"):
+        seen["cloud_lang"] = lang
+        station = "香港天文台" if lang == "tc" else "Hong Kong Observatory"
+        return CloudAmount(station, "2026-08-31", 88)
+
+    def fake_rain(timeout, lang="en"):
+        seen["rain_lang"] = lang
+        station = "香港天文台" if lang == "tc" else "Hong Kong Observatory"
+        return DailyRain(station, "2026-08-31", 25)
+
+    monkeypatch.setattr("hk_weather.cli.fetch_cloud", fake_cloud)
+    monkeypatch.setattr("hk_weather.cli.fetch_daily_rain", fake_rain)
+    phrase = "On 2026-08-31, 香港天文台 recorded 88% cloud and 25 mm of rain."
+    assert main(["--cloud-rain", "--lang", "tc"]) == 0
+    assert seen["cloud_lang"] == "tc"
+    assert seen["rain_lang"] == "tc"
+    assert capsys.readouterr().out == phrase + "\n"
+    assert main(["--cloud-rain", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "date": "2026-08-31",
+        "station": "Hong Kong Observatory",
+        "cloud_percent": 88,
+        "rainfall_mm": 25,
+        "phrase": "On 2026-08-31, Hong Kong Observatory recorded 88% cloud and 25 mm of rain.",
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_cloud",
+        lambda timeout, lang="en": CloudAmount("Hong Kong Observatory", "2026-08-31", 40),
+    )
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_daily_rain",
+        lambda timeout, lang="en": DailyRain("Hong Kong Observatory", "2026-08-31", 0),
+    )
+    assert main(["--cloud-rain"]) == 0
+    assert capsys.readouterr().out == (
+        "On 2026-08-31, Hong Kong Observatory recorded 40% cloud and no rain.\n"
+    )
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_cloud",
+        lambda timeout, lang="en": CloudAmount("Hong Kong Observatory", "2026-08-31", 0),
+    )
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_daily_rain",
+        lambda timeout, lang="en": DailyRain("Hong Kong Observatory", "2026-08-31", 3),
+    )
+    assert main(["--cloud-rain"]) == 0
+    assert capsys.readouterr().out == (
+        "On 2026-08-31, Hong Kong Observatory recorded no cloud and 3 mm of rain.\n"
+    )
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_daily_rain",
+        lambda timeout, lang="en": DailyRain("Hong Kong Observatory", "2026-08-31", 0),
+    )
+    assert main(["--cloud-rain"]) == 0
+    assert capsys.readouterr().out == (
+        "On 2026-08-31, Hong Kong Observatory recorded no cloud and no rain.\n"
+    )
+
+    def fail_rain(timeout, lang="en"):
+        raise AssertionError("must not fetch daily rainfall")
+
+    monkeypatch.setattr("hk_weather.cli.fetch_daily_rain", fail_rain)
+    monkeypatch.setattr("hk_weather.cli.fetch_cloud", lambda timeout, lang="en": None)
+    assert main(["--cloud-rain"]) == 0
+    assert capsys.readouterr().out == "No cloud amount is available.\n"
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_cloud",
+        lambda timeout, lang="en": CloudAmount("Hong Kong Observatory", "2026-08-31", 88),
+    )
+    monkeypatch.setattr("hk_weather.cli.fetch_daily_rain", lambda timeout, lang="en": None)
+    assert main(["--cloud-rain", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No daily rainfall is available."
+    }
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_daily_rain",
+        lambda timeout, lang="en": DailyRain("Hong Kong Observatory", "2026-08-30", 25),
+    )
+    assert main(["--cloud-rain", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No shared cloud day is available."
+    }
+
+    assert main(["--cloud", "--cloud-rain"]) == 2
+    assert "(--cloud --cloud-rain)" in capsys.readouterr().err
 
 
 def test_cli_evaporation_prints_latest_day(monkeypatch, capsys):

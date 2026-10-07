@@ -1081,6 +1081,7 @@ from hk_weather.hko import (
     format_buoy_8_dew_miss,
     format_cloud,
     format_cloud_miss,
+    format_cloud_rain,
     format_evaporation,
     format_evaporation_miss,
     format_evap_gap,
@@ -1726,6 +1727,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--buoy-2-dew prints the latest daily mean dew point at Automatic Weather Buoy No.2; "
             "--buoy-8-dew prints the latest daily mean dew point at Automatic Weather Buoy No.8; "
             "--cloud prints the latest daily mean cloud amount; "
+            "--cloud-rain compares that cloud amount with rainfall on the same day; "
             "--evaporation prints the latest daily evaporation; "
             "--evap-gap compares King's Park rainfall with that evaporation; "
             "--evapotranspiration prints the latest monthly potential evapotranspiration; "
@@ -2965,6 +2967,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--cloud",
         action="store_true",
         help="Print the latest daily mean cloud amount at the Observatory",
+    )
+    parser.add_argument(
+        "--cloud-rain",
+        action="store_true",
+        help="Compare the Observatory cloud amount with rainfall on the same day",
     )
     parser.add_argument(
         "--evaporation",
@@ -6554,6 +6561,12 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_cloud_miss(as_json=args.json)
             else:
                 text = format_json(cloud) if args.json else format_cloud(cloud)
+        elif args.cloud_rain:
+            cloud = fetch_cloud(timeout=args.timeout, lang=args.lang)
+            rain = None
+            if cloud is not None:
+                rain = fetch_daily_rain(timeout=args.timeout, lang=args.lang)
+            text = format_cloud_rain(cloud, rain, as_json=args.json)
         elif args.evaporation:
             evaporation = fetch_evaporation(timeout=args.timeout, lang=args.lang)
             if evaporation is None:

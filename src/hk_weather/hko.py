@@ -24900,6 +24900,42 @@ def format_cloud_miss(*, as_json: bool = False) -> str:
     return _unavailable("No cloud amount is available.", as_json=as_json)
 
 
+def format_cloud_rain(
+    cloud: CloudAmount | None, rain: DailyRain | None, *, as_json: bool
+) -> str:
+    """Compare the Observatory cloud amount with rainfall on the same day."""
+    if cloud is None:
+        return _unavailable("No cloud amount is available.", as_json=as_json)
+    if rain is None:
+        return _unavailable("No daily rainfall is available.", as_json=as_json)
+    if cloud.date != rain.date:
+        return _unavailable("No shared cloud day is available.", as_json=as_json)
+    station = rain.station
+    cloud_text = _number(cloud.cloud_percent)
+    rain_text = _number(rain.rainfall_mm)
+    if cloud.cloud_percent > 0 and rain.rainfall_mm > 0:
+        phrase = (
+            f"On {cloud.date}, {station} recorded {cloud_text}% cloud "
+            f"and {rain_text} mm of rain."
+        )
+    elif cloud.cloud_percent > 0:
+        phrase = f"On {cloud.date}, {station} recorded {cloud_text}% cloud and no rain."
+    elif rain.rainfall_mm > 0:
+        phrase = f"On {cloud.date}, {station} recorded no cloud and {rain_text} mm of rain."
+    else:
+        phrase = f"On {cloud.date}, {station} recorded no cloud and no rain."
+    if as_json:
+        payload = {
+            "date": cloud.date,
+            "station": station,
+            "cloud_percent": cloud.cloud_percent,
+            "rainfall_mm": rain.rainfall_mm,
+            "phrase": phrase,
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
+
+
 _EVAP_STATIONS = {
     "en": "King's Park",
     "tc": "京士柏",
