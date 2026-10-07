@@ -17,6 +17,8 @@ from hk_weather.hko import (
     Sunrise,
     TomorrowForecast,
     WeatherError,
+    WarningTime,
+    WarningTimeReport,
 )
 
 SAMPLE_WEATHER = CurrentWeather(
@@ -1722,6 +1724,96 @@ def test_cli_warning_time_json_is_one_object(monkeypatch, capsys):
             }
         ]
     }
+
+
+def test_cli_warning_ago_prints_how_long_each_warning_has_been_in_force(
+    monkeypatch, capsys
+):
+    seen = {}
+
+    def fake_fetch(timeout, lang="en"):
+        seen["lang"] = lang
+        return WarningTimeReport(
+            (
+                WarningTime(
+                    "WFIRER",
+                    "Fire Danger Warning",
+                    "2026-10-03T08:00:00+08:00",
+                    "",
+                    "",
+                ),
+            )
+        )
+
+    monkeypatch.setattr("hk_weather.cli.fetch_warning_time", fake_fetch)
+    monkeypatch.setattr(
+        "hk_weather.hko._clock",
+        lambda: datetime.fromisoformat("2026-10-03T02:00:00+00:00"),
+    )
+    assert main(["--warning-ago", "--lang", "tc"]) == 0
+    assert seen["lang"] == "tc"
+    assert capsys.readouterr().out == "Fire Danger Warning for 2 hours\n"
+
+    assert main(["--warning-ago", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "warnings": [
+            {
+                "code": "WFIRER",
+                "description": "Fire Danger Warning",
+                "issued": "2026-10-03T08:00:00+08:00",
+                "ago": "2 hours",
+            }
+        ]
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.hko._clock",
+        lambda: datetime.fromisoformat("2026-10-03T00:00:30+00:00"),
+    )
+    assert main(["--warning-ago"]) == 0
+    assert capsys.readouterr().out == "Fire Danger Warning, issued just now\n"
+
+    assert main(["--warning-ago", "--warning-time"]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "pass one report flag at a time (--warning-time --warning-ago)" in captured.err
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_warning_time",
+        lambda timeout, lang="en": WarningTimeReport(()),
+    )
+    assert main(["--warning-ago"]) == 0
+    assert capsys.readouterr().out == "No weather warnings are in force.\n"
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_warning_time",
+        lambda timeout, lang="en": WarningTimeReport(
+            (WarningTime("WFIRER", "Fire Danger Warning", " ", "", ""),)
+        ),
+    )
+    assert main(["--warning-ago"]) == 0
+    assert capsys.readouterr().out == "No warning issue time is available.\n"
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_warning_time",
+        lambda timeout, lang="en": WarningTimeReport(
+            (
+                WarningTime(
+                    "WFIRER",
+                    "Fire Danger Warning",
+                    "2026-10-03T12:00:00+08:00",
+                    "",
+                    "",
+                ),
+            )
+        ),
+    )
+    monkeypatch.setattr(
+        "hk_weather.hko._clock",
+        lambda: datetime.fromisoformat("2026-10-03T02:00:00+00:00"),
+    )
+    assert main(["--warning-ago"]) == 0
+    assert capsys.readouterr().out == "No warning issue time is available.\n"
 
 
 def test_cli_warning_time_when_none_are_in_force(monkeypatch, capsys):
