@@ -19587,6 +19587,53 @@ def test_cli_since_sunrise_says_how_long(monkeypatch, capsys):
     assert capsys.readouterr().out == "No sunrise time is available.\n"
 
 
+def test_cli_until_transit_says_how_long(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_sunrise",
+        lambda timeout, lang="en": Sunrise("2026-10-03", "06:15", "12:12", "18:09"),
+    )
+    monkeypatch.setattr(
+        "hk_weather.hko._clock",
+        lambda: datetime.fromisoformat("2026-10-03T00:00:00+00:00"),
+    )
+    assert main(["--until-transit"]) == 0
+    assert capsys.readouterr().out == "Transit in 4 hours 12 min\n"
+    monkeypatch.setattr(
+        "hk_weather.hko._clock",
+        lambda: datetime.fromisoformat("2026-10-03T06:00:00+00:00"),
+    )
+    assert main(["--until-transit"]) == 0
+    assert capsys.readouterr().out == "Transit was 1 hour 48 min ago\n"
+    monkeypatch.setattr(
+        "hk_weather.hko._clock",
+        lambda: datetime.fromisoformat("2026-10-03T04:12:30+00:00"),
+    )
+    assert main(["--until-transit"]) == 0
+    assert capsys.readouterr().out == "Transit now\n"
+    monkeypatch.setattr(
+        "hk_weather.hko._clock",
+        lambda: datetime.fromisoformat("2026-10-03T00:00:00+00:00"),
+    )
+    assert main(["--until-transit", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "transit": "12:12",
+        "until": "Transit in 4 hours 12 min",
+    }
+    assert main(["--until-transit", "--sunrise"]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "pass one report flag at a time (--sunrise --until-transit)" in captured.err
+    monkeypatch.setattr("hk_weather.cli.fetch_sunrise", lambda timeout, lang="en": None)
+    assert main(["--until-transit"]) == 0
+    assert capsys.readouterr().out == "No sun transit time is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_sunrise",
+        lambda timeout, lang="en": Sunrise("2026-10-03", "06:15", "", "18:09"),
+    )
+    assert main(["--until-transit"]) == 0
+    assert capsys.readouterr().out == "No sun transit time is available.\n"
+
+
 def test_cli_daylight_prints_the_length_of_the_day(monkeypatch, capsys):
     monkeypatch.setattr(
         "hk_weather.cli.fetch_sunrise",
