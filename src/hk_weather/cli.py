@@ -459,6 +459,7 @@ from hk_weather.hko import (
     format_aqhi,
     format_aqhi_miss,
     format_aqhi_mix,
+    format_aqhi_low,
     format_day_miss,
     format_driest,
     format_driest_miss,
@@ -1815,6 +1816,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--tide-swing prints how the first tide changes to the next one; "
             "--aqhi prints the air quality health index; "
             "--aqhi-mix prints how many stations are in each health-risk band; "
+            "--aqhi-low prints the station with the lowest AQHI; "
             "--sunrise prints today's sunrise and sunset; "
             "--until-sunset prints how long until today's sunset; "
             "--since-sunrise prints how long it has been since today's sunrise; "
@@ -3553,6 +3555,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--aqhi-mix",
         action="store_true",
         help="Print how many stations are in each AQHI health-risk band",
+    )
+    parser.add_argument(
+        "--aqhi-low",
+        action="store_true",
+        help="Print the station with the lowest AQHI",
     )
     parser.add_argument(
         "-U",
@@ -7556,6 +7563,11 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_json(aqhi) if args.json else format_aqhi(aqhi)
         elif args.aqhi_mix:
             text = format_aqhi_mix(
+                fetch_aqhi(timeout=args.timeout, lang=args.lang),
+                as_json=args.json,
+            )
+        elif args.aqhi_low:
+            text = format_aqhi_low(
                 fetch_aqhi(timeout=args.timeout, lang=args.lang),
                 as_json=args.json,
             )
