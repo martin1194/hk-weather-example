@@ -737,6 +737,7 @@ from hk_weather.hko import (
     format_temp_shift,
     format_heat_index,
     format_heat_index_miss,
+    format_heat_gap,
     format_daily_heat,
     format_daily_heat_miss,
     format_mean_heat,
@@ -1405,6 +1406,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--temp-diff prints the past 24-hour temperature change; "
             "--temp-shift counts how many stations are cooler or warmer than 24 hours ago; "
             "--heat-index prints the latest Hong Kong Heat Index; "
+            "--heat-gap compares that index at the current station with the air; "
             "--daily-heat prints the latest daily maximum heat index at King's Park; "
             "--mean-heat prints the latest daily mean heat index at King's Park; "
             "--wbgt prints the latest Wet Bulb Globe Temperature; "
@@ -4197,6 +4199,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--heat-index",
         action="store_true",
         help="Print the latest 10-minute mean Hong Kong Heat Index",
+    )
+    parser.add_argument(
+        "--heat-gap",
+        action="store_true",
+        help="Compare the heat index at the current station with the air temperature",
     )
     parser.add_argument(
         "--daily-heat",
@@ -8586,6 +8593,18 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_heat_index_miss(as_json=args.json)
             else:
                 text = format_json(heat_index) if args.json else format_heat_index(heat_index)
+        elif args.heat_gap:
+            heat_index = fetch_heat_index(timeout=args.timeout, lang=args.lang)
+            if not heat_index.stations:
+                text = format_heat_gap(heat_index, "", 0, as_json=args.json)
+            else:
+                weather = fetch_current(timeout=args.timeout, lang=args.lang)
+                text = format_heat_gap(
+                    heat_index,
+                    weather.place,
+                    weather.temperature_c,
+                    as_json=args.json,
+                )
         elif args.daily_heat:
             daily_heat = fetch_daily_heat(timeout=args.timeout, lang=args.lang)
             if daily_heat is None:
