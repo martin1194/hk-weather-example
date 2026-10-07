@@ -519,6 +519,7 @@ from hk_weather.hko import (
     format_forecast_period_miss,
     format_forecast_desc,
     format_forecast_desc_miss,
+    format_forecast_line,
     format_forecast_updated,
     format_forecast_updated_miss,
     format_grass,
@@ -1251,6 +1252,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--coast-report prints the latest coastal station reports; "
             "--forecast-period prints the forecast period; "
             "--forecast-desc prints the forecast description; "
+            "--forecast-line prints the first sentence of that description; "
             "--forecast-updated prints when the local forecast was updated; "
             "--situation prints the general situation; "
             "--fire-danger prints the fire danger warning; "
@@ -1804,6 +1806,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--forecast-desc",
         action="store_true",
         help="Print the description from the local weather forecast",
+    )
+    parser.add_argument(
+        "--forecast-line",
+        action="store_true",
+        help="Print the first sentence of the local weather forecast",
     )
     parser.add_argument(
         "--forecast-updated",
@@ -4205,6 +4212,11 @@ def main(argv: list[str] | None = None) -> int:
                     if args.json
                     else format_forecast_desc(forecast_desc)
                 )
+        elif args.forecast_line:
+            text = format_forecast_line(
+                fetch_forecast_desc(timeout=args.timeout, lang=args.lang),
+                as_json=args.json,
+            )
         elif args.forecast_updated:
             forecast_updated = fetch_forecast_updated(timeout=args.timeout, lang=args.lang)
             if forecast_updated is None:

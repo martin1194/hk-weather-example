@@ -1256,6 +1256,34 @@ def test_cli_forecast_period_when_missing(monkeypatch, capsys):
     assert json.loads(capsys.readouterr().out) == {"message": "No forecast period is available."}
 
 
+def test_cli_forecast_line_prints_the_first_sentence(monkeypatch, capsys):
+    paragraph = "Fine and dry. Slightly cooler in the morning."
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"forecastDesc": paragraph}),
+    )
+    assert main(["--forecast-line"]) == 0
+    assert capsys.readouterr().out == "Fine and dry.\n"
+    assert main(["--forecast-line", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {"forecast": "Fine and dry."}
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"forecastDesc": "天晴乾燥。早上稍涼。"}),
+    )
+    assert main(["--forecast-line"]) == 0
+    assert capsys.readouterr().out == "天晴乾燥。\n"
+    assert main(["--forecast-line", "--forecast-desc"]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "pass one report flag at a time (--forecast-desc --forecast-line)" in captured.err
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"forecastDesc": "  "}),
+    )
+    assert main(["--forecast-line"]) == 0
+    assert capsys.readouterr().out == "No forecast description is available.\n"
+
+
 def test_cli_forecast_desc_prints_paragraph(monkeypatch, capsys):
     seen = {}
     description = "Mainly cloudy with a few showers and thunderstorms."
