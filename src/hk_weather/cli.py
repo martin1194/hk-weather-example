@@ -782,6 +782,7 @@ from hk_weather.hko import (
     format_wind,
     format_gust,
     format_gust_miss,
+    format_strongest_gust,
     format_prevailing,
     format_prevailing_miss,
     format_cheung_prevailing_miss,
@@ -1385,6 +1386,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--kau-sai-chau-solar prints the latest daily global solar radiation at Kau Sai Chau; "
             "--wind lists the forecast wind; "
             "--gust prints the latest 10-minute wind and gust; "
+            "--strongest-gust prints the station with the strongest gust; "
             "--prevailing prints the latest prevailing wind direction; "
             "--cheung-prevailing prints the latest prevailing wind at Cheung Chau; "
             "--ping-chau-prevailing prints the latest prevailing wind at Ping Chau; "
@@ -2892,6 +2894,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--gust",
         action="store_true",
         help="Print the latest 10-minute wind and gust at automatic stations",
+    )
+    parser.add_argument(
+        "--strongest-gust",
+        action="store_true",
+        help="Print the station with the strongest 10-minute gust",
     )
     parser.add_argument(
         "--prevailing",
@@ -6209,6 +6216,11 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_gust_miss(as_json=args.json)
             else:
                 text = format_json(gust) if args.json else format_gust(gust)
+        elif args.strongest_gust:
+            text = format_strongest_gust(
+                fetch_gust(timeout=args.timeout, lang=args.lang),
+                as_json=args.json,
+            )
         elif args.prevailing:
             prevailing = fetch_prevailing(timeout=args.timeout, lang=args.lang)
             if prevailing is None:

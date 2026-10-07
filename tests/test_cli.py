@@ -14,6 +14,8 @@ from hk_weather.hko import (
     FifteenUv,
     ForecastIconDay,
     ForecastIcons,
+    GustReading,
+    GustReport,
     Moon,
     NineTemp,
     NineTempDay,
@@ -14896,6 +14898,71 @@ def test_cli_gust_when_missing(monkeypatch, capsys):
     )
     assert main(["--gust", "--json"]) == 0
     assert json.loads(capsys.readouterr().out) == {"message": "No wind gusts are available."}
+
+
+def test_cli_strongest_gust_prints_the_strongest_station(monkeypatch, capsys):
+    seen = {}
+    report = GustReport(
+        "2026-10-07 11:10",
+        (
+            GustReading("Central Pier", "East", 17, 28),
+            GustReading("Green Island", "East", 26, 38),
+            GustReading("Shek Kong", "Northwest", 6, 12),
+            GustReading("Wetland Park", "", None, None),
+        ),
+    )
+
+    def fake_fetch(timeout, lang="en"):
+        seen["lang"] = lang
+        return report
+
+    monkeypatch.setattr("hk_weather.cli.fetch_gust", fake_fetch)
+    assert main(["--strongest-gust", "--lang", "tc"]) == 0
+    assert seen["lang"] == "tc"
+    assert capsys.readouterr().out == (
+        "Strongest gust: 2026-10-07 11:10  Green Island  East  38 km/h\n"
+    )
+
+    assert main(["--strongest-gust", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "recorded": "2026-10-07 11:10",
+        "gust_kmh": 38,
+        "stations": [
+            {"place": "Green Island", "direction": "East", "gust_kmh": 38}
+        ],
+        "phrase": "Strongest gust: 2026-10-07 11:10  Green Island  East  38 km/h",
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_gust",
+        lambda timeout, lang="en": GustReport(
+            "2026-10-07 11:10",
+            (
+                GustReading("Green Island", "East", 22, 34),
+                GustReading("Tate's Cairn", "East", 22, 34),
+                GustReading("Central Pier", "East", 17, 28),
+            ),
+        ),
+    )
+    assert main(["--strongest-gust"]) == 0
+    assert capsys.readouterr().out == (
+        "Strongest gust: 2026-10-07 11:10  Green Island and Tate's Cairn, 34 km/h\n"
+    )
+
+    assert main(["--strongest-gust", "--gust"]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "pass one report flag at a time (--gust --strongest-gust)" in captured.err
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_gust",
+        lambda timeout, lang="en": GustReport(
+            "",
+            (GustReading("Shek Kong", "Northwest", 6, None),),
+        ),
+    )
+    assert main(["--strongest-gust"]) == 0
+    assert capsys.readouterr().out == "No wind gusts are available.\n"
 
 
 def test_cli_prevailing_prints_latest_day(monkeypatch, capsys):
