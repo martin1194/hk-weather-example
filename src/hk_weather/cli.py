@@ -744,6 +744,7 @@ from hk_weather.hko import (
     format_tide_hour_miss,
     format_tide_latest,
     format_tide_latest_miss,
+    format_next_tide,
     format_tc_info,
     format_tc_info_miss,
     format_tips,
@@ -1703,6 +1704,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--tide prints today's high and low tides; "
             "--tide-hour prints today's hourly tide heights; "
             "--tide-latest prints the latest observed tide height; "
+            "--next-tide prints how long until the next high or low tide; "
             "--aqhi prints the air quality health index; "
             "--sunrise prints today's sunrise and sunset; "
             "--until-sunset prints how long until today's sunset; "
@@ -3262,6 +3264,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--tide-latest",
         action="store_true",
         help="Print the latest observed tide height at tide stations",
+    )
+    parser.add_argument(
+        "--next-tide",
+        action="store_true",
+        help="Print how long until the next high or low tide at Quarry Bay",
     )
     parser.add_argument(
         "-A",
@@ -6961,6 +6968,11 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_tide_latest_miss(as_json=args.json)
             else:
                 text = format_json(tide_latest) if args.json else format_tide_latest(tide_latest)
+        elif args.next_tide:
+            text = format_next_tide(
+                fetch_tide(timeout=args.timeout, lang=args.lang),
+                as_json=args.json,
+            )
         elif args.aqhi:
             aqhi = fetch_aqhi(timeout=args.timeout, lang=args.lang)
             if not aqhi.readings:
