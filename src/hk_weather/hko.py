@@ -10992,6 +10992,28 @@ def format_since_sunrise(reading: Sunrise | None, *, as_json: bool) -> str:
     return phrase + "\n"
 
 
+def _until_transit_phrase(moment: datetime, now: datetime) -> str:
+    """Say whether sun transit is ahead, now, or already past."""
+    seconds = int((moment - now).total_seconds())
+    if abs(seconds) < 60:
+        return "Transit now"
+    span = _span_phrase(abs(seconds) // 60)
+    if seconds > 0:
+        return f"Transit in {span}"
+    return f"Transit was {span} ago"
+
+
+def format_until_transit(reading: Sunrise | None, *, as_json: bool) -> str:
+    """Print how long until today's sun transit."""
+    moment = _clock_moment(reading.date, reading.transit) if reading is not None else None
+    if reading is None or moment is None:
+        return _unavailable("No sun transit time is available.", as_json=as_json)
+    phrase = _until_transit_phrase(moment, _clock())
+    if as_json:
+        return json.dumps({"transit": reading.transit, "until": phrase}, indent=2) + "\n"
+    return phrase + "\n"
+
+
 def _clock_minutes(clock: str) -> int | None:
     """Turn an HH:MM clock into minutes after midnight."""
     parts = clock.strip().split(":")
