@@ -1001,6 +1001,8 @@ hk-weather --heat-index
 hk-weather --heat-index --json
 hk-weather --heat-gap
 hk-weather --heat-gap --json
+hk-weather --heat-span
+hk-weather --heat-span --json
 hk-weather --daily-heat
 hk-weather --daily-heat --json
 hk-weather --mean-heat
@@ -2034,6 +2036,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --heat-index` prints the latest 10-minute mean Hong Kong Heat Index at automatic stations, for example `Happy Valley  25.8`. Earlier minutes in the file are omitted. `--heat-index --json` prints that minute as one JSON object. `--lang` selects the station names. Stations marked `N/A` are omitted. If none remain, it says `No heat index is available.`
 
 `hk-weather --heat-gap` compares that index at the current temperature's station with the air, for example `Heat index at Hong Kong Observatory is 24.4, 3.6 below the 28°C air.` A higher index says above, and the same number says it matches. `--heat-index` still lists every station, and `--feels-like` still estimates a temperature from humidity. `--heat-gap --json` prints the place, the index, the air temperature, the gap, and that phrase. `--lang` applies. If no index is present, it says `No heat index is available.` If that station is missing from the index, it names the station.
+
+`hk-weather --heat-span` prints how far the highest of those readings is above the lowest. Beas River at 21.2, with Wong Chuk Hang at 22.7, is `The heat index spans 1.5, from 21.2 at Beas River to 22.7 at Wong Chuk Hang.` Stations that share either end are listed together. When every station matches, it says `The heat index is 22 at Happy Valley and Sha Tin.` `--heat-gap` still compares one station with the air. `--heat-span --json` prints both ends, the span, the stations, and that phrase. `--lang` applies. If no index is present, it says `No heat index is available.` If only one station has a reading, it says `No heat index range is available.`
 
 `hk-weather --daily-heat` prints the latest daily maximum Hong Kong Heat Index at King's Park, for example `2026-08-31  29.2`. `--heat-index` still prints the latest 10-minute readings. `--daily-heat --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No daily maximum heat index is available.`
 

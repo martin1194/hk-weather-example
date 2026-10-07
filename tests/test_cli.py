@@ -28572,6 +28572,96 @@ def test_cli_heat_gap_compares_station_index_with_air(monkeypatch, capsys):
     assert json.loads(capsys.readouterr().out) == {"message": "No heat index is available."}
 
 
+def test_cli_heat_span_prints_the_gap_between_lowest_and_highest(monkeypatch, capsys):
+    seen = {}
+    report = HeatIndexReport(
+        "2026-10-07 18:20",
+        (
+            HeatIndexReading("Beas River", 21.5),
+            HeatIndexReading("Happy Valley", 22.3),
+            HeatIndexReading("King's Park", 21.5),
+            HeatIndexReading("Wong Chuk Hang", 22.6),
+        ),
+    )
+
+    def fake_heat(timeout, lang="en"):
+        seen["lang"] = lang
+        return report
+
+    monkeypatch.setattr("hk_weather.cli.fetch_heat_index", fake_heat)
+    phrase = (
+        "The heat index spans 1.1, from 21.5 at Beas River and King's Park "
+        "to 22.6 at Wong Chuk Hang."
+    )
+    assert main(["--heat-span", "--lang", "tc"]) == 0
+    assert seen["lang"] == "tc"
+    assert capsys.readouterr().out == phrase + "\n"
+
+    assert main(["--heat-span", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "time": "2026-10-07 18:20",
+        "low": 21.5,
+        "high": 22.6,
+        "span": 1.1,
+        "low_places": ["Beas River", "King's Park"],
+        "high_places": ["Wong Chuk Hang"],
+        "phrase": phrase,
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_heat_index",
+        lambda timeout, lang="en": HeatIndexReport(
+            "2026-10-07 18:20",
+            (
+                HeatIndexReading("Happy Valley", 22),
+                HeatIndexReading("Sha Tin", 22),
+            ),
+        ),
+    )
+    assert main(["--heat-span"]) == 0
+    assert capsys.readouterr().out == "The heat index is 22 at Happy Valley and Sha Tin.\n"
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_heat_index",
+        lambda timeout, lang="en": HeatIndexReport(
+            "",
+            (
+                HeatIndexReading("Beas River", 21),
+                HeatIndexReading("Happy Valley", 21),
+                HeatIndexReading("Sha Tin", 21),
+            ),
+        ),
+    )
+    assert main(["--heat-span"]) == 0
+    assert capsys.readouterr().out == (
+        "The heat index is 21 at Beas River, Happy Valley, and Sha Tin.\n"
+    )
+
+    assert main(["--heat-span", "--heat-gap"]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "pass one report flag at a time (--heat-gap --heat-span)" in captured.err
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_heat_index",
+        lambda timeout, lang="en": HeatIndexReport(
+            "",
+            (HeatIndexReading("Wong Chuk Hang", 22.6),),
+        ),
+    )
+    assert main(["--heat-span"]) == 0
+    assert capsys.readouterr().out == "No heat index range is available.\n"
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_heat_index",
+        lambda timeout, lang="en": HeatIndexReport("", ()),
+    )
+    assert main(["--heat-span"]) == 0
+    assert capsys.readouterr().out == "No heat index is available.\n"
+    assert main(["--heat-span", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {"message": "No heat index is available."}
+
+
 def test_cli_daily_heat_prints_latest_day(monkeypatch, capsys):
     seen = {}
     monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
