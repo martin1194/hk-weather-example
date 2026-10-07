@@ -10376,6 +10376,24 @@ def format_high_gap(temperature_c: float, high_c: float | None, *, as_json: bool
     return phrase + "\n"
 
 
+def format_today_range(day: TomorrowForecast | None, *, as_json: bool) -> str:
+    """Print the span from today's forecast low to its forecast high."""
+    if day is None or day.temp_low_c is None or day.temp_high_c is None:
+        return _unavailable("No forecast range is available.", as_json=as_json)
+    span = round(day.temp_high_c - day.temp_low_c, 1)
+    if span < 0:
+        return _unavailable("No forecast range is available.", as_json=as_json)
+    if as_json:
+        return (
+            json.dumps(
+                {"low_c": day.temp_low_c, "high_c": day.temp_high_c, "range_c": span},
+                indent=2,
+            )
+            + "\n"
+        )
+    return f"Today's range is {_number(span)}°C\n"
+
+
 def format_day_miss(day: int, *, as_json: bool = False) -> str:
     """Say that forecast day N is not in the 9-day list."""
     return _unavailable(f"Forecast day {day} is not available.", as_json=as_json)
