@@ -53,6 +53,8 @@ hk-weather --forecast-desc
 hk-weather --forecast-desc --json
 hk-weather --forecast-line
 hk-weather --forecast-line --json
+hk-weather --about-high
+hk-weather --about-high --json
 hk-weather --forecast-updated
 hk-weather --forecast-updated --json
 hk-weather --situation
@@ -1066,6 +1068,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --forecast-desc` prints the description from that forecast (`forecastDesc`). `--forecast` still prints the full local forecast. `--forecast-desc --json` prints that paragraph as one JSON object. `--lang` applies. If the field is missing or blank, it says `No forecast description is available.`
 
 `hk-weather --forecast-line` prints only the first sentence of that description. `Fine and dry. Slightly cooler in the morning.` becomes `Fine and dry.` `--forecast-line --json` prints that sentence as one JSON object. `--lang` applies. If the description is missing, it says `No forecast description is available.`
+
+`hk-weather --about-high` reads the maximum temperature stated in that description and compares it with the next 9-day forecast high. `around 29 degrees` against Thursday's 29°C is `The local forecast high of about 29°C matches 2026-10-08 Thursday's 29°C.` A higher stated high says above, and a lower one says below. `--forecast-line` still prints the first sentence, and `--nine-temp` still lists every high and low. `--about-high --json` prints the stated high, the forecast day, the gap, and that phrase. `--lang` applies. If the description does not state a maximum, it says `No local forecast high is available.` If the 9-day forecast has no high, it says `No forecast high is available.`
 
 `hk-weather --forecast-updated` prints when that forecast was last updated (`updateTime`). `--forecast` still prints the full local forecast. `--forecast-updated --json` prints that timestamp as one JSON object. `--lang` applies. If the field is missing or blank, it says `No forecast update time is available.`
 

@@ -9674,6 +9674,107 @@ def format_forecast_line(report: ForecastDesc | None, *, as_json: bool) -> str:
     return line + "\n"
 
 
+def _number_before(text: str, end: int) -> float | None:
+    """Read the number that ends just before `end`."""
+    cursor = end
+    while cursor > 0 and text[cursor - 1].isspace():
+        cursor -= 1
+    start = cursor
+    dot = False
+    while start > 0:
+        char = text[start - 1]
+        if char.isdigit():
+            start -= 1
+        elif char == "." and not dot:
+            dot = True
+            start -= 1
+        else:
+            break
+    token = text[start:cursor]
+    if not any(char.isdigit() for char in token):
+        return None
+    return float(token)
+
+
+def _degree_index(text: str) -> int:
+    folded = text.casefold()
+    degree = folded.find("degree")
+    symbol = text.find("°")
+    if degree < 0:
+        return symbol
+    if symbol < 0:
+        return degree
+    return min(degree, symbol)
+
+
+def stated_high(text: str) -> float | None:
+    """Return the maximum temperature stated in a local-forecast paragraph."""
+    folded = text.casefold()
+    mark = folded.find("maximum temperature")
+    if mark >= 0:
+        rest = text[mark:]
+        degree = _degree_index(rest)
+        if degree >= 0:
+            value = _number_before(rest, degree)
+            if value is not None:
+                return value
+    for label in ("最高氣溫", "最高气温"):
+        mark = text.find(label)
+        if mark < 0:
+            continue
+        rest = text[mark + len(label) :]
+        degree = rest.find("度")
+        if degree < 0:
+            continue
+        value = _number_before(rest, degree)
+        if value is not None:
+            return value
+    return None
+
+
+def format_about_high(
+    description: str | None, report: NineTemp | None, *, as_json: bool
+) -> str:
+    """Compare the local forecast's stated high with the next 9-day high."""
+    stated = stated_high(description or "")
+    if stated is None:
+        return _unavailable("No local forecast high is available.", as_json=as_json)
+    day = None
+    if report is not None:
+        day = next((item for item in report.days if item.temp_high_c is not None), None)
+    if day is None or day.temp_high_c is None:
+        return _unavailable("No forecast high is available.", as_json=as_json)
+    gap = round(stated - day.temp_high_c, 1)
+    stated_text = _number(stated)
+    high_text = _number(day.temp_high_c)
+    label = _forecast_day_label(day)
+    if gap > 0:
+        phrase = (
+            f"The local forecast high of about {stated_text}°C is {_number(gap)}°C above "
+            f"{label}'s {high_text}°C."
+        )
+    elif gap < 0:
+        phrase = (
+            f"The local forecast high of about {stated_text}°C is {_number(abs(gap))}°C below "
+            f"{label}'s {high_text}°C."
+        )
+    else:
+        phrase = (
+            f"The local forecast high of about {stated_text}°C matches {label}'s {high_text}°C."
+        )
+    if as_json:
+        payload = {
+            "stated_c": stated,
+            "date": day.date,
+            "week": day.week,
+            "high_c": day.temp_high_c,
+            "gap_c": gap,
+            "phrase": phrase,
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
+
+
 def format_forecast_desc_miss(*, as_json: bool = False) -> str:
     """Say that the local forecast has no description."""
     return _unavailable("No forecast description is available.", as_json=as_json)
