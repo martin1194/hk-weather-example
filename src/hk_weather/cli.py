@@ -750,6 +750,7 @@ from hk_weather.hko import (
     format_today_psr,
     format_today_wind,
     format_today_weather,
+    format_today_humidity,
     format_tomorrow,
     format_tomorrow_miss,
     format_uv,
@@ -1445,6 +1446,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--today-psr prints today's chance of significant rain; "
             "--today-wind prints today's forecast wind; "
             "--today-weather prints today's forecast weather; "
+            "--today-humidity prints today's forecast humidity; "
             "--yesterday prints yesterday's Observatory summary; "
             "--mean-temp prints the latest daily mean temperature; "
             "--tai-mo-temp prints the latest daily mean temperature at Tai Mo Shan; "
@@ -1927,6 +1929,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--today-weather",
         action="store_true",
         help="Print today's forecast weather",
+    )
+    parser.add_argument(
+        "--today-humidity",
+        action="store_true",
+        help="Print today's forecast humidity",
     )
     parser.add_argument(
         "--yesterday",
@@ -4399,6 +4406,11 @@ def main(argv: list[str] | None = None) -> int:
             )
         elif args.today_weather:
             text = format_today_weather(
+                fetch_today(timeout=args.timeout, lang=args.lang),
+                as_json=args.json,
+            )
+        elif args.today_humidity:
+            text = format_today_humidity(
                 fetch_today(timeout=args.timeout, lang=args.lang),
                 as_json=args.json,
             )

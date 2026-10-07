@@ -91,6 +91,8 @@ hk-weather --today-wind
 hk-weather --today-wind --json
 hk-weather --today-weather
 hk-weather --today-weather --json
+hk-weather --today-humidity
+hk-weather --today-humidity --json
 hk-weather --yesterday
 hk-weather --yesterday --json
 hk-weather --mean-temp
@@ -1018,6 +1020,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --today-wind` prints today's forecast wind, for example `Wind: North force 4, occasionally force 5 offshore, becoming east later.` `--wind` still prints every day of the 9-day forecast. `--today-wind --json` prints the date and that wind. If it is missing, it says `No forecast wind is available for today.`
 
 `hk-weather --today-weather` prints today's forecast weather sentence, for example `Weather: Fine and dry. Slightly cooler in the morning.` `--nine-weather` still prints every day. `--forecast-line` still prints the first sentence of the local forecast. `--today-weather --json` prints the date and that sentence. If it is missing, it says `No forecast weather is available for today.`
+
+`hk-weather --today-humidity` prints today's forecast humidity, for example `Humidity: 40-75%`. `--nine-humidity` still prints every day, and `--humidity` still prints the current station readings. `--today-humidity --json` prints the date and that range. If it is missing, it says `No forecast humidity is available for today.`
 
 `hk-weather --yesterday` prints yesterday's Observatory summary (`dataType=RYES`, station HKO): high, low, rainfall, and humidity. `--yesterday --json` prints that summary as one JSON object. `--lang` applies. If the summary is missing, it says `Yesterday's Observatory summary is not available.`
 
