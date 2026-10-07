@@ -10232,6 +10232,39 @@ def format_nine_temp_miss(*, as_json: bool = False) -> str:
     return _unavailable("No 9-day temperatures are available.", as_json=as_json)
 
 
+def _forecast_day_label(day: NineTempDay) -> str:
+    """Date and weekday for one 9-day forecast row."""
+    return " ".join(part for part in (day.date, day.week) if part) or "unknown"
+
+
+def format_hottest_day(report: NineTemp, *, as_json: bool) -> str:
+    """Print the day or days with the highest forecast high."""
+    ranked = [day for day in report.days if day.temp_high_c is not None]
+    if not ranked:
+        return _unavailable("No forecast high is available.", as_json=as_json)
+    high = max(day.temp_high_c for day in ranked)
+    hottest = tuple(day for day in ranked if day.temp_high_c == high)
+    labels = [_forecast_day_label(day) for day in hottest]
+    if len(labels) == 1:
+        listed = labels[0]
+        word = "day"
+    elif len(labels) == 2:
+        listed = f"{labels[0]} and {labels[1]}"
+        word = "days"
+    else:
+        listed = ", ".join(labels[:-1]) + f", and {labels[-1]}"
+        word = "days"
+    phrase = f"Hottest {word}: {listed}, {_number(high)}°C"
+    if as_json:
+        payload = {
+            "high_c": high,
+            "days": [{"date": day.date, "week": day.week} for day in hottest],
+            "phrase": phrase,
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
+
+
 def parse_nine_humidity(payload: dict) -> NineHumidity:
     """Turn `fnd` forecast humidity fields into one line per day."""
     raw_days = payload.get("weatherForecast")

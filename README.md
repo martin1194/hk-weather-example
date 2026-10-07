@@ -79,6 +79,8 @@ hk-weather --nine-weather
 hk-weather --nine-weather --json
 hk-weather --nine-temp
 hk-weather --nine-temp --json
+hk-weather --hottest-day
+hk-weather --hottest-day --json
 hk-weather --nine-humidity
 hk-weather --nine-humidity --json
 hk-weather --today
@@ -1026,6 +1028,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --nine-weather` prints each day's weather sentence from that forecast (`forecastWeather`), for example `2026-10-04 Sunday  Mainly cloudy with a few showers`. `--nine-day` still prints the full daily forecast. `--wind` still prints the wind. `--nine-weather --json` prints those days as one JSON object. `--lang` applies. If no weather text is present, it says `No 9-day weather is available.`
 
 `hk-weather --nine-temp` prints each day's high and low from that forecast (`forecastMaxtemp` and `forecastMintemp`), for example `2026-10-04 Sunday  high 31°C  low 26°C`. `--temps` still prints the current station temperatures. `--nine-temp --json` prints those days as one JSON object. `--lang` applies. If no temperature is present, it says `No 9-day temperatures are available.`
+
+`hk-weather --hottest-day` prints the day with the highest of those forecast highs. When Tuesday and Wednesday both reach 32°C, that is `Hottest days: 2026-10-13 Tuesday and 2026-10-14 Wednesday, 32°C`. One day on its own says `Hottest day`. `--nine-temp` still lists every day. `--hottest-day --json` prints the high, the tied days, and that phrase. If no forecast high is present, it says `No forecast high is available.`
 
 `hk-weather --nine-humidity` prints each day's humidity range from that forecast (`forecastMaxrh` and `forecastMinrh`), for example `2026-10-04 Sunday  humidity 65-95%`. `--humidity` still prints the current station readings. `--nine-humidity --json` prints those days as one JSON object. `--lang` applies. If no humidity is present, it says `No 9-day humidity is available.`
 
