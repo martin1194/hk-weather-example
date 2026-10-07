@@ -19,6 +19,8 @@ from hk_weather.hko import (
     Moon,
     NineTemp,
     NineTempDay,
+    NineWeather,
+    NineWeatherDay,
     Sunrise,
     TideEvent,
     TideReport,
@@ -2503,6 +2505,84 @@ def test_cli_nine_weather_when_missing(monkeypatch, capsys):
     )
     assert main(["--nine-weather", "--json"]) == 0
     assert json.loads(capsys.readouterr().out) == {"message": "No 9-day weather is available."}
+
+
+def test_cli_cloud_day_prints_the_first_cloudier_day(monkeypatch, capsys):
+    seen = {}
+    report = NineWeather(
+        "2026-10-07T11:30:00+08:00",
+        (
+            NineWeatherDay("2026-10-08", "Thursday", "Mainly fine and dry."),
+            NineWeatherDay("2026-10-15", "Thursday", "Sunny periods."),
+            NineWeatherDay(
+                "2026-10-16",
+                "Friday",
+                "Mainly cloudy. Sunny periods during the day.",
+            ),
+        ),
+    )
+
+    def fake_fetch(timeout, lang="en"):
+        seen["lang"] = lang
+        return report
+
+    monkeypatch.setattr("hk_weather.cli.fetch_nine_weather", fake_fetch)
+    assert main(["--cloud-day", "--lang", "tc"]) == 0
+    assert seen["lang"] == "tc"
+    assert capsys.readouterr().out == (
+        "First cloudier day: 2026-10-16 Friday  "
+        "Mainly cloudy. Sunny periods during the day.\n"
+    )
+
+    assert main(["--cloud-day", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "date": "2026-10-16",
+        "week": "Friday",
+        "weather": "Mainly cloudy. Sunny periods during the day.",
+        "phrase": (
+            "First cloudier day: 2026-10-16 Friday  "
+            "Mainly cloudy. Sunny periods during the day."
+        ),
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_nine_weather",
+        lambda timeout, lang="en": NineWeather(
+            "2026-10-07T11:30:00+08:00",
+            (
+                NineWeatherDay("2026-10-14", "星期三", "大致天晴，日間乾燥及炎熱。"),
+                NineWeatherDay("2026-10-16", "星期五", "大致多雲。日間部分時間有陽光。"),
+            ),
+        ),
+    )
+    assert main(["--cloud-day"]) == 0
+    assert capsys.readouterr().out == (
+        "First cloudier day: 2026-10-16 星期五  大致多雲。日間部分時間有陽光。\n"
+    )
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_nine_weather",
+        lambda timeout, lang="en": NineWeather(
+            "2026-10-07T11:30:00+08:00",
+            (NineWeatherDay("2026-10-08", "Thursday", "Mainly fine and dry."),),
+        ),
+    )
+    assert main(["--cloud-day"]) == 0
+    assert capsys.readouterr().out == "No cloudier day in the 9-day forecast.\n"
+
+    assert main(["--cloud-day", "--nine-weather"]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "pass one report flag at a time (--nine-weather --cloud-day)" in captured.err
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_nine_weather",
+        lambda timeout, lang="en": NineWeather("", ()),
+    )
+    assert main(["--cloud-day", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No cloudier day in the 9-day forecast."
+    }
 
 
 def test_cli_nine_temp_lists_each_day(monkeypatch, capsys):

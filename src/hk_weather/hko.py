@@ -10185,6 +10185,52 @@ def format_nine_weather_miss(*, as_json: bool = False) -> str:
     return _unavailable("No 9-day weather is available.", as_json=as_json)
 
 
+_CLOUD_MARKS = (
+    "cloud",
+    "shower",
+    "rain",
+    "thunder",
+    "drizzle",
+    "squall",
+    "mist",
+    "fog",
+    "雲",
+    "云",
+    "雨",
+    "雷",
+    "霧",
+    "雾",
+    "驟",
+    "骤",
+)
+
+
+def _mentions_cloud_or_rain(weather: str) -> bool:
+    folded = weather.casefold()
+    return any(mark.casefold() in folded for mark in _CLOUD_MARKS)
+
+
+def format_cloud_day(report: NineWeather, *, as_json: bool) -> str:
+    """Print the first forecast day that mentions cloud or rain."""
+    match = next((day for day in report.days if _mentions_cloud_or_rain(day.weather)), None)
+    if match is None:
+        return _unavailable("No cloudier day in the 9-day forecast.", as_json=as_json)
+    heading = " ".join(part for part in (match.date, match.week) if part)
+    if heading:
+        phrase = f"First cloudier day: {heading}  {match.weather}"
+    else:
+        phrase = f"First cloudier day: {match.weather}"
+    if as_json:
+        payload = {
+            "date": match.date,
+            "week": match.week,
+            "weather": match.weather,
+            "phrase": phrase,
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
+
+
 def parse_nine_temp(payload: dict) -> NineTemp:
     """Turn `fnd` forecast high and low fields into one line per day."""
     raw_days = payload.get("weatherForecast")
