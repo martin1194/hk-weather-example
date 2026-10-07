@@ -22620,6 +22620,112 @@ def test_cli_least_vis_prints_the_poorest_station(monkeypatch, capsys):
     assert capsys.readouterr().out == "No visibility readings are available.\n"
 
 
+def test_cli_vis_span_prints_the_gap_between_poorest_and_clearest(monkeypatch, capsys):
+    seen = {}
+    report = VisibilityReport(
+        (
+            VisibilityReading("2026-10-07 18:00", "Central", "24 km"),
+            VisibilityReading("2026-10-07 18:00", "Chek Lap Kok", "40 km"),
+            VisibilityReading("2026-10-07 18:00", "Sai Wan Ho", "40 km"),
+            VisibilityReading("2026-10-07 18:00", "Waglan Island", "30 km"),
+            VisibilityReading("2026-10-07 18:00", "Harbour", "mist"),
+        )
+    )
+
+    def fake_fetch(timeout, lang="en"):
+        seen["lang"] = lang
+        return report
+
+    monkeypatch.setattr("hk_weather.cli.fetch_visibility", fake_fetch)
+    assert main(["--vis-span", "--lang", "tc"]) == 0
+    assert seen["lang"] == "tc"
+    assert capsys.readouterr().out == (
+        "Visibility spans 16 km, from 24 km at Central to 40 km at "
+        "Chek Lap Kok and Sai Wan Ho.\n"
+    )
+
+    assert main(["--vis-span", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "low_km": 24.0,
+        "high_km": 40.0,
+        "span_km": 16.0,
+        "low_places": ["Central"],
+        "high_places": ["Chek Lap Kok", "Sai Wan Ho"],
+        "phrase": (
+            "Visibility spans 16 km, from 24 km at Central to 40 km at "
+            "Chek Lap Kok and Sai Wan Ho."
+        ),
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_visibility",
+        lambda timeout, lang="en": VisibilityReport(
+            (
+                VisibilityReading("2026-10-03 07:30", "Central", "14 km"),
+                VisibilityReading("2026-10-03 07:30", "Sai Wan Ho", "14 km"),
+                VisibilityReading("2026-10-03 07:30", "Chek Lap Kok", "30 km"),
+            )
+        ),
+    )
+    assert main(["--vis-span"]) == 0
+    assert capsys.readouterr().out == (
+        "Visibility spans 16 km, from 14 km at Central and Sai Wan Ho "
+        "to 30 km at Chek Lap Kok.\n"
+    )
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_visibility",
+        lambda timeout, lang="en": VisibilityReport(
+            (
+                VisibilityReading("2026-10-03 07:30", "Central", "14 km"),
+                VisibilityReading("2026-10-03 07:30", "Sai Wan Ho", "14 km"),
+            )
+        ),
+    )
+    assert main(["--vis-span"]) == 0
+    assert capsys.readouterr().out == "Visibility is 14 km at Central and Sai Wan Ho.\n"
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_visibility",
+        lambda timeout, lang="en": VisibilityReport(
+            (
+                VisibilityReading("2026-10-03 07:30", "Central", "10 km"),
+                VisibilityReading("2026-10-03 07:30", "Chek Lap Kok", "10 km"),
+                VisibilityReading("2026-10-03 07:30", "Waglan Island", "10 km"),
+            )
+        ),
+    )
+    assert main(["--vis-span"]) == 0
+    assert capsys.readouterr().out == (
+        "Visibility is 10 km at Central, Chek Lap Kok, and Waglan Island.\n"
+    )
+
+    assert main(["--vis-span", "--least-vis"]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "pass one report flag at a time (--least-vis --vis-span)" in captured.err
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_visibility",
+        lambda timeout, lang="en": VisibilityReport(
+            (VisibilityReading("2026-10-07 18:00", "Central", "24 km"),)
+        ),
+    )
+    assert main(["--vis-span"]) == 0
+    assert capsys.readouterr().out == "No visibility range is available.\n"
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_visibility",
+        lambda timeout, lang="en": VisibilityReport(()),
+    )
+    assert main(["--vis-span"]) == 0
+    assert capsys.readouterr().out == "No visibility readings are available.\n"
+    assert main(["--vis-span", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No visibility readings are available."
+    }
+
+
 def test_cli_reduced_vis_prints_latest_day(monkeypatch, capsys):
     seen = {}
     monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")

@@ -801,6 +801,7 @@ from hk_weather.hko import (
     format_max_uv_gap,
     format_visibility,
     format_least_vis,
+    format_vis_span,
     format_reduced_vis,
     format_reduced_vis_miss,
     format_warning_info,
@@ -1721,6 +1722,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--weekend prints Saturday and Sunday; "
             "--visibility lists 10-minute mean visibility; "
             "--least-vis prints the station with the poorest visibility; "
+            "--vis-span prints the gap between the poorest and clearest visibility; "
             "--reduced-vis prints the latest daily hours of reduced visibility; "
             "--hottest prints the warmest place; "
             "--coldest prints the coolest place; "
@@ -3449,6 +3451,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--least-vis",
         action="store_true",
         help="Print the station with the poorest 10-minute visibility",
+    )
+    parser.add_argument(
+        "--vis-span",
+        action="store_true",
+        help="Print the gap between the poorest and clearest visibility",
     )
     parser.add_argument(
         "--reduced-vis",
@@ -7382,6 +7389,11 @@ def main(argv: list[str] | None = None) -> int:
             text = format_json(visibility) if args.json else format_visibility(visibility)
         elif args.least_vis:
             text = format_least_vis(
+                fetch_visibility(timeout=args.timeout, lang=args.lang),
+                as_json=args.json,
+            )
+        elif args.vis_span:
+            text = format_vis_span(
                 fetch_visibility(timeout=args.timeout, lang=args.lang),
                 as_json=args.json,
             )
