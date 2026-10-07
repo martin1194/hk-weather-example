@@ -28913,6 +28913,157 @@ def test_cli_wbgt_when_missing(monkeypatch, capsys):
     }
 
 
+def test_cli_wbgt_heat_prints_the_largest_difference(monkeypatch, capsys):
+    from hk_weather.hko import WbgtReading, WbgtReport
+
+    seen = {}
+    wbgt = WbgtReport(
+        "2026-10-07 18:50",
+        (
+            WbgtReading("Happy Valley", 22.7),
+            WbgtReading("Beas River", 21.5),
+            WbgtReading("Wong Chuk Hang", 23.0),
+        ),
+    )
+    heat = HeatIndexReport(
+        "2026-10-07 18:50",
+        (
+            HeatIndexReading("Happy Valley", 22.4),
+            HeatIndexReading("Beas River", 20.8),
+            HeatIndexReading("Wong Chuk Hang", 22.5),
+            HeatIndexReading("Sha Tin", 21.7),
+        ),
+    )
+
+    def fake_wbgt(timeout, lang="en"):
+        seen["wbgt_lang"] = lang
+        return wbgt
+
+    def fake_heat(timeout, lang="en"):
+        seen["heat_lang"] = lang
+        return heat
+
+    monkeypatch.setattr("hk_weather.cli.fetch_wbgt", fake_wbgt)
+    monkeypatch.setattr("hk_weather.cli.fetch_heat_index", fake_heat)
+    phrase = (
+        "Wet bulb globe temperature at Beas River is 21.5°C, "
+        "0.7 above the heat index of 20.8."
+    )
+    assert main(["--wbgt-heat", "--lang", "tc"]) == 0
+    assert seen == {"wbgt_lang": "tc", "heat_lang": "tc"}
+    assert capsys.readouterr().out == phrase + "\n"
+
+    assert main(["--wbgt-heat", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "time": "2026-10-07 18:50",
+        "places": ["Beas River"],
+        "wbgt_c": 21.5,
+        "heat_index": 20.8,
+        "gap": 0.7,
+        "phrase": phrase,
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_wbgt",
+        lambda timeout, lang="en": WbgtReport(
+            "2026-10-07 18:50",
+            (
+                WbgtReading("Beas River", 21.5),
+                WbgtReading("King's Park", 21.5),
+                WbgtReading("Happy Valley", 22),
+            ),
+        ),
+    )
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_heat_index",
+        lambda timeout, lang="en": HeatIndexReport(
+            "",
+            (
+                HeatIndexReading("Beas River", 20.8),
+                HeatIndexReading("King's Park", 20.8),
+                HeatIndexReading("Happy Valley", 22),
+            ),
+        ),
+    )
+    assert main(["--wbgt-heat"]) == 0
+    assert capsys.readouterr().out == (
+        "Wet bulb globe temperature at Beas River and King's Park is 21.5°C, "
+        "0.7 above the heat index of 20.8.\n"
+    )
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_wbgt",
+        lambda timeout, lang="en": WbgtReport(
+            "",
+            (WbgtReading("Hong Kong Observatory", 22),),
+        ),
+    )
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_heat_index",
+        lambda timeout, lang="en": HeatIndexReport(
+            "",
+            (HeatIndexReading("Hong Kong Observatory", 23.2),),
+        ),
+    )
+    assert main(["--wbgt-heat"]) == 0
+    assert capsys.readouterr().out == (
+        "Wet bulb globe temperature at Hong Kong Observatory is 22°C, "
+        "1.2 below the heat index of 23.2.\n"
+    )
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_heat_index",
+        lambda timeout, lang="en": HeatIndexReport(
+            "",
+            (HeatIndexReading("Hong Kong Observatory", 22),),
+        ),
+    )
+    assert main(["--wbgt-heat"]) == 0
+    assert capsys.readouterr().out == (
+        "Wet bulb globe temperature at Hong Kong Observatory matches "
+        "the heat index of 22.\n"
+    )
+
+    assert main(["--wbgt-heat", "--wbgt"]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "pass one report flag at a time (--wbgt --wbgt-heat)" in captured.err
+
+    def fail_heat(*args, **kwargs):
+        raise AssertionError("heat index must not be fetched")
+
+    monkeypatch.setattr("hk_weather.cli.fetch_heat_index", fail_heat)
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_wbgt",
+        lambda timeout, lang="en": WbgtReport("", ()),
+    )
+    assert main(["--wbgt-heat"]) == 0
+    assert capsys.readouterr().out == "No wet bulb globe temperature is available.\n"
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_wbgt",
+        lambda timeout, lang="en": WbgtReport("", (WbgtReading("Beas River", 21.5),)),
+    )
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_heat_index",
+        lambda timeout, lang="en": HeatIndexReport("", ()),
+    )
+    assert main(["--wbgt-heat"]) == 0
+    assert capsys.readouterr().out == "No heat index is available.\n"
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_heat_index",
+        lambda timeout, lang="en": HeatIndexReport(
+            "",
+            (HeatIndexReading("Sha Tin", 21.7),),
+        ),
+    )
+    assert main(["--wbgt-heat"]) == 0
+    assert capsys.readouterr().out == (
+        "No wet bulb globe temperature comparison is available.\n"
+    )
+
+
 def test_cli_wet_bulb_prints_latest_day(monkeypatch, capsys):
     seen = {}
     monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
