@@ -750,6 +750,7 @@ from hk_weather.hko import (
     format_heat_index,
     format_heat_index_miss,
     format_heat_gap,
+    format_heat_span,
     format_daily_heat,
     format_daily_heat_miss,
     format_mean_heat,
@@ -1435,6 +1436,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--temp-shift counts how many stations are cooler or warmer than 24 hours ago; "
             "--heat-index prints the latest Hong Kong Heat Index; "
             "--heat-gap compares that index at the current station with the air; "
+            "--heat-span prints the gap between the lowest and highest heat index; "
             "--daily-heat prints the latest daily maximum heat index at King's Park; "
             "--mean-heat prints the latest daily mean heat index at King's Park; "
             "--wbgt prints the latest Wet Bulb Globe Temperature; "
@@ -4332,6 +4334,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--heat-gap",
         action="store_true",
         help="Compare the heat index at the current station with the air temperature",
+    )
+    parser.add_argument(
+        "--heat-span",
+        action="store_true",
+        help="Print the gap between the lowest and highest heat index",
     )
     parser.add_argument(
         "--daily-heat",
@@ -8851,6 +8858,11 @@ def main(argv: list[str] | None = None) -> int:
                     weather.temperature_c,
                     as_json=args.json,
                 )
+        elif args.heat_span:
+            text = format_heat_span(
+                fetch_heat_index(timeout=args.timeout, lang=args.lang),
+                as_json=args.json,
+            )
         elif args.daily_heat:
             daily_heat = fetch_daily_heat(timeout=args.timeout, lang=args.lang)
             if daily_heat is None:

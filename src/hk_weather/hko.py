@@ -17555,6 +17555,49 @@ def format_heat_gap(
     return phrase + "\n"
 
 
+def format_heat_span(report: HeatIndexReport | None, *, as_json: bool) -> str:
+    """Print the gap between the lowest and highest heat index."""
+    stations = () if report is None else report.stations
+    if not stations:
+        return _unavailable("No heat index is available.", as_json=as_json)
+    places: list[str] = []
+    for reading in stations:
+        if reading.place and reading.place not in places:
+            places.append(reading.place)
+    if len(places) < 2:
+        return _unavailable("No heat index range is available.", as_json=as_json)
+    low = min(reading.heat_index for reading in stations)
+    high = max(reading.heat_index for reading in stations)
+    low_places = list(dict.fromkeys(
+        reading.place for reading in stations if reading.heat_index == low and reading.place
+    ))
+    high_places = list(dict.fromkeys(
+        reading.place for reading in stations if reading.heat_index == high and reading.place
+    ))
+    span = round(high - low, 1)
+    low_listed = _join_headings(low_places)
+    high_listed = _join_headings(high_places)
+    if span == 0:
+        phrase = f"The heat index is {_number(low)} at {low_listed}."
+    else:
+        phrase = (
+            f"The heat index spans {_number(span)}, from {_number(low)} at {low_listed} "
+            f"to {_number(high)} at {high_listed}."
+        )
+    if as_json:
+        payload = {
+            "time": report.obs_time if report is not None else "",
+            "low": low,
+            "high": high,
+            "span": span,
+            "low_places": low_places,
+            "high_places": high_places,
+            "phrase": phrase,
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
+
+
 _DAILY_HEAT_STATIONS = {
     "en": "King's Park",
     "tc": "京士柏",
