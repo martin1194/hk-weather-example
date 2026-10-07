@@ -3610,6 +3610,83 @@ def test_cli_high_gap_compares_current_with_todays_high(monkeypatch, capsys):
     assert capsys.readouterr().out == "No forecast high is available.\n"
 
 
+def test_cli_next_low_compares_the_current_temperature_with_the_forecast_low(
+    monkeypatch, capsys
+):
+    report = NineTemp(
+        "2026-10-07T17:00:00+08:00",
+        (
+            NineTempDay("2026-10-07", "Wednesday", 30, None),
+            NineTempDay("2026-10-08", "Thursday", 29, 24),
+            NineTempDay("2026-10-09", "Friday", 31, 26),
+        ),
+    )
+    seen = {}
+
+    def fake_nine(timeout, lang="en"):
+        seen["lang"] = lang
+        return report
+
+    monkeypatch.setattr("hk_weather.cli.fetch_nine_temp", fake_nine)
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_current",
+        lambda timeout, lang="en": replace(SAMPLE_WEATHER, temperature_c=27),
+    )
+    phrase = "27°C is 3°C above 2026-10-08 Thursday's low of 24°C."
+    assert main(["--next-low", "--lang", "tc"]) == 0
+    assert seen["lang"] == "tc"
+    assert capsys.readouterr().out == phrase + "\n"
+    assert main(["--next-low", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "temperature_c": 27,
+        "date": "2026-10-08",
+        "week": "Thursday",
+        "low_c": 24,
+        "gap_c": 3.0,
+        "phrase": phrase,
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_current",
+        lambda timeout, lang="en": replace(SAMPLE_WEATHER, temperature_c=22),
+    )
+    assert main(["--next-low"]) == 0
+    assert capsys.readouterr().out == (
+        "22°C is 2°C below 2026-10-08 Thursday's low of 24°C.\n"
+    )
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_current",
+        lambda timeout, lang="en": replace(SAMPLE_WEATHER, temperature_c=24),
+    )
+    assert main(["--next-low"]) == 0
+    assert capsys.readouterr().out == "24°C matches 2026-10-08 Thursday's low of 24°C.\n"
+
+    def fail_nine(timeout, lang="en"):
+        raise AssertionError("must not fetch the 9-day forecast")
+
+    monkeypatch.setattr("hk_weather.cli.fetch_nine_temp", fail_nine)
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_current",
+        lambda timeout, lang="en": replace(SAMPLE_WEATHER, temperature_c=None),
+    )
+    assert main(["--next-low"]) == 0
+    assert capsys.readouterr().out == "No temperature reading is available.\n"
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_current",
+        lambda timeout, lang="en": replace(SAMPLE_WEATHER, temperature_c=27),
+    )
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_nine_temp",
+        lambda timeout, lang="en": NineTemp("updated", ()),
+    )
+    assert main(["--next-low", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {"message": "No forecast low is available."}
+
+    assert main(["--next-low", "--high-gap"]) == 2
+    assert "(--high-gap --next-low)" in capsys.readouterr().err
+
+
 def test_cli_in_humidity_compares_current_humidity_with_the_next_range(monkeypatch, capsys):
     seen = {}
     report = NineHumidity(

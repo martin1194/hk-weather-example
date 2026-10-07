@@ -783,6 +783,7 @@ from hk_weather.hko import (
     format_lamppost_miss,
     format_today_miss,
     format_high_gap,
+    format_next_low,
     format_today_range,
     format_next_range,
     format_in_range,
@@ -1525,6 +1526,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--quake-ago prints how long ago that earthquake happened; "
             "--felt prints the locally felt earth tremor; --today prints today; "
             "--high-gap prints how far the current temperature is from today's forecast high; "
+            "--next-low compares the current temperature with the next forecast low; "
             "--today-range prints the span from today's forecast low to its high; "
             "--next-range prints that span for the first 9-day forecast day; "
             "--in-range says whether the current temperature is inside that range; "
@@ -2074,6 +2076,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--high-gap",
         action="store_true",
         help="Print how far the current temperature is from today's forecast high",
+    )
+    parser.add_argument(
+        "--next-low",
+        action="store_true",
+        help="Compare the current temperature with the next 9-day forecast low",
     )
     parser.add_argument(
         "--today-range",
@@ -4823,6 +4830,12 @@ def main(argv: list[str] | None = None) -> int:
             today = fetch_today(timeout=args.timeout, lang=args.lang)
             high = None if today is None else today.temp_high_c
             text = format_high_gap(weather.temperature_c, high, as_json=args.json)
+        elif args.next_low:
+            weather = fetch_current(timeout=args.timeout, lang=args.lang)
+            report = None
+            if weather.temperature_c is not None:
+                report = fetch_nine_temp(timeout=args.timeout, lang=args.lang)
+            text = format_next_low(weather.temperature_c, report, as_json=args.json)
         elif args.today_range:
             text = format_today_range(
                 fetch_today(timeout=args.timeout, lang=args.lang),

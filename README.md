@@ -109,6 +109,8 @@ hk-weather --today
 hk-weather -Y --json
 hk-weather --high-gap
 hk-weather --high-gap --json
+hk-weather --next-low
+hk-weather --next-low --json
 hk-weather --today-range
 hk-weather --today-range --json
 hk-weather --next-range
@@ -1132,6 +1134,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --today` (or `-Y`) prints only today's day from that forecast, using the Hong Kong calendar date. It includes weather, high and low, humidity, chance of rain, and wind when the Observatory sends them. `--today --json` prints that day as one JSON object. `--lang` applies. For example: `2026-10-03 Saturday  high 31°C  low 27°C  humidity 75-95%  rain Medium High`. If that day is missing, it says so.
 
 `hk-weather --high-gap` compares the current temperature with that day's forecast high. At 28°C with a high of 31°C it prints `3°C below today's high of 31°C`. A matching temperature prints `At today's high of 28°C`. A warmer reading prints how many degrees it is above the high. `--high-gap --json` prints the current temperature, the high, the gap, and that phrase. If today or its high is missing, it says `No forecast high is available.`
+
+`hk-weather --next-low` compares the current temperature with the next 9-day forecast low. At 27°C, with Thursday's low at 24°C, that is `27°C is 3°C above 2026-10-08 Thursday's low of 24°C.` A cooler reading says how far it is below that low, and a matching reading says it matches. Days with no low are skipped. `--high-gap` still uses today's forecast high. `--next-low --json` prints the current temperature, that day, the low, the gap, and that phrase. If the reading is missing, it says `No temperature reading is available.` If no low is listed, it says `No forecast low is available.`
 
 `hk-weather --today-range` prints the span from today's forecast low to its forecast high. A low of 27°C and a high of 31°C is `Today's range is 4°C`. `--today-range --json` prints the low, the high, and that span. If today or either temperature is missing, it says `No forecast range is available.`
 
