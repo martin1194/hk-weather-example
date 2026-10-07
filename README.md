@@ -1695,7 +1695,7 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 
 `hk-weather --icon-time` (or `-i`) prints when the current weather icon was last updated (`iconUpdateTime`). `--icon-time --json` prints that timestamp as one JSON object. `--lang` applies. If the field is missing or blank, it says `No icon update time is available.`
 
-`hk-weather --icon-ago` prints how long ago that change was, for example `The weather icon changed 7 hours 41 min ago.` A change in the last minute says `The weather icon changed just now.` `--icon-time` still prints the timestamp. `--icon-ago --json` prints the timestamp, the age, and that phrase. `--lang` applies. If the time is missing or still in the future, it says `No icon update time is available.`
+`hk-weather --icon-ago` prints how long ago that change was, for example `The weather icon changed 7 hours 44 min ago.` A change in the last minute says `The weather icon changed just now.` `--icon-time` still prints the timestamp. `--icon-ago --json` prints the timestamp, the age, and that phrase. `--lang` applies. If the time is missing or still in the future, it says `No icon update time is available.`
 
 `hk-weather --icon` prints the current weather icon number and label from that report (`icon`), for example `52  Sunny Intervals`. `--icon-time` still prints when the icon changed. `--forecast-icon` still prints each day's forecast icon. `--icon --json` prints the current icons as one JSON object. `--lang` applies. If no icon is present, it says `No weather icon is available.`
 
