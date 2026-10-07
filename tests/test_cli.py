@@ -3566,6 +3566,83 @@ def test_cli_in_humidity_compares_current_humidity_with_the_next_range(monkeypat
     }
 
 
+def test_cli_humid_floor_prints_the_first_minimum_change(monkeypatch, capsys):
+    seen = {}
+    report = NineHumidity(
+        "2026-10-07T11:30:00+08:00",
+        (
+            NineHumidityDay("2026-10-08", "Thursday", 75, None),
+            NineHumidityDay("2026-10-09", "Friday", 75, 50),
+            NineHumidityDay("2026-10-10", "Saturday", 75, 50),
+            NineHumidityDay("2026-10-11", "Sunday", 75, 50),
+            NineHumidityDay("2026-10-12", "Monday", 75, 55),
+        ),
+    )
+
+    def fake_humidity(timeout, lang="en"):
+        seen["lang"] = lang
+        return report
+
+    monkeypatch.setattr("hk_weather.cli.fetch_nine_humidity", fake_humidity)
+    assert main(["--humid-floor", "--lang", "tc"]) == 0
+    assert seen["lang"] == "tc"
+    assert capsys.readouterr().out == (
+        "The humidity floor rises on 2026-10-12 Monday, "
+        "from 50% on 2026-10-11 Sunday to 55%.\n"
+    )
+
+    assert main(["--humid-floor", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "from_date": "2026-10-11",
+        "from_week": "Sunday",
+        "from_percent": 50,
+        "to_date": "2026-10-12",
+        "to_week": "Monday",
+        "to_percent": 55,
+        "gap": 5,
+        "phrase": (
+            "The humidity floor rises on 2026-10-12 Monday, "
+            "from 50% on 2026-10-11 Sunday to 55%."
+        ),
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_nine_humidity",
+        lambda timeout, lang="en": NineHumidity(
+            "",
+            (
+                NineHumidityDay("2026-10-08", "Thursday", 75, 60),
+                NineHumidityDay("2026-10-09", "Friday", 70, 50),
+            ),
+        ),
+    )
+    assert main(["--humid-floor"]) == 0
+    assert capsys.readouterr().out == (
+        "The humidity floor falls on 2026-10-09 Friday, "
+        "from 60% on 2026-10-08 Thursday to 50%.\n"
+    )
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_nine_humidity",
+        lambda timeout, lang="en": NineHumidity(
+            "",
+            (
+                NineHumidityDay("2026-10-08", "Thursday", 75, 50),
+                NineHumidityDay("2026-10-09", "Friday", 80, 50),
+            ),
+        ),
+    )
+    assert main(["--humid-floor"]) == 0
+    assert capsys.readouterr().out == "No humidity floor change is in the forecast.\n"
+    assert main(["--humid-floor", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No humidity floor change is in the forecast."
+    }
+
+    assert main(["--humid-floor", "--in-humidity"]) == 2
+    assert "(--in-humidity --humid-floor)" in capsys.readouterr().err
+
+
 def test_cli_next_range_prints_the_first_forecast_span(monkeypatch, capsys):
     seen = {}
     report = NineTemp(

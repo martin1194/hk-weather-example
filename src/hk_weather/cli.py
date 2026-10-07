@@ -653,6 +653,7 @@ from hk_weather.hko import (
     format_nine_humidity,
     format_nine_humidity_miss,
     format_in_humidity,
+    format_humid_floor,
     format_sea_temp,
     format_sea_temp_miss,
     format_sea_gap,
@@ -1325,6 +1326,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--high-step compares the first forecast high with the next one; "
             "--nine-humidity prints each day's humidity from the 9-day forecast; "
             "--in-humidity says whether the current humidity is inside the next range; "
+            "--humid-floor prints the first day the forecast minimum humidity changes; "
             "--warnings lists active warnings; "
             "--warning-count prints how many warnings are in force; "
             "--warning-time prints when active warnings were issued; "
@@ -2028,6 +2030,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--in-humidity",
         action="store_true",
         help="Say whether the current humidity is inside the next forecast range",
+    )
+    parser.add_argument(
+        "--humid-floor",
+        action="store_true",
+        help="Print the first day the forecast minimum humidity changes",
     )
     parser.add_argument(
         "-Y",
@@ -4722,6 +4729,11 @@ def main(argv: list[str] | None = None) -> int:
                     weather.humidity_percent,
                     as_json=args.json,
                 )
+        elif args.humid_floor:
+            text = format_humid_floor(
+                fetch_nine_humidity(timeout=args.timeout, lang=args.lang),
+                as_json=args.json,
+            )
         elif args.today:
             today = fetch_today(timeout=args.timeout, lang=args.lang)
             if today is None:

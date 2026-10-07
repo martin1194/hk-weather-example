@@ -99,6 +99,8 @@ hk-weather --nine-humidity
 hk-weather --nine-humidity --json
 hk-weather --in-humidity
 hk-weather --in-humidity --json
+hk-weather --humid-floor
+hk-weather --humid-floor --json
 hk-weather --today
 hk-weather -Y --json
 hk-weather --high-gap
@@ -1104,6 +1106,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --nine-humidity` prints each day's humidity range from that forecast (`forecastMaxrh` and `forecastMinrh`), for example `2026-10-04 Sunday  humidity 65-95%`. `--humidity` still prints the current station readings. `--nine-humidity --json` prints those days as one JSON object. `--lang` applies. If no humidity is present, it says `No 9-day humidity is available.`
 
 `hk-weather --in-humidity` says whether the current humidity sits inside the next of those ranges. At 57% with a Thursday range of 50-75% it prints `Humidity 57% is inside 2026-10-08 Thursday's range of 50-75%.` A drier reading says below, and a wetter reading says above. `--in-range` still checks the temperature, and `--nine-humidity` still lists every day. `--in-humidity --json` prints the reading, the day, the range, and whether it is inside. If no range is present, it says `No forecast humidity range is available.` If the current reading is missing, it says `No humidity reading is available.`
+
+`hk-weather --humid-floor` prints the first day that minimum changes, for example `The humidity floor rises on 2026-10-12 Monday, from 50% on 2026-10-11 Sunday to 55%.` A lower minimum says it falls. Days with no minimum are skipped, and an unchanged minimum waits for the next day. `--nine-humidity` still lists every range, and `--in-humidity` still checks the current reading. `--humid-floor --json` prints both days, both minima, the gap, and that phrase. `--lang` applies. If the minimum never changes, it says `No humidity floor change is in the forecast.`
 
 `hk-weather --today` (or `-Y`) prints only today's day from that forecast, using the Hong Kong calendar date. It includes weather, high and low, humidity, chance of rain, and wind when the Observatory sends them. `--today --json` prints that day as one JSON object. `--lang` applies. For example: `2026-10-03 Saturday  high 31°C  low 27°C  humidity 75-95%  rain Medium High`. If that day is missing, it says so.
 
