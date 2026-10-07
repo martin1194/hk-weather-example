@@ -774,6 +774,7 @@ from hk_weather.hko import (
     format_wet_bulb_miss,
     format_airport_wet_miss,
     format_park_wet_miss,
+    format_wet_dew,
     format_sha_lo_wan_wet_miss,
     format_nei_lak_shan_wet_miss,
     format_solar,
@@ -1471,6 +1472,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--wet-bulb prints the latest daily wet-bulb temperature; "
             "--airport-wet prints the latest daily wet-bulb temperature at the airport; "
             "--park-wet prints the latest daily wet-bulb temperature at King's Park; "
+            "--wet-dew compares that wet-bulb temperature with the dew point; "
             "--sha-lo-wan-wet prints the latest daily wet-bulb temperature at Sha Lo Wan; "
             "--nei-lak-shan-wet prints the latest daily wet-bulb temperature at Nei Lak Shan; "
             "--solar prints the latest solar radiation; "
@@ -4484,6 +4486,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--park-wet",
         action="store_true",
         help="Print the latest daily mean wet-bulb temperature at King's Park",
+    )
+    parser.add_argument(
+        "--wet-dew",
+        action="store_true",
+        help="Compare King's Park wet-bulb temperature with the dew point on the same day",
     )
     parser.add_argument(
         "--sha-lo-wan-wet",
@@ -9110,6 +9117,12 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_park_wet_miss(as_json=args.json)
             else:
                 text = format_json(park_wet) if args.json else format_wet_bulb(park_wet)
+        elif args.wet_dew:
+            wet = fetch_park_wet(timeout=args.timeout, lang=args.lang)
+            dew = None
+            if wet is not None:
+                dew = fetch_park_dew(timeout=args.timeout, lang=args.lang)
+            text = format_wet_dew(wet, dew, as_json=args.json)
         elif args.sha_lo_wan_wet:
             sha_lo_wan_wet = fetch_sha_lo_wan_wet(timeout=args.timeout, lang=args.lang)
             if sha_lo_wan_wet is None:

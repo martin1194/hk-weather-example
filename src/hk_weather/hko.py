@@ -18327,6 +18327,43 @@ def format_park_wet_miss(*, as_json: bool = False) -> str:
     return _unavailable("No King's Park wet bulb temperature is available.", as_json=as_json)
 
 
+def format_wet_dew(wet: WetBulb | None, dew: DewPoint | None, *, as_json: bool) -> str:
+    """Compare King's Park wet-bulb temperature with the dew point on the same day."""
+    if wet is None:
+        return _unavailable("No King's Park wet bulb temperature is available.", as_json=as_json)
+    if dew is None:
+        return _unavailable("No King's Park dew point is available.", as_json=as_json)
+    if wet.date != dew.date:
+        return _unavailable("No shared wet-bulb day is available.", as_json=as_json)
+    gap = round(wet.wet_bulb_c - dew.dew_point_c, 1)
+    station = wet.station
+    wet_text = _number(wet.wet_bulb_c)
+    dew_text = _number(dew.dew_point_c)
+    if gap > 0:
+        phrase = (
+            f"On {wet.date}, {station} wet-bulb of {wet_text}°C is {_number(gap)}°C "
+            f"above the dew point of {dew_text}°C."
+        )
+    elif gap < 0:
+        phrase = (
+            f"On {wet.date}, {station} wet-bulb of {wet_text}°C is {_number(abs(gap))}°C "
+            f"below the dew point of {dew_text}°C."
+        )
+    else:
+        phrase = f"On {wet.date}, {station} wet-bulb matches the dew point of {dew_text}°C."
+    if as_json:
+        payload = {
+            "date": wet.date,
+            "station": station,
+            "wet_bulb_c": wet.wet_bulb_c,
+            "dew_point_c": dew.dew_point_c,
+            "gap_c": gap,
+            "phrase": phrase,
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
+
+
 _SHA_LO_WAN_STATIONS = {
     "en": "Sha Lo Wan",
     "tc": "沙螺灣",
