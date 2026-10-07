@@ -3047,6 +3047,92 @@ def test_cli_hottest_day_prints_the_highest_forecast_day(monkeypatch, capsys):
     assert capsys.readouterr().out == "No forecast high is available.\n"
 
 
+def test_cli_high_step_compares_the_first_two_forecast_highs(monkeypatch, capsys):
+    seen = {}
+    report = NineTemp(
+        "2026-10-07T14:50:00+08:00",
+        (
+            NineTempDay("2026-10-08", "Thursday", 30, 25),
+            NineTempDay("2026-10-09", "Friday", 31, 26),
+            NineTempDay("2026-10-13", "Tuesday", 32, 27),
+        ),
+    )
+
+    def fake_fetch(timeout, lang="en"):
+        seen["lang"] = lang
+        return report
+
+    monkeypatch.setattr("hk_weather.cli.fetch_nine_temp", fake_fetch)
+    assert main(["--high-step", "--lang", "tc"]) == 0
+    assert seen["lang"] == "tc"
+    assert capsys.readouterr().out == (
+        "2026-10-09 Friday's high of 31°C is 1°C warmer than 2026-10-08 Thursday's 30°C.\n"
+    )
+
+    assert main(["--high-step", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "from_date": "2026-10-08",
+        "from_week": "Thursday",
+        "from_high_c": 30,
+        "to_date": "2026-10-09",
+        "to_week": "Friday",
+        "to_high_c": 31,
+        "gap_c": 1,
+        "phrase": (
+            "2026-10-09 Friday's high of 31°C is 1°C warmer than "
+            "2026-10-08 Thursday's 30°C."
+        ),
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_nine_temp",
+        lambda timeout, lang="en": NineTemp(
+            "",
+            (
+                NineTempDay("2026-10-08", "Thursday", 30, 25),
+                NineTempDay("2026-10-09", "Friday", None, 26),
+                NineTempDay("2026-10-10", "Saturday", 29, 26),
+            ),
+        ),
+    )
+    assert main(["--high-step"]) == 0
+    assert capsys.readouterr().out == (
+        "2026-10-10 Saturday's high of 29°C is 1°C cooler than 2026-10-08 Thursday's 30°C.\n"
+    )
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_nine_temp",
+        lambda timeout, lang="en": NineTemp(
+            "",
+            (
+                NineTempDay("2026-10-08", "Thursday", 31, 26),
+                NineTempDay("2026-10-09", "Friday", 31, 26),
+            ),
+        ),
+    )
+    assert main(["--high-step"]) == 0
+    assert capsys.readouterr().out == (
+        "2026-10-09 Friday's high matches 2026-10-08 Thursday's 31°C.\n"
+    )
+
+    assert main(["--high-step", "--nine-temp"]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "pass one report flag at a time (--nine-temp --high-step)" in captured.err
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_nine_temp",
+        lambda timeout, lang="en": NineTemp("", (NineTempDay("2026-10-08", "Thursday", 30, 25),)),
+    )
+    assert main(["--high-step"]) == 0
+    assert capsys.readouterr().out == "No following forecast high is available.\n"
+
+    assert main(["--high-step", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No following forecast high is available."
+    }
+
+
 def test_cli_nine_humidity_lists_each_day(monkeypatch, capsys):
     seen = {}
 

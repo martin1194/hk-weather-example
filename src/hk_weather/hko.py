@@ -10509,6 +10509,44 @@ def format_hottest_day(report: NineTemp, *, as_json: bool) -> str:
     return phrase + "\n"
 
 
+def format_high_step(report: NineTemp, *, as_json: bool) -> str:
+    """Compare the first forecast high with the next high after it."""
+    ranked = [day for day in report.days if day.temp_high_c is not None]
+    if len(ranked) < 2:
+        return _unavailable("No following forecast high is available.", as_json=as_json)
+    earlier, later = ranked[0], ranked[1]
+    gap = round(later.temp_high_c - earlier.temp_high_c, 1)
+    earlier_label = _forecast_day_label(earlier)
+    later_label = _forecast_day_label(later)
+    earlier_high = _number(earlier.temp_high_c)
+    later_high = _number(later.temp_high_c)
+    if gap > 0:
+        phrase = (
+            f"{later_label}'s high of {later_high}°C is {_number(gap)}°C warmer than "
+            f"{earlier_label}'s {earlier_high}°C."
+        )
+    elif gap < 0:
+        phrase = (
+            f"{later_label}'s high of {later_high}°C is {_number(abs(gap))}°C cooler than "
+            f"{earlier_label}'s {earlier_high}°C."
+        )
+    else:
+        phrase = f"{later_label}'s high matches {earlier_label}'s {earlier_high}°C."
+    if as_json:
+        payload = {
+            "from_date": earlier.date,
+            "from_week": earlier.week,
+            "from_high_c": earlier.temp_high_c,
+            "to_date": later.date,
+            "to_week": later.week,
+            "to_high_c": later.temp_high_c,
+            "gap_c": gap,
+            "phrase": phrase,
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
+
+
 def parse_nine_humidity(payload: dict) -> NineHumidity:
     """Turn `fnd` forecast humidity fields into one line per day."""
     raw_days = payload.get("weatherForecast")

@@ -89,6 +89,8 @@ hk-weather --nine-temp
 hk-weather --nine-temp --json
 hk-weather --hottest-day
 hk-weather --hottest-day --json
+hk-weather --high-step
+hk-weather --high-step --json
 hk-weather --nine-humidity
 hk-weather --nine-humidity --json
 hk-weather --today
@@ -1080,6 +1082,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --nine-temp` prints each day's high and low from that forecast (`forecastMaxtemp` and `forecastMintemp`), for example `2026-10-04 Sunday  high 31°C  low 26°C`. `--temps` still prints the current station temperatures. `--nine-temp --json` prints those days as one JSON object. `--lang` applies. If no temperature is present, it says `No 9-day temperatures are available.`
 
 `hk-weather --hottest-day` prints the day with the highest of those forecast highs. When Tuesday and Wednesday both reach 32°C, that is `Hottest days: 2026-10-13 Tuesday and 2026-10-14 Wednesday, 32°C`. One day on its own says `Hottest day`. `--nine-temp` still lists every day. `--hottest-day --json` prints the high, the tied days, and that phrase. If no forecast high is present, it says `No forecast high is available.`
+
+`hk-weather --high-step` compares the first of those highs with the next one after it. Friday at 31°C after Thursday at 30°C is `2026-10-09 Friday's high of 31°C is 1°C warmer than 2026-10-08 Thursday's 30°C.` A lower next high says cooler, and the same high says it matches. `--hottest-day` still prints the highest day in the whole forecast. `--high-step --json` prints both days, both highs, the gap, and that phrase. If fewer than two highs are present, it says `No following forecast high is available.`
 
 `hk-weather --nine-humidity` prints each day's humidity range from that forecast (`forecastMaxrh` and `forecastMinrh`), for example `2026-10-04 Sunday  humidity 65-95%`. `--humidity` still prints the current station readings. `--nine-humidity --json` prints those days as one JSON object. `--lang` applies. If no humidity is present, it says `No 9-day humidity is available.`
 
