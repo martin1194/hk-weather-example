@@ -17751,6 +17751,69 @@ def format_wbgt_miss(*, as_json: bool = False) -> str:
     return _unavailable("No wet bulb globe temperature is available.", as_json=as_json)
 
 
+def format_wbgt_heat(
+    wbgt: WbgtReport | None, heat: HeatIndexReport | None, *, as_json: bool
+) -> str:
+    """Print where the wet bulb globe temperature differs most from the heat index."""
+    wbgt_stations = () if wbgt is None else wbgt.stations
+    heat_stations = () if heat is None else heat.stations
+    if not wbgt_stations:
+        return _unavailable("No wet bulb globe temperature is available.", as_json=as_json)
+    if not heat_stations:
+        return _unavailable("No heat index is available.", as_json=as_json)
+    heat_by_place = {
+        reading.place: reading.heat_index for reading in heat_stations if reading.place
+    }
+    pairs: list[tuple[float, str, float, float]] = []
+    for reading in wbgt_stations:
+        if not reading.place or reading.place not in heat_by_place:
+            continue
+        heat_value = heat_by_place[reading.place]
+        gap = round(reading.wbgt_c - heat_value, 1)
+        pairs.append((gap, reading.place, reading.wbgt_c, heat_value))
+    if not pairs:
+        return _unavailable(
+            "No wet bulb globe temperature comparison is available.",
+            as_json=as_json,
+        )
+    widest = max(abs(item[0]) for item in pairs)
+    first = next(item for item in pairs if abs(item[0]) == widest)
+    chosen = [
+        item
+        for item in pairs
+        if item[0] == first[0] and item[2] == first[2] and item[3] == first[3]
+    ]
+    gap, _place, wbgt_c, heat_value = first
+    listed = _join_headings([item[1] for item in chosen])
+    wbgt_text = _number(wbgt_c)
+    heat_text = _number(heat_value)
+    if gap > 0:
+        phrase = (
+            f"Wet bulb globe temperature at {listed} is {wbgt_text}°C, "
+            f"{_number(gap)} above the heat index of {heat_text}."
+        )
+    elif gap < 0:
+        phrase = (
+            f"Wet bulb globe temperature at {listed} is {wbgt_text}°C, "
+            f"{_number(abs(gap))} below the heat index of {heat_text}."
+        )
+    else:
+        phrase = (
+            f"Wet bulb globe temperature at {listed} matches the heat index of {heat_text}."
+        )
+    if as_json:
+        payload = {
+            "time": wbgt.obs_time if wbgt is not None else "",
+            "places": [item[1] for item in chosen],
+            "wbgt_c": wbgt_c,
+            "heat_index": heat_value,
+            "gap": gap,
+            "phrase": phrase,
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
+
+
 _WET_BULB_STATIONS = {
     "en": "Hong Kong Observatory",
     "tc": "香港天文台",

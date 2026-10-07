@@ -1011,6 +1011,8 @@ hk-weather --mean-heat
 hk-weather --mean-heat --json
 hk-weather --wbgt
 hk-weather --wbgt --json
+hk-weather --wbgt-heat
+hk-weather --wbgt-heat --json
 hk-weather --wet-bulb
 hk-weather --wet-bulb --json
 hk-weather --airport-wet
@@ -2048,6 +2050,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --mean-heat` prints the latest daily mean Hong Kong Heat Index at King's Park, for example `2026-08-31  26.6`. `--daily-heat` still prints that day's maximum, and `--heat-index` still prints the latest 10-minute readings. `--mean-heat --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No daily mean heat index is available.`
 
 `hk-weather --wbgt` prints the latest 60-minute mean Wet Bulb Globe Temperature at automatic stations, for example `Happy Valley  25.8°C`. `--heat-index` still prints the Hong Kong Heat Index. Earlier minutes in the file are omitted. `--wbgt --json` prints that minute as one JSON object. `--lang` selects the station names. Stations marked `N/A` are omitted. If none remain, it says `No wet bulb globe temperature is available.`
+
+`hk-weather --wbgt-heat` prints the station where that temperature differs most from the heat index at the same place. Beas River at 21.5°C against a heat index of 20.8 is `Wet bulb globe temperature at Beas River is 21.5°C, 0.7 above the heat index of 20.8.` A lower reading says below, and the same number says it matches. Stations that share that difference and those readings are listed together. `--wbgt` still lists every station, and `--heat-gap` still compares the heat index with the air. `--wbgt-heat --json` prints the places, both readings, the signed gap, and that phrase. `--lang` applies. If the wet bulb globe temperature is missing, it says `No wet bulb globe temperature is available.` If the heat index is missing, it says `No heat index is available.` If the stations do not overlap, it says `No wet bulb globe temperature comparison is available.`
 
 `hk-weather --wet-bulb` prints the latest daily mean wet-bulb temperature at the Observatory, for example `2026-08-31  25.8°C`. `--wbgt` still prints the current Wet Bulb Globe Temperature. `--dew-point` still prints the dew point. `--wet-bulb --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No wet bulb temperature is available.`
 

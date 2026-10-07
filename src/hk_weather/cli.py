@@ -757,6 +757,7 @@ from hk_weather.hko import (
     format_mean_heat,
     format_mean_heat_miss,
     format_wbgt,
+    format_wbgt_heat,
     format_wbgt_miss,
     format_wet_bulb,
     format_wet_bulb_miss,
@@ -1442,6 +1443,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--daily-heat prints the latest daily maximum heat index at King's Park; "
             "--mean-heat prints the latest daily mean heat index at King's Park; "
             "--wbgt prints the latest Wet Bulb Globe Temperature; "
+            "--wbgt-heat prints where that temperature differs most from the heat index; "
             "--wet-bulb prints the latest daily wet-bulb temperature; "
             "--airport-wet prints the latest daily wet-bulb temperature at the airport; "
             "--park-wet prints the latest daily wet-bulb temperature at King's Park; "
@@ -4361,6 +4363,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--wbgt",
         action="store_true",
         help="Print the latest 60-minute mean Wet Bulb Globe Temperature",
+    )
+    parser.add_argument(
+        "--wbgt-heat",
+        action="store_true",
+        help="Print where the wet bulb globe temperature differs most from the heat index",
     )
     parser.add_argument(
         "--wet-bulb",
@@ -8893,6 +8900,12 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_wbgt_miss(as_json=args.json)
             else:
                 text = format_json(wbgt) if args.json else format_wbgt(wbgt)
+        elif args.wbgt_heat:
+            wbgt = fetch_wbgt(timeout=args.timeout, lang=args.lang)
+            heat = None
+            if wbgt.stations:
+                heat = fetch_heat_index(timeout=args.timeout, lang=args.lang)
+            text = format_wbgt_heat(wbgt, heat, as_json=args.json)
         elif args.wet_bulb:
             wet_bulb = fetch_wet_bulb(timeout=args.timeout, lang=args.lang)
             if wet_bulb is None:
