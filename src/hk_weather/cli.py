@@ -763,6 +763,7 @@ from hk_weather.hko import (
     format_uv,
     format_fifteen_uv,
     format_fifteen_uv_miss,
+    format_uv_level,
     format_visibility,
     format_reduced_vis,
     format_reduced_vis_miss,
@@ -1290,6 +1291,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--warning-ago prints how long each warning has been in force; "
             "--uv prints the UV index; "
             "--fifteen-uv prints the latest 15-minute mean UV index; "
+            "--uv-level prints whether that 15-minute index is low through extreme; "
             "--icon-time prints when the weather icon changed; "
             "--icon prints the current weather icon; "
             "--current-updated prints when the current weather report was updated; "
@@ -3360,6 +3362,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--fifteen-uv",
         action="store_true",
         help="Print the latest 15-minute mean UV index at King's Park",
+    )
+    parser.add_argument(
+        "--uv-level",
+        action="store_true",
+        help="Print the exposure band for the latest 15-minute UV index",
     )
     parser.add_argument(
         "-i",
@@ -7036,6 +7043,11 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_fifteen_uv_miss(as_json=args.json)
             else:
                 text = format_json(fifteen_uv) if args.json else format_fifteen_uv(fifteen_uv)
+        elif args.uv_level:
+            text = format_uv_level(
+                fetch_fifteen_uv(timeout=args.timeout, lang=args.lang),
+                as_json=args.json,
+            )
         elif args.icon_time:
             icon_time = fetch_icon_time(timeout=args.timeout, lang=args.lang)
             if icon_time is None:

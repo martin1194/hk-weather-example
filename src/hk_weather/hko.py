@@ -16482,6 +16482,38 @@ def format_fifteen_uv_miss(*, as_json: bool = False) -> str:
     return _unavailable("No 15-minute UV index is available.", as_json=as_json)
 
 
+def _uv_level(value: float) -> str | None:
+    """Band for a UV index: low, moderate, high, very high, or extreme."""
+    if value < 0:
+        return None
+    if value < 3:
+        return "low"
+    if value < 6:
+        return "moderate"
+    if value < 8:
+        return "high"
+    if value < 11:
+        return "very high"
+    return "extreme"
+
+
+def format_uv_level(reading: FifteenUv | None, *, as_json: bool) -> str:
+    """Print the exposure band for the latest 15-minute UV index."""
+    level = _uv_level(reading.uv_index) if reading is not None else None
+    if reading is None or level is None:
+        return _unavailable("No 15-minute UV index is available.", as_json=as_json)
+    phrase = f"UV {level}, {_number(reading.uv_index)}"
+    if as_json:
+        payload = {
+            "station": reading.station,
+            "time": reading.time,
+            "uv": reading.uv_index,
+            "level": level,
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
+
+
 def parse_icon_time(payload: dict) -> IconUpdate | None:
     """Turn the `rhrread` icon update time into one timestamp."""
     text = _text(payload.get("iconUpdateTime"))
