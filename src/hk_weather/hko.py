@@ -27449,6 +27449,44 @@ def format_cloud_strikes_miss(*, as_json: bool = False) -> str:
     return _unavailable("No cloud-to-cloud lightning count is available.", as_json=as_json)
 
 
+def format_flash_gap(
+    ground: DailyStrikes | None, cloud: CloudStrikes | None, *, as_json: bool
+) -> str:
+    """Compare the latest cloud-to-cloud count with the cloud-to-ground count."""
+    if ground is None:
+        return _unavailable("No daily lightning count is available.", as_json=as_json)
+    if cloud is None:
+        return _unavailable("No cloud-to-cloud lightning count is available.", as_json=as_json)
+    if ground.date != cloud.date:
+        return _unavailable("No shared lightning day is available.", as_json=as_json)
+    gap = round(cloud.count - ground.count, 1)
+    if gap > 0:
+        phrase = (
+            f"On {ground.date}, cloud-to-cloud lightning is {_number(gap)} above "
+            f"the cloud-to-ground count of {_number(ground.count)}."
+        )
+    elif gap < 0:
+        phrase = (
+            f"On {ground.date}, cloud-to-ground lightning is {_number(abs(gap))} above "
+            f"the cloud-to-cloud count of {_number(cloud.count)}."
+        )
+    else:
+        phrase = (
+            f"On {ground.date}, cloud-to-cloud lightning matches "
+            f"the cloud-to-ground count of {_number(ground.count)}."
+        )
+    if as_json:
+        payload = {
+            "date": ground.date,
+            "ground": ground.count,
+            "cloud": cloud.count,
+            "gap": gap,
+            "phrase": phrase,
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
+
+
 def _strike_period(value: object) -> tuple[str, str]:
     text = _text(value)
     start, sep, end = text.partition("-")

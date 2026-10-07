@@ -709,6 +709,7 @@ from hk_weather.hko import (
     format_daily_strikes_miss,
     format_cloud_strikes,
     format_cloud_strikes_miss,
+    format_flash_gap,
     format_sunrise,
     format_sunrise_miss,
     format_until_sunset,
@@ -1385,6 +1386,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--lightning lists lightning locations; --strikes lists hourly lightning counts; "
             "--daily-strikes prints the latest daily cloud-to-ground count; "
             "--cloud-strikes prints the latest daily cloud-to-cloud count; "
+            "--flash-gap compares that cloud-to-cloud count with the cloud-to-ground count; "
             "--humidity lists humidity readings; "
             "--humidity-time prints when those readings were recorded; "
             "--minute-humidity prints the latest 1-minute mean humidity; "
@@ -4049,6 +4051,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--cloud-strikes",
         action="store_true",
         help="Print the latest daily cloud-to-cloud lightning count over Hong Kong",
+    )
+    parser.add_argument(
+        "--flash-gap",
+        action="store_true",
+        help="Compare the latest cloud-to-cloud lightning count with the cloud-to-ground count",
     )
     parser.add_argument(
         "--humidity",
@@ -8317,6 +8324,12 @@ def main(argv: list[str] | None = None) -> int:
                     if args.json
                     else format_cloud_strikes(cloud_strikes)
                 )
+        elif args.flash_gap:
+            ground = fetch_daily_strikes(timeout=args.timeout, lang=args.lang)
+            cloud = None
+            if ground is not None:
+                cloud = fetch_cloud_strikes(timeout=args.timeout, lang=args.lang)
+            text = format_flash_gap(ground, cloud, as_json=args.json)
         elif args.humidity:
             humidity = fetch_humidity(timeout=args.timeout, lang=args.lang)
             text = format_json(humidity) if args.json else format_humidity(humidity)

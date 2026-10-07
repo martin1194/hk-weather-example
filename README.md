@@ -877,6 +877,8 @@ hk-weather --daily-strikes
 hk-weather --daily-strikes --json
 hk-weather --cloud-strikes
 hk-weather --cloud-strikes --json
+hk-weather --flash-gap
+hk-weather --flash-gap --json
 hk-weather --humidity
 hk-weather --humidity --json
 hk-weather --humidity-time
@@ -1936,6 +1938,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --daily-strikes` prints the latest daily cloud-to-ground lightning count over Hong Kong, for example `2026-08-31  42`. `--strikes` still prints the hourly counts. A count of zero is kept. `--daily-strikes --json` prints that day as one JSON object. Days marked `***` are omitted. If none remain, it says `No daily lightning count is available.`
 
 `hk-weather --cloud-strikes` prints the latest daily cloud-to-cloud lightning count over Hong Kong, for example `2026-08-31  158`. `--daily-strikes` still prints the cloud-to-ground count. A count of zero is kept. `--cloud-strikes --json` prints that day as one JSON object. Days marked `***` are omitted. If none remain, it says `No cloud-to-cloud lightning count is available.`
+
+`hk-weather --flash-gap` compares those two latest counts when they fall on the same day. On 2026-08-31, 158 cloud-to-cloud flashes against 42 cloud-to-ground flashes is `On 2026-08-31, cloud-to-cloud lightning is 116 above the cloud-to-ground count of 42.` A higher cloud-to-ground count says that count is above the cloud-to-cloud count. A match says the cloud-to-cloud count matches. `--daily-strikes` and `--cloud-strikes` still print each count on its own. `--flash-gap --json` prints both counts, the date, the signed gap, and that phrase. `--lang` applies. If the cloud-to-ground count is missing, it says `No daily lightning count is available.` If the cloud-to-cloud count is missing, it says `No cloud-to-cloud lightning count is available.` If the dates differ, it says `No shared lightning day is available.`
 
 `hk-weather --humidity` prints humidity by place from the current report, with the record time when the Observatory includes it. `--humidity --json` prints that list as one JSON object. If no reading is present, it says so.
 
