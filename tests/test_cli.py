@@ -20607,6 +20607,76 @@ def test_cli_sunny_days_lists_icon_50(monkeypatch, capsys):
     assert "(--today-icon --sunny-days)" in capsys.readouterr().err
 
 
+def test_cli_icon_change_prints_the_first_different_icon(monkeypatch, capsys):
+    seen = {}
+    report = ForecastIcons(
+        "2026-10-07T16:30:00+08:00",
+        (
+            ForecastIconDay("2026-10-08", "Thursday", 51, "Sunny Periods"),
+            ForecastIconDay("2026-10-09", "Friday", 51, "Sunny Periods"),
+            ForecastIconDay("2026-10-10", "Saturday", 50, "Sunny"),
+        ),
+    )
+
+    def fake_fetch(timeout, lang="en"):
+        seen["lang"] = lang
+        return report
+
+    monkeypatch.setattr("hk_weather.cli.fetch_forecast_icon", fake_fetch)
+    assert main(["--icon-change", "--lang", "tc"]) == 0
+    assert seen["lang"] == "tc"
+    assert capsys.readouterr().out == (
+        "The forecast icon changes on 2026-10-10 Saturday, "
+        "from 51 Sunny Periods to 50 Sunny.\n"
+    )
+
+    assert main(["--icon-change", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "from_date": "2026-10-09",
+        "from_week": "Friday",
+        "from_icon": 51,
+        "from_label": "Sunny Periods",
+        "to_date": "2026-10-10",
+        "to_week": "Saturday",
+        "to_icon": 50,
+        "to_label": "Sunny",
+        "phrase": (
+            "The forecast icon changes on 2026-10-10 Saturday, "
+            "from 51 Sunny Periods to 50 Sunny."
+        ),
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_forecast_icon",
+        lambda timeout, lang="en": ForecastIcons(
+            "",
+            (
+                ForecastIconDay("2026-10-08", "Thursday", 51, "Sunny Periods"),
+                ForecastIconDay("2026-10-09", "Friday", 51, "Sunny Periods"),
+            ),
+        ),
+    )
+    assert main(["--icon-change"]) == 0
+    assert capsys.readouterr().out == "The forecast icon does not change.\n"
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_forecast_icon",
+        lambda timeout, lang="en": ForecastIcons(
+            "",
+            (ForecastIconDay("2026-10-08", "Thursday", 51, "Sunny Periods"),),
+        ),
+    )
+    assert main(["--icon-change"]) == 0
+    assert capsys.readouterr().out == "No forecast icon change is available.\n"
+    assert main(["--icon-change", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No forecast icon change is available."
+    }
+
+    assert main(["--icon-change", "--forecast-icon"]) == 2
+    assert "(--forecast-icon --icon-change)" in capsys.readouterr().err
+
+
 def test_cli_forecast_icon_json_is_one_object(monkeypatch, capsys):
     monkeypatch.setattr(
         "hk_weather.hko.urllib.request.urlopen",

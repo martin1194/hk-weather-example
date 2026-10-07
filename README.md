@@ -630,6 +630,8 @@ hk-weather --tap-mun-east-wind
 hk-weather --tap-mun-east-wind --json
 hk-weather --forecast-icon
 hk-weather --forecast-icon --json
+hk-weather --icon-change
+hk-weather --icon-change --json
 hk-weather --sunny-days
 hk-weather --sunny-days --json
 hk-weather --today-icon
@@ -1642,6 +1644,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --tap-mun-east-wind` prints the latest daily mean wind speed at Tap Mun East, for example `2026-08-31  6 km/h`. `--mean-wind` still prints Waglan Island, and the other station wind flags still print their own stations. `--yi-tung-shan-wind` still prints Yi Tung Shan, and `--tap-mun-temp` still prints Tap Mun. A speed of zero is kept. `--tap-mun-east-wind --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `塔門東` and simplified text uses `塔门东`. Days marked `***` are omitted. If none remain, it says `No Tap Mun East mean wind speed is available.`
 
 `hk-weather --forecast-icon` prints each day's weather icon from that forecast (`ForecastIcon`), for example `2026-10-04 Sunday  54  Sunny Intervals with Showers`. `--wind` still prints the wind. `--forecast-icon --json` prints those days as one JSON object. `--lang` applies. If no icon is present, it says `No forecast icons are available.`
+
+`hk-weather --icon-change` prints the first day that icon differs from the day before it, for example `The forecast icon changes on 2026-10-10 Saturday, from 51 Sunny Periods to 50 Sunny.` `--forecast-icon` still prints every icon, and `--sunny-days` still lists the Sunny days. `--icon-change --json` prints both days, both icons, and that phrase. `--lang` applies. If the icon stays the same, it says `The forecast icon does not change.` If fewer than two icons are present, it says `No forecast icon change is available.`
 
 `hk-weather --sunny-days` lists only the days whose icon is 50 Sunny. Four of them read `4 sunny days: 2026-10-10 Saturday, 2026-10-11 Sunday, 2026-10-12 Monday, and 2026-10-13 Tuesday`. One day says `1 sunny day`. Sunny Periods (icon 51) stays out. `--forecast-icon` still prints every icon. `--sunny-days --json` prints the count, those days, and that phrase. If none are Sunny, it says `No sunny day is in the forecast.` If no icon is present, it says `No forecast icons are available.`
 
