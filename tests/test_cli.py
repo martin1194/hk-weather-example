@@ -98,6 +98,7 @@ def test_cli_find_lists_matching_flags(monkeypatch, capsys):
     assert capsys.readouterr().out == (
         "-I, --tide  Print today's high and low tides at Quarry Bay\n"
         "--tide-hour  Print today's hourly tide heights at Quarry Bay\n"
+        "--tide-turn  Print whether the Quarry Bay tide is rising or falling this hour\n"
         "--tide-latest  Print the latest observed tide height at tide stations\n"
         "--tide-span  Print the gap between the lowest and highest latest tide heights\n"
         "--next-tide  Print how long until the next high or low tide at Quarry Bay\n"
@@ -108,6 +109,7 @@ def test_cli_find_lists_matching_flags(monkeypatch, capsys):
     assert [item["options"][-1] for item in payload] == [
         "--tide",
         "--tide-hour",
+        "--tide-turn",
         "--tide-latest",
         "--tide-span",
         "--next-tide",
@@ -20089,6 +20091,82 @@ def test_cli_tide_hour_json_is_one_object(monkeypatch, capsys):
         "date": "2026-10-03",
         "hours": [{"hour": "01:00", "height_m": 2.44}],
     }
+
+
+def test_cli_tide_turn_prints_whether_the_tide_is_rising(monkeypatch, capsys):
+    from datetime import datetime
+
+    seen = {}
+    monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-07")
+    payload = {
+        "fields": ["MM", "DD", "06", "07", "12", "13", "14"],
+        "data": [["10", "7", "2.34", "2.34", "0.92", "0.78", "0.81"]],
+    }
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response(payload)
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    monkeypatch.setattr(
+        "hk_weather.hko._clock",
+        lambda: datetime.fromisoformat("2026-10-07T12:34:00+08:00"),
+    )
+    assert main(["--tide-turn", "--lang", "tc"]) == 0
+    assert "dataType=HHOT" in seen["url"]
+    assert "station=QUB" in seen["url"]
+    assert "lang=tc" in seen["url"]
+    assert capsys.readouterr().out == (
+        "Tide is falling at Quarry Bay: 2026-10-07 12:00 0.92 m to 13:00 0.78 m\n"
+    )
+
+    assert main(["--tide-turn", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "station": "Quarry Bay",
+        "date": "2026-10-07",
+        "from": "12:00",
+        "to": "13:00",
+        "from_m": 0.92,
+        "to_m": 0.78,
+        "turn": "falling",
+        "phrase": "Tide is falling at Quarry Bay: 2026-10-07 12:00 0.92 m to 13:00 0.78 m",
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.hko._clock",
+        lambda: datetime.fromisoformat("2026-10-07T13:30:00+08:00"),
+    )
+    assert main(["--tide-turn"]) == 0
+    assert capsys.readouterr().out == (
+        "Tide is rising at Quarry Bay: 2026-10-07 13:00 0.78 m to 14:00 0.81 m\n"
+    )
+
+    monkeypatch.setattr(
+        "hk_weather.hko._clock",
+        lambda: datetime.fromisoformat("2026-10-07T06:10:00+08:00"),
+    )
+    assert main(["--tide-turn"]) == 0
+    assert capsys.readouterr().out == (
+        "Tide is steady at Quarry Bay: 2026-10-07 06:00 2.34 m to 07:00 2.34 m\n"
+    )
+
+    assert main(["--tide-turn", "--tide-hour"]) == 2
+    assert "(--tide-hour --tide-turn)" in capsys.readouterr().err
+
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {"fields": ["MM", "DD", "12"], "data": [["10", "7", "0.92"]]}
+        ),
+    )
+    assert main(["--tide-turn"]) == 0
+    assert capsys.readouterr().out == "No tide turn is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"data": []}),
+    )
+    assert main(["--tide-turn", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {"message": "No tide turn is available."}
 
 
 def test_cli_tide_hour_when_missing(monkeypatch, capsys):
