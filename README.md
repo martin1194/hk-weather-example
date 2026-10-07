@@ -1001,6 +1001,8 @@ hk-weather --temp-diff
 hk-weather --temp-diff --json
 hk-weather --temp-shift
 hk-weather --temp-shift --json
+hk-weather --temp-drop
+hk-weather --temp-drop --json
 hk-weather --heat-index
 hk-weather --heat-index --json
 hk-weather --heat-gap
@@ -2042,6 +2044,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --temp-diff` prints the past 24-hour air-temperature change at automatic stations, for example `Chek Lap Kok  -0.6°C` and `HK Observatory  +0.4°C`. `--minute-temp` still prints the latest 1-minute temperature. `--temp-diff --json` prints those stations as one JSON object. `--lang` selects the station names. Stations marked `N/A` are omitted. If none remain, it says `No 24-hour temperature changes are available.`
 
 `hk-weather --temp-shift` counts those changes, for example `At 2026-10-07 14:10, 11 stations are cooler than 24 hours ago, and 26 are warmer.` `--temp-diff` still lists every station. A change of zero is unchanged and stays out of that sentence. `--temp-shift --json` prints the cooler, warmer, and unchanged counts as one JSON object. `--lang` selects the bulletin language. If no numeric changes remain, it says `No 24-hour temperature changes are available.`
+
+`hk-weather --temp-drop` names the station with the largest of those drops, for example `At 2026-10-07 19:10, the largest drop is 2.4°C at Pak Tam Chung.` Stations that share that drop are listed together. `--temp-shift` still counts cooler and warmer stations, and `--temp-diff` still lists every change. `--temp-drop --json` prints the time, the station names, the signed change, and that phrase. `--lang` selects the station names. If every station is unchanged or warmer, it says `No station is cooler than 24 hours ago.` If no numeric changes remain, it says `No 24-hour temperature changes are available.`
 
 `hk-weather --heat-index` prints the latest 10-minute mean Hong Kong Heat Index at automatic stations, for example `Happy Valley  25.8`. Earlier minutes in the file are omitted. `--heat-index --json` prints that minute as one JSON object. `--lang` selects the station names. Stations marked `N/A` are omitted. If none remain, it says `No heat index is available.`
 
