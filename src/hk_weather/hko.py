@@ -12483,6 +12483,71 @@ def format_wind_span(report: WindForecast, *, as_json: bool) -> str:
     return phrase + "\n"
 
 
+def _wind_direction(text: str) -> str | None:
+    """Direction words before the first Beaufort force in a wind sentence."""
+    lower = text.lower()
+    index = lower.find("force")
+    if index >= 0:
+        direction = text[:index].strip(" ,.;")
+        return direction or None
+    cut: int | None = None
+    for mark in ("級", "级", "至"):
+        start = 0
+        while True:
+            found = text.find(mark, start)
+            if found < 0:
+                break
+            cursor = found - 1
+            while cursor >= 0 and text[cursor].isdigit():
+                cursor -= 1
+            if cursor < found - 1:
+                cut = cursor + 1 if cut is None else min(cut, cursor + 1)
+            start = found + len(mark)
+    if cut is None:
+        return None
+    direction = text[:cut].strip(" ,.;")
+    return direction or None
+
+
+def format_wind_turn(report: WindForecast, *, as_json: bool) -> str:
+    """Print the first day the forecast wind direction differs from the day before."""
+    directed = [
+        (day, direction)
+        for day in report.days
+        if (direction := _wind_direction(day.wind)) is not None
+    ]
+    if len(directed) < 2:
+        return _unavailable("No forecast wind turn is available.", as_json=as_json)
+    chosen = next(
+        (
+            (earlier, later, before, after)
+            for (earlier, before), (later, after) in zip(directed, directed[1:])
+            if after != before
+        ),
+        None,
+    )
+    if chosen is None:
+        return _unavailable("The forecast wind does not turn.", as_json=as_json)
+    before_day, after_day, before, after = chosen
+    heading = " ".join(part for part in (after_day.date, after_day.week) if part)
+    if heading:
+        phrase = f"The forecast wind turns on {heading}, from {before} to {after}."
+    else:
+        phrase = f"The forecast wind turns from {before} to {after}."
+    if as_json:
+        payload = {
+            "from_date": before_day.date,
+            "from_week": before_day.week,
+            "from_direction": before,
+            "to_date": after_day.date,
+            "to_week": after_day.week,
+            "to_direction": after,
+            "phrase": phrase,
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
+
+
 def parse_gust(text: str) -> GustReport:
     """Turn the regional 10-minute wind CSV into one row per station."""
     stations: list[GustReading] = []
