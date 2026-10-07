@@ -14966,6 +14966,93 @@ def test_cli_strongest_gust_prints_the_strongest_station(monkeypatch, capsys):
     assert capsys.readouterr().out == "No wind gusts are available.\n"
 
 
+def test_cli_gust_gap_prints_the_widest_surplus(monkeypatch, capsys):
+    seen = {}
+    report = GustReport(
+        "2026-10-07 11:40",
+        (
+            GustReading("Green Island", "East", 23, 33),
+            GustReading("Hong Kong Sea School", "East", 21, 41),
+            GustReading("Tai Po Kau", "East", 8, 12),
+            GustReading("Wetland Park", "", None, 30),
+        ),
+    )
+
+    def fake_fetch(timeout, lang="en"):
+        seen["lang"] = lang
+        return report
+
+    monkeypatch.setattr("hk_weather.cli.fetch_gust", fake_fetch)
+    assert main(["--gust-gap", "--lang", "tc"]) == 0
+    assert seen["lang"] == "tc"
+    assert capsys.readouterr().out == (
+        "Largest gust gap: 2026-10-07 11:40  "
+        "Hong Kong Sea School  East  20 km/h above 21 km/h\n"
+    )
+
+    assert main(["--gust-gap", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "recorded": "2026-10-07 11:40",
+        "gap_kmh": 20,
+        "stations": [
+            {
+                "place": "Hong Kong Sea School",
+                "direction": "East",
+                "wind_kmh": 21,
+                "gust_kmh": 41,
+                "gap_kmh": 20,
+            }
+        ],
+        "phrase": (
+            "Largest gust gap: 2026-10-07 11:40  "
+            "Hong Kong Sea School  East  20 km/h above 21 km/h"
+        ),
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_gust",
+        lambda timeout, lang="en": GustReport(
+            "2026-10-07 11:40",
+            (
+                GustReading("Sha Tin", "North", 10, 22),
+                GustReading("King's Park", "Northeast", 8, 20),
+                GustReading("Green Island", "East", 23, 33),
+            ),
+        ),
+    )
+    assert main(["--gust-gap"]) == 0
+    assert capsys.readouterr().out == (
+        "Largest gust gap: 2026-10-07 11:40  Sha Tin and King's Park, 12 km/h above the wind\n"
+    )
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_gust",
+        lambda timeout, lang="en": GustReport(
+            "",
+            (GustReading("Tap Mun", "East", 12, 12),),
+        ),
+    )
+    assert main(["--gust-gap"]) == 0
+    assert capsys.readouterr().out == (
+        "Largest gust gap: Tap Mun  East  gust matches its 12 km/h wind\n"
+    )
+
+    assert main(["--gust-gap", "--gust"]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "pass one report flag at a time (--gust --gust-gap)" in captured.err
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_gust",
+        lambda timeout, lang="en": GustReport(
+            "2026-10-07 11:40",
+            (GustReading("Shek Kong", "Northwest", 6, None),),
+        ),
+    )
+    assert main(["--gust-gap"]) == 0
+    assert capsys.readouterr().out == "No gust gap is available.\n"
+
+
 def test_cli_prevailing_prints_latest_day(monkeypatch, capsys):
     seen = {}
     monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")

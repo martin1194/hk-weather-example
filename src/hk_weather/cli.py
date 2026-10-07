@@ -784,6 +784,7 @@ from hk_weather.hko import (
     format_gust,
     format_gust_miss,
     format_strongest_gust,
+    format_gust_gap,
     format_prevailing,
     format_prevailing_miss,
     format_cheung_prevailing_miss,
@@ -1389,6 +1390,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--wind lists the forecast wind; "
             "--gust prints the latest 10-minute wind and gust; "
             "--strongest-gust prints the station with the strongest gust; "
+            "--gust-gap prints where the gust exceeds the mean wind by the most; "
             "--prevailing prints the latest prevailing wind direction; "
             "--cheung-prevailing prints the latest prevailing wind at Cheung Chau; "
             "--ping-chau-prevailing prints the latest prevailing wind at Ping Chau; "
@@ -2901,6 +2903,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--strongest-gust",
         action="store_true",
         help="Print the station with the strongest 10-minute gust",
+    )
+    parser.add_argument(
+        "--gust-gap",
+        action="store_true",
+        help="Print where the 10-minute gust exceeds the mean wind by the most",
     )
     parser.add_argument(
         "--prevailing",
@@ -6225,6 +6232,11 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_json(gust) if args.json else format_gust(gust)
         elif args.strongest_gust:
             text = format_strongest_gust(
+                fetch_gust(timeout=args.timeout, lang=args.lang),
+                as_json=args.json,
+            )
+        elif args.gust_gap:
+            text = format_gust_gap(
                 fetch_gust(timeout=args.timeout, lang=args.lang),
                 as_json=args.json,
             )
