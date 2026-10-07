@@ -10808,6 +10808,60 @@ def format_visibility(report: VisibilityReport) -> str:
     return "\n".join(lines) + "\n"
 
 
+def _visibility_km(text: str) -> float | None:
+    """Read a visibility such as '14 km' as a number of kilometres."""
+    token = text.strip().casefold()
+    if token.endswith("km"):
+        token = token[:-2].strip()
+    if not token:
+        return None
+    try:
+        value = float(token)
+    except ValueError:
+        return None
+    if value < 0:
+        return None
+    return value
+
+
+def format_least_vis(report: VisibilityReport, *, as_json: bool) -> str:
+    """Print the station or stations with the poorest visibility."""
+    ranked: list[tuple[float, VisibilityReading]] = []
+    for reading in report.readings:
+        kilometres = _visibility_km(reading.visibility)
+        if kilometres is None:
+            continue
+        ranked.append((kilometres, reading))
+    if not ranked:
+        return _unavailable("No visibility readings are available.", as_json=as_json)
+    poorest_km = min(kilometres for kilometres, _reading in ranked)
+    poorest = tuple(reading for kilometres, reading in ranked if kilometres == poorest_km)
+    places = [reading.place for reading in poorest]
+    if len(places) == 1:
+        listed = places[0]
+    elif len(places) == 2:
+        listed = f"{places[0]} and {places[1]}"
+    else:
+        listed = ", ".join(places[:-1]) + f", and {places[-1]}"
+    distance = poorest[0].visibility
+    times = {reading.time for reading in poorest}
+    if len(times) == 1 and poorest[0].time:
+        phrase = f"Poorest visibility: {poorest[0].time}  {listed}  {distance}"
+    else:
+        phrase = f"Poorest visibility: {listed}, {distance}"
+    if as_json:
+        payload = {
+            "visibility_km": poorest_km,
+            "readings": [
+                {"time": reading.time, "place": reading.place, "visibility": reading.visibility}
+                for reading in poorest
+            ],
+            "phrase": phrase,
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
+
+
 _REDUCED_VIS_STATIONS = {
     "en": "Hong Kong International Airport",
     "tc": "香港國際機場",

@@ -766,6 +766,7 @@ from hk_weather.hko import (
     format_fifteen_uv_miss,
     format_uv_level,
     format_visibility,
+    format_least_vis,
     format_reduced_vis,
     format_reduced_vis_miss,
     format_warning_info,
@@ -1647,6 +1648,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--warning-info prints detailed warning messages; "
             "--weekend prints Saturday and Sunday; "
             "--visibility lists 10-minute mean visibility; "
+            "--least-vis prints the station with the poorest visibility; "
             "--reduced-vis prints the latest daily hours of reduced visibility; "
             "--hottest prints the warmest place; "
             "--coldest prints the coolest place; "
@@ -3252,6 +3254,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--visibility",
         action="store_true",
         help="Print the latest 10-minute mean visibility",
+    )
+    parser.add_argument(
+        "--least-vis",
+        action="store_true",
+        help="Print the station with the poorest 10-minute visibility",
     )
     parser.add_argument(
         "--reduced-vis",
@@ -6963,6 +6970,11 @@ def main(argv: list[str] | None = None) -> int:
         elif args.visibility:
             visibility = fetch_visibility(timeout=args.timeout, lang=args.lang)
             text = format_json(visibility) if args.json else format_visibility(visibility)
+        elif args.least_vis:
+            text = format_least_vis(
+                fetch_visibility(timeout=args.timeout, lang=args.lang),
+                as_json=args.json,
+            )
         elif args.reduced_vis:
             reduced_vis = fetch_reduced_vis(timeout=args.timeout, lang=args.lang)
             if reduced_vis is None:
