@@ -18177,6 +18177,40 @@ def format_uv_gap(
     return phrase + "\n"
 
 
+def format_max_uv_gap(
+    hourly: UvIndex | None, maximum: MaxUv | None, *, as_json: bool
+) -> str:
+    """Compare the hourly UV index with yesterday's maximum."""
+    value = hourly.value if hourly is not None else None
+    if value is None:
+        return _unavailable("No UV index is available.", as_json=as_json)
+    if maximum is None:
+        return _unavailable("No maximum UV index is available.", as_json=as_json)
+    gap = round(value - maximum.uv_index, 1)
+    current = _number(value)
+    peak = _number(maximum.uv_index)
+    if gap > 0:
+        phrase = (
+            f"UV {current} is {_number(gap)} above {maximum.date}'s maximum of {peak}"
+        )
+    elif gap < 0:
+        phrase = (
+            f"UV {current} is {_number(abs(gap))} below {maximum.date}'s maximum of {peak}"
+        )
+    else:
+        phrase = f"UV {current} matches {maximum.date}'s maximum of {peak}"
+    if as_json:
+        payload = {
+            "uv": value,
+            "date": maximum.date,
+            "maximum": maximum.uv_index,
+            "gap": gap,
+            "phrase": phrase,
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
+
+
 def parse_icon_time(payload: dict) -> IconUpdate | None:
     """Turn the `rhrread` icon update time into one timestamp."""
     text = _text(payload.get("iconUpdateTime"))
