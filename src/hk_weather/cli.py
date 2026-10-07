@@ -87,6 +87,7 @@ from hk_weather.hko import (
     fetch_hourly_dose,
     fetch_accum_rain,
     fetch_avg_rain,
+    fetch_rain_vs_normal,
     fetch_radiation,
     fetch_bulletin,
     fetch_radiation_note,
@@ -544,6 +545,7 @@ from hk_weather.hko import (
     format_accum_rain_miss,
     format_avg_rain,
     format_avg_rain_miss,
+    format_rain_vs_normal,
     format_radiation,
     format_radiation_miss,
     format_bulletin,
@@ -1651,6 +1653,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--hourly-dose prints the latest hourly gamma dose rate; "
             "--accum-rain prints accumulated rainfall since 1 January; "
             "--avg-rain prints the climatological rainfall normal; "
+            "--rain-vs-normal prints how far that total is from the normal; "
             "--radiation prints yesterday's gamma radiation report; "
             "--bulletin prints when yesterday's bulletin was issued; "
             "--radiation-note prints the normal radiation range; "
@@ -2856,6 +2859,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--avg-rain",
         action="store_true",
         help="Print the climatological normal of accumulated rainfall through yesterday",
+    )
+    parser.add_argument(
+        "--rain-vs-normal",
+        action="store_true",
+        help="Print how far accumulated rainfall is from the climatological normal",
     )
     parser.add_argument(
         "--radiation",
@@ -6193,6 +6201,11 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_avg_rain_miss(as_json=args.json)
             else:
                 text = format_json(avg_rain) if args.json else format_avg_rain(avg_rain)
+        elif args.rain_vs_normal:
+            text = format_rain_vs_normal(
+                fetch_rain_vs_normal(timeout=args.timeout, lang=args.lang),
+                as_json=args.json,
+            )
         elif args.radiation:
             radiation = fetch_radiation(timeout=args.timeout, lang=args.lang)
             if radiation is None:

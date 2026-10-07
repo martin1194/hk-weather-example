@@ -445,6 +445,8 @@ hk-weather --accum-rain
 hk-weather --accum-rain --json
 hk-weather --avg-rain
 hk-weather --avg-rain --json
+hk-weather --rain-vs-normal
+hk-weather --rain-vs-normal --json
 hk-weather --radiation
 hk-weather --radiation --json
 hk-weather --bulletin
@@ -1414,6 +1416,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --accum-rain` prints accumulated rainfall at the Observatory from 1 January through yesterday (`HKOReadingsAccumRainfall` on that same summary). `--year-rain` still prints the January-to-last-month note. `--accum-rain --json` prints the total as one JSON object. `--lang` applies. If the reading is missing, it says `No accumulated rainfall is available.`
 
 `hk-weather --avg-rain` prints the climatological normal of that accumulated total (`HKOReadingsAvgRainfall`). `--accum-rain` still prints the recorded total. `--avg-rain --json` prints the normal as one JSON object. `--lang` applies. If the reading is missing, it says `No average rainfall is available.`
+
+`hk-weather --rain-vs-normal` compares those two totals. A recorded 100.5 mm against a normal of 80 mm, dated 2026-10-06, is `Through 2026-10-06, rainfall is 20.5 mm above the normal of 80 mm`. A shortfall says `below`. An exact match says `Through 2026-10-06, rainfall matches the normal of 80 mm`. `--accum-rain` and `--avg-rain` still print each figure on its own. `--rain-vs-normal --json` prints both totals, the signed difference, and that phrase. If either figure is missing, it says `No rainfall comparison is available.`
 
 `hk-weather --radiation` prints yesterday's outdoor gamma radiation report from that same summary (`HongKongDesc`). `--radiation --json` prints that paragraph as one JSON object. `--lang` applies. If the report is missing, it says `No radiation report is available.`
 
