@@ -21,6 +21,8 @@ from hk_weather.hko import (
     TideEvent,
     TideReport,
     TomorrowForecast,
+    VisibilityReading,
+    VisibilityReport,
     WeatherError,
     WarningTime,
     WarningTimeReport,
@@ -20268,6 +20270,63 @@ def test_cli_visibility_when_none_available(monkeypatch, capsys):
         ),
     )
     assert main(["--visibility"]) == 0
+    assert capsys.readouterr().out == "No visibility readings are available.\n"
+
+
+def test_cli_least_vis_prints_the_poorest_station(monkeypatch, capsys):
+    seen = {}
+    report = VisibilityReport(
+        (
+            VisibilityReading("2026-10-07 11:00", "Central", "30 km"),
+            VisibilityReading("2026-10-07 11:00", "Chek Lap Kok", "50 km"),
+            VisibilityReading("2026-10-07 11:00", "Waglan Island", "45 km"),
+            VisibilityReading("2026-10-07 11:00", "Sai Wan Ho", "mist"),
+        )
+    )
+
+    def fake_fetch(timeout, lang="en"):
+        seen["lang"] = lang
+        return report
+
+    monkeypatch.setattr("hk_weather.cli.fetch_visibility", fake_fetch)
+    assert main(["--least-vis", "--lang", "tc"]) == 0
+    assert seen["lang"] == "tc"
+    assert capsys.readouterr().out == "Poorest visibility: 2026-10-07 11:00  Central  30 km\n"
+
+    assert main(["--least-vis", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "visibility_km": 30.0,
+        "readings": [
+            {"time": "2026-10-07 11:00", "place": "Central", "visibility": "30 km"}
+        ],
+        "phrase": "Poorest visibility: 2026-10-07 11:00  Central  30 km",
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_visibility",
+        lambda timeout, lang="en": VisibilityReport(
+            (
+                VisibilityReading("2026-10-03 07:30", "Central", "14 km"),
+                VisibilityReading("2026-10-03 07:30", "Sai Wan Ho", "14 km"),
+                VisibilityReading("2026-10-03 07:30", "Chek Lap Kok", "30 km"),
+            )
+        ),
+    )
+    assert main(["--least-vis"]) == 0
+    assert capsys.readouterr().out == (
+        "Poorest visibility: 2026-10-03 07:30  Central and Sai Wan Ho  14 km\n"
+    )
+
+    assert main(["--least-vis", "--visibility"]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "pass one report flag at a time (--visibility --least-vis)" in captured.err
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_visibility",
+        lambda timeout, lang="en": VisibilityReport(()),
+    )
+    assert main(["--least-vis"]) == 0
     assert capsys.readouterr().out == "No visibility readings are available.\n"
 
 
