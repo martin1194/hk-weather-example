@@ -10625,6 +10625,37 @@ def format_high_step(report: NineTemp, *, as_json: bool) -> str:
     return phrase + "\n"
 
 
+def format_high_rise(report: NineTemp, *, as_json: bool) -> str:
+    """Print how far the hottest forecast high is above the first high."""
+    ranked = [day for day in report.days if day.temp_high_c is not None]
+    if not ranked:
+        return _unavailable("No forecast high is available.", as_json=as_json)
+    opening = ranked[0]
+    peak = max(day.temp_high_c for day in ranked)
+    gap = round(peak - opening.temp_high_c, 1)
+    if gap <= 0:
+        return _unavailable("The forecast high does not rise.", as_json=as_json)
+    reached = next(day for day in ranked if day.temp_high_c == peak)
+    phrase = (
+        f"The forecast high rises {_number(gap)}°C, from {_number(opening.temp_high_c)}°C "
+        f"on {_forecast_day_label(opening)} to {_number(reached.temp_high_c)}°C "
+        f"on {_forecast_day_label(reached)}."
+    )
+    if as_json:
+        payload = {
+            "from_date": opening.date,
+            "from_week": opening.week,
+            "from_high_c": opening.temp_high_c,
+            "to_date": reached.date,
+            "to_week": reached.week,
+            "to_high_c": reached.temp_high_c,
+            "gap_c": gap,
+            "phrase": phrase,
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
+
+
 def parse_nine_humidity(payload: dict) -> NineHumidity:
     """Turn `fnd` forecast humidity fields into one line per day."""
     raw_days = payload.get("weatherForecast")
