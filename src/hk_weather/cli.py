@@ -798,6 +798,7 @@ from hk_weather.hko import (
     format_fifteen_uv_miss,
     format_uv_level,
     format_uv_gap,
+    format_max_uv_gap,
     format_visibility,
     format_least_vis,
     format_reduced_vis,
@@ -1349,6 +1350,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--fifteen-uv prints the latest 15-minute mean UV index; "
             "--uv-level prints whether that 15-minute index is low through extreme; "
             "--uv-gap prints how far that 15-minute index is from the hourly UV; "
+            "--max-uv-gap prints how far that hourly UV is from yesterday's maximum; "
             "--icon-time prints when the weather icon changed; "
             "--icon-ago prints how long ago that change was; "
             "--icon prints the current weather icon; "
@@ -3614,6 +3616,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--uv-gap",
         action="store_true",
         help="Print how far the latest 15-minute UV is from the hourly index",
+    )
+    parser.add_argument(
+        "--max-uv-gap",
+        action="store_true",
+        help="Print how far the hourly UV is from yesterday's maximum",
     )
     parser.add_argument(
         "-i",
@@ -7521,6 +7528,12 @@ def main(argv: list[str] | None = None) -> int:
                 fetch_fifteen_uv(timeout=args.timeout, lang=args.lang),
                 as_json=args.json,
             )
+        elif args.max_uv_gap:
+            hourly = fetch_uv(timeout=args.timeout, lang=args.lang)
+            maximum = None
+            if hourly is not None and hourly.value is not None:
+                maximum = fetch_max_uv(timeout=args.timeout, lang=args.lang)
+            text = format_max_uv_gap(hourly, maximum, as_json=args.json)
         elif args.icon_time:
             icon_time = fetch_icon_time(timeout=args.timeout, lang=args.lang)
             if icon_time is None:
