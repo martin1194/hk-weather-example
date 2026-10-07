@@ -466,6 +466,8 @@ hk-weather --gust
 hk-weather --gust --json
 hk-weather --strongest-gust
 hk-weather --strongest-gust --json
+hk-weather --gust-gap
+hk-weather --gust-gap --json
 hk-weather --prevailing
 hk-weather --prevailing --json
 hk-weather --cheung-prevailing
@@ -1422,6 +1424,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --gust` prints the latest 10-minute mean wind and maximum gust at automatic stations, for example `Central Pier  East  5 km/h  gust 9 km/h`. `--wind` still prints the forecast wind. `--gust --json` prints those stations as one JSON object. `--lang` selects the English, Traditional Chinese, or Simplified Chinese station names. If no numeric wind remains, it says `No wind gusts are available.`
 
 `hk-weather --strongest-gust` prints the station with the strongest of those gusts. Green Island from the east at 38 km/h is `Strongest gust: 2026-10-07 11:10  Green Island  East  38 km/h`. Stations that share that gust are listed together. `--gust` still lists every station. `--strongest-gust --json` prints the gust, the tied stations, and that phrase. If no gust is present, it says `No wind gusts are available.`
+
+`hk-weather --gust-gap` prints where that gust exceeds the 10-minute mean wind by the most. A 41 km/h gust on a 21 km/h northeast wind is `Largest gust gap: 2026-10-07 11:40  Hong Kong Sea School  Northeast  20 km/h above 21 km/h`. Stations that share that gap are listed together. A gust that matches the mean wind says the gust matches that wind. `--gust-gap --json` prints the gap, the wind, the gust, and that phrase. If no station has both speeds, it says `No gust gap is available.`
 
 `hk-weather --prevailing` prints the latest daily prevailing wind direction at Waglan Island, for example `2026-08-31  360°`. `--wind` still prints the forecast wind, and `--gust` still prints the latest gusts. `--prevailing --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No prevailing wind is available.`
 

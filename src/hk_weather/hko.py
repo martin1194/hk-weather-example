@@ -11530,6 +11530,73 @@ def format_strongest_gust(report: GustReport, *, as_json: bool) -> str:
     return phrase + "\n"
 
 
+def _gust_gap_kmh(reading: GustReading) -> float:
+    return round(reading.gust_kmh - reading.speed_kmh, 1)
+
+
+def _gust_gap_relation(gap: float, wind_kmh: float) -> str:
+    wind = f"{_number(wind_kmh)} km/h"
+    if gap > 0:
+        return f"{_number(gap)} km/h above {wind}"
+    if gap < 0:
+        return f"{_number(abs(gap))} km/h below {wind}"
+    return f"gust matches its {wind} wind"
+
+
+def format_gust_gap(report: GustReport, *, as_json: bool) -> str:
+    """Print where the gust exceeds the mean wind by the most."""
+    ranked = [
+        reading
+        for reading in report.stations
+        if reading.gust_kmh is not None and reading.speed_kmh is not None
+    ]
+    if not ranked:
+        return _unavailable("No gust gap is available.", as_json=as_json)
+    peak = max(_gust_gap_kmh(reading) for reading in ranked)
+    widest = tuple(reading for reading in ranked if _gust_gap_kmh(reading) == peak)
+    if len(widest) == 1:
+        reading = widest[0]
+        relation = _gust_gap_relation(peak, reading.speed_kmh)
+        if reading.direction:
+            detail = f"{reading.place}  {reading.direction}  {relation}"
+        else:
+            detail = f"{reading.place}  {relation}"
+    else:
+        places = [reading.place for reading in widest]
+        if len(places) == 2:
+            listed = f"{places[0]} and {places[1]}"
+        else:
+            listed = ", ".join(places[:-1]) + f", and {places[-1]}"
+        if peak > 0:
+            detail = f"{listed}, {_number(peak)} km/h above the wind"
+        elif peak < 0:
+            detail = f"{listed}, {_number(abs(peak))} km/h below the wind"
+        else:
+            detail = f"{listed}, gust matches the wind"
+    if report.obs_time:
+        phrase = f"Largest gust gap: {report.obs_time}  {detail}"
+    else:
+        phrase = f"Largest gust gap: {detail}"
+    if as_json:
+        payload = {
+            "recorded": report.obs_time,
+            "gap_kmh": peak,
+            "stations": [
+                {
+                    "place": reading.place,
+                    "direction": reading.direction,
+                    "wind_kmh": reading.speed_kmh,
+                    "gust_kmh": reading.gust_kmh,
+                    "gap_kmh": _gust_gap_kmh(reading),
+                }
+                for reading in widest
+            ],
+            "phrase": phrase,
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
+
+
 _PREVAILING_STATIONS = {
     "en": "Waglan Island",
     "tc": "橫瀾島",
