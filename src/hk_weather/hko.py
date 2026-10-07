@@ -10231,6 +10231,53 @@ def format_warm_soil(report: SoilReport | None, *, as_json: bool) -> str:
     return phrase + "\n"
 
 
+def _soil_gap_spot(readings: tuple[SoilReading, ...]) -> str:
+    depth = _number(readings[0].depth_m)
+    places = [reading.place for reading in readings]
+    if len(places) == 1:
+        return f"{places[0]} {depth} m"
+    if len(places) == 2:
+        listed = f"{places[0]} and {places[1]}"
+    else:
+        listed = ", ".join(places[:-1]) + f", and {places[-1]}"
+    return f"{listed} {depth} m"
+
+
+def format_soil_gap(
+    report: SoilReport | None, air_c: float, *, as_json: bool
+) -> str:
+    """Compare the shallowest soil temperature with the current air temperature."""
+    if report is None or not report.readings:
+        return _unavailable("No soil temperature is available.", as_json=as_json)
+    shallow = min(reading.depth_m for reading in report.readings)
+    chosen = tuple(reading for reading in report.readings if reading.depth_m == shallow)
+    temperature = chosen[0].temperature_c
+    same = tuple(reading for reading in chosen if reading.temperature_c == temperature)
+    gap = round(temperature - air_c, 1)
+    spot = _soil_gap_spot(same)
+    air = _number(air_c)
+    verb = "is" if len(same) == 1 else "are"
+    if gap > 0:
+        phrase = f"Soil at {spot} {verb} {_number(gap)}°C warmer than the {air}°C air."
+    elif gap < 0:
+        phrase = (
+            f"Soil at {spot} {verb} {_number(abs(gap))}°C cooler than the {air}°C air."
+        )
+    else:
+        phrase = f"Soil at {spot} matches the {air}°C air."
+    if as_json:
+        payload = {
+            "depth_m": shallow,
+            "soil_c": temperature,
+            "air_c": air_c,
+            "gap_c": gap,
+            "places": [reading.place for reading in same],
+            "phrase": phrase,
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
+
+
 def format_nine_situation(report: GeneralSituation) -> str:
     """Render the general situation from the 9-day forecast."""
     return f"Hong Kong 9-day situation\n{report.situation}\n"
