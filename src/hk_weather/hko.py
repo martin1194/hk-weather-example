@@ -15365,6 +15365,67 @@ def format_minute_temp_miss(*, as_json: bool = False) -> str:
     return _unavailable("No 1-minute temperatures are available.", as_json=as_json)
 
 
+_OBSERVATORY_TEMP_NAMES = frozenset({"HK Observatory", "天文台"})
+
+
+def format_temp_gap(report: MinuteTempReport, *, as_json: bool) -> str:
+    """Print the station whose 1-minute temperature differs most from the Observatory."""
+    if not report.stations:
+        return _unavailable("No 1-minute temperatures are available.", as_json=as_json)
+    observatory = next(
+        (
+            reading
+            for reading in report.stations
+            if reading.place in _OBSERVATORY_TEMP_NAMES
+        ),
+        None,
+    )
+    if observatory is None:
+        return _unavailable("No Observatory temperature is available.", as_json=as_json)
+    base = round(observatory.temperature_c, 1)
+    ranked = [
+        (
+            round(reading.temperature_c - observatory.temperature_c, 1),
+            reading.place,
+            round(reading.temperature_c, 1),
+        )
+        for reading in report.stations
+        if reading.place and reading.place not in _OBSERVATORY_TEMP_NAMES
+    ]
+    if not ranked:
+        return _unavailable("No temperature comparison is available.", as_json=as_json)
+    widest = max(abs(item[0]) for item in ranked)
+    first = next(item for item in ranked if abs(item[0]) == widest)
+    chosen = [item for item in ranked if item[0] == first[0] and item[2] == first[2]]
+    gap, _place, temperature = first
+    places = _join_headings([item[1] for item in chosen])
+    height = _number(temperature)
+    base_text = _number(base)
+    if gap > 0:
+        phrase = (
+            f"Temperature at {places} is {height}°C, "
+            f"{_number(gap)} above the Observatory's {base_text}."
+        )
+    elif gap < 0:
+        phrase = (
+            f"Temperature at {places} is {height}°C, "
+            f"{_number(abs(gap))} below the Observatory's {base_text}."
+        )
+    else:
+        phrase = f"Temperature at {places} matches the Observatory's {base_text}°C."
+    if as_json:
+        payload = {
+            "time": report.obs_time,
+            "places": [item[1] for item in chosen],
+            "temperature_c": temperature,
+            "observatory_c": base,
+            "gap": gap,
+            "phrase": phrase,
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
+
+
 def parse_minute_humidity(text: str) -> MinuteHumidityReport:
     """Turn the regional 1-minute humidity CSV into one row per station."""
     stations: list[MinuteHumidityReading] = []
