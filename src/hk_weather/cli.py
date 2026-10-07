@@ -78,6 +78,7 @@ from hk_weather.hko import (
     fetch_fire_danger,
     fetch_grass,
     fetch_sunshine,
+    fetch_yesterday_sunrise,
     fetch_daily_sun,
     fetch_max_uv,
     fetch_uv_peak,
@@ -533,6 +534,7 @@ from hk_weather.hko import (
     format_grass_miss,
     format_sunshine,
     format_sunshine_miss,
+    format_sun_share,
     format_daily_sun,
     format_daily_sun_miss,
     format_max_uv,
@@ -1720,6 +1722,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--evapotranspiration prints the latest monthly potential evapotranspiration; "
             "--grass prints yesterday's grass minimum; "
             "--sunshine prints yesterday's sunshine duration; "
+            "--sun-share compares that sunshine with the day's daylight; "
             "--daily-sun prints the latest daily bright sunshine total; "
             "--max-uv prints yesterday's maximum UV index; "
             "--uv-peak prints the latest daily maximum UV index and its period; "
@@ -2967,6 +2970,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--sunshine",
         action="store_true",
         help="Print yesterday's sunshine duration at King's Park",
+    )
+    parser.add_argument(
+        "--sun-share",
+        action="store_true",
+        help="Compare yesterday's sunshine with that day's daylight",
     )
     parser.add_argument(
         "--daily-sun",
@@ -6531,6 +6539,12 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_sunshine_miss(as_json=args.json)
             else:
                 text = format_json(sunshine) if args.json else format_sunshine(sunshine)
+        elif args.sun_share:
+            sunshine = fetch_sunshine(timeout=args.timeout, lang=args.lang)
+            daylight = None
+            if sunshine is not None:
+                daylight = fetch_yesterday_sunrise(timeout=args.timeout, lang=args.lang)
+            text = format_sun_share(sunshine, daylight, as_json=args.json)
         elif args.daily_sun:
             daily_sun = fetch_daily_sun(timeout=args.timeout, lang=args.lang)
             if daily_sun is None:
