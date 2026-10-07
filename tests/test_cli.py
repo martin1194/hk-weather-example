@@ -24,6 +24,8 @@ from hk_weather.hko import (
     SoilReading,
     SoilReport,
     Sunrise,
+    LatestTideReading,
+    LatestTideReport,
     TideEvent,
     TideReport,
     TomorrowForecast,
@@ -93,6 +95,7 @@ def test_cli_find_lists_matching_flags(monkeypatch, capsys):
         "-I, --tide  Print today's high and low tides at Quarry Bay\n"
         "--tide-hour  Print today's hourly tide heights at Quarry Bay\n"
         "--tide-latest  Print the latest observed tide height at tide stations\n"
+        "--tide-span  Print the gap between the lowest and highest latest tide heights\n"
         "--next-tide  Print how long until the next high or low tide at Quarry Bay\n"
     )
 
@@ -102,6 +105,7 @@ def test_cli_find_lists_matching_flags(monkeypatch, capsys):
         "--tide",
         "--tide-hour",
         "--tide-latest",
+        "--tide-span",
         "--next-tide",
     ]
 
@@ -19999,6 +20003,71 @@ def test_cli_tide_latest_when_missing(monkeypatch, capsys):
     )
     assert main(["--tide-latest", "--json"]) == 0
     assert json.loads(capsys.readouterr().out) == {"message": "No latest tide heights are available."}
+
+
+def test_cli_tide_span_prints_the_gap(monkeypatch, capsys):
+    seen = {}
+    report = LatestTideReport(
+        "2026-10-07 12:10",
+        (
+            LatestTideReading("Quarry Bay", 1.08),
+            LatestTideReading("Tai O", 1.03),
+            LatestTideReading("Tsim Bei Tsui", 1.38),
+            LatestTideReading("Tai Po Kau", 1.11),
+        ),
+    )
+
+    def fake_fetch(timeout, lang="en"):
+        seen["lang"] = lang
+        return report
+
+    monkeypatch.setattr("hk_weather.cli.fetch_tide_latest", fake_fetch)
+    assert main(["--tide-span", "--lang", "tc"]) == 0
+    assert seen["lang"] == "tc"
+    assert capsys.readouterr().out == (
+        "Tide span: 2026-10-07 12:10  0.35 m, from Tai O 1.03 m to Tsim Bei Tsui 1.38 m\n"
+    )
+
+    assert main(["--tide-span", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "recorded": "2026-10-07 12:10",
+        "span_m": 0.35,
+        "low_m": 1.03,
+        "high_m": 1.38,
+        "low_stations": ["Tai O"],
+        "high_stations": ["Tsim Bei Tsui"],
+        "phrase": (
+            "Tide span: 2026-10-07 12:10  0.35 m, from Tai O 1.03 m to Tsim Bei Tsui 1.38 m"
+        ),
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_tide_latest",
+        lambda timeout, lang="en": LatestTideReport(
+            "2026-10-07 12:10",
+            (
+                LatestTideReading("Tai O", 1.1),
+                LatestTideReading("Shek Pik", 1.1),
+            ),
+        ),
+    )
+    assert main(["--tide-span"]) == 0
+    assert capsys.readouterr().out == "Tide span: 2026-10-07 12:10  tides match at 1.1 m\n"
+
+    assert main(["--tide-span", "--tide-latest"]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "pass one report flag at a time (--tide-latest --tide-span)" in captured.err
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_tide_latest",
+        lambda timeout, lang="en": LatestTideReport(
+            "2026-10-07 12:10",
+            (LatestTideReading("Quarry Bay", 1.08),),
+        ),
+    )
+    assert main(["--tide-span"]) == 0
+    assert capsys.readouterr().out == "No tide span is available.\n"
 
 
 _AQHI_XML = """<?xml version="1.0" encoding="UTF-8"?>
