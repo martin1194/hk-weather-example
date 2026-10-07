@@ -11085,6 +11085,42 @@ def format_high_gap(temperature_c: float, high_c: float | None, *, as_json: bool
     return phrase + "\n"
 
 
+def format_next_low(
+    temperature_c: float | None, report: NineTemp | None, *, as_json: bool
+) -> str:
+    """Compare the current temperature with the next forecast low."""
+    if temperature_c is None:
+        return _unavailable("No temperature reading is available.", as_json=as_json)
+    day = None
+    if report is not None:
+        day = next((item for item in report.days if item.temp_low_c is not None), None)
+    if day is None or day.temp_low_c is None:
+        return _unavailable("No forecast low is available.", as_json=as_json)
+    gap = round(temperature_c - day.temp_low_c, 1)
+    temperature = _number(temperature_c)
+    low = _number(day.temp_low_c)
+    label = _forecast_day_label(day)
+    if gap > 0:
+        phrase = f"{temperature}°C is {_number(gap)}°C above {label}'s low of {low}°C."
+    elif gap < 0:
+        phrase = (
+            f"{temperature}°C is {_number(abs(gap))}°C below {label}'s low of {low}°C."
+        )
+    else:
+        phrase = f"{temperature}°C matches {label}'s low of {low}°C."
+    if as_json:
+        payload = {
+            "temperature_c": temperature_c,
+            "date": day.date,
+            "week": day.week,
+            "low_c": day.temp_low_c,
+            "gap_c": gap,
+            "phrase": phrase,
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
+
+
 def format_today_range(day: TomorrowForecast | None, *, as_json: bool) -> str:
     """Print the span from today's forecast low to its forecast high."""
     if day is None or day.temp_low_c is None or day.temp_high_c is None:
