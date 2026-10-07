@@ -10394,6 +10394,19 @@ def format_today_range(day: TomorrowForecast | None, *, as_json: bool) -> str:
     return f"Today's range is {_number(span)}°C\n"
 
 
+def format_today_psr(day: TomorrowForecast | None, *, as_json: bool) -> str:
+    """Print today's chance of significant rain."""
+    chance = "" if day is None or day.rain_chance is None else day.rain_chance.strip()
+    if day is None or not chance:
+        return _unavailable("No rain chance is available.", as_json=as_json)
+    if as_json:
+        return (
+            json.dumps({"date": day.date, "rain_chance": chance}, indent=2, ensure_ascii=False)
+            + "\n"
+        )
+    return f"Rain chance: {chance}\n"
+
+
 def format_day_miss(day: int, *, as_json: bool = False) -> str:
     """Say that forecast day N is not in the 9-day list."""
     return _unavailable(f"Forecast day {day} is not available.", as_json=as_json)
