@@ -9574,6 +9574,33 @@ def format_forecast_desc(report: ForecastDesc) -> str:
     return f"Hong Kong forecast description\n{report.description}\n"
 
 
+def _first_sentence(text: str) -> str:
+    """Return the first sentence, keeping its closing punctuation."""
+    stripped = text.strip()
+    cuts: list[int] = []
+    for mark in (". ", "? ", "! "):
+        index = stripped.find(mark)
+        if index != -1:
+            cuts.append(index)
+    for mark in ("。", "？", "！"):
+        index = stripped.find(mark)
+        if index != -1:
+            cuts.append(index)
+    if not cuts:
+        return stripped
+    return stripped[: min(cuts) + 1]
+
+
+def format_forecast_line(report: ForecastDesc | None, *, as_json: bool) -> str:
+    """Print the first sentence of the local forecast."""
+    if report is None or not report.description.strip():
+        return _unavailable("No forecast description is available.", as_json=as_json)
+    line = _first_sentence(report.description)
+    if as_json:
+        return json.dumps({"forecast": line}, indent=2, ensure_ascii=False) + "\n"
+    return line + "\n"
+
+
 def format_forecast_desc_miss(*, as_json: bool = False) -> str:
     """Say that the local forecast has no description."""
     return _unavailable("No forecast description is available.", as_json=as_json)

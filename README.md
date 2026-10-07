@@ -49,6 +49,8 @@ hk-weather --forecast-period
 hk-weather --forecast-period --json
 hk-weather --forecast-desc
 hk-weather --forecast-desc --json
+hk-weather --forecast-line
+hk-weather --forecast-line --json
 hk-weather --forecast-updated
 hk-weather --forecast-updated --json
 hk-weather --situation
@@ -962,6 +964,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --forecast-period` prints the period that forecast covers (`forecastPeriod`), for example `Weather forecast for tonight and tomorrow`. `--forecast` still prints the full local forecast. `--forecast-period --json` prints that line as one JSON object. `--lang` applies. If the field is missing or blank, it says `No forecast period is available.`
 
 `hk-weather --forecast-desc` prints the description from that forecast (`forecastDesc`). `--forecast` still prints the full local forecast. `--forecast-desc --json` prints that paragraph as one JSON object. `--lang` applies. If the field is missing or blank, it says `No forecast description is available.`
+
+`hk-weather --forecast-line` prints only the first sentence of that description. `Fine and dry. Slightly cooler in the morning.` becomes `Fine and dry.` `--forecast-line --json` prints that sentence as one JSON object. `--lang` applies. If the description is missing, it says `No forecast description is available.`
 
 `hk-weather --forecast-updated` prints when that forecast was last updated (`updateTime`). `--forecast` still prints the full local forecast. `--forecast-updated --json` prints that timestamp as one JSON object. `--lang` applies. If the field is missing or blank, it says `No forecast update time is available.`
 
