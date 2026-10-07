@@ -10394,6 +10394,44 @@ def format_today_range(day: TomorrowForecast | None, *, as_json: bool) -> str:
     return f"Today's range is {_number(span)}°C\n"
 
 
+def format_in_range(
+    temperature_c: float,
+    low_c: float | None,
+    high_c: float | None,
+    *,
+    as_json: bool,
+) -> str:
+    """Say whether the current temperature is inside today's forecast range."""
+    if low_c is None or high_c is None or high_c < low_c:
+        return _unavailable("No forecast range is available.", as_json=as_json)
+    span = f"{_number(low_c)}-{_number(high_c)}°C"
+    if temperature_c < low_c:
+        phrase = f"Below today's range of {span}"
+        inside = False
+    elif temperature_c > high_c:
+        phrase = f"Above today's range of {span}"
+        inside = False
+    else:
+        phrase = f"Inside today's range of {span}"
+        inside = True
+    if as_json:
+        return (
+            json.dumps(
+                {
+                    "temperature_c": temperature_c,
+                    "low_c": low_c,
+                    "high_c": high_c,
+                    "inside": inside,
+                    "phrase": phrase,
+                },
+                indent=2,
+                ensure_ascii=False,
+            )
+            + "\n"
+        )
+    return phrase + "\n"
+
+
 def format_today_psr(day: TomorrowForecast | None, *, as_json: bool) -> str:
     """Print today's chance of significant rain."""
     chance = "" if day is None or day.rain_chance is None else day.rain_chance.strip()
