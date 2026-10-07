@@ -530,6 +530,33 @@ def test_cli_feels_like_estimates_humidex(monkeypatch, capsys):
     assert capsys.readouterr().out == "No feels-like temperature is available.\n"
 
 
+def test_cli_dew_gap_prints_how_far_above_the_dew_point(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_current",
+        lambda timeout, lang="en": SAMPLE_WEATHER,
+    )
+    assert main(["--dew-gap"]) == 0
+    assert capsys.readouterr().out == "2.8°C above the dew point of 25.2°C\n"
+    assert main(["--dew-gap", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "temperature_c": 28,
+        "humidity_percent": 85,
+        "dew_c": 25.2,
+        "gap_c": 2.8,
+        "phrase": "2.8°C above the dew point of 25.2°C",
+    }
+    assert main(["--dew-gap", "--feels-like"]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "pass one report flag at a time (--feels-like --dew-gap)" in captured.err
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_current",
+        lambda timeout, lang="en": replace(SAMPLE_WEATHER, humidity_percent=None),
+    )
+    assert main(["--dew-gap"]) == 0
+    assert capsys.readouterr().out == "No dew point is available.\n"
+
+
 def test_cli_prints_report(monkeypatch, capsys):
     monkeypatch.setattr(
         "hk_weather.cli.fetch_current",

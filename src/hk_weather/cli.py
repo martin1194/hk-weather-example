@@ -671,6 +671,7 @@ from hk_weather.hko import (
     format_raining,
     format_hotter,
     format_feels_like,
+    format_dew_gap,
     format_stations,
     format_strikes,
     format_strikes_miss,
@@ -1257,6 +1258,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--raining prints yes or no; "
             "--hotter-than C prints yes or no; "
             "--feels-like estimates how warm it feels; "
+            "--dew-gap prints how far the temperature is above the dew point; "
             "Current conditions by default; --summary prints a short briefing; "
             "--forecast prints the local forecast; "
             "--outlook prints the local-forecast outlook; "
@@ -1763,6 +1765,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--feels-like",
         action="store_true",
         help="Estimate how warm it feels from the current temperature and humidity",
+    )
+    parser.add_argument(
+        "--dew-gap",
+        action="store_true",
+        help="Print how far the current temperature is above the estimated dew point",
     )
     parser.add_argument(
         "--plain",
@@ -8396,6 +8403,8 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_feels_like(
                     weather, as_json=args.json, fahrenheit=args.fahrenheit
                 )
+            elif args.dew_gap:
+                text = format_dew_gap(weather, as_json=args.json)
             elif args.hotter_than is not None:
                 text = format_hotter(weather, args.hotter_than, as_json=args.json)
             elif args.raining:
