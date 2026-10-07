@@ -10052,6 +10052,33 @@ def format_sea_temp_miss(*, as_json: bool = False) -> str:
     return _unavailable("No sea temperature is available.", as_json=as_json)
 
 
+def format_sea_gap(reading: SeaTemperature | None, air_c: float, *, as_json: bool) -> str:
+    """Compare the sea temperature with the current air temperature."""
+    if reading is None:
+        return _unavailable("No sea temperature is available.", as_json=as_json)
+    gap = round(reading.temperature_c - air_c, 1)
+    sea = _number(reading.temperature_c)
+    air = _number(air_c)
+    if gap > 0:
+        phrase = f"Sea at {reading.place}, {sea}°C, is {_number(gap)}°C warmer than the {air}°C air."
+    elif gap < 0:
+        phrase = (
+            f"Sea at {reading.place}, {sea}°C, is {_number(abs(gap))}°C cooler than the {air}°C air."
+        )
+    else:
+        phrase = f"Sea at {reading.place}, {sea}°C, matches the {air}°C air."
+    if as_json:
+        payload = {
+            "place": reading.place,
+            "sea_c": reading.temperature_c,
+            "air_c": air_c,
+            "gap_c": gap,
+            "phrase": phrase,
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
+
+
 _NORTH_POINT_AM_SEA_STATIONS = {
     "en": "North Point",
     "tc": "北角",

@@ -30,6 +30,7 @@ from hk_weather.hko import (
     NineTempDay,
     NineWeather,
     NineWeatherDay,
+    SeaTemperature,
     SoilReading,
     SoilReport,
     Sunrise,
@@ -2200,6 +2201,77 @@ def test_cli_sea_temp_when_missing(monkeypatch, capsys):
         lambda request, timeout: _json_response({}),
     )
     assert main(["--sea-temp", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {"message": "No sea temperature is available."}
+
+
+def test_cli_sea_gap_compares_sea_temperature_with_air(monkeypatch, capsys):
+    seen = {}
+
+    def fake_sea(timeout, lang="en"):
+        seen["lang"] = lang
+        return SeaTemperature("North Point", 27, "2026-10-07T07:00:00+08:00")
+
+    def fake_current(timeout, lang="en"):
+        seen["current_lang"] = lang
+        return CurrentWeather(
+            update_time="2026-10-07T15:00:00+08:00",
+            conditions="Sunny",
+            place="Hong Kong Observatory",
+            temperature_c=28,
+            humidity_percent=57,
+            rainfall_mm=0,
+            rainfall_place="Central & Western District",
+            lightning_places=(),
+            warnings=(),
+        )
+
+    monkeypatch.setattr("hk_weather.cli.fetch_sea_temp", fake_sea)
+    monkeypatch.setattr("hk_weather.cli.fetch_current", fake_current)
+    assert main(["--sea-gap", "--lang", "tc"]) == 0
+    assert seen["lang"] == "tc"
+    assert seen["current_lang"] == "tc"
+    assert capsys.readouterr().out == (
+        "Sea at North Point, 27°C, is 1°C cooler than the 28°C air.\n"
+    )
+
+    assert main(["--sea-gap", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "place": "North Point",
+        "sea_c": 27,
+        "air_c": 28,
+        "gap_c": -1,
+        "phrase": "Sea at North Point, 27°C, is 1°C cooler than the 28°C air.",
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_sea_temp",
+        lambda timeout, lang="en": SeaTemperature("North Point", 30, ""),
+    )
+    assert main(["--sea-gap"]) == 0
+    assert capsys.readouterr().out == (
+        "Sea at North Point, 30°C, is 2°C warmer than the 28°C air.\n"
+    )
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_sea_temp",
+        lambda timeout, lang="en": SeaTemperature("North Point", 28, ""),
+    )
+    assert main(["--sea-gap"]) == 0
+    assert capsys.readouterr().out == "Sea at North Point, 28°C, matches the 28°C air.\n"
+
+    assert main(["--sea-gap", "--sea-temp"]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "pass one report flag at a time (--sea-temp --sea-gap)" in captured.err
+
+    def fail_current(timeout, lang="en"):
+        raise AssertionError("current weather should not be fetched")
+
+    monkeypatch.setattr("hk_weather.cli.fetch_current", fail_current)
+    monkeypatch.setattr("hk_weather.cli.fetch_sea_temp", lambda timeout, lang="en": None)
+    assert main(["--sea-gap"]) == 0
+    assert capsys.readouterr().out == "No sea temperature is available.\n"
+    assert main(["--sea-gap", "--json"]) == 0
     assert json.loads(capsys.readouterr().out) == {"message": "No sea temperature is available."}
 
 

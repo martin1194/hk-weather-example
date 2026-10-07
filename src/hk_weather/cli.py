@@ -655,6 +655,7 @@ from hk_weather.hko import (
     format_in_humidity,
     format_sea_temp,
     format_sea_temp_miss,
+    format_sea_gap,
     format_morning_sea,
     format_north_point_am_sea_miss,
     format_afternoon_sea,
@@ -1304,6 +1305,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--fire-danger prints the fire danger warning; "
             "--tc-info prints tropical cyclone information from the local forecast; "
             "--nine-day prints the 9-day forecast; --sea-temp prints the sea temperature; "
+            "--sea-gap compares that sea temperature with the air; "
             "--north-point-am-sea prints the latest daily morning sea temperature at North Point; "
             "--north-point-pm-sea prints the latest daily afternoon sea temperature "
             "at North Point; "
@@ -1937,6 +1939,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--sea-temp",
         action="store_true",
         help="Print the sea temperature from the 9-day forecast",
+    )
+    parser.add_argument(
+        "--sea-gap",
+        action="store_true",
+        help="Compare the sea temperature with the current air temperature",
     )
     parser.add_argument(
         "--north-point-am-sea",
@@ -4572,6 +4579,13 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_sea_temp_miss(as_json=args.json)
             else:
                 text = format_json(sea_temp) if args.json else format_sea_temp(sea_temp)
+        elif args.sea_gap:
+            sea_temp = fetch_sea_temp(timeout=args.timeout, lang=args.lang)
+            if sea_temp is None:
+                text = format_sea_gap(None, 0, as_json=args.json)
+            else:
+                weather = fetch_current(timeout=args.timeout, lang=args.lang)
+                text = format_sea_gap(sea_temp, weather.temperature_c, as_json=args.json)
         elif args.north_point_am_sea:
             north_point_am_sea = fetch_north_point_am_sea(
                 timeout=args.timeout, lang=args.lang

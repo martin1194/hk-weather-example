@@ -65,6 +65,8 @@ hk-weather --nine-day
 hk-weather --nine-day --json
 hk-weather --sea-temp
 hk-weather --sea-temp --json
+hk-weather --sea-gap
+hk-weather --sea-gap --json
 hk-weather --north-point-am-sea
 hk-weather --north-point-am-sea --json
 hk-weather --north-point-pm-sea
@@ -1064,6 +1066,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --nine-day` (or `-n`) prints each day with the date, weather, high and low temperature, humidity range, and chance of rain when the Observatory includes them. `--nine-day --json` prints that same forecast as one JSON object.
 
 `hk-weather --sea-temp` prints the sea temperature from that forecast (`seaTemp`), for example `North Point  29°C`. `--nine-day` still prints the daily forecast. `--sea-temp --json` prints the reading as one JSON object. `--lang` applies. If the reading is missing, it says `No sea temperature is available.`
+
+`hk-weather --sea-gap` compares that reading with the current air temperature, for example `Sea at North Point, 27°C, is 1°C cooler than the 28°C air.` A warmer sea says warmer, and the same temperature says it matches. `--sea-temp` still prints the sea reading on its own, and `--soil-gap` still compares the shallowest soil. `--sea-gap --json` prints the place, both temperatures, the gap, and that phrase. `--lang` applies. If no sea temperature is present, it says `No sea temperature is available.`
 
 `hk-weather --north-point-am-sea` prints the latest daily mean morning sea temperature at North Point, for example `2026-08-31  25°C`. `--sea-temp` still prints the sea temperature from the 9-day forecast. `--north-point-am-sea --json` prints that day as one JSON object. `--lang` selects the station name. The Chinese name is `北角` in both traditional and simplified text. Days marked `***` are omitted. If none remain, it says `No North Point morning sea temperature is available.`
 
