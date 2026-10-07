@@ -77,6 +77,8 @@ hk-weather --warm-soil
 hk-weather --warm-soil --json
 hk-weather --soil-gap
 hk-weather --soil-gap --json
+hk-weather --soil-span
+hk-weather --soil-span --json
 hk-weather --nine-situation
 hk-weather --nine-situation --json
 hk-weather --nine-updated
@@ -1080,6 +1082,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --warm-soil` prints the warmest of those depths. The 1 m reading at 30.2°C is `Warmer soil: Hong Kong Observatory 1 m, 30.2°C`. Depths that share that temperature are listed together. `--soil-temp` still lists every depth. `--warm-soil --json` prints the temperature, the tied depths, and that phrase. If no soil temperature is present, it says `No soil temperature is available.`
 
 `hk-weather --soil-gap` compares the shallowest of those depths with the current air temperature, for example `Soil at Hong Kong Observatory 0.5 m is 2.5°C warmer than the 27°C air.` The 1 m reading stays with `--warm-soil`. `--soil-gap --json` prints the depth, both temperatures, the gap, and that phrase. `--lang` applies. If no soil temperature is present, it says `No soil temperature is available.`
+
+`hk-weather --soil-span` compares the deepest of those depths with the shallowest, for example `The 1 m soil at Hong Kong Observatory is 0.7°C warmer than the 0.5 m soil.` A cooler deep reading says cooler, and the same temperature says it matches. `--soil-gap` still compares the shallowest soil with the air, and `--warm-soil` still prints the warmest depth. `--soil-span --json` prints both depths, both temperatures, the gap, and that phrase. `--lang` applies. If fewer than two depths are present, it says `No deeper soil temperature is available.`
 
 `hk-weather --nine-situation` prints the general situation from the 9-day forecast (`generalSituation` on `dataType=fnd`). `--situation` still prints the local-forecast paragraph. `--nine-situation --json` prints that paragraph as one JSON object. `--lang` applies. If the field is missing or blank, it says `No 9-day situation is available.`
 
