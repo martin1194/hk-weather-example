@@ -15817,6 +15817,42 @@ def format_pressure_miss(*, as_json: bool = False) -> str:
     return _unavailable("No sea level pressure is available.", as_json=as_json)
 
 
+def _pressure_places(places: list[str]) -> str:
+    """Join station names for a shared pressure reading."""
+    if len(places) == 1:
+        return places[0]
+    if len(places) == 2:
+        return f"{places[0]} and {places[1]}"
+    return ", ".join(places[:-1]) + f", and {places[-1]}"
+
+
+def format_high_pressure(report: PressureReport, *, as_json: bool) -> str:
+    """Print the station with the highest latest sea level pressure."""
+    if not report.stations:
+        return _unavailable("No sea level pressure is available.", as_json=as_json)
+    peak = max(round(reading.pressure_hpa, 1) for reading in report.stations)
+    winners = [
+        reading
+        for reading in report.stations
+        if round(reading.pressure_hpa, 1) == peak
+    ]
+    places = _pressure_places([reading.place for reading in winners])
+    height = f"{_number(peak)} hPa"
+    if report.obs_time:
+        phrase = f"Highest pressure: {report.obs_time}  {places}  {height}"
+    else:
+        phrase = f"Highest pressure: {places}  {height}"
+    if as_json:
+        payload = {
+            "time": report.obs_time,
+            "places": [reading.place for reading in winners],
+            "pressure_hpa": peak,
+            "phrase": phrase,
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
+
+
 _MEAN_PRESSURE_STATIONS = {
     "en": "Hong Kong Observatory",
     "tc": "香港天文台",

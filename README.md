@@ -905,6 +905,8 @@ hk-weather --since-midnight
 hk-weather --since-midnight --json
 hk-weather --pressure
 hk-weather --pressure --json
+hk-weather --high-pressure
+hk-weather --high-pressure --json
 hk-weather --mean-pressure
 hk-weather --mean-pressure --json
 hk-weather --park-pressure
@@ -1884,6 +1886,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --since-midnight` prints each automatic station's maximum and minimum air temperature since midnight, for example `Chek Lap Kok  high 28.2°C  low 27.8°C`. `--minute-temp` still prints the latest 1-minute temperature. `--max-temp` and `--min-temp` still print the Observatory daily climate series. `--since-midnight --json` prints those stations as one JSON object. `--lang` selects the station names. A station is omitted when both readings are missing. If none remain, it says `No temperatures since midnight are available.`
 
 `hk-weather --pressure` prints the latest 1-minute mean sea level pressure at automatic stations, for example `Chek Lap Kok  1011.9 hPa`. `--pressure --json` prints those stations as one JSON object. `--lang` selects the English, Traditional Chinese, or Simplified Chinese station names. Stations marked `N/A` are omitted. If none remain, it says `No sea level pressure is available.`
+
+`hk-weather --high-pressure` prints the highest of those readings, for example `Highest pressure: 2026-10-04 02:10  Chek Lap Kok  1011.9 hPa`. Stations that share that reading are listed together. `--pressure` still prints every station. `--high-pressure --json` prints the time, the station names, and that phrase. If none remain, it says `No sea level pressure is available.`
 
 `hk-weather --mean-pressure` prints the latest daily mean pressure at the Observatory, for example `2026-08-31  998.7 hPa`. `--pressure` still prints the latest 1-minute station readings. `--mean-pressure --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No daily mean pressure is available.`
 

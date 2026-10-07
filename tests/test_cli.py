@@ -25212,6 +25212,70 @@ def test_cli_pressure_prints_latest_stations(monkeypatch, capsys):
     )
 
 
+def test_cli_high_pressure_prints_the_highest_station(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _text_response(
+            "Date time,Automatic Weather Station,Mean Sea Level Pressure(hPa)\n"
+            "202610040210,Chek Lap Kok,1011.9\n"
+            "202610040210,Peng Chau,N/A\n"
+            "202610040210,HK Observatory,1011.8\n"
+            "202610040210,Tai Po,1018.7\n"
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--high-pressure", "--lang", "tc"]) == 0
+    assert seen["url"].endswith("latest_1min_pressure_uc.csv")
+    assert capsys.readouterr().out == (
+        "Highest pressure: 2026-10-04 02:10  Tai Po  1018.7 hPa\n"
+    )
+
+    assert main(["--high-pressure", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "time": "2026-10-04 02:10",
+        "places": ["Tai Po"],
+        "pressure_hpa": 1018.7,
+        "phrase": "Highest pressure: 2026-10-04 02:10  Tai Po  1018.7 hPa",
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Date time,Station,Pressure\n"
+            "202610040210,Chek Lap Kok,1012.0\n"
+            "202610040210,Peng Chau,1012\n"
+            "202610040210,Sha Tin,1011.4\n"
+        ),
+    )
+    assert main(["--high-pressure"]) == 0
+    assert capsys.readouterr().out == (
+        "Highest pressure: 2026-10-04 02:10  Chek Lap Kok and Peng Chau  1012 hPa\n"
+    )
+
+    assert main(["--high-pressure", "--pressure"]) == 2
+    assert "(--pressure --high-pressure)" in capsys.readouterr().err
+
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Date time,Station,Pressure\n"
+            "202610040210,Peng Chau,N/A\n"
+        ),
+    )
+    assert main(["--high-pressure"]) == 0
+    assert capsys.readouterr().out == "No sea level pressure is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response("Date time,Station,Pressure\n"),
+    )
+    assert main(["--high-pressure", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No sea level pressure is available."
+    }
+
+
 def test_cli_pressure_json_is_one_object(monkeypatch, capsys):
     monkeypatch.setattr(
         "hk_weather.hko.urllib.request.urlopen",
