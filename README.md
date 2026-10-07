@@ -492,6 +492,8 @@ hk-weather --wind-ease
 hk-weather --wind-ease --json
 hk-weather --wind-span
 hk-weather --wind-span --json
+hk-weather --wind-turn
+hk-weather --wind-turn --json
 hk-weather --gust
 hk-weather --gust --json
 hk-weather --strongest-gust
@@ -1512,6 +1514,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --wind-ease` prints the first of those days whose strongest force is lighter than the day before. Force 6 on Thursday, then force 5 on Friday, is `Wind eases on 2026-10-09 Friday, from force 6 to force 5: East to northeast force 4, force 5 at first.` Chinese text such as `6級` is read the same way. `--wind` still lists every day. `--wind-ease --json` prints that day, both forces, and the phrase. If the wind never becomes lighter, it says `No lighter wind day is in the forecast.`
 
 `hk-weather --wind-span` prints the first of those days whose wind sentence states more than one force. Thursday's `force 4 to 5, occasionally force 6` is `The forecast wind spans force 4 to force 6 on 2026-10-08 Thursday: East to northeast force 4 to 5, occasionally force 6 offshore and on high ground at first.` A day that names only one force is skipped. `--wind-ease` still looks for a lighter day. `--wind-span --json` prints the low force, the high force, the span, and that phrase. If no day states a range, it says `No forecast wind range is available.`
+
+`hk-weather --wind-turn` prints the first of those days whose direction differs from the day before. East to northeast on Monday, then east on Tuesday, is `The forecast wind turns on 2026-10-13 Tuesday, from East to northeast to East.` Chinese text such as `東北風` is read the same way. `--wind-span` still prints the force range. `--wind-turn --json` prints both days, both directions, and that phrase. If the direction never changes, it says `The forecast wind does not turn.` If fewer than two directions are available, it says `No forecast wind turn is available.`
 
 `hk-weather --gust` prints the latest 10-minute mean wind and maximum gust at automatic stations, for example `Central Pier  East  5 km/h  gust 9 km/h`. `--wind` still prints the forecast wind. `--gust --json` prints those stations as one JSON object. `--lang` selects the English, Traditional Chinese, or Simplified Chinese station names. If no numeric wind remains, it says `No wind gusts are available.`
 

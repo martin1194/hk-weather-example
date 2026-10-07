@@ -814,6 +814,7 @@ from hk_weather.hko import (
     format_wind,
     format_wind_ease,
     format_wind_span,
+    format_wind_turn,
     format_gust,
     format_gust_miss,
     format_strongest_gust,
@@ -1442,6 +1443,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--wind lists the forecast wind; "
             "--wind-ease prints the first day that wind becomes lighter; "
             "--wind-span prints the first day whose wind covers a force range; "
+            "--wind-turn prints the first day the wind direction changes; "
             "--gust prints the latest 10-minute wind and gust; "
             "--strongest-gust prints the station with the strongest gust; "
             "--gust-gap prints where the gust exceeds the mean wind by the most; "
@@ -3034,6 +3036,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--wind-span",
         action="store_true",
         help="Print the first 9-day forecast day whose wind covers a force range",
+    )
+    parser.add_argument(
+        "--wind-turn",
+        action="store_true",
+        help="Print the first 9-day forecast day when the wind direction changes",
     )
     parser.add_argument(
         "--gust",
@@ -6546,6 +6553,11 @@ def main(argv: list[str] | None = None) -> int:
             )
         elif args.wind_span:
             text = format_wind_span(
+                fetch_wind(timeout=args.timeout, lang=args.lang),
+                as_json=args.json,
+            )
+        elif args.wind_turn:
+            text = format_wind_turn(
                 fetch_wind(timeout=args.timeout, lang=args.lang),
                 as_json=args.json,
             )
