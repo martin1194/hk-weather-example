@@ -23953,6 +23953,47 @@ def format_nowcast_miss(*, as_json: bool = False) -> str:
     return _unavailable("No rainfall nowcast is available.", as_json=as_json)
 
 
+def format_nowcast_peak(report: NowcastReport, *, as_json: bool) -> str:
+    """Print the half-hour with the heaviest nowcast rainfall."""
+    if not report.periods:
+        return _unavailable("No rainfall nowcast is available.", as_json=as_json)
+    peak = max(round(period.rainfall_mm, 2) for period in report.periods)
+    if peak <= 0:
+        return _unavailable("No rain is in the nowcast.", as_json=as_json)
+    winners = [
+        period
+        for period in report.periods
+        if round(period.rainfall_mm, 2) == peak
+    ]
+    amount = f"{_number(peak)} mm"
+    if len(winners) == 1:
+        period = winners[0]
+        phrase = (
+            f"Heaviest nowcast: {period.ending}  {amount}"
+            f" at {_number(period.latitude)}°N {_number(period.longitude)}°E"
+        )
+    else:
+        times = _join_headings([period.ending for period in winners])
+        phrase = f"Heaviest nowcast: {amount} at {times}"
+    if as_json:
+        payload = {
+            "updated": report.updated,
+            "rainfall_mm": peak,
+            "periods": [
+                {
+                    "ending": period.ending,
+                    "latitude": period.latitude,
+                    "longitude": period.longitude,
+                    "rainfall_mm": period.rainfall_mm,
+                }
+                for period in winners
+            ],
+            "phrase": phrase,
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
+
+
 _DAILY_RAIN_STATIONS = {
     "en": "Hong Kong Observatory",
     "tc": "香港天文台",

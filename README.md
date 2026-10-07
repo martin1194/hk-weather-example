@@ -713,6 +713,8 @@ hk-weather --driest
 hk-weather --driest --json
 hk-weather --nowcast
 hk-weather --nowcast --json
+hk-weather --nowcast-peak
+hk-weather --nowcast-peak --json
 hk-weather --daily-rain
 hk-weather --daily-rain --json
 hk-weather --lau-fau-rain
@@ -1700,6 +1702,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --driest` (or `-D`) prints the driest district from that list, for example `Central & Western  0 mm`. `--driest --json` prints that reading as one JSON object. `--lang` applies. If no readings are present, it says so.
 
 `hk-weather --nowcast` prints the heaviest grid cell in each half-hour of the rainfall nowcast, for example `2026-10-04 08:24  22.178°N  115.272°E  80.44 mm`. `--rain` still prints observed district rainfall. `--nowcast --json` prints those half-hours as one JSON object. `--lang` selects the bulletin language. A cell is omitted when its rainfall is not numeric. If none remain, it says `No rainfall nowcast is available.`
+
+`hk-weather --nowcast-peak` prints only the half-hour with the heaviest rainfall in that nowcast, for example `Heaviest nowcast: 2026-10-04 08:24  80.44 mm at 22.178°N 115.272°E`. `--nowcast` still lists every half-hour. When several half-hours share that peak, it names each ending time. A peak of zero says `No rain is in the nowcast.` `--nowcast-peak --json` prints the winning half-hours as one JSON object. `--lang` selects the bulletin language. If no numeric cells remain, it says `No rainfall nowcast is available.`
 
 `hk-weather --daily-rain` prints the latest daily total rainfall at the Observatory, for example `2026-08-31  25 mm`. `--rain` still prints district rainfall, and `--nowcast` still prints the nowcast peaks. A total of zero is kept. `--daily-rain --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No daily rainfall is available.`
 

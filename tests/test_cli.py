@@ -28114,6 +28114,92 @@ def test_cli_nowcast_when_missing(monkeypatch, capsys):
     }
 
 
+def test_cli_nowcast_peak_prints_the_heaviest_half_hour(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _text_response(
+            "Updated,Ending,Latitude,Longitude,Rainfall\n"
+            "202610040624,202610040654,23.487,112.956,0.00\n"
+            "202610040624,202610040724,22.200,114.100,1.50\n"
+            "202610040624,202610040824,22.178,115.272,80.44\n"
+            "202610040624,202610040824,22.100,115.100,80.44\n"
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--nowcast-peak", "--lang", "tc"]) == 0
+    assert seen["url"].endswith("Gridded_rainfall_nowcast_tc.csv")
+    assert capsys.readouterr().out == (
+        "Heaviest nowcast: 2026-10-04 08:24  80.44 mm at 22.178°N 115.272°E\n"
+    )
+
+    assert main(["--nowcast-peak", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "updated": "2026-10-04 06:24",
+        "rainfall_mm": 80.44,
+        "periods": [
+            {
+                "ending": "2026-10-04 08:24",
+                "latitude": 22.178,
+                "longitude": 115.272,
+                "rainfall_mm": 80.44,
+            }
+        ],
+        "phrase": "Heaviest nowcast: 2026-10-04 08:24  80.44 mm at 22.178°N 115.272°E",
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Updated,Ending,Latitude,Longitude,Rainfall\n"
+            "202610040624,202610040724,22.200,114.100,1.50\n"
+            "202610040624,202610040824,22.178,115.272,1.50\n"
+            "202610040624,202610040654,23.487,112.956,0.00\n"
+        ),
+    )
+    assert main(["--nowcast-peak"]) == 0
+    assert capsys.readouterr().out == (
+        "Heaviest nowcast: 1.5 mm at 2026-10-04 07:24 and 2026-10-04 08:24\n"
+    )
+
+    assert main(["--nowcast-peak", "--nowcast"]) == 2
+    assert "(--nowcast --nowcast-peak)" in capsys.readouterr().err
+
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Updated,Ending,Latitude,Longitude,Rainfall\n"
+            "202610040624,202610040654,23.487,112.956,0.00\n"
+            "202610040624,202610040724,22.200,114.100,0\n"
+        ),
+    )
+    assert main(["--nowcast-peak"]) == 0
+    assert capsys.readouterr().out == "No rain is in the nowcast.\n"
+    assert main(["--nowcast-peak", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No rain is in the nowcast."
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Updated,Ending,Latitude,Longitude,Rainfall\n"
+            "202610040624,202610040654,22.178,115.272,N/A\n"
+        ),
+    )
+    assert main(["--nowcast-peak"]) == 0
+    assert capsys.readouterr().out == "No rainfall nowcast is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(""),
+    )
+    assert main(["--nowcast-peak", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No rainfall nowcast is available."
+    }
+
+
 def test_cli_daily_rain_prints_latest_day(monkeypatch, capsys):
     seen = {}
     monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
