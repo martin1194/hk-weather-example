@@ -2682,6 +2682,39 @@ def test_cli_today_psr_prints_the_rain_chance(monkeypatch, capsys):
     assert capsys.readouterr().out == "No rain chance is available.\n"
 
 
+def test_cli_today_wind_prints_todays_forecast_wind(monkeypatch, capsys):
+    today = TomorrowForecast(
+        "updated",
+        "2026-10-03",
+        "Saturday",
+        "Sunny",
+        31,
+        27,
+        None,
+        None,
+        "Low",
+        "North force 4.",
+    )
+    monkeypatch.setattr("hk_weather.cli.fetch_today", lambda timeout, lang="en": today)
+    assert main(["--today-wind"]) == 0
+    assert capsys.readouterr().out == "Wind: North force 4.\n"
+    assert main(["--today-wind", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "date": "2026-10-03",
+        "wind": "North force 4.",
+    }
+    assert main(["--today-wind", "--wind"]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "pass one report flag at a time (--today-wind --wind)" in captured.err
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_today",
+        lambda timeout, lang="en": replace(today, wind=None),
+    )
+    assert main(["--today-wind"]) == 0
+    assert capsys.readouterr().out == "No forecast wind is available for today.\n"
+
+
 def test_cli_today_prints_the_hong_kong_day(monkeypatch, capsys):
     seen = {}
     monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")

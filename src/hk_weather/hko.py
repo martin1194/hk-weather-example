@@ -10407,6 +10407,19 @@ def format_today_psr(day: TomorrowForecast | None, *, as_json: bool) -> str:
     return f"Rain chance: {chance}\n"
 
 
+def format_today_wind(day: TomorrowForecast | None, *, as_json: bool) -> str:
+    """Print today's forecast wind."""
+    wind = "" if day is None or day.wind is None else day.wind.strip()
+    if day is None or not wind:
+        return _unavailable("No forecast wind is available for today.", as_json=as_json)
+    if as_json:
+        return (
+            json.dumps({"date": day.date, "wind": wind}, indent=2, ensure_ascii=False)
+            + "\n"
+        )
+    return f"Wind: {wind}\n"
+
+
 def format_day_miss(day: int, *, as_json: bool = False) -> str:
     """Say that forecast day N is not in the 9-day list."""
     return _unavailable(f"Forecast day {day} is not available.", as_json=as_json)
