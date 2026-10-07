@@ -12,7 +12,9 @@ from hk_weather.cli import main
 from hk_weather.hko import (
     CurrentWeather,
     DailyRain,
+    DailySun,
     Evaporation,
+    GlobalSolar,
     HeatIndexReading,
     HeatIndexReport,
     FifteenUv,
@@ -30628,6 +30630,114 @@ def test_cli_global_solar_when_missing(monkeypatch, capsys):
     assert json.loads(capsys.readouterr().out) == {
         "message": "No global solar radiation is available."
     }
+
+
+def test_cli_sun_rate_compares_solar_radiation_with_sunshine(monkeypatch, capsys):
+    seen = {}
+
+    def fake_solar(timeout, lang="en"):
+        seen["solar_lang"] = lang
+        return GlobalSolar("京士柏" if lang == "tc" else "King's Park", "2026-08-31", 8.95)
+
+    def fake_sun(timeout, lang="en"):
+        seen["sun_lang"] = lang
+        return DailySun("京士柏" if lang == "tc" else "King's Park", "2026-08-31", 2.2)
+
+    monkeypatch.setattr("hk_weather.cli.fetch_global_solar", fake_solar)
+    monkeypatch.setattr("hk_weather.cli.fetch_daily_sun", fake_sun)
+    phrase = (
+        "On 2026-08-31, 京士柏 recorded 8.95 MJ/m² over 2.2 hours of sunshine, "
+        "4.1 MJ/m² per hour."
+    )
+    assert main(["--sun-rate", "--lang", "tc"]) == 0
+    assert seen["solar_lang"] == "tc"
+    assert seen["sun_lang"] == "tc"
+    assert capsys.readouterr().out == phrase + "\n"
+    assert main(["--sun-rate", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "date": "2026-08-31",
+        "station": "King's Park",
+        "solar_mj_m2": 8.95,
+        "hours": 2.2,
+        "rate_mj_m2": 4.1,
+        "phrase": (
+            "On 2026-08-31, King's Park recorded 8.95 MJ/m² over 2.2 hours of sunshine, "
+            "4.1 MJ/m² per hour."
+        ),
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_global_solar",
+        lambda timeout, lang="en": GlobalSolar("King's Park", "2026-08-31", 0),
+    )
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_daily_sun",
+        lambda timeout, lang="en": DailySun("King's Park", "2026-08-31", 1.2),
+    )
+    assert main(["--sun-rate"]) == 0
+    assert capsys.readouterr().out == (
+        "On 2026-08-31, King's Park recorded 1.2 hours of sunshine "
+        "and no global solar radiation.\n"
+    )
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_global_solar",
+        lambda timeout, lang="en": GlobalSolar("King's Park", "2026-08-31", 0.4),
+    )
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_daily_sun",
+        lambda timeout, lang="en": DailySun("King's Park", "2026-08-31", 0),
+    )
+    assert main(["--sun-rate"]) == 0
+    assert capsys.readouterr().out == (
+        "On 2026-08-31, King's Park recorded 0.4 MJ/m² of global solar "
+        "radiation with no bright sunshine.\n"
+    )
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_global_solar",
+        lambda timeout, lang="en": GlobalSolar("King's Park", "2026-08-31", 0),
+    )
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_daily_sun",
+        lambda timeout, lang="en": DailySun("King's Park", "2026-08-31", 0),
+    )
+    assert main(["--sun-rate", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "date": "2026-08-31",
+        "station": "King's Park",
+        "solar_mj_m2": 0,
+        "hours": 0,
+        "rate_mj_m2": None,
+        "phrase": "On 2026-08-31, King's Park recorded no sunshine and no global solar radiation.",
+    }
+
+    def fail_sun(timeout, lang="en"):
+        raise AssertionError("must not fetch daily sunshine")
+
+    monkeypatch.setattr("hk_weather.cli.fetch_daily_sun", fail_sun)
+    monkeypatch.setattr("hk_weather.cli.fetch_global_solar", lambda timeout, lang="en": None)
+    assert main(["--sun-rate"]) == 0
+    assert capsys.readouterr().out == "No global solar radiation is available.\n"
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_global_solar",
+        lambda timeout, lang="en": GlobalSolar("King's Park", "2026-08-31", 8.95),
+    )
+    monkeypatch.setattr("hk_weather.cli.fetch_daily_sun", lambda timeout, lang="en": None)
+    assert main(["--sun-rate", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No daily sunshine is available."
+    }
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_daily_sun",
+        lambda timeout, lang="en": DailySun("King's Park", "2026-08-30", 2.2),
+    )
+    assert main(["--sun-rate", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No shared sunshine day is available."
+    }
+
+    assert main(["--global-solar", "--sun-rate"]) == 2
+    assert "(--global-solar --sun-rate)" in capsys.readouterr().err
 
 
 def test_cli_kau_sai_chau_solar_prints_latest_day(monkeypatch, capsys):
