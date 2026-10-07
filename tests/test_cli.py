@@ -2660,6 +2660,55 @@ def test_cli_today_range_prints_the_high_low_span(monkeypatch, capsys):
     assert capsys.readouterr().out == "No forecast range is available.\n"
 
 
+def test_cli_in_range_says_whether_the_temperature_is_inside(monkeypatch, capsys):
+    today = TomorrowForecast(
+        "updated",
+        "2026-10-03",
+        "Saturday",
+        "Sunny",
+        31,
+        27,
+        None,
+        None,
+        None,
+        None,
+    )
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_current",
+        lambda timeout, lang="en": SAMPLE_WEATHER,
+    )
+    monkeypatch.setattr("hk_weather.cli.fetch_today", lambda timeout, lang="en": today)
+    assert main(["--in-range"]) == 0
+    assert capsys.readouterr().out == "Inside today's range of 27-31°C\n"
+    assert main(["--in-range", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "temperature_c": 28,
+        "low_c": 27,
+        "high_c": 31,
+        "inside": True,
+        "phrase": "Inside today's range of 27-31°C",
+    }
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_current",
+        lambda timeout, lang="en": replace(SAMPLE_WEATHER, temperature_c=32),
+    )
+    assert main(["--in-range"]) == 0
+    assert capsys.readouterr().out == "Above today's range of 27-31°C\n"
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_current",
+        lambda timeout, lang="en": replace(SAMPLE_WEATHER, temperature_c=26),
+    )
+    assert main(["--in-range"]) == 0
+    assert capsys.readouterr().out == "Below today's range of 27-31°C\n"
+    assert main(["--in-range", "--today-range"]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "pass one report flag at a time (--today-range --in-range)" in captured.err
+    monkeypatch.setattr("hk_weather.cli.fetch_today", lambda timeout, lang="en": None)
+    assert main(["--in-range"]) == 0
+    assert capsys.readouterr().out == "No forecast range is available.\n"
+
+
 def test_cli_today_psr_prints_the_rain_chance(monkeypatch, capsys):
     today = TomorrowForecast(
         "updated",

@@ -750,6 +750,7 @@ from hk_weather.hko import (
     format_today_miss,
     format_high_gap,
     format_today_range,
+    format_in_range,
     format_today_psr,
     format_today_wind,
     format_today_weather,
@@ -1448,6 +1449,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--felt prints the locally felt earth tremor; --today prints today; "
             "--high-gap prints how far the current temperature is from today's forecast high; "
             "--today-range prints the span from today's forecast low to its high; "
+            "--in-range says whether the current temperature is inside that range; "
             "--today-psr prints today's chance of significant rain; "
             "--today-wind prints today's forecast wind; "
             "--today-weather prints today's forecast weather; "
@@ -1922,6 +1924,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--today-range",
         action="store_true",
         help="Print the span from today's forecast low to its forecast high",
+    )
+    parser.add_argument(
+        "--in-range",
+        action="store_true",
+        help="Say whether the current temperature is inside today's forecast range",
     )
     parser.add_argument(
         "--today-psr",
@@ -4422,6 +4429,12 @@ def main(argv: list[str] | None = None) -> int:
                 fetch_today(timeout=args.timeout, lang=args.lang),
                 as_json=args.json,
             )
+        elif args.in_range:
+            weather = fetch_current(timeout=args.timeout, lang=args.lang)
+            today = fetch_today(timeout=args.timeout, lang=args.lang)
+            low = None if today is None else today.temp_low_c
+            high = None if today is None else today.temp_high_c
+            text = format_in_range(weather.temperature_c, low, high, as_json=args.json)
         elif args.today_psr:
             text = format_today_psr(
                 fetch_today(timeout=args.timeout, lang=args.lang),
