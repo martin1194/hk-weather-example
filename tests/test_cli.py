@@ -3458,6 +3458,76 @@ def test_cli_high_rise_prints_the_climb_to_the_hottest_high(monkeypatch, capsys)
     assert "(--high-step --high-rise)" in capsys.readouterr().err
 
 
+def test_cli_high_fall_prints_the_first_lower_forecast_high(monkeypatch, capsys):
+    seen = {}
+    report = NineTemp(
+        "2026-10-07T16:30:00+08:00",
+        (
+            NineTempDay("2026-10-08", "Thursday", 29, 24),
+            NineTempDay("2026-10-09", "Friday", 31, 26),
+            NineTempDay("2026-10-10", "Saturday", None, 26),
+            NineTempDay("2026-10-14", "Wednesday", 32, 27),
+            NineTempDay("2026-10-15", "Thursday", 31, 27),
+            NineTempDay("2026-10-16", "Friday", 30, 26),
+        ),
+    )
+
+    def fake_fetch(timeout, lang="en"):
+        seen["lang"] = lang
+        return report
+
+    monkeypatch.setattr("hk_weather.cli.fetch_nine_temp", fake_fetch)
+    phrase = (
+        "The forecast high falls on 2026-10-15 Thursday, "
+        "from 32°C on 2026-10-14 Wednesday to 31°C."
+    )
+    assert main(["--high-fall", "--lang", "tc"]) == 0
+    assert seen["lang"] == "tc"
+    assert capsys.readouterr().out == phrase + "\n"
+
+    assert main(["--high-fall", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "from_date": "2026-10-14",
+        "from_week": "Wednesday",
+        "from_high_c": 32,
+        "to_date": "2026-10-15",
+        "to_week": "Thursday",
+        "to_high_c": 31,
+        "gap_c": -1,
+        "phrase": phrase,
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_nine_temp",
+        lambda timeout, lang="en": NineTemp(
+            "",
+            (
+                NineTempDay("2026-10-08", "Thursday", 29, 24),
+                NineTempDay("2026-10-09", "Friday", 31, 26),
+                NineTempDay("2026-10-10", "Saturday", 31, 26),
+            ),
+        ),
+    )
+    assert main(["--high-fall"]) == 0
+    assert capsys.readouterr().out == "The forecast high does not fall.\n"
+    assert main(["--high-fall", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "The forecast high does not fall."
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_nine_temp",
+        lambda timeout, lang="en": NineTemp("", ()),
+    )
+    assert main(["--high-fall"]) == 0
+    assert capsys.readouterr().out == "No forecast high is available.\n"
+
+    assert main(["--high-fall", "--high-rise"]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "pass one report flag at a time (--high-rise --high-fall)" in captured.err
+
+
 def test_cli_nine_humidity_lists_each_day(monkeypatch, capsys):
     seen = {}
 

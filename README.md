@@ -99,6 +99,8 @@ hk-weather --high-step
 hk-weather --high-step --json
 hk-weather --high-rise
 hk-weather --high-rise --json
+hk-weather --high-fall
+hk-weather --high-fall --json
 hk-weather --nine-humidity
 hk-weather --nine-humidity --json
 hk-weather --in-humidity
@@ -1132,6 +1134,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --high-step` compares the first of those highs with the next one after it. Friday at 31°C after Thursday at 30°C is `2026-10-09 Friday's high of 31°C is 1°C warmer than 2026-10-08 Thursday's 30°C.` A lower next high says cooler, and the same high says it matches. `--hottest-day` still prints the highest day in the whole forecast. `--high-step --json` prints both days, both highs, the gap, and that phrase. If fewer than two highs are present, it says `No following forecast high is available.`
 
 `hk-weather --high-rise` prints how far the hottest of those highs is above the first one, for example `The forecast high rises 3°C, from 29°C on 2026-10-08 Thursday to 32°C on 2026-10-13 Tuesday.` When two days share that peak, it names the first of them. `--high-step` still compares the first high with the next one, and `--hottest-day` still lists every hottest day. `--high-rise --json` prints both days, both highs, the gap, and that phrase. `--lang` applies. If the first high is already the hottest, it says `The forecast high does not rise.` If no high is present, it says `No forecast high is available.`
+
+`hk-weather --high-fall` prints the first day that high is lower than the previous high. After a rise to 32°C, the next lower day is `The forecast high falls on 2026-10-15 Thursday, from 32°C on 2026-10-14 Wednesday to 31°C.` Days with no high are skipped, and a high that stays the same is not a fall. `--high-step` still compares only the first high with the next one, and `--high-rise` still measures the climb to the hottest high. `--high-fall --json` prints both days, both highs, the signed gap, and that phrase. `--lang` applies. If the high never falls, it says `The forecast high does not fall.` If no high is present, it says `No forecast high is available.`
 
 `hk-weather --nine-humidity` prints each day's humidity range from that forecast (`forecastMaxrh` and `forecastMinrh`), for example `2026-10-04 Sunday  humidity 65-95%`. `--humidity` still prints the current station readings. `--nine-humidity --json` prints those days as one JSON object. `--lang` applies. If no humidity is present, it says `No 9-day humidity is available.`
 

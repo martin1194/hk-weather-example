@@ -656,6 +656,7 @@ from hk_weather.hko import (
     format_hottest_day,
     format_high_step,
     format_high_rise,
+    format_high_fall,
     format_nine_humidity,
     format_nine_humidity_miss,
     format_in_humidity,
@@ -1341,6 +1342,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--hottest-day prints the hottest day in that forecast; "
             "--high-step compares the first forecast high with the next one; "
             "--high-rise prints how far the hottest forecast high is above the first; "
+            "--high-fall prints the first day the forecast high falls; "
             "--nine-humidity prints each day's humidity from the 9-day forecast; "
             "--in-humidity says whether the current humidity is inside the next range; "
             "--humid-floor prints the first day the forecast minimum humidity changes; "
@@ -2058,6 +2060,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--high-rise",
         action="store_true",
         help="Print how far the hottest forecast high is above the first high",
+    )
+    parser.add_argument(
+        "--high-fall",
+        action="store_true",
+        help="Print the first day the 9-day forecast high falls",
     )
     parser.add_argument(
         "--nine-humidity",
@@ -4810,6 +4817,11 @@ def main(argv: list[str] | None = None) -> int:
             )
         elif args.high_rise:
             text = format_high_rise(
+                fetch_nine_temp(timeout=args.timeout, lang=args.lang),
+                as_json=args.json,
+            )
+        elif args.high_fall:
+            text = format_high_fall(
                 fetch_nine_temp(timeout=args.timeout, lang=args.lang),
                 as_json=args.json,
             )
