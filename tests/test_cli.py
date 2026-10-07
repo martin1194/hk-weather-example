@@ -1353,6 +1353,105 @@ def test_cli_forecast_line_prints_the_first_sentence(monkeypatch, capsys):
     assert capsys.readouterr().out == "No forecast description is available.\n"
 
 
+def test_cli_about_high_compares_the_stated_high_with_the_forecast(monkeypatch, capsys):
+    from hk_weather.hko import ForecastDesc
+
+    seen = {}
+    paragraph = (
+        "Mainly fine and dry. Slightly cooler tomorrow morning with a minimum "
+        "temperature of about 24 degrees. The maximum temperature will be around "
+        "29 degrees during the day."
+    )
+
+    def fake_desc(timeout, lang="en"):
+        seen["desc_lang"] = lang
+        return ForecastDesc(paragraph)
+
+    def fake_temps(timeout, lang="en"):
+        seen["temp_lang"] = lang
+        return NineTemp(
+            "",
+            (
+                NineTempDay("2026-10-07", "Wednesday", None, 24),
+                NineTempDay("2026-10-08", "Thursday", 29, 24),
+            ),
+        )
+
+    monkeypatch.setattr("hk_weather.cli.fetch_forecast_desc", fake_desc)
+    monkeypatch.setattr("hk_weather.cli.fetch_nine_temp", fake_temps)
+    assert main(["--about-high", "--lang", "tc"]) == 0
+    assert seen["desc_lang"] == "tc"
+    assert seen["temp_lang"] == "tc"
+    assert capsys.readouterr().out == (
+        "The local forecast high of about 29°C matches 2026-10-08 Thursday's 29°C.\n"
+    )
+
+    assert main(["--about-high", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "stated_c": 29.0,
+        "date": "2026-10-08",
+        "week": "Thursday",
+        "high_c": 29,
+        "gap_c": 0,
+        "phrase": "The local forecast high of about 29°C matches 2026-10-08 Thursday's 29°C.",
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_forecast_desc",
+        lambda timeout, lang="en": ForecastDesc(
+            "The maximum temperature will be around 31 degrees."
+        ),
+    )
+    assert main(["--about-high"]) == 0
+    assert capsys.readouterr().out == (
+        "The local forecast high of about 31°C is 2°C above 2026-10-08 Thursday's 29°C.\n"
+    )
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_forecast_desc",
+        lambda timeout, lang="en": ForecastDesc("日間最高氣溫約28度。"),
+    )
+    assert main(["--about-high"]) == 0
+    assert capsys.readouterr().out == (
+        "The local forecast high of about 28°C is 1°C below 2026-10-08 Thursday's 29°C.\n"
+    )
+
+    def fail_temps(timeout, lang="en"):
+        raise AssertionError("a description with no high must not fetch the 9-day forecast")
+
+    monkeypatch.setattr("hk_weather.cli.fetch_nine_temp", fail_temps)
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_forecast_desc",
+        lambda timeout, lang="en": ForecastDesc("Mainly fine and dry."),
+    )
+    assert main(["--about-high"]) == 0
+    assert capsys.readouterr().out == "No local forecast high is available.\n"
+    assert main(["--about-high", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No local forecast high is available."
+    }
+
+    monkeypatch.setattr("hk_weather.cli.fetch_forecast_desc", lambda timeout, lang="en": None)
+    assert main(["--about-high"]) == 0
+    assert capsys.readouterr().out == "No local forecast high is available.\n"
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_forecast_desc",
+        lambda timeout, lang="en": ForecastDesc(
+            "The maximum temperature will be around 29 degrees."
+        ),
+    )
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_nine_temp",
+        lambda timeout, lang="en": NineTemp("", ()),
+    )
+    assert main(["--about-high"]) == 0
+    assert capsys.readouterr().out == "No forecast high is available.\n"
+
+    assert main(["--about-high", "--forecast-line"]) == 2
+    assert "(--forecast-line --about-high)" in capsys.readouterr().err
+
+
 def test_cli_forecast_desc_prints_paragraph(monkeypatch, capsys):
     seen = {}
     description = "Mainly cloudy with a few showers and thunderstorms."
