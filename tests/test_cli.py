@@ -30,6 +30,7 @@ from hk_weather.hko import (
     NineTempDay,
     NineWeather,
     NineWeatherDay,
+    YesterdayReport,
     SeaTemperature,
     SoilReading,
     SoilReport,
@@ -4494,6 +4495,94 @@ def test_cli_yesterday_when_missing(monkeypatch, capsys):
     assert json.loads(capsys.readouterr().out) == {
         "message": "Yesterday's Observatory summary is not available."
     }
+
+
+def test_cli_yest_high_compares_yesterdays_high_with_the_forecast(monkeypatch, capsys):
+    seen = {}
+    yesterday = YesterdayReport("2026-10-06", 28.2, 23.3, 0, 70, 53)
+    report = NineTemp(
+        "2026-10-07T16:30:00+08:00",
+        (
+            NineTempDay("2026-10-07", "Wednesday", None, 24),
+            NineTempDay("2026-10-08", "Thursday", 29, 24),
+            NineTempDay("2026-10-09", "Friday", 31, 26),
+        ),
+    )
+
+    def fake_yesterday(timeout, lang="en"):
+        seen["lang"] = lang
+        return yesterday
+
+    def fake_nine(timeout, lang="en"):
+        seen["nine_lang"] = lang
+        return report
+
+    monkeypatch.setattr("hk_weather.cli.fetch_yesterday", fake_yesterday)
+    monkeypatch.setattr("hk_weather.cli.fetch_nine_temp", fake_nine)
+    phrase = "2026-10-08 Thursday's high of 29°C is 0.8°C above yesterday's 28.2°C."
+    assert main(["--yest-high", "--lang", "tc"]) == 0
+    assert seen["lang"] == "tc"
+    assert seen["nine_lang"] == "tc"
+    assert capsys.readouterr().out == phrase + "\n"
+    assert main(["--yest-high", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "yesterday_c": 28.2,
+        "date": "2026-10-08",
+        "week": "Thursday",
+        "high_c": 29,
+        "gap_c": 0.8,
+        "phrase": phrase,
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_yesterday",
+        lambda timeout, lang="en": YesterdayReport("2026-10-06", 31, 24, 0, 70, 50),
+    )
+    assert main(["--yest-high"]) == 0
+    assert capsys.readouterr().out == (
+        "2026-10-08 Thursday's high of 29°C is 2°C below yesterday's 31°C.\n"
+    )
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_yesterday",
+        lambda timeout, lang="en": YesterdayReport("2026-10-06", 29, 24, 0, 70, 50),
+    )
+    assert main(["--yest-high"]) == 0
+    assert capsys.readouterr().out == (
+        "2026-10-08 Thursday's high of 29°C matches yesterday's 29°C.\n"
+    )
+
+    def fail_nine(timeout, lang="en"):
+        raise AssertionError("must not fetch the 9-day forecast")
+
+    monkeypatch.setattr("hk_weather.cli.fetch_nine_temp", fail_nine)
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_yesterday",
+        lambda timeout, lang="en": None,
+    )
+    assert main(["--yest-high"]) == 0
+    assert capsys.readouterr().out == "No yesterday high is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_yesterday",
+        lambda timeout, lang="en": YesterdayReport("2026-10-06", None, 24, 0, 70, 50),
+    )
+    assert main(["--yest-high", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No yesterday high is available."
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_yesterday",
+        lambda timeout, lang="en": yesterday,
+    )
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_nine_temp",
+        lambda timeout, lang="en": NineTemp("updated", ()),
+    )
+    assert main(["--yest-high"]) == 0
+    assert capsys.readouterr().out == "No forecast high is available.\n"
+
+    assert main(["--yesterday", "--yest-high"]) == 2
+    assert "(--yesterday --yest-high)" in capsys.readouterr().err
 
 
 def test_cli_mean_temp_prints_latest_day(monkeypatch, capsys):
