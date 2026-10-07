@@ -688,6 +688,8 @@ hk-weather --until-moonset
 hk-weather --until-moonset --json
 hk-weather --moon-up
 hk-weather --moon-up --json
+hk-weather --moonlight
+hk-weather --moonlight --json
 hk-weather --lunar
 hk-weather --lunar --json
 hk-weather --warnings
@@ -1706,6 +1708,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --until-moonset` prints how long until that moonset. At 08:00, with moonset at 15:54, that is `Moonset in 7 hours 54 min`. After moonset it says `Moonset was 2 hours 6 min ago`. Within that minute it says `Moonset now`. `--moon` still prints the rise, transit, and set clocks. `--until-moonset --json` prints the moonset clock and that phrase. If the moonset time is missing, it says `No moonset time is available.`
 
 `hk-weather --moon-up` says whether the moon is above the horizon. With rise at 02:51 and set at 15:54, 10:00 is `The moon is up` and 01:00 is `The moon is down`. When moonset is earlier than moonrise, the moon is up from moonrise through midnight until moonset. `--moon` still prints the clocks. `--moon-up --json` prints that answer with the rise and set. If either time is missing, it says `No moon times are available.`
+
+`hk-weather --moonlight` prints how long the moon is above the horizon. From `02:51` to `15:54` that is `The moon is up for 13 hours 3 min, from 02:51 to 15:54.` When moonset is earlier than moonrise, the length runs through midnight. `--moon-up` still says only whether the moon is up now. `--moonlight --json` prints the clocks, the length in minutes, and that phrase. If either time is missing, it says `No moonlight length is available.`
 
 `hk-weather --lunar` prints today's lunar date from the Observatory calendar, for example `丙午年，馬` and `八月廿三`. `--lunar --json` prints that date as one JSON object. `--lang` is sent on the request; the Observatory still returns the lunar labels in Chinese. If the date is missing, it says `No lunar date is available.`
 
