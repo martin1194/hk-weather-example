@@ -594,6 +594,8 @@ hk-weather --tap-mun-east-wind
 hk-weather --tap-mun-east-wind --json
 hk-weather --forecast-icon
 hk-weather --forecast-icon --json
+hk-weather --today-icon
+hk-weather --today-icon --json
 hk-weather --quake
 hk-weather --quake --json
 hk-weather --felt
@@ -1528,6 +1530,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --tap-mun-east-wind` prints the latest daily mean wind speed at Tap Mun East, for example `2026-08-31  6 km/h`. `--mean-wind` still prints Waglan Island, and the other station wind flags still print their own stations. `--yi-tung-shan-wind` still prints Yi Tung Shan, and `--tap-mun-temp` still prints Tap Mun. A speed of zero is kept. `--tap-mun-east-wind --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `塔門東` and simplified text uses `塔门东`. Days marked `***` are omitted. If none remain, it says `No Tap Mun East mean wind speed is available.`
 
 `hk-weather --forecast-icon` prints each day's weather icon from that forecast (`ForecastIcon`), for example `2026-10-04 Sunday  54  Sunny Intervals with Showers`. `--wind` still prints the wind. `--forecast-icon --json` prints those days as one JSON object. `--lang` applies. If no icon is present, it says `No forecast icons are available.`
+
+`hk-weather --today-icon` prints only today's forecast icon, for example `Icon: 81 Dry`. `--forecast-icon` still prints every day, and `--icon` still prints the current weather icon. `--today-icon --json` prints the date, icon number, and label. If today is missing from the forecast, it says `No forecast icon is available for today.`
 
 `hk-weather --quake` lists the latest quick earthquake message from the Observatory earthquake feed (`earthquake.php`, `dataType=qem`), for example `2026-10-03T00:34:00+08:00  M6  off east coast of Kamchatka (51.79, 159.6)`. `--quake --json` prints that list as one JSON object. `--lang` applies. If none is reported, it says so.
 

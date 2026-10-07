@@ -844,6 +844,7 @@ from hk_weather.hko import (
     format_tap_mun_east_wind_miss,
     format_forecast_icon,
     format_forecast_icon_miss,
+    format_today_icon,
     format_yesterday,
     format_yesterday_miss,
     format_mean_temp,
@@ -1441,6 +1442,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--yi-tung-shan-wind prints the latest daily mean wind speed at Yi Tung Shan; "
             "--tap-mun-east-wind prints the latest daily mean wind speed at Tap Mun East; "
             "--forecast-icon prints each day's weather icon; "
+            "--today-icon prints today's forecast icon; "
             "--quake lists the latest earthquake message; "
             "--felt prints the locally felt earth tremor; --today prints today; "
             "--high-gap prints how far the current temperature is from today's forecast high; "
@@ -3197,6 +3199,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--forecast-icon",
         action="store_true",
         help="Print the weather icon for each day of the 9-day forecast",
+    )
+    parser.add_argument(
+        "--today-icon",
+        action="store_true",
+        help="Print today's forecast weather icon",
     )
     parser.add_argument(
         "--quake",
@@ -6867,6 +6874,11 @@ def main(argv: list[str] | None = None) -> int:
                     if args.json
                     else format_forecast_icon(forecast_icon)
                 )
+        elif args.today_icon:
+            text = format_today_icon(
+                fetch_forecast_icon(timeout=args.timeout, lang=args.lang),
+                as_json=args.json,
+            )
         elif args.quake:
             quakes = fetch_quakes(timeout=args.timeout, lang=args.lang)
             text = format_json(quakes) if args.json else format_quakes(quakes)
