@@ -1524,6 +1524,51 @@ def test_cli_tc_info_when_blank_or_missing(monkeypatch, capsys):
     }
 
 
+def test_cli_warning_count_prints_how_many_are_in_force(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {
+                "WTS": {
+                    "name": "Thunderstorm Warning",
+                    "code": "WTS",
+                    "actionCode": "ISSUE",
+                },
+                "WHOT": {
+                    "name": "Very Hot Weather Warning",
+                    "code": "WHOT",
+                    "actionCode": "CANCEL",
+                },
+            }
+        ),
+    )
+    assert main(["--warning-count"]) == 0
+    assert capsys.readouterr().out == "1 warning in force\n"
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {
+                "WTS": {"name": "Thunderstorm Warning", "code": "WTS", "actionCode": "ISSUE"},
+                "WFIRER": {"name": "Fire Danger Warning", "code": "WFIRER", "actionCode": "ISSUE"},
+            }
+        ),
+    )
+    assert main(["--warning-count"]) == 0
+    assert capsys.readouterr().out == "2 warnings in force\n"
+    assert main(["--warning-count", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {"count": 2}
+    assert main(["--warning-count", "--warnings"]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "pass one report flag at a time (--warnings --warning-count)" in captured.err
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({}),
+    )
+    assert main(["--warning-count"]) == 0
+    assert capsys.readouterr().out == "No weather warnings are in force.\n"
+
+
 def test_cli_warnings_lists_active_codes(monkeypatch, capsys):
     seen = {}
 

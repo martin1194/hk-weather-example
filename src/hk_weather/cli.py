@@ -757,6 +757,7 @@ from hk_weather.hko import (
     format_wettest,
     format_wettest_miss,
     format_warnings,
+    format_warning_count,
     format_warning_time,
     format_warning_time_miss,
     format_weekend,
@@ -1268,6 +1269,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--nine-temp prints each day's high and low from the 9-day forecast; "
             "--nine-humidity prints each day's humidity from the 9-day forecast; "
             "--warnings lists active warnings; "
+            "--warning-count prints how many warnings are in force; "
             "--warning-time prints when active warnings were issued; "
             "--uv prints the UV index; "
             "--fifteen-uv prints the latest 15-minute mean UV index; "
@@ -3228,6 +3230,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Print only active weather warnings",
     )
     parser.add_argument(
+        "--warning-count",
+        action="store_true",
+        help="Print how many weather warnings are in force",
+    )
+    parser.add_argument(
         "--warning-time",
         action="store_true",
         help="Print issue and expiry times for active weather warnings",
@@ -4153,6 +4160,11 @@ def main(argv: list[str] | None = None) -> int:
             text = _format_find(parser, args.find, as_json=args.json)
         elif args.warnings:
             text = format_warnings(
+                fetch_warnings(timeout=args.timeout, lang=args.lang),
+                as_json=args.json,
+            )
+        elif args.warning_count:
+            text = format_warning_count(
                 fetch_warnings(timeout=args.timeout, lang=args.lang),
                 as_json=args.json,
             )

@@ -9707,6 +9707,18 @@ def format_warnings(warnings: tuple[WeatherWarning, ...], *, as_json: bool = Fal
     return "\n".join(lines) + "\n"
 
 
+def format_warning_count(warnings: tuple[WeatherWarning, ...], *, as_json: bool) -> str:
+    """Print how many weather warnings are in force."""
+    count = len(warnings)
+    if as_json:
+        return json.dumps({"count": count}, indent=2) + "\n"
+    if count == 0:
+        return "No weather warnings are in force.\n"
+    if count == 1:
+        return "1 warning in force\n"
+    return f"{count} warnings in force\n"
+
+
 def parse_warning_time(payload: dict) -> WarningTimeReport:
     """Turn a `warnsum` document into issue and expiry times for active warnings."""
     warnings: list[WarningTime] = []
