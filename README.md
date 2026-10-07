@@ -672,6 +672,8 @@ hk-weather --until-transit
 hk-weather --until-transit --json
 hk-weather --daylight
 hk-weather --daylight --json
+hk-weather --daylight-shift
+hk-weather --daylight-shift --json
 hk-weather --moon
 hk-weather --moon --json
 hk-weather --until-moonset
@@ -1680,6 +1682,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --until-transit` prints how long until today's sun transit, the time the sun is highest. At 08:00, with transit at 12:12, that is `Transit in 4 hours 12 min`. After transit it says `Transit was 1 hour 48 min ago`. Within that minute it says `Transit now`. `--sunrise` still prints the rise, transit, and set clocks. `--until-transit --json` prints the transit clock and that phrase. If the transit time is missing, it says `No sun transit time is available.`
 
 `hk-weather --daylight` prints how long the sun is up, from sunrise to sunset. From `06:15` to `18:09` that is `Daylight 11 hours 54 min`. `--daylight --json` prints the sunrise, sunset, and that length. If either time is missing, it says `No daylight length is available.`
+
+`hk-weather --daylight-shift` compares tomorrow's daylight with today's. From `06:17`–`18:06` today and `06:17`–`18:05` tomorrow, that is `Tomorrow's daylight is 1 min shorter than today's 11 hours 49 min.` A longer day says longer, and the same length says it matches. `--daylight` still prints today's length on its own. `--daylight-shift --json` prints both dates, both lengths in minutes, the gap, and that phrase. `--lang` applies. If either day is missing, it says `No daylight comparison is available.`
 
 `hk-weather --moon` (or `-M`) prints today's moonrise, moon transit, and moonset (`opendata.php`, `dataType=MRS`), for example `Rise: 23:39` and `Set: 12:48`. `--moon --json` prints that day as one JSON object. `--lang` applies. If the times are missing, it says so.
 

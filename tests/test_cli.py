@@ -21606,6 +21606,70 @@ def test_cli_daylight_prints_the_length_of_the_day(monkeypatch, capsys):
     assert capsys.readouterr().out == "No daylight length is available.\n"
 
 
+def test_cli_daylight_shift_compares_tomorrow_with_today(monkeypatch, capsys):
+    seen = {}
+
+    def fake_today(timeout, lang="en"):
+        seen["today_lang"] = lang
+        return Sunrise("2026-10-07", "06:17", "12:11", "18:06")
+
+    def fake_tomorrow(timeout, lang="en"):
+        seen["tomorrow_lang"] = lang
+        return Sunrise("2026-10-08", "06:17", "12:11", "18:05")
+
+    monkeypatch.setattr("hk_weather.cli.fetch_sunrise", fake_today)
+    monkeypatch.setattr("hk_weather.cli.fetch_tomorrow_sunrise", fake_tomorrow)
+    assert main(["--daylight-shift", "--lang", "tc"]) == 0
+    assert seen["today_lang"] == "tc"
+    assert seen["tomorrow_lang"] == "tc"
+    assert capsys.readouterr().out == (
+        "Tomorrow's daylight is 1 min shorter than today's 11 hours 49 min.\n"
+    )
+
+    assert main(["--daylight-shift", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "today": "2026-10-07",
+        "tomorrow": "2026-10-08",
+        "today_minutes": 709,
+        "tomorrow_minutes": 708,
+        "gap_minutes": -1,
+        "phrase": "Tomorrow's daylight is 1 min shorter than today's 11 hours 49 min.",
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_tomorrow_sunrise",
+        lambda timeout, lang="en": Sunrise("2026-10-08", "06:16", "12:11", "18:06"),
+    )
+    assert main(["--daylight-shift"]) == 0
+    assert capsys.readouterr().out == (
+        "Tomorrow's daylight is 1 min longer than today's 11 hours 49 min.\n"
+    )
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_tomorrow_sunrise",
+        lambda timeout, lang="en": Sunrise("2026-10-08", "06:17", "12:11", "18:06"),
+    )
+    assert main(["--daylight-shift"]) == 0
+    assert capsys.readouterr().out == (
+        "Tomorrow's daylight matches today's 11 hours 49 min.\n"
+    )
+
+    assert main(["--daylight-shift", "--daylight"]) == 2
+    assert "(--daylight --daylight-shift)" in capsys.readouterr().err
+
+    def fail_tomorrow(timeout, lang="en"):
+        raise AssertionError("missing sunrise must not fetch tomorrow")
+
+    monkeypatch.setattr("hk_weather.cli.fetch_tomorrow_sunrise", fail_tomorrow)
+    monkeypatch.setattr("hk_weather.cli.fetch_sunrise", lambda timeout, lang="en": None)
+    assert main(["--daylight-shift"]) == 0
+    assert capsys.readouterr().out == "No daylight comparison is available.\n"
+    assert main(["--daylight-shift", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No daylight comparison is available."
+    }
+
+
 def test_cli_sunrise_prints_times(monkeypatch, capsys):
     seen = {}
 

@@ -7806,16 +7806,26 @@ def fetch_aqhi(timeout: float = 10, lang: str = "en") -> AqhiReport:
     return parse_aqhi(_fetch_text(url, timeout))
 
 
-def fetch_sunrise(timeout: float = 10, lang: str = "en") -> Sunrise | None:
-    """Download today's sunrise, sun transit, and sunset (`dataType=SRS`)."""
-    today = _hong_kong_today()
-    year = int(today[:4])
-    month = int(today[5:7])
-    day = int(today[8:10])
-    url = (
+def _srs_url(date_text: str) -> str:
+    """Open-data URL for sunrise and sunset on one Hong Kong calendar date."""
+    year = int(date_text[:4])
+    month = int(date_text[5:7])
+    day = int(date_text[8:10])
+    return (
         "https://data.weather.gov.hk/weatherAPI/opendata/opendata.php"
         f"?dataType=SRS&rformat=json&year={year}&month={month}&day={day}&lang=en"
     )
+
+
+def fetch_sunrise(timeout: float = 10, lang: str = "en") -> Sunrise | None:
+    """Download today's sunrise, sun transit, and sunset (`dataType=SRS`)."""
+    url = _srs_url(_hong_kong_today())
+    return parse_sunrise(_fetch_json(_apply_lang(url, lang), timeout))
+
+
+def fetch_tomorrow_sunrise(timeout: float = 10, lang: str = "en") -> Sunrise | None:
+    """Download tomorrow's sunrise, sun transit, and sunset (`dataType=SRS`)."""
+    url = _srs_url(_hong_kong_tomorrow())
     return parse_sunrise(_fetch_json(_apply_lang(url, lang), timeout))
 
 
@@ -12024,6 +12034,52 @@ def format_daylight(reading: Sunrise | None, *, as_json: bool) -> str:
             + "\n"
         )
     return f"Daylight {phrase}\n"
+
+
+def _daylight_minutes(reading: Sunrise | None) -> int | None:
+    """Minutes from sunrise to sunset, or None when either clock is unusable."""
+    if reading is None:
+        return None
+    rise = _clock_minutes(reading.rise)
+    sunset = _clock_minutes(reading.set)
+    if rise is None or sunset is None or sunset <= rise:
+        return None
+    return sunset - rise
+
+
+def format_daylight_shift(
+    today: Sunrise | None, tomorrow: Sunrise | None, *, as_json: bool
+) -> str:
+    """Compare tomorrow's daylight length with today's."""
+    today_minutes = _daylight_minutes(today)
+    tomorrow_minutes = _daylight_minutes(tomorrow)
+    if today_minutes is None or tomorrow_minutes is None:
+        return _unavailable("No daylight comparison is available.", as_json=as_json)
+    gap = tomorrow_minutes - today_minutes
+    today_length = _span_phrase(today_minutes)
+    if gap > 0:
+        phrase = (
+            f"Tomorrow's daylight is {_span_phrase(gap)} longer than "
+            f"today's {today_length}."
+        )
+    elif gap < 0:
+        phrase = (
+            f"Tomorrow's daylight is {_span_phrase(abs(gap))} shorter than "
+            f"today's {today_length}."
+        )
+    else:
+        phrase = f"Tomorrow's daylight matches today's {today_length}."
+    if as_json:
+        payload = {
+            "today": today.date if today is not None else "",
+            "tomorrow": tomorrow.date if tomorrow is not None else "",
+            "today_minutes": today_minutes,
+            "tomorrow_minutes": tomorrow_minutes,
+            "gap_minutes": gap,
+            "phrase": phrase,
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
 
 
 def parse_moon(payload: dict) -> Moon | None:

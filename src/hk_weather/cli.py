@@ -168,6 +168,7 @@ from hk_weather.hko import (
     fetch_summary,
     fetch_situation,
     fetch_sunrise,
+    fetch_tomorrow_sunrise,
     fetch_wettest,
     fetch_temps,
     fetch_temp_time,
@@ -704,6 +705,7 @@ from hk_weather.hko import (
     format_sun_up,
     format_until_transit,
     format_daylight,
+    format_daylight_shift,
     format_temps,
     format_temp_time,
     format_temp_time_miss,
@@ -1775,6 +1777,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--sun-up says whether the sun is above the horizon; "
             "--until-transit prints how long until today's sun transit; "
             "--daylight prints how long the sun is up; "
+            "--daylight-shift compares tomorrow's daylight with today's; "
             "--moon prints today's moonrise and moonset; "
             "--until-moonset prints how long until today's moonset; "
             "--moon-up says whether the moon is above the horizon; "
@@ -3460,6 +3463,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--daylight",
         action="store_true",
         help="Print how long the sun is up, from sunrise to sunset",
+    )
+    parser.add_argument(
+        "--daylight-shift",
+        action="store_true",
+        help="Compare tomorrow's daylight length with today's",
     )
     parser.add_argument(
         "--since-sunrise",
@@ -7342,6 +7350,16 @@ def main(argv: list[str] | None = None) -> int:
                 fetch_sunrise(timeout=args.timeout, lang=args.lang),
                 as_json=args.json,
             )
+        elif args.daylight_shift:
+            today_sun = fetch_sunrise(timeout=args.timeout, lang=args.lang)
+            if today_sun is None:
+                text = format_daylight_shift(None, None, as_json=args.json)
+            else:
+                text = format_daylight_shift(
+                    today_sun,
+                    fetch_tomorrow_sunrise(timeout=args.timeout, lang=args.lang),
+                    as_json=args.json,
+                )
         elif args.since_sunrise:
             text = format_since_sunrise(
                 fetch_sunrise(timeout=args.timeout, lang=args.lang),
