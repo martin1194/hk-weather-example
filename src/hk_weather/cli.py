@@ -624,6 +624,7 @@ from hk_weather.hko import (
     format_lunar_miss,
     format_moon,
     format_moon_miss,
+    format_until_moonset,
     format_month_rain,
     format_month_rain_miss,
     format_year_rain,
@@ -1702,6 +1703,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--until-transit prints how long until today's sun transit; "
             "--daylight prints how long the sun is up; "
             "--moon prints today's moonrise and moonset; "
+            "--until-moonset prints how long until today's moonset; "
             "--lunar prints today's lunar date; "
             "--rainstorm prints the rainstorm reminder; "
             "--cyclone prints the tropical cyclone message; "
@@ -3280,6 +3282,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--moon",
         action="store_true",
         help="Print today's moonrise, moon transit, and moonset",
+    )
+    parser.add_argument(
+        "--until-moonset",
+        action="store_true",
+        help="Print how long until today's moonset",
     )
     parser.add_argument(
         "--lunar",
@@ -6953,6 +6960,11 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_moon_miss(as_json=args.json)
             else:
                 text = format_json(moon) if args.json else format_moon(moon)
+        elif args.until_moonset:
+            text = format_until_moonset(
+                fetch_moon(timeout=args.timeout, lang=args.lang),
+                as_json=args.json,
+            )
         elif args.lunar:
             lunar = fetch_lunar(timeout=args.timeout, lang=args.lang)
             if lunar is None:

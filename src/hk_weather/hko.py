@@ -11071,6 +11071,28 @@ def format_moon_miss(*, as_json: bool = False) -> str:
     return _unavailable("No moon times are available.", as_json=as_json)
 
 
+def _until_moonset_phrase(moment: datetime, now: datetime) -> str:
+    """Say whether moonset is ahead, now, or already past."""
+    seconds = int((moment - now).total_seconds())
+    if abs(seconds) < 60:
+        return "Moonset now"
+    span = _span_phrase(abs(seconds) // 60)
+    if seconds > 0:
+        return f"Moonset in {span}"
+    return f"Moonset was {span} ago"
+
+
+def format_until_moonset(reading: Moon | None, *, as_json: bool) -> str:
+    """Print how long until today's moonset."""
+    moment = _clock_moment(reading.date, reading.set) if reading is not None else None
+    if reading is None or moment is None:
+        return _unavailable("No moonset time is available.", as_json=as_json)
+    phrase = _until_moonset_phrase(moment, _clock())
+    if as_json:
+        return json.dumps({"moonset": reading.set, "until": phrase}, indent=2) + "\n"
+    return phrase + "\n"
+
+
 def parse_lunar(payload: dict, date: str) -> LunarDate | None:
     """Turn a lunar-date document into today's Gregorian and lunar labels."""
     lunar_year = _text(payload.get("LunarYear"))
