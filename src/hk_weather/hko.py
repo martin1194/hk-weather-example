@@ -15400,6 +15400,46 @@ def format_minute_humidity_miss(*, as_json: bool = False) -> str:
     return _unavailable("No 1-minute humidity readings are available.", as_json=as_json)
 
 
+def format_humid_span(report: MinuteHumidityReport, *, as_json: bool) -> str:
+    """Print the gap between the lowest and highest 1-minute humidity."""
+    if not report.stations:
+        return _unavailable("No 1-minute humidity readings are available.", as_json=as_json)
+    ranked = [
+        (round(reading.humidity_percent, 1), reading.place)
+        for reading in report.stations
+        if reading.place
+    ]
+    places = list(dict.fromkeys(place for _value, place in ranked))
+    if len(places) < 2:
+        return _unavailable("No humidity range is available.", as_json=as_json)
+    low = min(item[0] for item in ranked)
+    high = max(item[0] for item in ranked)
+    low_places = list(dict.fromkeys(place for value, place in ranked if value == low))
+    high_places = list(dict.fromkeys(place for value, place in ranked if value == high))
+    span = round(high - low, 1)
+    low_listed = _join_headings(low_places)
+    high_listed = _join_headings(high_places)
+    if span == 0:
+        phrase = f"Humidity is {_number(low)}% at {low_listed}."
+    else:
+        phrase = (
+            f"Humidity spans {_number(span)}%, from {_number(low)}% at {low_listed} "
+            f"to {_number(high)}% at {high_listed}."
+        )
+    if as_json:
+        payload = {
+            "time": report.obs_time,
+            "low": low,
+            "high": high,
+            "span": span,
+            "low_places": low_places,
+            "high_places": high_places,
+            "phrase": phrase,
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
+
+
 _MEAN_HUMIDITY_STATIONS = {
     "en": "Hong Kong Observatory",
     "tc": "香港天文台",

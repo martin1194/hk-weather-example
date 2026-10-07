@@ -580,6 +580,7 @@ from hk_weather.hko import (
     format_humidity_time_miss,
     format_minute_humidity,
     format_minute_humidity_miss,
+    format_humid_span,
     format_mean_humidity,
     format_mean_humidity_miss,
     format_tai_mo_humidity_miss,
@@ -1378,6 +1379,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--humidity lists humidity readings; "
             "--humidity-time prints when those readings were recorded; "
             "--minute-humidity prints the latest 1-minute mean humidity; "
+            "--humid-span prints the gap between the lowest and highest of those readings; "
             "--mean-humidity prints the latest daily mean humidity; "
             "--tai-mo-humidity prints the latest daily mean humidity at Tai Mo Shan; "
             "--waglan-humidity prints the latest daily mean humidity at Waglan Island; "
@@ -4022,6 +4024,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--minute-humidity",
         action="store_true",
         help="Print the latest 1-minute mean humidity at automatic stations",
+    )
+    parser.add_argument(
+        "--humid-span",
+        action="store_true",
+        help="Print the gap between the lowest and highest 1-minute humidity",
     )
     parser.add_argument(
         "--humidest",
@@ -8249,6 +8256,11 @@ def main(argv: list[str] | None = None) -> int:
                     if args.json
                     else format_minute_humidity(minute_humidity)
                 )
+        elif args.humid_span:
+            text = format_humid_span(
+                fetch_minute_humidity(timeout=args.timeout, lang=args.lang),
+                as_json=args.json,
+            )
         elif args.humidest:
             humidest = fetch_humidest(timeout=args.timeout, lang=args.lang)
             if humidest is None:

@@ -24796,6 +24796,87 @@ def test_cli_minute_humidity_when_missing(monkeypatch, capsys):
     }
 
 
+def test_cli_humid_span_prints_the_humidity_range(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _text_response(
+            "Date time,Automatic Weather Station,Relative Humidity(percent)\n"
+            "202610071920,Chek Lap Kok,58\n"
+            "202610071920,Clear Water Bay,N/A\n"
+            "202610071920,Tsing Yi,59\n"
+            "202610071920,Pak Tam Chung,93\n"
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--humid-span", "--lang", "tc"]) == 0
+    assert seen["url"].endswith("latest_1min_humidity_uc.csv")
+    assert capsys.readouterr().out == (
+        "Humidity spans 35%, from 58% at Chek Lap Kok to 93% at Pak Tam Chung.\n"
+    )
+
+    assert main(["--humid-span", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "time": "2026-10-07 19:20",
+        "low": 58.0,
+        "high": 93.0,
+        "span": 35.0,
+        "low_places": ["Chek Lap Kok"],
+        "high_places": ["Pak Tam Chung"],
+        "phrase": "Humidity spans 35%, from 58% at Chek Lap Kok to 93% at Pak Tam Chung.",
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Date time,Station,Humidity\n"
+            "202610071920,Chek Lap Kok,58\n"
+            "202610071920,Tsing Yi,58\n"
+            "202610071920,Pak Tam Chung,93\n"
+            "202610071920,Tai Lung,93\n"
+        ),
+    )
+    assert main(["--humid-span"]) == 0
+    assert capsys.readouterr().out == (
+        "Humidity spans 35%, from 58% at Chek Lap Kok and Tsing Yi "
+        "to 93% at Pak Tam Chung and Tai Lung.\n"
+    )
+
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Date time,Station,Humidity\n"
+            "202610071920,Chek Lap Kok,70\n"
+            "202610071920,Sha Tin,70\n"
+        ),
+    )
+    assert main(["--humid-span"]) == 0
+    assert capsys.readouterr().out == "Humidity is 70% at Chek Lap Kok and Sha Tin.\n"
+
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Date time,Station,Humidity\n"
+            "202610071920,Chek Lap Kok,58\n"
+        ),
+    )
+    assert main(["--humid-span"]) == 0
+    assert capsys.readouterr().out == "No humidity range is available.\n"
+
+    assert main(["--minute-humidity", "--humid-span"]) == 2
+    assert "(--minute-humidity --humid-span)" in capsys.readouterr().err
+
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response("Date time,Station,Humidity\n"),
+    )
+    assert main(["--humid-span", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No 1-minute humidity readings are available."
+    }
+
+
 def test_cli_mean_humidity_prints_latest_day(monkeypatch, capsys):
     seen = {}
     monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")

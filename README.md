@@ -873,6 +873,8 @@ hk-weather --humidity-time
 hk-weather --humidity-time --json
 hk-weather --minute-humidity
 hk-weather --minute-humidity --json
+hk-weather --humid-span
+hk-weather --humid-span --json
 hk-weather --humidest
 hk-weather --humidest --json
 hk-weather --least-humid
@@ -1916,6 +1918,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --humidity-time` prints when those humidity readings were recorded (`humidity.recordTime`). `--humidity` still prints the readings. `--temp-time` still prints when the temperatures were recorded. `--humidity-time --json` prints that timestamp as one JSON object. `--lang` applies. If the field is missing or blank, it says `No humidity time is available.`
 
 `hk-weather --minute-humidity` prints the latest 1-minute mean relative humidity at automatic stations, for example `Chek Lap Kok  74%`. `--humidity` still prints humidity from the current weather report. `--minute-humidity --json` prints those stations as one JSON object. `--lang` selects the English, Traditional Chinese, or Simplified Chinese station names. Stations marked `N/A` are omitted. If none remain, it says `No 1-minute humidity readings are available.`
+
+`hk-weather --humid-span` prints the gap between the lowest and highest of those readings, for example `Humidity spans 35%, from 58% at Chek Lap Kok to 93% at Pak Tam Chung.` Stations that share either end are listed together. When every station matches, it names them without a span. `--humidest` and `--least-humid` still use the current weather report, and `--minute-humidity` still lists every station. `--humid-span --json` prints the time, both ends, the gap, and that phrase. `--lang` selects the station names. If only one station remains, it says `No humidity range is available.` If none remain, it says `No 1-minute humidity readings are available.`
 
 `hk-weather --humidest` prints the most humid place from the current report, for example `Chek Lap Kok  95%`. `--humidest --json` prints that reading as one JSON object. `--lang` applies. If no reading is present, it says so.
 
