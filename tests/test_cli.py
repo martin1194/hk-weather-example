@@ -19259,6 +19259,34 @@ def test_cli_until_sunset_says_how_long(monkeypatch, capsys):
     assert capsys.readouterr().out == "No sunset time is available.\n"
 
 
+def test_cli_daylight_prints_the_length_of_the_day(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_sunrise",
+        lambda timeout, lang="en": Sunrise("2026-10-03", "06:15", "12:12", "18:09"),
+    )
+    assert main(["--daylight"]) == 0
+    assert capsys.readouterr().out == "Daylight 11 hours 54 min\n"
+    assert main(["--daylight", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "rise": "06:15",
+        "set": "18:09",
+        "daylight": "11 hours 54 min",
+    }
+    assert main(["--daylight", "--sunrise"]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "pass one report flag at a time (--sunrise --daylight)" in captured.err
+    monkeypatch.setattr("hk_weather.cli.fetch_sunrise", lambda timeout, lang="en": None)
+    assert main(["--daylight"]) == 0
+    assert capsys.readouterr().out == "No daylight length is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_sunrise",
+        lambda timeout, lang="en": Sunrise("2026-10-03", "", "12:12", "18:09"),
+    )
+    assert main(["--daylight"]) == 0
+    assert capsys.readouterr().out == "No daylight length is available.\n"
+
+
 def test_cli_sunrise_prints_times(monkeypatch, capsys):
     seen = {}
 
