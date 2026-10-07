@@ -11687,6 +11687,50 @@ def format_next_tide(report: TideReport, *, as_json: bool) -> str:
     return phrase + "\n"
 
 
+def format_tide_swing(report: TideReport, *, as_json: bool) -> str:
+    """Print how the first tide changes to the next one."""
+    if not report.events:
+        return _unavailable("No tide readings are available.", as_json=as_json)
+    if len(report.events) < 2:
+        return _unavailable("No following tide is available.", as_json=as_json)
+    earlier, later = report.events[0], report.events[1]
+    gap = round(later.height_m - earlier.height_m, 2)
+    earlier_height = _number(earlier.height_m)
+    later_height = _number(later.height_m)
+    earlier_when = earlier.time
+    later_when = later.time
+    if earlier.date != later.date:
+        earlier_when = f"{earlier.date} {earlier.time}".strip()
+        later_when = f"{later.date} {later.time}".strip()
+    if gap < 0:
+        phrase = (
+            f"The tide falls {_number(abs(gap))} m, from {earlier_height} m at "
+            f"{earlier_when} to {later_height} m at {later_when}."
+        )
+    elif gap > 0:
+        phrase = (
+            f"The tide rises {_number(gap)} m, from {earlier_height} m at "
+            f"{earlier_when} to {later_height} m at {later_when}."
+        )
+    else:
+        phrase = (
+            f"The tide holds at {earlier_height} m, from {earlier_when} to {later_when}."
+        )
+    if as_json:
+        payload = {
+            "from_date": earlier.date,
+            "from_time": earlier.time,
+            "from_height_m": earlier.height_m,
+            "to_date": later.date,
+            "to_time": later.time,
+            "to_height_m": later.height_m,
+            "gap_m": gap,
+            "phrase": phrase,
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
+
+
 def parse_tide_hour(payload: dict, year: int) -> HourlyTideReport:
     """Turn an `HHOT` document into one height per hour."""
     fields = payload.get("fields")
