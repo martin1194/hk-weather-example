@@ -455,6 +455,8 @@ hk-weather --grass
 hk-weather --grass --json
 hk-weather --sunshine
 hk-weather --sunshine --json
+hk-weather --sun-share
+hk-weather --sun-share --json
 hk-weather --daily-sun
 hk-weather --daily-sun --json
 hk-weather --max-uv
@@ -1506,6 +1508,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --grass` prints yesterday's grass minimum from that same summary (`HKOReadingsMinGrassTemp`). `--yesterday` still prints the air-temperature summary. `--grass --json` prints the grass minimum as one JSON object. `--lang` applies. If the reading is missing, it says `No grass minimum is available.`
 
 `hk-weather --sunshine` prints yesterday's sunshine duration at King's Park (`dataType=RYES`, station KP, `KingsParkReadingsSunShine`), for example `2026-10-02  4.7 hours`. `--grass` still prints yesterday's grass minimum. `--uv` still prints the current UV index. `--sunshine --json` prints that day as one JSON object. `--lang` applies. If the reading is missing, it says `No sunshine duration is available.`
+
+`hk-weather --sun-share` compares that sunshine with the same day's daylight, from sunrise to sunset. On 2026-10-06, 4.7 hours against 11 hours 50 min of daylight is `On 2026-10-06, King's Park recorded 4.7 hours of sunshine, 40% of the 11 hours 50 min of daylight.` A full day says it matches, and a longer reading says it is more than the daylight. `--sunshine` still prints the hours alone. `--sun-share --json` prints the hours, the daylight, the percentage, and that phrase. `--lang` applies. If the sunshine reading is missing, it says `No sunshine duration is available.` If that day's sunrise or sunset is missing, it says `No daylight length is available.`
 
 `hk-weather --daily-sun` prints the latest daily bright sunshine total at King's Park, for example `2026-08-31  2.2 hours`. `--sunshine` still prints yesterday's duration. A total of zero is kept. `--daily-sun --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No daily sunshine is available.`
 

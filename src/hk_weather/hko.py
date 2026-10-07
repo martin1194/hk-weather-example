@@ -7829,6 +7829,12 @@ def fetch_tomorrow_sunrise(timeout: float = 10, lang: str = "en") -> Sunrise | N
     return parse_sunrise(_fetch_json(_apply_lang(url, lang), timeout))
 
 
+def fetch_yesterday_sunrise(timeout: float = 10, lang: str = "en") -> Sunrise | None:
+    """Download yesterday's sunrise, sun transit, and sunset (`dataType=SRS`)."""
+    url = _srs_url(_hong_kong_yesterday())
+    return parse_sunrise(_fetch_json(_apply_lang(url, lang), timeout))
+
+
 def fetch_moon(timeout: float = 10, lang: str = "en") -> Moon | None:
     """Download today's moonrise, moon transit, and moonset (`dataType=MRS`)."""
     today = _hong_kong_today()
@@ -24901,6 +24907,49 @@ def format_sunshine(reading: Sunshine) -> str:
 def format_sunshine_miss(*, as_json: bool = False) -> str:
     """Say that yesterday's sunshine duration is not available."""
     return _unavailable("No sunshine duration is available.", as_json=as_json)
+
+
+def format_sun_share(
+    sunshine: Sunshine | None, daylight: Sunrise | None, *, as_json: bool
+) -> str:
+    """Compare yesterday's sunshine hours with that day's daylight."""
+    if sunshine is None:
+        return _unavailable("No sunshine duration is available.", as_json=as_json)
+    minutes = None
+    if daylight is not None and daylight.date == sunshine.date:
+        minutes = _daylight_minutes(daylight)
+    if minutes is None:
+        return _unavailable("No daylight length is available.", as_json=as_json)
+    sunny = round(sunshine.hours * 60)
+    percent = round(sunny * 100 / minutes)
+    hours = _number(sunshine.hours)
+    length = _span_phrase(minutes)
+    if percent > 100:
+        phrase = (
+            f"On {sunshine.date}, {sunshine.station} recorded {hours} hours of sunshine, "
+            f"more than the {length} of daylight."
+        )
+    elif percent == 100:
+        phrase = (
+            f"On {sunshine.date}, {sunshine.station} recorded {hours} hours of sunshine, "
+            f"matching the {length} of daylight."
+        )
+    else:
+        phrase = (
+            f"On {sunshine.date}, {sunshine.station} recorded {hours} hours of sunshine, "
+            f"{percent}% of the {length} of daylight."
+        )
+    if as_json:
+        payload = {
+            "station": sunshine.station,
+            "date": sunshine.date,
+            "sunshine_hours": sunshine.hours,
+            "daylight": length,
+            "percent": percent,
+            "phrase": phrase,
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
 
 
 _DAILY_SUN_STATIONS = {

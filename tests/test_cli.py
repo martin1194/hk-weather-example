@@ -35,6 +35,7 @@ from hk_weather.hko import (
     SoilReading,
     SoilReport,
     Sunrise,
+    Sunshine,
     LatestTideReading,
     LatestTideReport,
     TideEvent,
@@ -14811,6 +14812,97 @@ def test_cli_sunshine_when_missing(monkeypatch, capsys):
     )
     assert main(["--sunshine", "--json"]) == 0
     assert json.loads(capsys.readouterr().out) == {"message": "No sunshine duration is available."}
+
+
+def test_cli_sun_share_compares_sunshine_with_daylight(monkeypatch, capsys):
+    seen = {}
+    sunshine = Sunshine("King's Park", "2026-10-06", 4.7)
+    daylight = Sunrise("2026-10-06", "06:16", "12:12", "18:06")
+
+    def fake_sunshine(timeout, lang="en"):
+        seen["lang"] = lang
+        return sunshine
+
+    def fake_sunrise(timeout, lang="en"):
+        seen["sun_lang"] = lang
+        return daylight
+
+    monkeypatch.setattr("hk_weather.cli.fetch_sunshine", fake_sunshine)
+    monkeypatch.setattr("hk_weather.cli.fetch_yesterday_sunrise", fake_sunrise)
+    phrase = (
+        "On 2026-10-06, King's Park recorded 4.7 hours of sunshine, "
+        "40% of the 11 hours 50 min of daylight."
+    )
+    assert main(["--sun-share", "--lang", "tc"]) == 0
+    assert seen["lang"] == "tc"
+    assert seen["sun_lang"] == "tc"
+    assert capsys.readouterr().out == phrase + "\n"
+    assert main(["--sun-share", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "station": "King's Park",
+        "date": "2026-10-06",
+        "sunshine_hours": 4.7,
+        "daylight": "11 hours 50 min",
+        "percent": 40,
+        "phrase": phrase,
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_sunshine",
+        lambda timeout, lang="en": Sunshine("King's Park", "2026-10-06", 6),
+    )
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_yesterday_sunrise",
+        lambda timeout, lang="en": Sunrise("2026-10-06", "06:00", "09:00", "12:00"),
+    )
+    assert main(["--sun-share"]) == 0
+    assert capsys.readouterr().out == (
+        "On 2026-10-06, King's Park recorded 6 hours of sunshine, "
+        "matching the 6 hours of daylight.\n"
+    )
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_sunshine",
+        lambda timeout, lang="en": Sunshine("King's Park", "2026-10-06", 12),
+    )
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_yesterday_sunrise",
+        lambda timeout, lang="en": daylight,
+    )
+    assert main(["--sun-share"]) == 0
+    assert capsys.readouterr().out == (
+        "On 2026-10-06, King's Park recorded 12 hours of sunshine, "
+        "more than the 11 hours 50 min of daylight.\n"
+    )
+
+    def fail_sunrise(timeout, lang="en"):
+        raise AssertionError("must not fetch sunrise")
+
+    monkeypatch.setattr("hk_weather.cli.fetch_yesterday_sunrise", fail_sunrise)
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_sunshine",
+        lambda timeout, lang="en": None,
+    )
+    assert main(["--sun-share"]) == 0
+    assert capsys.readouterr().out == "No sunshine duration is available.\n"
+    assert main(["--sun-share", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No sunshine duration is available."
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_sunshine",
+        lambda timeout, lang="en": sunshine,
+    )
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_yesterday_sunrise",
+        lambda timeout, lang="en": Sunrise("2026-10-05", "06:16", "12:12", "18:06"),
+    )
+    assert main(["--sun-share"]) == 0
+    assert capsys.readouterr().out == "No daylight length is available.\n"
+
+    assert main(["--sunshine", "--sun-share"]) == 2
+    assert "(--sunshine --sun-share)" in capsys.readouterr().err
 
 
 def test_cli_daily_sun_prints_latest_day(monkeypatch, capsys):
