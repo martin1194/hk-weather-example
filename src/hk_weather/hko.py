@@ -10757,6 +10757,40 @@ def format_high_rise(report: NineTemp, *, as_json: bool) -> str:
     return phrase + "\n"
 
 
+def format_high_fall(report: NineTemp, *, as_json: bool) -> str:
+    """Print the first day the forecast high falls."""
+    ranked = [day for day in report.days if day.temp_high_c is not None]
+    if not ranked:
+        return _unavailable("No forecast high is available.", as_json=as_json)
+    chosen: tuple[NineTempDay, NineTempDay] | None = None
+    for earlier, later in zip(ranked, ranked[1:]):
+        if round(later.temp_high_c - earlier.temp_high_c, 1) < 0:
+            chosen = (earlier, later)
+            break
+    if chosen is None:
+        return _unavailable("The forecast high does not fall.", as_json=as_json)
+    before, after = chosen
+    gap = round(after.temp_high_c - before.temp_high_c, 1)
+    phrase = (
+        f"The forecast high falls on {_forecast_day_label(after)}, "
+        f"from {_number(before.temp_high_c)}°C on {_forecast_day_label(before)} "
+        f"to {_number(after.temp_high_c)}°C."
+    )
+    if as_json:
+        payload = {
+            "from_date": before.date,
+            "from_week": before.week,
+            "from_high_c": before.temp_high_c,
+            "to_date": after.date,
+            "to_week": after.week,
+            "to_high_c": after.temp_high_c,
+            "gap_c": gap,
+            "phrase": phrase,
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
+
+
 def parse_nine_humidity(payload: dict) -> NineHumidity:
     """Turn `fnd` forecast humidity fields into one line per day."""
     raw_days = payload.get("weatherForecast")
