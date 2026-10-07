@@ -11489,6 +11489,47 @@ def format_gust_miss(*, as_json: bool = False) -> str:
     return _unavailable("No wind gusts are available.", as_json=as_json)
 
 
+def format_strongest_gust(report: GustReport, *, as_json: bool) -> str:
+    """Print the station or stations with the strongest gust."""
+    ranked = [reading for reading in report.stations if reading.gust_kmh is not None]
+    if not ranked:
+        return _unavailable("No wind gusts are available.", as_json=as_json)
+    peak = max(reading.gust_kmh for reading in ranked)
+    strongest = tuple(reading for reading in ranked if reading.gust_kmh == peak)
+    places = [reading.place for reading in strongest]
+    if len(places) == 1:
+        listed = places[0]
+    elif len(places) == 2:
+        listed = f"{places[0]} and {places[1]}"
+    else:
+        listed = ", ".join(places[:-1]) + f", and {places[-1]}"
+    speed = f"{_number(peak)} km/h"
+    if len(strongest) == 1 and strongest[0].direction:
+        detail = f"{listed}  {strongest[0].direction}  {speed}"
+    else:
+        detail = f"{listed}, {speed}"
+    if report.obs_time:
+        phrase = f"Strongest gust: {report.obs_time}  {detail}"
+    else:
+        phrase = f"Strongest gust: {detail}"
+    if as_json:
+        payload = {
+            "recorded": report.obs_time,
+            "gust_kmh": peak,
+            "stations": [
+                {
+                    "place": reading.place,
+                    "direction": reading.direction,
+                    "gust_kmh": reading.gust_kmh,
+                }
+                for reading in strongest
+            ],
+            "phrase": phrase,
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
+
+
 _PREVAILING_STATIONS = {
     "en": "Waglan Island",
     "tc": "橫瀾島",

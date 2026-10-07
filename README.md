@@ -464,6 +464,8 @@ hk-weather --wind
 hk-weather --wind --json
 hk-weather --gust
 hk-weather --gust --json
+hk-weather --strongest-gust
+hk-weather --strongest-gust --json
 hk-weather --prevailing
 hk-weather --prevailing --json
 hk-weather --cheung-prevailing
@@ -1416,6 +1418,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --wind` prints the forecast wind for each day from that same 9-day forecast. `--wind --json` prints those days as one JSON object. If no wind text is present, it says so.
 
 `hk-weather --gust` prints the latest 10-minute mean wind and maximum gust at automatic stations, for example `Central Pier  East  5 km/h  gust 9 km/h`. `--wind` still prints the forecast wind. `--gust --json` prints those stations as one JSON object. `--lang` selects the English, Traditional Chinese, or Simplified Chinese station names. If no numeric wind remains, it says `No wind gusts are available.`
+
+`hk-weather --strongest-gust` prints the station with the strongest of those gusts. Green Island from the east at 38 km/h is `Strongest gust: 2026-10-07 11:10  Green Island  East  38 km/h`. Stations that share that gust are listed together. `--gust` still lists every station. `--strongest-gust --json` prints the gust, the tied stations, and that phrase. If no gust is present, it says `No wind gusts are available.`
 
 `hk-weather --prevailing` prints the latest daily prevailing wind direction at Waglan Island, for example `2026-08-31  360°`. `--wind` still prints the forecast wind, and `--gust` still prints the latest gusts. `--prevailing --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No prevailing wind is available.`
 
