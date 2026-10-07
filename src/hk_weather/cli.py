@@ -885,6 +885,7 @@ from hk_weather.hko import (
     format_tap_mun_east_wind_miss,
     format_forecast_icon,
     format_forecast_icon_miss,
+    format_icon_change,
     format_sunny_days,
     format_today_icon,
     format_yesterday,
@@ -1508,6 +1509,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--yi-tung-shan-wind prints the latest daily mean wind speed at Yi Tung Shan; "
             "--tap-mun-east-wind prints the latest daily mean wind speed at Tap Mun East; "
             "--forecast-icon prints each day's weather icon; "
+            "--icon-change prints the first day that icon changes; "
             "--today-icon prints today's forecast icon; "
             "--sunny-days lists the forecast days whose icon is Sunny; "
             "--quake lists the latest earthquake message; "
@@ -3370,6 +3372,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--forecast-icon",
         action="store_true",
         help="Print the weather icon for each day of the 9-day forecast",
+    )
+    parser.add_argument(
+        "--icon-change",
+        action="store_true",
+        help="Print the first day the 9-day forecast icon changes",
     )
     parser.add_argument(
         "--today-icon",
@@ -7264,6 +7271,11 @@ def main(argv: list[str] | None = None) -> int:
                     if args.json
                     else format_forecast_icon(forecast_icon)
                 )
+        elif args.icon_change:
+            text = format_icon_change(
+                fetch_forecast_icon(timeout=args.timeout, lang=args.lang),
+                as_json=args.json,
+            )
         elif args.today_icon:
             text = format_today_icon(
                 fetch_forecast_icon(timeout=args.timeout, lang=args.lang),

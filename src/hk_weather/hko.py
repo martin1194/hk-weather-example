@@ -17632,6 +17632,42 @@ def _icon_day_heading(day: ForecastIconDay) -> str:
     return " ".join(part for part in (day.date, day.week) if part)
 
 
+def format_icon_change(report: ForecastIcons, *, as_json: bool) -> str:
+    """Print the first day the forecast icon differs from the day before it."""
+    if len(report.days) < 2:
+        return _unavailable("No forecast icon change is available.", as_json=as_json)
+    chosen = next(
+        (
+            (earlier, later)
+            for earlier, later in zip(report.days, report.days[1:])
+            if later.icon != earlier.icon
+        ),
+        None,
+    )
+    if chosen is None:
+        return _unavailable("The forecast icon does not change.", as_json=as_json)
+    before, after = chosen
+    heading = _icon_day_heading(after) or "the next day"
+    phrase = (
+        f"The forecast icon changes on {heading}, "
+        f"from {before.icon} {before.label} to {after.icon} {after.label}."
+    )
+    if as_json:
+        payload = {
+            "from_date": before.date,
+            "from_week": before.week,
+            "from_icon": before.icon,
+            "from_label": before.label,
+            "to_date": after.date,
+            "to_week": after.week,
+            "to_icon": after.icon,
+            "to_label": after.label,
+            "phrase": phrase,
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
+
+
 def _join_headings(headings: list[str]) -> str:
     """Join day headings with commas and a final 'and'."""
     if len(headings) == 1:
