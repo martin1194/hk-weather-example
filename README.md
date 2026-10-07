@@ -957,6 +957,8 @@ hk-weather --pressure
 hk-weather --pressure --json
 hk-weather --high-pressure
 hk-weather --high-pressure --json
+hk-weather --pressure-gap
+hk-weather --pressure-gap --json
 hk-weather --mean-pressure
 hk-weather --mean-pressure --json
 hk-weather --park-pressure
@@ -1996,6 +1998,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --pressure` prints the latest 1-minute mean sea level pressure at automatic stations, for example `Chek Lap Kok  1011.9 hPa`. `--pressure --json` prints those stations as one JSON object. `--lang` selects the English, Traditional Chinese, or Simplified Chinese station names. Stations marked `N/A` are omitted. If none remain, it says `No sea level pressure is available.`
 
 `hk-weather --high-pressure` prints the highest of those readings, for example `Highest pressure: 2026-10-04 02:10  Chek Lap Kok  1011.9 hPa`. Stations that share that reading are listed together. `--pressure` still prints every station. `--high-pressure --json` prints the time, the station names, and that phrase. If none remain, it says `No sea level pressure is available.`
+
+`hk-weather --pressure-gap` prints the station whose latest sea level pressure differs most from the Observatory, for example `Pressure at Tai Po is 1018.6 hPa, 0.9 above the Observatory's 1017.7.`. A lower station says `below`, and a matching station says it matches. Stations that share that gap are listed together. `--high-pressure` still prints the highest reading, and `--pressure` still prints every station. `--pressure-gap --json` prints the time, the station names, both readings, the gap, and that phrase. `--lang` selects the Observatory name (`HK Observatory` or `天文台`). If the Observatory reading is missing, it says `No Observatory pressure is available.` If only the Observatory remains, it says `No pressure comparison is available.` If none remain, it says `No sea level pressure is available.`
 
 `hk-weather --mean-pressure` prints the latest daily mean pressure at the Observatory, for example `2026-08-31  998.7 hPa`. `--pressure` still prints the latest 1-minute station readings. `--mean-pressure --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No daily mean pressure is available.`
 
