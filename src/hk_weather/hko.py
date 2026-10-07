@@ -9405,6 +9405,38 @@ def format_feels_like(
     return f"Feels like {_celsius_text(feels, fahrenheit=fahrenheit)}\n"
 
 
+def format_dew_gap(weather: CurrentWeather, *, as_json: bool) -> str:
+    """Say how far the current temperature is above the estimated dew point."""
+    humidity = weather.humidity_percent
+    if humidity is None or not 0 < humidity <= 100:
+        return _unavailable("No dew point is available.", as_json=as_json)
+    dew = round(_live_dew_c(weather.temperature_c, humidity), 1)
+    gap = round(weather.temperature_c - dew, 1)
+    dew_text = _number(dew)
+    if gap > 0:
+        phrase = f"{_number(gap)}°C above the dew point of {dew_text}°C"
+    elif gap < 0:
+        phrase = f"{_number(abs(gap))}°C below the dew point of {dew_text}°C"
+    else:
+        phrase = f"At the dew point of {dew_text}°C"
+    if as_json:
+        return (
+            json.dumps(
+                {
+                    "temperature_c": weather.temperature_c,
+                    "humidity_percent": humidity,
+                    "dew_c": dew,
+                    "gap_c": gap,
+                    "phrase": phrase,
+                },
+                indent=2,
+                ensure_ascii=False,
+            )
+            + "\n"
+        )
+    return phrase + "\n"
+
+
 def _brief_warning(message: str) -> str:
     sentence = message.strip().split(". ", 1)[0].rstrip(".")
     if len(sentence) > 80:
