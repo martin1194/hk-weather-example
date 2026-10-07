@@ -11,6 +11,7 @@ import pytest
 from hk_weather.cli import main
 from hk_weather.hko import (
     CurrentWeather,
+    FifteenUv,
     ForecastIconDay,
     ForecastIcons,
     Moon,
@@ -20409,6 +20410,52 @@ def test_cli_fifteen_uv_when_missing(monkeypatch, capsys):
     assert json.loads(capsys.readouterr().out) == {
         "message": "No 15-minute UV index is available."
     }
+
+
+def test_cli_uv_level_prints_the_fifteen_minute_band(monkeypatch, capsys):
+    seen = {}
+
+    def fake_fetch(timeout, lang="en"):
+        seen["lang"] = lang
+        return FifteenUv("King's Park", "2026-10-07 10:30", 6)
+
+    monkeypatch.setattr("hk_weather.cli.fetch_fifteen_uv", fake_fetch)
+    assert main(["--uv-level", "--lang", "tc"]) == 0
+    assert seen["lang"] == "tc"
+    assert capsys.readouterr().out == "UV high, 6\n"
+
+    assert main(["--uv-level", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "station": "King's Park",
+        "time": "2026-10-07 10:30",
+        "uv": 6,
+        "level": "high",
+    }
+
+    bands = (
+        (0, "UV low, 0\n"),
+        (3, "UV moderate, 3\n"),
+        (8, "UV very high, 8\n"),
+        (11, "UV extreme, 11\n"),
+    )
+    for value, expected in bands:
+        monkeypatch.setattr(
+            "hk_weather.cli.fetch_fifteen_uv",
+            lambda timeout, lang="en", value=value: FifteenUv(
+                "King's Park", "2026-10-07 10:30", value
+            ),
+        )
+        assert main(["--uv-level"]) == 0
+        assert capsys.readouterr().out == expected
+
+    assert main(["--uv-level", "--fifteen-uv"]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "pass one report flag at a time (--fifteen-uv --uv-level)" in captured.err
+
+    monkeypatch.setattr("hk_weather.cli.fetch_fifteen_uv", lambda timeout, lang="en": None)
+    assert main(["--uv-level"]) == 0
+    assert capsys.readouterr().out == "No 15-minute UV index is available.\n"
 
 
 def test_cli_icon_time_prints_timestamp(monkeypatch, capsys):
