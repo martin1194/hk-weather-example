@@ -11576,6 +11576,51 @@ def format_least_vis(report: VisibilityReport, *, as_json: bool) -> str:
     return phrase + "\n"
 
 
+def format_vis_span(report: VisibilityReport, *, as_json: bool) -> str:
+    """Print the gap between the poorest and clearest visibility."""
+    ranked: list[tuple[float, str]] = []
+    for reading in report.readings:
+        kilometres = _visibility_km(reading.visibility)
+        if kilometres is None or not reading.place:
+            continue
+        ranked.append((kilometres, reading.place))
+    if not ranked:
+        return _unavailable("No visibility readings are available.", as_json=as_json)
+    places: list[str] = []
+    for _kilometres, place in ranked:
+        if place not in places:
+            places.append(place)
+    if len(places) < 2:
+        return _unavailable("No visibility range is available.", as_json=as_json)
+    low_km = min(kilometres for kilometres, _place in ranked)
+    high_km = max(kilometres for kilometres, _place in ranked)
+    low_places = [place for kilometres, place in ranked if kilometres == low_km]
+    high_places = [place for kilometres, place in ranked if kilometres == high_km]
+    low_places = list(dict.fromkeys(low_places))
+    high_places = list(dict.fromkeys(high_places))
+    span = round(high_km - low_km, 1)
+    low_listed = _join_headings(low_places)
+    high_listed = _join_headings(high_places)
+    if span == 0:
+        phrase = f"Visibility is {_number(low_km)} km at {low_listed}."
+    else:
+        phrase = (
+            f"Visibility spans {_number(span)} km, from {_number(low_km)} km at "
+            f"{low_listed} to {_number(high_km)} km at {high_listed}."
+        )
+    if as_json:
+        payload = {
+            "low_km": low_km,
+            "high_km": high_km,
+            "span_km": span,
+            "low_places": low_places,
+            "high_places": high_places,
+            "phrase": phrase,
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
+
+
 _REDUCED_VIS_STATIONS = {
     "en": "Hong Kong International Airport",
     "tc": "香港國際機場",

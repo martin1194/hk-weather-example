@@ -654,6 +654,8 @@ hk-weather --visibility
 hk-weather --visibility --json
 hk-weather --least-vis
 hk-weather --least-vis --json
+hk-weather --vis-span
+hk-weather --vis-span --json
 hk-weather --reduced-vis
 hk-weather --reduced-vis --json
 hk-weather --tide
@@ -1680,6 +1682,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --visibility` (or `-V`) prints the latest 10-minute mean visibility (`opendata.php`, `dataType=LTMV`), for example `2026-10-03 07:30  Central  14 km`. `--visibility --json` prints those stations as one JSON object. `--lang` applies. Stations marked `N/A` are omitted. If none remain, it says so.
 
 `hk-weather --least-vis` prints the station with the poorest of those readings. Central at 30 km, with the other stations clearer, is `Poorest visibility: 2026-10-07 11:00  Central  30 km`. Stations that share that distance are listed together. `--visibility` still lists every station. `--least-vis --json` prints the distance, the tied stations, and that phrase. If no numeric reading is available, it says `No visibility readings are available.`
+
+`hk-weather --vis-span` prints how far the clearest of those readings is above the poorest. Central at 24 km and Chek Lap Kok and Sai Wan Ho at 40 km is `Visibility spans 16 km, from 24 km at Central to 40 km at Chek Lap Kok and Sai Wan Ho.` Stations that share either end are listed together. When every station matches, it says `Visibility is 14 km at Central and Sai Wan Ho.` `--least-vis` still prints only the poorest station. `--vis-span --json` prints both distances, the span, the stations, and that phrase. If no numeric reading is available, it says `No visibility readings are available.` If only one station has a number, it says `No visibility range is available.`
 
 `hk-weather --reduced-vis` prints the latest daily hours of reduced visibility at Hong Kong International Airport, for example `2026-08-31  0 hours`. `--visibility` still prints the latest 10-minute station readings. A total of zero is kept. `--reduced-vis --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No reduced visibility is available.`
 
