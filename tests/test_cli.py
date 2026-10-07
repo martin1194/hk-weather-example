@@ -22445,6 +22445,74 @@ def test_cli_moonlight_prints_how_long_the_moon_is_up(monkeypatch, capsys):
     assert "(--moon-up --moonlight)" in capsys.readouterr().err
 
 
+def test_cli_sun_moon_compares_moonlight_with_daylight(monkeypatch, capsys):
+    seen = {}
+
+    def fake_sunrise(timeout, lang="en"):
+        seen["sun_lang"] = lang
+        return Sunrise("2026-10-07", "06:17", "12:11", "18:06")
+
+    def fake_moon(timeout, lang="en"):
+        seen["moon_lang"] = lang
+        return Moon("2026-10-07", "02:51", "09:26", "15:54")
+
+    monkeypatch.setattr("hk_weather.cli.fetch_sunrise", fake_sunrise)
+    monkeypatch.setattr("hk_weather.cli.fetch_moon", fake_moon)
+    phrase = "The moon is up 1 hour 14 min longer than today's 11 hours 49 min of daylight."
+    assert main(["--sun-moon", "--lang", "tc"]) == 0
+    assert seen == {"sun_lang": "tc", "moon_lang": "tc"}
+    assert capsys.readouterr().out == phrase + "\n"
+
+    assert main(["--sun-moon", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "date": "2026-10-07",
+        "daylight_minutes": 709,
+        "moonlight_minutes": 783,
+        "gap_minutes": 74,
+        "phrase": phrase,
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_moon",
+        lambda timeout, lang="en": Moon("2026-10-07", "06:17", "12:11", "18:06"),
+    )
+    assert main(["--sun-moon"]) == 0
+    assert capsys.readouterr().out == (
+        "The moon is up for the same 11 hours 49 min as today's daylight.\n"
+    )
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_moon",
+        lambda timeout, lang="en": Moon("2026-10-07", "12:00", "12:30", "13:00"),
+    )
+    assert main(["--sun-moon"]) == 0
+    assert capsys.readouterr().out == (
+        "The moon is up 10 hours 49 min shorter than today's 11 hours 49 min of daylight.\n"
+    )
+
+    assert main(["--sun-moon", "--moonlight"]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "pass one report flag at a time (--moonlight --sun-moon)" in captured.err
+
+    def fail_moon(*args, **kwargs):
+        raise AssertionError("moon must not be fetched")
+
+    monkeypatch.setattr("hk_weather.cli.fetch_moon", fail_moon)
+    monkeypatch.setattr("hk_weather.cli.fetch_sunrise", lambda timeout, lang="en": None)
+    assert main(["--sun-moon"]) == 0
+    assert capsys.readouterr().out == "No daylight length is available.\n"
+    assert main(["--sun-moon", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No daylight length is available."
+    }
+
+    monkeypatch.setattr("hk_weather.cli.fetch_sunrise", fake_sunrise)
+    monkeypatch.setattr("hk_weather.cli.fetch_moon", lambda timeout, lang="en": None)
+    assert main(["--sun-moon"]) == 0
+    assert capsys.readouterr().out == "No moonlight length is available.\n"
+
+
 def test_cli_moon_prints_times(monkeypatch, capsys):
     seen = {}
 

@@ -12446,6 +12446,42 @@ def format_moonlight(reading: Moon | None, *, as_json: bool) -> str:
     return phrase + "\n"
 
 
+def format_sun_moon(
+    daylight: Sunrise | None, moon: Moon | None, *, as_json: bool
+) -> str:
+    """Compare how long the moon is up with today's daylight."""
+    day_minutes = _daylight_minutes(daylight)
+    if day_minutes is None:
+        return _unavailable("No daylight length is available.", as_json=as_json)
+    moon_minutes = _moonlight_minutes(moon.rise, moon.set) if moon is not None else None
+    if moon_minutes is None:
+        return _unavailable("No moonlight length is available.", as_json=as_json)
+    gap = moon_minutes - day_minutes
+    day_length = _span_phrase(day_minutes)
+    if gap > 0:
+        phrase = (
+            f"The moon is up {_span_phrase(gap)} longer than today's "
+            f"{day_length} of daylight."
+        )
+    elif gap < 0:
+        phrase = (
+            f"The moon is up {_span_phrase(abs(gap))} shorter than today's "
+            f"{day_length} of daylight."
+        )
+    else:
+        phrase = f"The moon is up for the same {day_length} as today's daylight."
+    if as_json:
+        payload = {
+            "date": daylight.date if daylight is not None else "",
+            "daylight_minutes": day_minutes,
+            "moonlight_minutes": moon_minutes,
+            "gap_minutes": gap,
+            "phrase": phrase,
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
+
+
 def parse_lunar(payload: dict, date: str) -> LunarDate | None:
     """Turn a lunar-date document into today's Gregorian and lunar labels."""
     lunar_year = _text(payload.get("LunarYear"))

@@ -698,6 +698,8 @@ hk-weather --moon-up
 hk-weather --moon-up --json
 hk-weather --moonlight
 hk-weather --moonlight --json
+hk-weather --sun-moon
+hk-weather --sun-moon --json
 hk-weather --lunar
 hk-weather --lunar --json
 hk-weather --warnings
@@ -1728,6 +1730,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --moon-up` says whether the moon is above the horizon. With rise at 02:51 and set at 15:54, 10:00 is `The moon is up` and 01:00 is `The moon is down`. When moonset is earlier than moonrise, the moon is up from moonrise through midnight until moonset. `--moon` still prints the clocks. `--moon-up --json` prints that answer with the rise and set. If either time is missing, it says `No moon times are available.`
 
 `hk-weather --moonlight` prints how long the moon is above the horizon. From `02:51` to `15:54` that is `The moon is up for 13 hours 3 min, from 02:51 to 15:54.` When moonset is earlier than moonrise, the length runs through midnight. `--moon-up` still says only whether the moon is up now. `--moonlight --json` prints the clocks, the length in minutes, and that phrase. If either time is missing, it says `No moonlight length is available.`
+
+`hk-weather --sun-moon` compares that moonlight with today's daylight. With the moon up for 13 hours 3 min and daylight of 11 hours 49 min, that is `The moon is up 1 hour 14 min longer than today's 11 hours 49 min of daylight.` A shorter moon says shorter, and the same length says `The moon is up for the same 11 hours 49 min as today's daylight.` `--moonlight` still prints the moon's clocks, and `--daylight` still prints the sun's length on its own. `--sun-moon --json` prints both lengths in minutes, the gap, and that phrase. `--lang` applies. If daylight is missing, it says `No daylight length is available.` If moonlight is missing, it says `No moonlight length is available.`
 
 `hk-weather --lunar` prints today's lunar date from the Observatory calendar, for example `丙午年，馬` and `八月廿三`. `--lunar --json` prints that date as one JSON object. `--lang` is sent on the request; the Observatory still returns the lunar labels in Chinese. If the date is missing, it says `No lunar date is available.`
 
