@@ -449,6 +449,8 @@ hk-weather --buoy-8-dew
 hk-weather --buoy-8-dew --json
 hk-weather --cloud
 hk-weather --cloud --json
+hk-weather --cloud-rain
+hk-weather --cloud-rain --json
 hk-weather --evaporation
 hk-weather --evaporation --json
 hk-weather --evap-gap
@@ -1512,6 +1514,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --buoy-8-dew` prints the latest daily mean dew point at Automatic Weather Buoy No.8 (Hong Kong International Airport, East), for example `2026-08-31  24.1°C`. `--dew-point` still prints the Observatory reading, and the other station dew-point flags still print their own stations. `--buoy-8-temp` still prints the buoy's mean temperature, and `--buoy-2-dew` still prints Automatic Weather Buoy No.2. `--buoy-8-dew --json` prints that day as one JSON object. `--lang` selects the station name. Traditional text uses `自動氣象浮標8號 (香港國際機場東面)` and simplified text uses `自动气象浮标8号 (香港国际机场东面)`. Days marked `***` are omitted. If none remain, it says `No Automatic Weather Buoy No.8 (Hong Kong International Airport, East) dew point is available.`
 
 `hk-weather --cloud` prints the latest daily mean cloud amount at the Observatory for the current Hong Kong year, for example `2026-08-31  88%`. `--dew-point` still prints the dew point. `--cloud --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No cloud amount is available.`
+
+`hk-weather --cloud-rain` compares that cloud amount with Observatory rainfall on the same day. On 2026-08-31, 88% cloud and 25 mm of rain is `On 2026-08-31, Hong Kong Observatory recorded 88% cloud and 25 mm of rain.` A dry day says there was no rain. A clear day says there was no cloud. A day with neither says there was no cloud and no rain. `--cloud` and `--daily-rain` still print each total on its own. `--cloud-rain --json` prints both totals, the station, the date, and that phrase. `--lang` applies. If the cloud amount is missing, it says `No cloud amount is available.` If the rainfall is missing, it says `No daily rainfall is available.` If the dates differ, it says `No shared cloud day is available.`
 
 `hk-weather --evaporation` prints the latest daily total evaporation at King's Park for the current Hong Kong year, for example `2026-08-31  2.5 mm`. `--cloud` still prints the cloud amount. `--evaporation --json` prints that day as one JSON object. `--lang` selects the station name. Days marked `***` are omitted. If none remain, it says `No evaporation is available.`
 
