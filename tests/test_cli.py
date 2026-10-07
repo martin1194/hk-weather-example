@@ -28617,6 +28617,165 @@ def test_cli_minute_grass_when_missing(monkeypatch, capsys):
     }
 
 
+def test_cli_grass_gap_prints_the_largest_difference(monkeypatch, capsys):
+    from hk_weather.hko import (
+        MinuteGrassReading,
+        MinuteGrassReport,
+        MinuteTempReading,
+        MinuteTempReport,
+    )
+
+    seen = {}
+    grass = MinuteGrassReport(
+        "2026-10-07 19:40",
+        (
+            MinuteGrassReading("King's Park", 23.8),
+            MinuteGrassReading("Ta Kwu Ling", 22.6),
+            MinuteGrassReading("Tai Mo Shan", 18.5),
+        ),
+    )
+    air = MinuteTempReport(
+        "2026-10-07 19:40",
+        (
+            MinuteTempReading("King's Park", 25.2),
+            MinuteTempReading("Ta Kwu Ling", 23.4),
+            MinuteTempReading("Tai Mo Shan", 16.7),
+            MinuteTempReading("HK Observatory", 26.5),
+        ),
+    )
+
+    def fake_grass(timeout, lang="en"):
+        seen["grass_lang"] = lang
+        return grass
+
+    def fake_temp(timeout, lang="en"):
+        seen["temp_lang"] = lang
+        return air
+
+    monkeypatch.setattr("hk_weather.cli.fetch_minute_grass", fake_grass)
+    monkeypatch.setattr("hk_weather.cli.fetch_minute_temp", fake_temp)
+    phrase = "Grass at Tai Mo Shan is 18.5°C, 1.8 above the 16.7°C air."
+    assert main(["--grass-gap", "--lang", "tc"]) == 0
+    assert seen == {"grass_lang": "tc", "temp_lang": "tc"}
+    assert capsys.readouterr().out == phrase + "\n"
+
+    assert main(["--grass-gap", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "time": "2026-10-07 19:40",
+        "places": ["Tai Mo Shan"],
+        "grass_c": 18.5,
+        "air_c": 16.7,
+        "gap": 1.8,
+        "phrase": phrase,
+    }
+
+    cooler = MinuteGrassReport(
+        "2026-10-07 19:40",
+        (
+            MinuteGrassReading("King's Park", 23.8),
+            MinuteGrassReading("Ta Kwu Ling", 22.6),
+        ),
+    )
+    monkeypatch.setattr("hk_weather.cli.fetch_minute_grass", lambda timeout, lang="en": cooler)
+    assert main(["--grass-gap"]) == 0
+    assert capsys.readouterr().out == (
+        "Grass at King's Park is 23.8°C, 1.4 below the 25.2°C air.\n"
+    )
+
+    matching = MinuteGrassReport(
+        "2026-10-07 19:40",
+        (
+            MinuteGrassReading("King's Park", 25.2),
+            MinuteGrassReading("Ta Kwu Ling", 23.4),
+        ),
+    )
+    monkeypatch.setattr("hk_weather.cli.fetch_minute_grass", lambda timeout, lang="en": matching)
+    assert main(["--grass-gap"]) == 0
+    assert capsys.readouterr().out == "Grass at King's Park matches the 25.2°C air.\n"
+
+    tied = MinuteGrassReport(
+        "2026-10-07 19:40",
+        (
+            MinuteGrassReading("Tai Mo Shan", 18.5),
+            MinuteGrassReading("Ngong Ping", 18.5),
+        ),
+    )
+    tied_air = MinuteTempReport(
+        "2026-10-07 19:40",
+        (
+            MinuteTempReading("Tai Mo Shan", 16.7),
+            MinuteTempReading("Ngong Ping", 16.7),
+        ),
+    )
+    monkeypatch.setattr("hk_weather.cli.fetch_minute_grass", lambda timeout, lang="en": tied)
+    monkeypatch.setattr("hk_weather.cli.fetch_minute_temp", lambda timeout, lang="en": tied_air)
+    assert main(["--grass-gap"]) == 0
+    assert capsys.readouterr().out == (
+        "Grass at Tai Mo Shan and Ngong Ping is 18.5°C, 1.8 above the 16.7°C air.\n"
+    )
+
+    opposite = MinuteGrassReport(
+        "2026-10-07 19:40",
+        (
+            MinuteGrassReading("Tai Mo Shan", 18.5),
+            MinuteGrassReading("King's Park", 23.4),
+        ),
+    )
+    opposite_air = MinuteTempReport(
+        "2026-10-07 19:40",
+        (
+            MinuteTempReading("Tai Mo Shan", 16.7),
+            MinuteTempReading("King's Park", 25.2),
+        ),
+    )
+    monkeypatch.setattr("hk_weather.cli.fetch_minute_grass", lambda timeout, lang="en": opposite)
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_minute_temp", lambda timeout, lang="en": opposite_air
+    )
+    assert main(["--grass-gap"]) == 0
+    assert capsys.readouterr().out == (
+        "Grass at Tai Mo Shan is 18.5°C, 1.8 above the 16.7°C air.\n"
+    )
+
+    assert main(["--minute-grass", "--grass-gap"]) == 2
+    assert "(--minute-grass --grass-gap)" in capsys.readouterr().err
+
+    calls = {"temp": 0}
+
+    def empty_grass(timeout, lang="en"):
+        return MinuteGrassReport("2026-10-07 19:40", ())
+
+    def counting_temp(timeout, lang="en"):
+        calls["temp"] += 1
+        return air
+
+    monkeypatch.setattr("hk_weather.cli.fetch_minute_grass", empty_grass)
+    monkeypatch.setattr("hk_weather.cli.fetch_minute_temp", counting_temp)
+    assert main(["--grass-gap"]) == 0
+    assert capsys.readouterr().out == "No 1-minute grass temperatures are available.\n"
+    assert calls["temp"] == 0
+
+    monkeypatch.setattr("hk_weather.cli.fetch_minute_grass", lambda timeout, lang="en": grass)
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_minute_temp",
+        lambda timeout, lang="en": MinuteTempReport("2026-10-07 19:40", ()),
+    )
+    assert main(["--grass-gap"]) == 0
+    assert capsys.readouterr().out == "No 1-minute temperatures are available.\n"
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_minute_temp",
+        lambda timeout, lang="en": MinuteTempReport(
+            "2026-10-07 19:40",
+            (MinuteTempReading("HK Observatory", 26.5),),
+        ),
+    )
+    assert main(["--grass-gap", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No grass temperature comparison is available."
+    }
+
+
 def test_cli_daily_grass_prints_latest_day(monkeypatch, capsys):
     seen = {}
     monkeypatch.setattr("hk_weather.hko._hong_kong_today", lambda now=None: "2026-10-03")
