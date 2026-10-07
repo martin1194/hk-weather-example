@@ -468,6 +468,8 @@ hk-weather --psr
 hk-weather --psr --json
 hk-weather --wind
 hk-weather --wind --json
+hk-weather --wind-ease
+hk-weather --wind-ease --json
 hk-weather --gust
 hk-weather --gust --json
 hk-weather --strongest-gust
@@ -1444,6 +1446,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --psr` (or `-P`) prints the chance of significant rain for each day of that forecast, for example `2026-10-03 Saturday  High`. `--psr --json` prints those days as one JSON object. `--lang` applies. A day with no PSR value shows `n/a`.
 
 `hk-weather --wind` prints the forecast wind for each day from that same 9-day forecast. `--wind --json` prints those days as one JSON object. If no wind text is present, it says so.
+
+`hk-weather --wind-ease` prints the first of those days whose strongest force is lighter than the day before. Force 6 on Thursday, then force 5 on Friday, is `Wind eases on 2026-10-09 Friday, from force 6 to force 5: East to northeast force 4, force 5 at first.` Chinese text such as `6級` is read the same way. `--wind` still lists every day. `--wind-ease --json` prints that day, both forces, and the phrase. If the wind never becomes lighter, it says `No lighter wind day is in the forecast.`
 
 `hk-weather --gust` prints the latest 10-minute mean wind and maximum gust at automatic stations, for example `Central Pier  East  5 km/h  gust 9 km/h`. `--wind` still prints the forecast wind. `--gust --json` prints those stations as one JSON object. `--lang` selects the English, Traditional Chinese, or Simplified Chinese station names. If no numeric wind remains, it says `No wind gusts are available.`
 
