@@ -81,6 +81,8 @@ hk-weather --nine-humidity
 hk-weather --nine-humidity --json
 hk-weather --today
 hk-weather -Y --json
+hk-weather --high-gap
+hk-weather --high-gap --json
 hk-weather --yesterday
 hk-weather --yesterday --json
 hk-weather --mean-temp
@@ -998,6 +1000,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --nine-humidity` prints each day's humidity range from that forecast (`forecastMaxrh` and `forecastMinrh`), for example `2026-10-04 Sunday  humidity 65-95%`. `--humidity` still prints the current station readings. `--nine-humidity --json` prints those days as one JSON object. `--lang` applies. If no humidity is present, it says `No 9-day humidity is available.`
 
 `hk-weather --today` (or `-Y`) prints only today's day from that forecast, using the Hong Kong calendar date. It includes weather, high and low, humidity, chance of rain, and wind when the Observatory sends them. `--today --json` prints that day as one JSON object. `--lang` applies. For example: `2026-10-03 Saturday  high 31°C  low 27°C  humidity 75-95%  rain Medium High`. If that day is missing, it says so.
+
+`hk-weather --high-gap` compares the current temperature with that day's forecast high. At 28°C with a high of 31°C it prints `3°C below today's high of 31°C`. A matching temperature prints `At today's high of 28°C`. A warmer reading prints how many degrees it is above the high. `--high-gap --json` prints the current temperature, the high, the gap, and that phrase. If today or its high is missing, it says `No forecast high is available.`
 
 `hk-weather --yesterday` prints yesterday's Observatory summary (`dataType=RYES`, station HKO): high, low, rainfall, and humidity. `--yesterday --json` prints that summary as one JSON object. `--lang` applies. If the summary is missing, it says `Yesterday's Observatory summary is not available.`
 

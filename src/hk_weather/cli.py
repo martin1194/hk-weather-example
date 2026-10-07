@@ -745,6 +745,7 @@ from hk_weather.hko import (
     format_lamppost,
     format_lamppost_miss,
     format_today_miss,
+    format_high_gap,
     format_tomorrow,
     format_tomorrow_miss,
     format_uv,
@@ -1435,6 +1436,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--forecast-icon prints each day's weather icon; "
             "--quake lists the latest earthquake message; "
             "--felt prints the locally felt earth tremor; --today prints today; "
+            "--high-gap prints how far the current temperature is from today's forecast high; "
             "--yesterday prints yesterday's Observatory summary; "
             "--mean-temp prints the latest daily mean temperature; "
             "--tai-mo-temp prints the latest daily mean temperature at Tai Mo Shan; "
@@ -1892,6 +1894,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--today",
         action="store_true",
         help="Print today's day from the 9-day forecast (Hong Kong calendar date)",
+    )
+    parser.add_argument(
+        "--high-gap",
+        action="store_true",
+        help="Print how far the current temperature is from today's forecast high",
     )
     parser.add_argument(
         "--yesterday",
@@ -4342,6 +4349,11 @@ def main(argv: list[str] | None = None) -> int:
                     if args.json
                     else format_tomorrow(today, title="Hong Kong forecast for today")
                 )
+        elif args.high_gap:
+            weather = fetch_current(timeout=args.timeout, lang=args.lang)
+            today = fetch_today(timeout=args.timeout, lang=args.lang)
+            high = None if today is None else today.temp_high_c
+            text = format_high_gap(weather.temperature_c, high, as_json=args.json)
         elif args.yesterday:
             yesterday = fetch_yesterday(timeout=args.timeout, lang=args.lang)
             if yesterday is None:
