@@ -869,6 +869,7 @@ from hk_weather.hko import (
     format_tap_mun_east_wind_miss,
     format_forecast_icon,
     format_forecast_icon_miss,
+    format_sunny_days,
     format_today_icon,
     format_yesterday,
     format_yesterday_miss,
@@ -1480,6 +1481,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--tap-mun-east-wind prints the latest daily mean wind speed at Tap Mun East; "
             "--forecast-icon prints each day's weather icon; "
             "--today-icon prints today's forecast icon; "
+            "--sunny-days lists the forecast days whose icon is Sunny; "
             "--quake lists the latest earthquake message; "
             "--quake-ago prints how long ago that earthquake happened; "
             "--felt prints the locally felt earth tremor; --today prints today; "
@@ -3297,6 +3299,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--today-icon",
         action="store_true",
         help="Print today's forecast weather icon",
+    )
+    parser.add_argument(
+        "--sunny-days",
+        action="store_true",
+        help="List the 9-day forecast days whose icon is Sunny",
     )
     parser.add_argument(
         "--quake",
@@ -7090,6 +7097,11 @@ def main(argv: list[str] | None = None) -> int:
                 )
         elif args.today_icon:
             text = format_today_icon(
+                fetch_forecast_icon(timeout=args.timeout, lang=args.lang),
+                as_json=args.json,
+            )
+        elif args.sunny_days:
+            text = format_sunny_days(
                 fetch_forecast_icon(timeout=args.timeout, lang=args.lang),
                 as_json=args.json,
             )

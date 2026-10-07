@@ -17085,6 +17085,51 @@ def format_today_icon(report: ForecastIcons, *, as_json: bool) -> str:
     return f"Icon: {day.icon} {day.label}\n"
 
 
+def _icon_day_heading(day: ForecastIconDay) -> str:
+    """Date and weekday for one forecast icon, when either is present."""
+    return " ".join(part for part in (day.date, day.week) if part)
+
+
+def _join_headings(headings: list[str]) -> str:
+    """Join day headings with commas and a final 'and'."""
+    if len(headings) == 1:
+        return headings[0]
+    if len(headings) == 2:
+        return f"{headings[0]} and {headings[1]}"
+    return ", ".join(headings[:-1]) + f", and {headings[-1]}"
+
+
+def format_sunny_days(report: ForecastIcons, *, as_json: bool) -> str:
+    """Print the 9-day forecast days whose icon is Sunny."""
+    if not report.days:
+        return _unavailable("No forecast icons are available.", as_json=as_json)
+    sunny = tuple(day for day in report.days if day.icon == 50)
+    if not sunny:
+        return _unavailable("No sunny day is in the forecast.", as_json=as_json)
+    headings = [_icon_day_heading(day) or day.label for day in sunny]
+    listed = _join_headings(headings)
+    if len(sunny) == 1:
+        phrase = f"1 sunny day: {listed}"
+    else:
+        phrase = f"{len(sunny)} sunny days: {listed}"
+    if as_json:
+        payload = {
+            "count": len(sunny),
+            "days": [
+                {
+                    "date": day.date,
+                    "week": day.week,
+                    "icon": day.icon,
+                    "label": day.label,
+                }
+                for day in sunny
+            ],
+            "phrase": phrase,
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
+
+
 def parse_uv(payload: dict) -> UvIndex:
     """Turn the `uvindex` field of an `rhrread` document into a short report."""
     update_time = _text(payload.get("updateTime")) or "unknown"
