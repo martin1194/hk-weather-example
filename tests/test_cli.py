@@ -15,6 +15,8 @@ from hk_weather.hko import (
     ForecastIconDay,
     ForecastIcons,
     GustReading,
+    AqhiReading,
+    AqhiReport,
     GustReport,
     Moon,
     NineTemp,
@@ -20192,6 +20194,66 @@ def test_cli_aqhi_when_no_readings(monkeypatch, capsys):
     assert capsys.readouterr().out == "No AQHI readings are available.\n"
     assert main(["--aqhi", "--json"]) == 0
     assert json.loads(capsys.readouterr().out) == {"message": "No AQHI readings are available."}
+
+
+def test_cli_aqhi_mix_counts_health_risk_bands(monkeypatch, capsys):
+    seen = {}
+    report = AqhiReport(
+        "Wed, 07 Oct 2026 11:30",
+        (
+            AqhiReading("Sham Shui Po", "General Stations", "3", "Low"),
+            AqhiReading("Central/Western", "General Stations", "4", "Moderate"),
+            AqhiReading("Tung Chung", "General Stations", "3", "Low"),
+            AqhiReading("Causeway Bay", "Roadside Stations", "7", "High"),
+        ),
+    )
+
+    def fake_fetch(timeout, lang="en"):
+        seen["lang"] = lang
+        return report
+
+    monkeypatch.setattr("hk_weather.cli.fetch_aqhi", fake_fetch)
+    assert main(["--aqhi-mix", "--lang", "tc"]) == 0
+    assert seen["lang"] == "tc"
+    assert capsys.readouterr().out == "AQHI: 1 High, 1 Moderate, 2 Low\n"
+
+    assert main(["--aqhi-mix", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "updated": "Wed, 07 Oct 2026 11:30",
+        "stations": 4,
+        "bands": [
+            {"risk": "High", "count": 1},
+            {"risk": "Moderate", "count": 1},
+            {"risk": "Low", "count": 2},
+        ],
+        "phrase": "AQHI: 1 High, 1 Moderate, 2 Low",
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_aqhi",
+        lambda timeout, lang="en": AqhiReport(
+            "2026年10月07日 (星期三)",
+            (
+                AqhiReading("深水埗", "一般監測站", "3", "低"),
+                AqhiReading("中西區", "一般監測站", "4", "中"),
+                AqhiReading("東區", "一般監測站", "4", "中"),
+            ),
+        ),
+    )
+    assert main(["--aqhi-mix"]) == 0
+    assert capsys.readouterr().out == "AQHI: 2 中, 1 低\n"
+
+    assert main(["--aqhi-mix", "--aqhi"]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "pass one report flag at a time (--aqhi --aqhi-mix)" in captured.err
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_aqhi",
+        lambda timeout, lang="en": AqhiReport("", ()),
+    )
+    assert main(["--aqhi-mix"]) == 0
+    assert capsys.readouterr().out == "No AQHI readings are available.\n"
 
 
 def test_cli_until_sunset_says_how_long(monkeypatch, capsys):

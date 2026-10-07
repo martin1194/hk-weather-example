@@ -11282,6 +11282,45 @@ def format_aqhi_miss(*, as_json: bool = False) -> str:
     return _unavailable("No AQHI readings are available.", as_json=as_json)
 
 
+_AQHI_SEVERITY = (
+    ("serious", "嚴重", "严重"),
+    ("very high", "甚高"),
+    ("high", "高"),
+    ("moderate", "中"),
+    ("low", "低"),
+)
+
+
+def _aqhi_severity(risk: str) -> int:
+    folded = risk.casefold()
+    for index, names in enumerate(_AQHI_SEVERITY):
+        if folded in names:
+            return index
+    return len(_AQHI_SEVERITY)
+
+
+def format_aqhi_mix(report: AqhiReport, *, as_json: bool) -> str:
+    """Print how many stations fall in each AQHI health-risk band."""
+    counts: dict[str, int] = {}
+    for reading in report.readings:
+        if not reading.health_risk:
+            continue
+        counts[reading.health_risk] = counts.get(reading.health_risk, 0) + 1
+    if not counts:
+        return _unavailable("No AQHI readings are available.", as_json=as_json)
+    bands = sorted(counts, key=lambda risk: (_aqhi_severity(risk), risk.casefold()))
+    phrase = "AQHI: " + ", ".join(f"{counts[risk]} {risk}" for risk in bands)
+    if as_json:
+        payload = {
+            "updated": report.updated,
+            "stations": sum(counts.values()),
+            "bands": [{"risk": risk, "count": counts[risk]} for risk in bands],
+            "phrase": phrase,
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
+
+
 def parse_sunrise(payload: dict) -> Sunrise | None:
     """Turn an `SRS` document into today's sunrise, transit, and sunset."""
     raw = payload.get("data")
