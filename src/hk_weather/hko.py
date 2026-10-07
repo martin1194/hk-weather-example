@@ -10915,13 +10915,13 @@ def format_sunrise_miss(*, as_json: bool = False) -> str:
     return _unavailable("No sunrise times are available.", as_json=as_json)
 
 
-def _sunset_moment(reading: Sunrise) -> datetime | None:
-    """Combine the sunrise report's date and sunset clock into one HKT moment."""
-    parts = reading.set.strip().split(":")
+def _clock_moment(date_text: str, clock: str) -> datetime | None:
+    """Combine a YYYY-MM-DD date and an HH:MM clock into one HKT moment."""
+    parts = clock.strip().split(":")
     if len(parts) != 2:
         return None
     try:
-        day = datetime.fromisoformat(reading.date.strip()).date()
+        day = datetime.fromisoformat(date_text.strip()).date()
         hour = int(parts[0])
         minute = int(parts[1])
     except ValueError:
@@ -10929,6 +10929,11 @@ def _sunset_moment(reading: Sunrise) -> datetime | None:
     if not (0 <= hour <= 23 and 0 <= minute <= 59):
         return None
     return datetime(day.year, day.month, day.day, hour, minute, tzinfo=_HKT)
+
+
+def _sunset_moment(reading: Sunrise) -> datetime | None:
+    """Combine the sunrise report's date and sunset clock into one HKT moment."""
+    return _clock_moment(reading.date, reading.set)
 
 
 def _span_phrase(minutes: int) -> str:
@@ -10962,6 +10967,28 @@ def format_until_sunset(reading: Sunrise | None, *, as_json: bool) -> str:
     phrase = _until_sunset_phrase(moment, _clock())
     if as_json:
         return json.dumps({"sunset": reading.set, "until": phrase}, indent=2) + "\n"
+    return phrase + "\n"
+
+
+def _since_sunrise_phrase(moment: datetime, now: datetime) -> str:
+    """Say whether sunrise is ahead, now, or already past."""
+    seconds = int((moment - now).total_seconds())
+    if abs(seconds) < 60:
+        return "Sunrise now"
+    span = _span_phrase(abs(seconds) // 60)
+    if seconds > 0:
+        return f"Sunrise in {span}"
+    return f"Sunrise was {span} ago"
+
+
+def format_since_sunrise(reading: Sunrise | None, *, as_json: bool) -> str:
+    """Print how long it has been since today's sunrise."""
+    moment = _clock_moment(reading.date, reading.rise) if reading is not None else None
+    if reading is None or moment is None:
+        return _unavailable("No sunrise time is available.", as_json=as_json)
+    phrase = _since_sunrise_phrase(moment, _clock())
+    if as_json:
+        return json.dumps({"sunrise": reading.rise, "since": phrase}, indent=2) + "\n"
     return phrase + "\n"
 
 
