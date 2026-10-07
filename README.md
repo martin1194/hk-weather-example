@@ -81,6 +81,8 @@ hk-weather --nine-weather
 hk-weather --nine-weather --json
 hk-weather --cloud-day
 hk-weather --cloud-day --json
+hk-weather --hot-day
+hk-weather --hot-day --json
 hk-weather --nine-temp
 hk-weather --nine-temp --json
 hk-weather --hottest-day
@@ -1068,6 +1070,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --nine-weather` prints each day's weather sentence from that forecast (`forecastWeather`), for example `2026-10-04 Sunday  Mainly cloudy with a few showers`. `--nine-day` still prints the full daily forecast. `--wind` still prints the wind. `--nine-weather --json` prints those days as one JSON object. `--lang` applies. If no weather text is present, it says `No 9-day weather is available.`
 
 `hk-weather --cloud-day` prints the first of those days that mentions cloud, showers, rain, thunder, drizzle, mist, or fog. `First cloudier day: 2026-10-16 Friday  Mainly cloudy. Sunny periods during the day.` skips the earlier fine and dry days. The same words in Chinese, including 多雲 and 多云, count too. `--nine-weather` still lists every day. `--cloud-day --json` prints the date, weekday, sentence, and that phrase. If every day stays fine, it says `No cloudier day in the 9-day forecast.`
+
+`hk-weather --hot-day` prints the first of those days whose sentence says hot, for example `First hot day: 2026-10-13 Tuesday  Fine and dry. Hot during the day.` `--hottest-day` still prints the highest forecast temperature, and `--cloud-day` still prints the first cloudier day. Chinese 炎熱, 酷熱, and 热 count too. A word such as "photo" does not. `--hot-day --json` prints the date, weekday, sentence, and that phrase. If no day says hot, it says `No hot day is in the forecast.`
 
 `hk-weather --nine-temp` prints each day's high and low from that forecast (`forecastMaxtemp` and `forecastMintemp`), for example `2026-10-04 Sunday  high 31°C  low 26°C`. `--temps` still prints the current station temperatures. `--nine-temp --json` prints those days as one JSON object. `--lang` applies. If no temperature is present, it says `No 9-day temperatures are available.`
 

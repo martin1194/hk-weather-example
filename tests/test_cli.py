@@ -2731,6 +2731,75 @@ def test_cli_cloud_day_prints_the_first_cloudier_day(monkeypatch, capsys):
     }
 
 
+def test_cli_hot_day_prints_the_first_hot_sentence(monkeypatch, capsys):
+    seen = {}
+    report = NineWeather(
+        "2026-10-07T11:30:00+08:00",
+        (
+            NineWeatherDay("2026-10-08", "Thursday", "Mainly fine and dry."),
+            NineWeatherDay("2026-10-12", "Monday", "A photo of the harbour."),
+            NineWeatherDay("2026-10-13", "Tuesday", "Fine and dry. Hot during the day."),
+            NineWeatherDay("2026-10-14", "Wednesday", "Dry and hot during the day."),
+        ),
+    )
+
+    def fake_fetch(timeout, lang="en"):
+        seen["lang"] = lang
+        return report
+
+    monkeypatch.setattr("hk_weather.cli.fetch_nine_weather", fake_fetch)
+    assert main(["--hot-day", "--lang", "tc"]) == 0
+    assert seen["lang"] == "tc"
+    assert capsys.readouterr().out == (
+        "First hot day: 2026-10-13 Tuesday  Fine and dry. Hot during the day.\n"
+    )
+
+    assert main(["--hot-day", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "date": "2026-10-13",
+        "week": "Tuesday",
+        "weather": "Fine and dry. Hot during the day.",
+        "phrase": "First hot day: 2026-10-13 Tuesday  Fine and dry. Hot during the day.",
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_nine_weather",
+        lambda timeout, lang="en": NineWeather(
+            "2026-10-07T11:30:00+08:00",
+            (
+                NineWeatherDay("2026-10-12", "星期一", "大致天晴。"),
+                NineWeatherDay("2026-10-14", "星期三", "大致天晴，日間乾燥及炎熱。"),
+            ),
+        ),
+    )
+    assert main(["--hot-day"]) == 0
+    assert capsys.readouterr().out == (
+        "First hot day: 2026-10-14 星期三  大致天晴，日間乾燥及炎熱。\n"
+    )
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_nine_weather",
+        lambda timeout, lang="en": NineWeather(
+            "2026-10-07T11:30:00+08:00",
+            (NineWeatherDay("2026-10-08", "Thursday", "Mainly fine and dry."),),
+        ),
+    )
+    assert main(["--hot-day"]) == 0
+    assert capsys.readouterr().out == "No hot day is in the forecast.\n"
+
+    assert main(["--hot-day", "--cloud-day"]) == 2
+    assert "(--cloud-day --hot-day)" in capsys.readouterr().err
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_nine_weather",
+        lambda timeout, lang="en": NineWeather("", ()),
+    )
+    assert main(["--hot-day", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No hot day is in the forecast."
+    }
+
+
 def test_cli_nine_temp_lists_each_day(monkeypatch, capsys):
     seen = {}
 
