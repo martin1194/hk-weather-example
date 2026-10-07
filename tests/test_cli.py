@@ -21,6 +21,8 @@ from hk_weather.hko import (
     NineTempDay,
     NineWeather,
     NineWeatherDay,
+    SoilReading,
+    SoilReport,
     Sunrise,
     TideEvent,
     TideReport,
@@ -2328,6 +2330,62 @@ def test_cli_soil_temp_when_missing(monkeypatch, capsys):
     )
     assert main(["--soil-temp", "--json"]) == 0
     assert json.loads(capsys.readouterr().out) == {"message": "No soil temperature is available."}
+
+
+def test_cli_warm_soil_prints_the_warmest_depth(monkeypatch, capsys):
+    seen = {}
+    report = SoilReport(
+        (
+            SoilReading("Hong Kong Observatory", 0.5, 29.5, "2026-10-07T07:00:00+08:00"),
+            SoilReading("Hong Kong Observatory", 1, 30.2, "2026-10-07T07:00:00+08:00"),
+        )
+    )
+
+    def fake_fetch(timeout, lang="en"):
+        seen["lang"] = lang
+        return report
+
+    monkeypatch.setattr("hk_weather.cli.fetch_soil_temp", fake_fetch)
+    assert main(["--warm-soil", "--lang", "tc"]) == 0
+    assert seen["lang"] == "tc"
+    assert capsys.readouterr().out == "Warmer soil: Hong Kong Observatory 1 m, 30.2°C\n"
+
+    assert main(["--warm-soil", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "recorded": "2026-10-07T07:00:00+08:00",
+        "temperature_c": 30.2,
+        "readings": [
+            {
+                "place": "Hong Kong Observatory",
+                "depth_m": 1,
+                "temperature_c": 30.2,
+            }
+        ],
+        "phrase": "Warmer soil: Hong Kong Observatory 1 m, 30.2°C",
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_soil_temp",
+        lambda timeout, lang="en": SoilReport(
+            (
+                SoilReading("Hong Kong Observatory", 0.5, 30, "2026-10-07T07:00:00+08:00"),
+                SoilReading("King's Park", 1, 30, "2026-10-07T07:00:00+08:00"),
+            )
+        ),
+    )
+    assert main(["--warm-soil"]) == 0
+    assert capsys.readouterr().out == (
+        "Warmer soil: Hong Kong Observatory 0.5 m and King's Park 1 m, 30°C\n"
+    )
+
+    assert main(["--warm-soil", "--soil-temp"]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "pass one report flag at a time (--soil-temp --warm-soil)" in captured.err
+
+    monkeypatch.setattr("hk_weather.cli.fetch_soil_temp", lambda timeout, lang="en": None)
+    assert main(["--warm-soil"]) == 0
+    assert capsys.readouterr().out == "No soil temperature is available.\n"
 
 
 def test_cli_nine_situation_prints_paragraph(monkeypatch, capsys):

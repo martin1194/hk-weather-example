@@ -10117,6 +10117,44 @@ def format_soil_temp_miss(*, as_json: bool = False) -> str:
     return _unavailable("No soil temperature is available.", as_json=as_json)
 
 
+def _soil_spot(reading: SoilReading) -> str:
+    return f"{reading.place} {_number(reading.depth_m)} m"
+
+
+def format_warm_soil(report: SoilReport | None, *, as_json: bool) -> str:
+    """Print the soil depth or depths with the highest temperature."""
+    if report is None or not report.readings:
+        return _unavailable("No soil temperature is available.", as_json=as_json)
+    peak = max(reading.temperature_c for reading in report.readings)
+    warmest = tuple(reading for reading in report.readings if reading.temperature_c == peak)
+    spots = [_soil_spot(reading) for reading in warmest]
+    if len(spots) == 1:
+        listed = spots[0]
+    elif len(spots) == 2:
+        listed = f"{spots[0]} and {spots[1]}"
+    else:
+        listed = ", ".join(spots[:-1]) + f", and {spots[-1]}"
+    phrase = f"Warmer soil: {listed}, {_number(peak)}°C"
+    recorded = {reading.recorded for reading in warmest}
+    stamp = next(iter(recorded)) if len(recorded) == 1 else ""
+    if as_json:
+        payload = {
+            "recorded": stamp,
+            "temperature_c": peak,
+            "readings": [
+                {
+                    "place": reading.place,
+                    "depth_m": reading.depth_m,
+                    "temperature_c": reading.temperature_c,
+                }
+                for reading in warmest
+            ],
+            "phrase": phrase,
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
+
+
 def format_nine_situation(report: GeneralSituation) -> str:
     """Render the general situation from the 9-day forecast."""
     return f"Hong Kong 9-day situation\n{report.situation}\n"

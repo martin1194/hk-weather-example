@@ -651,6 +651,7 @@ from hk_weather.hko import (
     format_afternoon_sea,
     format_north_point_pm_sea_miss,
     format_soil_temp,
+    format_warm_soil,
     format_soil_temp_miss,
     format_noon_rain,
     format_noon_rain_miss,
@@ -1286,6 +1287,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--north-point-pm-sea prints the latest daily afternoon sea temperature "
             "at North Point; "
             "--soil-temp prints soil temperatures; "
+            "--warm-soil prints the warmest of those soil depths; "
             "--nine-situation prints the 9-day general situation; "
             "--nine-updated prints when the 9-day forecast was updated; "
             "--nine-weather prints each day's weather from the 9-day forecast; "
@@ -1910,6 +1912,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--soil-temp",
         action="store_true",
         help="Print soil temperatures from the 9-day forecast",
+    )
+    parser.add_argument(
+        "--warm-soil",
+        action="store_true",
+        help="Print the warmest soil depth from the 9-day forecast",
     )
     parser.add_argument(
         "--nine-situation",
@@ -4455,6 +4462,11 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_soil_temp_miss(as_json=args.json)
             else:
                 text = format_json(soil_temp) if args.json else format_soil_temp(soil_temp)
+        elif args.warm_soil:
+            text = format_warm_soil(
+                fetch_soil_temp(timeout=args.timeout, lang=args.lang),
+                as_json=args.json,
+            )
         elif args.nine_situation:
             nine_situation = fetch_nine_situation(timeout=args.timeout, lang=args.lang)
             if nine_situation is None:

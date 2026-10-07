@@ -71,6 +71,8 @@ hk-weather --north-point-pm-sea
 hk-weather --north-point-pm-sea --json
 hk-weather --soil-temp
 hk-weather --soil-temp --json
+hk-weather --warm-soil
+hk-weather --warm-soil --json
 hk-weather --nine-situation
 hk-weather --nine-situation --json
 hk-weather --nine-updated
@@ -1030,6 +1032,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --north-point-pm-sea` prints the latest daily mean afternoon sea temperature at North Point, for example `2026-08-31  25°C`. `--north-point-am-sea` still prints the morning reading, and `--sea-temp` still prints the sea temperature from the 9-day forecast. `--north-point-pm-sea --json` prints that day as one JSON object. `--lang` selects the station name. The Chinese name is `北角` in both traditional and simplified text. Days marked `***` are omitted. If none remain, it says `No North Point afternoon sea temperature is available.`
 
 `hk-weather --soil-temp` prints soil temperatures from that forecast (`soilTemp`), one line per depth, for example `Hong Kong Observatory  0.5 m  30.6°C`. `--sea-temp` still prints the sea temperature. `--soil-temp --json` prints those readings as one JSON object. `--lang` applies. If none are present, it says `No soil temperature is available.`
+
+`hk-weather --warm-soil` prints the warmest of those depths. The 1 m reading at 30.2°C is `Warmer soil: Hong Kong Observatory 1 m, 30.2°C`. Depths that share that temperature are listed together. `--soil-temp` still lists every depth. `--warm-soil --json` prints the temperature, the tied depths, and that phrase. If no soil temperature is present, it says `No soil temperature is available.`
 
 `hk-weather --nine-situation` prints the general situation from the 9-day forecast (`generalSituation` on `dataType=fnd`). `--situation` still prints the local-forecast paragraph. `--nine-situation --json` prints that paragraph as one JSON object. `--lang` applies. If the field is missing or blank, it says `No 9-day situation is available.`
 
