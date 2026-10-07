@@ -772,6 +772,7 @@ from hk_weather.hko import (
     format_warning_count,
     format_warning_time,
     format_warning_time_miss,
+    format_warning_ago,
     format_weekend,
     format_weekend_miss,
     format_wind,
@@ -1285,6 +1286,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--warnings lists active warnings; "
             "--warning-count prints how many warnings are in force; "
             "--warning-time prints when active warnings were issued; "
+            "--warning-ago prints how long each warning has been in force; "
             "--uv prints the UV index; "
             "--fifteen-uv prints the latest 15-minute mean UV index; "
             "--icon-time prints when the weather icon changed; "
@@ -3331,6 +3333,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Print issue and expiry times for active weather warnings",
     )
     parser.add_argument(
+        "--warning-ago",
+        action="store_true",
+        help="Print how long each active warning has been in force",
+    )
+    parser.add_argument(
         "-W",
         "--warning-info",
         action="store_true",
@@ -4269,6 +4276,11 @@ def main(argv: list[str] | None = None) -> int:
                     if args.json
                     else format_warning_time(warning_time)
                 )
+        elif args.warning_ago:
+            text = format_warning_ago(
+                fetch_warning_time(timeout=args.timeout, lang=args.lang),
+                as_json=args.json,
+            )
         elif args.warning_info:
             text = format_warning_info(
                 fetch_warning_info(timeout=args.timeout, lang=args.lang),

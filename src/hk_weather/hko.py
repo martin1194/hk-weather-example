@@ -9795,6 +9795,58 @@ def format_warning_time_miss(*, as_json: bool = False) -> str:
     return _unavailable("No weather warnings are in force.", as_json=as_json)
 
 
+def _warning_ago(issue_time: str, now: datetime) -> str | None:
+    """How long a warning has been in force, or None if the issue time cannot be used."""
+    text = issue_time.strip()
+    if not text:
+        return None
+    try:
+        issued = datetime.fromisoformat(text)
+    except ValueError:
+        return None
+    if issued.tzinfo is None:
+        issued = issued.replace(tzinfo=_HKT)
+    seconds = int((now - issued).total_seconds())
+    if seconds < 0:
+        return None
+    if seconds < 60:
+        return "just now"
+    return _span_phrase(seconds // 60)
+
+
+def format_warning_ago(report: WarningTimeReport, *, as_json: bool) -> str:
+    """Print how long each active warning has been in force."""
+    if not report.warnings:
+        return _unavailable("No weather warnings are in force.", as_json=as_json)
+    now = _clock()
+    rows = []
+    for warning in report.warnings:
+        ago = _warning_ago(warning.issue_time, now)
+        if ago is None:
+            continue
+        name = warning.description or warning.code
+        phrase = (
+            f"{name}, issued just now" if ago == "just now" else f"{name} for {ago}"
+        )
+        rows.append((warning, ago, phrase))
+    if not rows:
+        return _unavailable("No warning issue time is available.", as_json=as_json)
+    if as_json:
+        payload = {
+            "warnings": [
+                {
+                    "code": warning.code,
+                    "description": warning.description,
+                    "issued": warning.issue_time,
+                    "ago": ago,
+                }
+                for warning, ago, _phrase in rows
+            ]
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return "".join(phrase + "\n" for _warning, _ago, phrase in rows)
+
+
 def parse_warning_info(payload: dict) -> tuple[WarningDetail, ...]:
     """Turn a `warningInfo` document into detailed warning messages."""
     raw = payload.get("details")
