@@ -775,6 +775,7 @@ from hk_weather.hko import (
     format_today_miss,
     format_high_gap,
     format_today_range,
+    format_next_range,
     format_in_range,
     format_today_psr,
     format_today_wind,
@@ -1506,6 +1507,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--felt prints the locally felt earth tremor; --today prints today; "
             "--high-gap prints how far the current temperature is from today's forecast high; "
             "--today-range prints the span from today's forecast low to its high; "
+            "--next-range prints that span for the first 9-day forecast day; "
             "--in-range says whether the current temperature is inside that range; "
             "--today-psr prints today's chance of significant rain; "
             "--today-wind prints today's forecast wind; "
@@ -2035,6 +2037,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--today-range",
         action="store_true",
         help="Print the span from today's forecast low to its forecast high",
+    )
+    parser.add_argument(
+        "--next-range",
+        action="store_true",
+        help="Print the temperature span of the first 9-day forecast day",
     )
     parser.add_argument(
         "--in-range",
@@ -4721,6 +4728,11 @@ def main(argv: list[str] | None = None) -> int:
         elif args.today_range:
             text = format_today_range(
                 fetch_today(timeout=args.timeout, lang=args.lang),
+                as_json=args.json,
+            )
+        elif args.next_range:
+            text = format_next_range(
+                fetch_nine_temp(timeout=args.timeout, lang=args.lang),
                 as_json=args.json,
             )
         elif args.in_range:

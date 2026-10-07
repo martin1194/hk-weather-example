@@ -10873,6 +10873,37 @@ def format_today_range(day: TomorrowForecast | None, *, as_json: bool) -> str:
     return f"Today's range is {_number(span)}°C\n"
 
 
+def format_next_range(report: NineTemp, *, as_json: bool) -> str:
+    """Print the temperature span of the first 9-day forecast day that has both."""
+    chosen = next(
+        (
+            day
+            for day in report.days
+            if day.temp_low_c is not None
+            and day.temp_high_c is not None
+            and day.temp_high_c >= day.temp_low_c
+        ),
+        None,
+    )
+    if chosen is None:
+        return _unavailable("No forecast range is available.", as_json=as_json)
+    span = round(chosen.temp_high_c - chosen.temp_low_c, 1)
+    low = _number(chosen.temp_low_c)
+    high = _number(chosen.temp_high_c)
+    phrase = f"{_forecast_day_label(chosen)}'s range is {_number(span)}°C, from {low}°C to {high}°C."
+    if as_json:
+        payload = {
+            "date": chosen.date,
+            "week": chosen.week,
+            "low_c": chosen.temp_low_c,
+            "high_c": chosen.temp_high_c,
+            "range_c": span,
+            "phrase": phrase,
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
+
+
 def format_in_range(
     temperature_c: float,
     low_c: float | None,

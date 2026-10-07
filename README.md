@@ -103,6 +103,8 @@ hk-weather --high-gap
 hk-weather --high-gap --json
 hk-weather --today-range
 hk-weather --today-range --json
+hk-weather --next-range
+hk-weather --next-range --json
 hk-weather --in-range
 hk-weather --in-range --json
 hk-weather --today-psr
@@ -1104,6 +1106,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --high-gap` compares the current temperature with that day's forecast high. At 28°C with a high of 31°C it prints `3°C below today's high of 31°C`. A matching temperature prints `At today's high of 28°C`. A warmer reading prints how many degrees it is above the high. `--high-gap --json` prints the current temperature, the high, the gap, and that phrase. If today or its high is missing, it says `No forecast high is available.`
 
 `hk-weather --today-range` prints the span from today's forecast low to its forecast high. A low of 27°C and a high of 31°C is `Today's range is 4°C`. `--today-range --json` prints the low, the high, and that span. If today or either temperature is missing, it says `No forecast range is available.`
+
+`hk-weather --next-range` prints that span for the first day in the 9-day forecast that has both a high and a low. Thursday from 25°C to 30°C is `2026-10-08 Thursday's range is 5°C, from 25°C to 30°C.` `--today-range` still uses the Hong Kong calendar date, which can already have dropped out of the forecast. `--next-range --json` prints the date, the low, the high, the span, and that phrase. `--lang` applies. If no day has both temperatures, it says `No forecast range is available.`
 
 `hk-weather --in-range` says whether the current temperature sits inside that range. At 28°C with a low of 27°C and a high of 31°C it prints `Inside today's range of 27-31°C`. A warmer reading prints `Above today's range of 27-31°C`. A cooler reading prints `Below today's range of 27-31°C`. `--in-range --json` prints the temperature, the low, the high, and whether it is inside. If today or either forecast temperature is missing, it says `No forecast range is available.`
 
