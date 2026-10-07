@@ -779,6 +779,7 @@ from hk_weather.hko import (
     format_solar_miss,
     format_global_solar,
     format_global_solar_miss,
+    format_sun_rate,
     format_kau_sai_chau_solar_miss,
     format_tide,
     format_tide_miss,
@@ -1471,6 +1472,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--nei-lak-shan-wet prints the latest daily wet-bulb temperature at Nei Lak Shan; "
             "--solar prints the latest solar radiation; "
             "--global-solar prints the latest daily global solar radiation; "
+            "--sun-rate compares that radiation with bright sunshine on the same day; "
             "--kau-sai-chau-solar prints the latest daily global solar radiation at Kau Sai Chau; "
             "--wind lists the forecast wind; "
             "--wind-ease prints the first day that wind becomes lighter; "
@@ -4488,6 +4490,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--global-solar",
         action="store_true",
         help="Print the latest daily global solar radiation at King's Park",
+    )
+    parser.add_argument(
+        "--sun-rate",
+        action="store_true",
+        help="Compare King's Park global solar radiation with bright sunshine on the same day",
     )
     parser.add_argument(
         "--kau-sai-chau-solar",
@@ -9105,6 +9112,12 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_global_solar_miss(as_json=args.json)
             else:
                 text = format_json(global_solar) if args.json else format_global_solar(global_solar)
+        elif args.sun_rate:
+            solar = fetch_global_solar(timeout=args.timeout, lang=args.lang)
+            sunshine = None
+            if solar is not None:
+                sunshine = fetch_daily_sun(timeout=args.timeout, lang=args.lang)
+            text = format_sun_rate(solar, sunshine, as_json=args.json)
         elif args.kau_sai_chau_solar:
             kau_sai_chau_solar = fetch_kau_sai_chau_solar(
                 timeout=args.timeout, lang=args.lang

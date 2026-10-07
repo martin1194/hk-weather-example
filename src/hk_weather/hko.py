@@ -18446,6 +18446,55 @@ def format_global_solar_miss(*, as_json: bool = False) -> str:
     return _unavailable("No global solar radiation is available.", as_json=as_json)
 
 
+def format_sun_rate(
+    solar: GlobalSolar | None, sunshine: DailySun | None, *, as_json: bool
+) -> str:
+    """Compare King's Park global solar radiation with bright sunshine on the same day."""
+    if solar is None:
+        return _unavailable("No global solar radiation is available.", as_json=as_json)
+    if sunshine is None:
+        return _unavailable("No daily sunshine is available.", as_json=as_json)
+    if solar.date != sunshine.date:
+        return _unavailable("No shared sunshine day is available.", as_json=as_json)
+    station = sunshine.station
+    energy = _number(solar.global_solar_mj_m2)
+    hours = _number(sunshine.hours)
+    if sunshine.hours > 0 and solar.global_solar_mj_m2 > 0:
+        rate = round(solar.global_solar_mj_m2 / sunshine.hours, 1)
+        phrase = (
+            f"On {solar.date}, {station} recorded {energy} MJ/m² over {hours} hours "
+            f"of sunshine, {_number(rate)} MJ/m² per hour."
+        )
+    elif sunshine.hours > 0:
+        rate = None
+        phrase = (
+            f"On {solar.date}, {station} recorded {hours} hours of sunshine "
+            "and no global solar radiation."
+        )
+    elif solar.global_solar_mj_m2 > 0:
+        rate = None
+        phrase = (
+            f"On {solar.date}, {station} recorded {energy} MJ/m² of global solar "
+            "radiation with no bright sunshine."
+        )
+    else:
+        rate = None
+        phrase = (
+            f"On {solar.date}, {station} recorded no sunshine and no global solar radiation."
+        )
+    if as_json:
+        payload = {
+            "date": solar.date,
+            "station": station,
+            "solar_mj_m2": solar.global_solar_mj_m2,
+            "hours": sunshine.hours,
+            "rate_mj_m2": rate,
+            "phrase": phrase,
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
+
+
 _KAU_SAI_CHAU_SOLAR_STATIONS = {
     "en": "Kau Sai Chau",
     "tc": "滘西洲",
