@@ -19540,6 +19540,53 @@ def test_cli_until_sunset_says_how_long(monkeypatch, capsys):
     assert capsys.readouterr().out == "No sunset time is available.\n"
 
 
+def test_cli_since_sunrise_says_how_long(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_sunrise",
+        lambda timeout, lang="en": Sunrise("2026-10-03", "06:15", "12:12", "18:09"),
+    )
+    monkeypatch.setattr(
+        "hk_weather.hko._clock",
+        lambda: datetime.fromisoformat("2026-10-03T00:00:00+00:00"),
+    )
+    assert main(["--since-sunrise"]) == 0
+    assert capsys.readouterr().out == "Sunrise was 1 hour 45 min ago\n"
+    monkeypatch.setattr(
+        "hk_weather.hko._clock",
+        lambda: datetime.fromisoformat("2026-10-02T21:00:00+00:00"),
+    )
+    assert main(["--since-sunrise"]) == 0
+    assert capsys.readouterr().out == "Sunrise in 1 hour 15 min\n"
+    monkeypatch.setattr(
+        "hk_weather.hko._clock",
+        lambda: datetime.fromisoformat("2026-10-02T22:15:30+00:00"),
+    )
+    assert main(["--since-sunrise"]) == 0
+    assert capsys.readouterr().out == "Sunrise now\n"
+    monkeypatch.setattr(
+        "hk_weather.hko._clock",
+        lambda: datetime.fromisoformat("2026-10-03T00:00:00+00:00"),
+    )
+    assert main(["--since-sunrise", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "sunrise": "06:15",
+        "since": "Sunrise was 1 hour 45 min ago",
+    }
+    assert main(["--since-sunrise", "--sunrise"]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "pass one report flag at a time (--sunrise --since-sunrise)" in captured.err
+    monkeypatch.setattr("hk_weather.cli.fetch_sunrise", lambda timeout, lang="en": None)
+    assert main(["--since-sunrise"]) == 0
+    assert capsys.readouterr().out == "No sunrise time is available.\n"
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_sunrise",
+        lambda timeout, lang="en": Sunrise("2026-10-03", "", "12:12", "18:09"),
+    )
+    assert main(["--since-sunrise"]) == 0
+    assert capsys.readouterr().out == "No sunrise time is available.\n"
+
+
 def test_cli_daylight_prints_the_length_of_the_day(monkeypatch, capsys):
     monkeypatch.setattr(
         "hk_weather.cli.fetch_sunrise",

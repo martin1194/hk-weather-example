@@ -614,6 +614,8 @@ hk-weather --sunrise
 hk-weather --sunrise --json
 hk-weather --until-sunset
 hk-weather --until-sunset --json
+hk-weather --since-sunrise
+hk-weather --since-sunrise --json
 hk-weather --daylight
 hk-weather --daylight --json
 hk-weather --moon
@@ -1544,6 +1546,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --sunrise` (or `-U`) prints today's sunrise, sun transit, and sunset (`opendata.php`, `dataType=SRS`), for example `Rise: 06:15` and `Set: 18:09`. `--sunrise --json` prints that day as one JSON object. `--lang` applies. If the times are missing, it says so.
 
 `hk-weather --until-sunset` prints how long until that sunset, for example `Sunset in 10 hours 9 min` at 08:00 when sunset is 18:09. After sunset it says `Sunset was 1 hour 51 min ago`. Within the sunset minute it says `Sunset now`. `--until-sunset --json` prints the sunset clock and that phrase. If the sunset time is missing, it says `No sunset time is available.`
+
+`hk-weather --since-sunrise` prints how long it has been since today's sunrise. At 08:00, with sunrise at 06:15, that is `Sunrise was 1 hour 45 min ago`. Before sunrise it says `Sunrise in 1 hour 15 min`. Within the sunrise minute it says `Sunrise now`. `--since-sunrise --json` prints the sunrise clock and that phrase. If the sunrise time is missing, it says `No sunrise time is available.`
 
 `hk-weather --daylight` prints how long the sun is up, from sunrise to sunset. From `06:15` to `18:09` that is `Daylight 11 hours 54 min`. `--daylight --json` prints the sunrise, sunset, and that length. If either time is missing, it says `No daylight length is available.`
 
