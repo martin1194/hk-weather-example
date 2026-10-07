@@ -17611,6 +17611,21 @@ def format_icon_time_miss(*, as_json: bool = False) -> str:
     return _unavailable("No icon update time is available.", as_json=as_json)
 
 
+def format_icon_ago(report: IconUpdate | None, *, as_json: bool) -> str:
+    """Say how long ago the current weather icon changed."""
+    ago = None if report is None else _warning_ago(report.updated, _clock())
+    if report is None or ago is None:
+        return _unavailable("No icon update time is available.", as_json=as_json)
+    if ago == "just now":
+        phrase = "The weather icon changed just now."
+    else:
+        phrase = f"The weather icon changed {ago} ago."
+    if as_json:
+        payload = {"updated": report.updated, "ago": ago, "phrase": phrase}
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
+
+
 def parse_icon(payload: dict) -> IconReport | None:
     """Turn the `rhrread` icon field into icon numbers and labels."""
     raw = payload.get("icon")

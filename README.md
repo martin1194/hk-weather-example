@@ -693,6 +693,8 @@ hk-weather --uv-gap
 hk-weather --uv-gap --json
 hk-weather --icon-time
 hk-weather --icon-time --json
+hk-weather --icon-ago
+hk-weather --icon-ago --json
 hk-weather --icon
 hk-weather --icon --json
 hk-weather --current-updated
@@ -1692,6 +1694,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --uv-gap` compares that 15-minute index with the hourly UV. `15-minute UV is 2 above the hourly index of 6` means the latest quarter-hour reading is two points higher. A matching pair says `15-minute UV matches the hourly index of 6`, and a lower reading says `15-minute UV is 1 below the hourly index of 6`. `--uv-gap --json` prints both indexes, the signed gap, and that phrase. If either index is missing, it says `No UV comparison is available.`
 
 `hk-weather --icon-time` (or `-i`) prints when the current weather icon was last updated (`iconUpdateTime`). `--icon-time --json` prints that timestamp as one JSON object. `--lang` applies. If the field is missing or blank, it says `No icon update time is available.`
+
+`hk-weather --icon-ago` prints how long ago that change was, for example `The weather icon changed 7 hours 41 min ago.` A change in the last minute says `The weather icon changed just now.` `--icon-time` still prints the timestamp. `--icon-ago --json` prints the timestamp, the age, and that phrase. `--lang` applies. If the time is missing or still in the future, it says `No icon update time is available.`
 
 `hk-weather --icon` prints the current weather icon number and label from that report (`icon`), for example `52  Sunny Intervals`. `--icon-time` still prints when the icon changed. `--forecast-icon` still prints each day's forecast icon. `--icon --json` prints the current icons as one JSON object. `--lang` applies. If no icon is present, it says `No weather icon is available.`
 

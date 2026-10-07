@@ -14,6 +14,7 @@ from hk_weather.hko import (
     HeatIndexReading,
     HeatIndexReport,
     FifteenUv,
+    IconUpdate,
     ForecastIconDay,
     ForecastIcons,
     GustReading,
@@ -22002,6 +22003,58 @@ def test_cli_icon_time_when_blank_or_missing(monkeypatch, capsys):
     assert json.loads(capsys.readouterr().out) == {
         "message": "No icon update time is available."
     }
+
+
+def test_cli_icon_ago_prints_how_long_since_the_icon_changed(monkeypatch, capsys):
+    seen = {}
+    monkeypatch.setattr(
+        "hk_weather.hko._clock",
+        lambda: datetime.fromisoformat("2026-10-07T15:26:00+08:00"),
+    )
+
+    def fake_fetch(timeout, lang="en"):
+        seen["lang"] = lang
+        return IconUpdate("2026-10-07T07:45:00+08:00")
+
+    monkeypatch.setattr("hk_weather.cli.fetch_icon_time", fake_fetch)
+    assert main(["--icon-ago", "--lang", "tc"]) == 0
+    assert seen["lang"] == "tc"
+    assert capsys.readouterr().out == "The weather icon changed 7 hours 41 min ago.\n"
+
+    assert main(["--icon-ago", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "updated": "2026-10-07T07:45:00+08:00",
+        "ago": "7 hours 41 min",
+        "phrase": "The weather icon changed 7 hours 41 min ago.",
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_icon_time",
+        lambda timeout, lang="en": IconUpdate("2026-10-07T15:25:40+08:00"),
+    )
+    assert main(["--icon-ago"]) == 0
+    assert capsys.readouterr().out == "The weather icon changed just now.\n"
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_icon_time",
+        lambda timeout, lang="en": IconUpdate("2026-10-07T16:00:00+08:00"),
+    )
+    assert main(["--icon-ago"]) == 0
+    assert capsys.readouterr().out == "No icon update time is available.\n"
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_icon_time",
+        lambda timeout, lang="en": None,
+    )
+    assert main(["--icon-ago", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No icon update time is available."
+    }
+
+    assert main(["--icon-ago", "--icon-time"]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "pass one report flag at a time (--icon-time --icon-ago)" in captured.err
 
 
 def test_cli_icon_prints_code_and_label(monkeypatch, capsys):
