@@ -684,6 +684,8 @@ hk-weather --aqhi
 hk-weather --aqhi --json
 hk-weather --aqhi-mix
 hk-weather --aqhi-mix --json
+hk-weather --aqhi-low
+hk-weather --aqhi-low --json
 hk-weather --sunrise
 hk-weather --sunrise --json
 hk-weather --until-sunset
@@ -1738,6 +1740,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --aqhi` (or `-A`) prints the current Air Quality Health Index at each monitoring station, for example `Central/Western  General Stations  3  Low`. `--aqhi --json` prints that list as one JSON object. `--lang` chooses the English, Traditional Chinese, or Simplified Chinese feed. If none are present, it says so.
 
 `hk-weather --aqhi-mix` counts those stations by health-risk band, with the more serious band first. Right now that is `AQHI: 16 Moderate, 2 Low`. One band on its own is `AQHI: 18 Moderate`. Chinese labels such as 中 and 低 stay in the same order. `--aqhi` still lists every station. `--aqhi-mix --json` prints the counts and that phrase. If no risk labels are present, it says `No AQHI readings are available.`
+
+`hk-weather --aqhi-low` prints the station with the lowest of those readings, for example `The lowest AQHI is 3 Low at Tung Chung.` A tie names every station at that reading, and a field where every station matches says `at every station`. A value ending in `+` sorts just above that number. `--aqhi-mix` still counts the bands. `--aqhi-low --json` prints the index, the health risk, the stations, and that phrase. `--lang` applies. If no index is present, it says `No AQHI readings are available.`
 
 `hk-weather --sunrise` (or `-U`) prints today's sunrise, sun transit, and sunset (`opendata.php`, `dataType=SRS`), for example `Rise: 06:15` and `Set: 18:09`. `--sunrise --json` prints that day as one JSON object. `--lang` applies. If the times are missing, it says so.
 

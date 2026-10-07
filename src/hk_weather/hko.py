@@ -12173,6 +12173,19 @@ def _aqhi_severity(risk: str) -> int:
     return len(_AQHI_SEVERITY)
 
 
+def _aqhi_value(aqhi: str) -> float | None:
+    """Rank an AQHI token. A trailing plus sorts just above that number."""
+    text = aqhi.strip()
+    plus = text.endswith("+")
+    number = text[:-1] if plus else text
+    if not number.isdigit():
+        return None
+    value = float(number)
+    if plus:
+        value += 0.5
+    return value
+
+
 def format_aqhi_mix(report: AqhiReport, *, as_json: bool) -> str:
     """Print how many stations fall in each AQHI health-risk band."""
     counts: dict[str, int] = {}
@@ -12189,6 +12202,37 @@ def format_aqhi_mix(report: AqhiReport, *, as_json: bool) -> str:
             "updated": report.updated,
             "stations": sum(counts.values()),
             "bands": [{"risk": risk, "count": counts[risk]} for risk in bands],
+            "phrase": phrase,
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
+
+
+def format_aqhi_low(report: AqhiReport, *, as_json: bool) -> str:
+    """Print the station or stations with the lowest AQHI."""
+    ranked = [
+        reading
+        for reading in report.readings
+        if reading.station and _aqhi_value(reading.aqhi) is not None
+    ]
+    if not ranked:
+        return _unavailable("No AQHI readings are available.", as_json=as_json)
+    low = min(_aqhi_value(reading.aqhi) for reading in ranked)
+    chosen = [reading for reading in ranked if _aqhi_value(reading.aqhi) == low]
+    stations = list(dict.fromkeys(reading.station for reading in chosen))
+    everyone = list(dict.fromkeys(reading.station for reading in ranked))
+    risks = list(dict.fromkeys(reading.health_risk for reading in chosen if reading.health_risk))
+    risk = risks[0] if len(risks) == 1 else ""
+    label = f"{chosen[0].aqhi} {risk}".strip()
+    if len(stations) == len(everyone) and len(everyone) > 1:
+        phrase = f"The lowest AQHI is {label} at every station."
+    else:
+        phrase = f"The lowest AQHI is {label} at {_join_headings(stations)}."
+    if as_json:
+        payload = {
+            "aqhi": chosen[0].aqhi,
+            "health_risk": risk,
+            "stations": stations,
             "phrase": phrase,
         }
         return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"

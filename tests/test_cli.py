@@ -22303,6 +22303,78 @@ def test_cli_aqhi_mix_counts_health_risk_bands(monkeypatch, capsys):
     assert capsys.readouterr().out == "No AQHI readings are available.\n"
 
 
+def test_cli_aqhi_low_prints_the_lowest_station(monkeypatch, capsys):
+    seen = {}
+    report = AqhiReport(
+        "Wed, 07 Oct 2026 20:30",
+        (
+            AqhiReading("Sham Shui Po", "General Stations", "4", "Moderate"),
+            AqhiReading("Tung Chung", "General Stations", "3", "Low"),
+            AqhiReading("Central/Western", "General Stations", "5", "Moderate"),
+            AqhiReading("Tai Po", "General Stations", "4", "Moderate"),
+        ),
+    )
+
+    def fake_fetch(timeout, lang="en"):
+        seen["lang"] = lang
+        return report
+
+    monkeypatch.setattr("hk_weather.cli.fetch_aqhi", fake_fetch)
+    phrase = "The lowest AQHI is 3 Low at Tung Chung."
+    assert main(["--aqhi-low", "--lang", "tc"]) == 0
+    assert seen["lang"] == "tc"
+    assert capsys.readouterr().out == phrase + "\n"
+    assert main(["--aqhi-low", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "aqhi": "3",
+        "health_risk": "Low",
+        "stations": ["Tung Chung"],
+        "phrase": phrase,
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_aqhi",
+        lambda timeout, lang="en": AqhiReport(
+            "",
+            (
+                AqhiReading("Sham Shui Po", "General Stations", "4", "Moderate"),
+                AqhiReading("Tai Po", "General Stations", "4", "Moderate"),
+                AqhiReading("Central", "Roadside Stations", "10+", "Serious"),
+                AqhiReading("Mong Kok", "Roadside Stations", "10", "Very High"),
+            ),
+        ),
+    )
+    assert main(["--aqhi-low"]) == 0
+    assert capsys.readouterr().out == (
+        "The lowest AQHI is 4 Moderate at Sham Shui Po and Tai Po.\n"
+    )
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_aqhi",
+        lambda timeout, lang="en": AqhiReport(
+            "",
+            (
+                AqhiReading("Central/Western", "General Stations", "5", "Moderate"),
+                AqhiReading("Southern", "General Stations", "5", "Moderate"),
+            ),
+        ),
+    )
+    assert main(["--aqhi-low"]) == 0
+    assert capsys.readouterr().out == "The lowest AQHI is 5 Moderate at every station.\n"
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_aqhi",
+        lambda timeout, lang="en": AqhiReport("", ()),
+    )
+    assert main(["--aqhi-low", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No AQHI readings are available."
+    }
+
+    assert main(["--aqhi-mix", "--aqhi-low"]) == 2
+    assert "(--aqhi-mix --aqhi-low)" in capsys.readouterr().err
+
+
 def test_cli_until_sunset_says_how_long(monkeypatch, capsys):
     monkeypatch.setattr(
         "hk_weather.cli.fetch_sunrise",
