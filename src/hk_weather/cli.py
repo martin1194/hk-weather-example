@@ -662,6 +662,7 @@ from hk_weather.hko import (
     format_nine_humidity_miss,
     format_in_humidity,
     format_humid_floor,
+    format_humid_ceil,
     format_sea_temp,
     format_sea_temp_miss,
     format_sea_gap,
@@ -1351,6 +1352,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--nine-humidity prints each day's humidity from the 9-day forecast; "
             "--in-humidity says whether the current humidity is inside the next range; "
             "--humid-floor prints the first day the forecast minimum humidity changes; "
+            "--humid-ceil prints the first day the forecast maximum humidity changes; "
             "--warnings lists active warnings; "
             "--warning-count prints how many warnings are in force; "
             "--warning-time prints when active warnings were issued; "
@@ -2090,6 +2092,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--humid-floor",
         action="store_true",
         help="Print the first day the forecast minimum humidity changes",
+    )
+    parser.add_argument(
+        "--humid-ceil",
+        action="store_true",
+        help="Print the first day the forecast maximum humidity changes",
     )
     parser.add_argument(
         "-Y",
@@ -4887,6 +4894,11 @@ def main(argv: list[str] | None = None) -> int:
                 )
         elif args.humid_floor:
             text = format_humid_floor(
+                fetch_nine_humidity(timeout=args.timeout, lang=args.lang),
+                as_json=args.json,
+            )
+        elif args.humid_ceil:
+            text = format_humid_ceil(
                 fetch_nine_humidity(timeout=args.timeout, lang=args.lang),
                 as_json=args.json,
             )
