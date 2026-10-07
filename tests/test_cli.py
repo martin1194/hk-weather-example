@@ -28594,6 +28594,72 @@ def test_cli_temp_shift_counts_cooler_and_warmer(monkeypatch, capsys):
     }
 
 
+def test_cli_temp_drop_prints_the_largest_drop(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _text_response(
+            "Date time,Station,Past 24-hour Temperature Difference(degree Celsius)\n"
+            "202610071910,The Peak,-0.4\n"
+            "202610071910,Clear Water Bay,N/A\n"
+            "202610071910,Pak Tam Chung,-2.4\n"
+            "202610071910,Sheung Shui,+0.9\n"
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--temp-drop", "--lang", "tc"]) == 0
+    assert seen["url"].endswith("latest_past24_temperature_diff_uc.csv")
+    assert capsys.readouterr().out == (
+        "At 2026-10-07 19:10, the largest drop is 2.4°C at Pak Tam Chung.\n"
+    )
+
+    assert main(["--temp-drop", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "time": "2026-10-07 19:10",
+        "places": ["Pak Tam Chung"],
+        "change_c": -2.4,
+        "phrase": "At 2026-10-07 19:10, the largest drop is 2.4°C at Pak Tam Chung.",
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Date time,Station,Difference\n"
+            "202610071910,Tai Lung,-1.4\n"
+            "202610071910,Tseung Kwan O,-1.4\n"
+            "202610071910,The Peak,-0.4\n"
+        ),
+    )
+    assert main(["--temp-drop"]) == 0
+    assert capsys.readouterr().out == (
+        "At 2026-10-07 19:10, the largest drop is 1.4°C at Tai Lung and Tseung Kwan O.\n"
+    )
+
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Date time,Station,Difference\n"
+            "202610071910,Sheung Shui,+0.9\n"
+            "202610071910,Peng Chau,0\n"
+        ),
+    )
+    assert main(["--temp-drop"]) == 0
+    assert capsys.readouterr().out == "No station is cooler than 24 hours ago.\n"
+
+    assert main(["--temp-shift", "--temp-drop"]) == 2
+    assert "(--temp-shift --temp-drop)" in capsys.readouterr().err
+
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response("Date time,Station,Difference\n"),
+    )
+    assert main(["--temp-drop", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No 24-hour temperature changes are available."
+    }
+
+
 def test_cli_heat_index_prints_latest_minute(monkeypatch, capsys):
     seen = {}
 

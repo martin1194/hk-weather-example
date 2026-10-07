@@ -749,6 +749,7 @@ from hk_weather.hko import (
     format_temp_diff,
     format_temp_diff_miss,
     format_temp_shift,
+    format_temp_drop,
     format_heat_index,
     format_heat_index_miss,
     format_heat_gap,
@@ -1439,6 +1440,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--obs-grass prints the latest daily grass minimum at the Observatory; "
             "--temp-diff prints the past 24-hour temperature change; "
             "--temp-shift counts how many stations are cooler or warmer than 24 hours ago; "
+            "--temp-drop prints the station with the largest of those drops; "
             "--heat-index prints the latest Hong Kong Heat Index; "
             "--heat-gap compares that index at the current station with the air; "
             "--heat-span prints the gap between the lowest and highest heat index; "
@@ -4340,6 +4342,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--temp-shift",
         action="store_true",
         help="Count stations cooler or warmer than 24 hours ago",
+    )
+    parser.add_argument(
+        "--temp-drop",
+        action="store_true",
+        help="Print the station with the largest 24-hour temperature drop",
     )
     parser.add_argument(
         "--heat-index",
@@ -8871,6 +8878,9 @@ def main(argv: list[str] | None = None) -> int:
         elif args.temp_shift:
             temp_diff = fetch_temp_diff(timeout=args.timeout, lang=args.lang)
             text = format_temp_shift(temp_diff, as_json=args.json)
+        elif args.temp_drop:
+            temp_diff = fetch_temp_diff(timeout=args.timeout, lang=args.lang)
+            text = format_temp_drop(temp_diff, as_json=args.json)
         elif args.heat_index:
             heat_index = fetch_heat_index(timeout=args.timeout, lang=args.lang)
             if not heat_index.stations:

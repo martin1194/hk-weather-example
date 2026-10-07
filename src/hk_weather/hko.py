@@ -17572,6 +17572,44 @@ def format_temp_shift(report: TempDiffReport, *, as_json: bool) -> str:
     return phrase + "\n"
 
 
+def format_temp_drop(report: TempDiffReport, *, as_json: bool) -> str:
+    """Print the station with the largest 24-hour temperature drop."""
+    if not report.stations:
+        return _unavailable(
+            "No 24-hour temperature changes are available.", as_json=as_json
+        )
+    ranked = [
+        (round(reading.change_c, 1), reading.place)
+        for reading in report.stations
+        if reading.place
+    ]
+    if not ranked:
+        return _unavailable(
+            "No 24-hour temperature changes are available.", as_json=as_json
+        )
+    lowest = min(item[0] for item in ranked)
+    if lowest >= 0:
+        return _unavailable(
+            "No station is cooler than 24 hours ago.", as_json=as_json
+        )
+    winners = [place for change, place in ranked if change == lowest]
+    places = _join_headings(winners)
+    drop = _number(abs(lowest))
+    if report.obs_time:
+        phrase = f"At {report.obs_time}, the largest drop is {drop}°C at {places}."
+    else:
+        phrase = f"The largest drop is {drop}°C at {places}."
+    if as_json:
+        payload = {
+            "time": report.obs_time,
+            "places": winners,
+            "change_c": lowest,
+            "phrase": phrase,
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
+
+
 def parse_heat_index(text: str) -> HeatIndexReport:
     """Turn the heat-index CSV into the latest minute, one row per station."""
     stations: list[HeatIndexReading] = []
