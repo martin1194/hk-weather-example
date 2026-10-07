@@ -3289,6 +3289,74 @@ def test_cli_high_step_compares_the_first_two_forecast_highs(monkeypatch, capsys
     }
 
 
+def test_cli_high_rise_prints_the_climb_to_the_hottest_high(monkeypatch, capsys):
+    seen = {}
+    report = NineTemp(
+        "2026-10-07T16:30:00+08:00",
+        (
+            NineTempDay("2026-10-07", "Wednesday", None, 24),
+            NineTempDay("2026-10-08", "Thursday", 29, 24),
+            NineTempDay("2026-10-09", "Friday", 31, 26),
+            NineTempDay("2026-10-13", "Tuesday", 32, 27),
+            NineTempDay("2026-10-14", "Wednesday", 32, 27),
+        ),
+    )
+
+    def fake_fetch(timeout, lang="en"):
+        seen["lang"] = lang
+        return report
+
+    monkeypatch.setattr("hk_weather.cli.fetch_nine_temp", fake_fetch)
+    assert main(["--high-rise", "--lang", "tc"]) == 0
+    assert seen["lang"] == "tc"
+    assert capsys.readouterr().out == (
+        "The forecast high rises 3°C, from 29°C on 2026-10-08 Thursday "
+        "to 32°C on 2026-10-13 Tuesday.\n"
+    )
+
+    assert main(["--high-rise", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "from_date": "2026-10-08",
+        "from_week": "Thursday",
+        "from_high_c": 29,
+        "to_date": "2026-10-13",
+        "to_week": "Tuesday",
+        "to_high_c": 32,
+        "gap_c": 3,
+        "phrase": (
+            "The forecast high rises 3°C, from 29°C on 2026-10-08 Thursday "
+            "to 32°C on 2026-10-13 Tuesday."
+        ),
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_nine_temp",
+        lambda timeout, lang="en": NineTemp(
+            "",
+            (
+                NineTempDay("2026-10-08", "Thursday", 32, 27),
+                NineTempDay("2026-10-09", "Friday", 31, 26),
+            ),
+        ),
+    )
+    assert main(["--high-rise"]) == 0
+    assert capsys.readouterr().out == "The forecast high does not rise.\n"
+    assert main(["--high-rise", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "The forecast high does not rise."
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_nine_temp",
+        lambda timeout, lang="en": NineTemp("", ()),
+    )
+    assert main(["--high-rise"]) == 0
+    assert capsys.readouterr().out == "No forecast high is available.\n"
+
+    assert main(["--high-rise", "--high-step"]) == 2
+    assert "(--high-step --high-rise)" in capsys.readouterr().err
+
+
 def test_cli_nine_humidity_lists_each_day(monkeypatch, capsys):
     seen = {}
 
