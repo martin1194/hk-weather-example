@@ -85,6 +85,8 @@ hk-weather --high-gap
 hk-weather --high-gap --json
 hk-weather --today-range
 hk-weather --today-range --json
+hk-weather --today-psr
+hk-weather --today-psr --json
 hk-weather --yesterday
 hk-weather --yesterday --json
 hk-weather --mean-temp
@@ -1006,6 +1008,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --high-gap` compares the current temperature with that day's forecast high. At 28°C with a high of 31°C it prints `3°C below today's high of 31°C`. A matching temperature prints `At today's high of 28°C`. A warmer reading prints how many degrees it is above the high. `--high-gap --json` prints the current temperature, the high, the gap, and that phrase. If today or its high is missing, it says `No forecast high is available.`
 
 `hk-weather --today-range` prints the span from today's forecast low to its forecast high. A low of 27°C and a high of 31°C is `Today's range is 4°C`. `--today-range --json` prints the low, the high, and that span. If today or either temperature is missing, it says `No forecast range is available.`
+
+`hk-weather --today-psr` prints today's chance of significant rain from that same forecast. A PSR of Low is `Rain chance: Low`. `--psr` still prints the chance for every day. `--today-psr --json` prints the date and that chance. If it is missing, it says `No rain chance is available.`
 
 `hk-weather --yesterday` prints yesterday's Observatory summary (`dataType=RYES`, station HKO): high, low, rainfall, and humidity. `--yesterday --json` prints that summary as one JSON object. `--lang` applies. If the summary is missing, it says `Yesterday's Observatory summary is not available.`
 

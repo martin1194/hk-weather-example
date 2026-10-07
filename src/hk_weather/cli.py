@@ -747,6 +747,7 @@ from hk_weather.hko import (
     format_today_miss,
     format_high_gap,
     format_today_range,
+    format_today_psr,
     format_tomorrow,
     format_tomorrow_miss,
     format_uv,
@@ -1439,6 +1440,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--felt prints the locally felt earth tremor; --today prints today; "
             "--high-gap prints how far the current temperature is from today's forecast high; "
             "--today-range prints the span from today's forecast low to its high; "
+            "--today-psr prints today's chance of significant rain; "
             "--yesterday prints yesterday's Observatory summary; "
             "--mean-temp prints the latest daily mean temperature; "
             "--tai-mo-temp prints the latest daily mean temperature at Tai Mo Shan; "
@@ -1906,6 +1908,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--today-range",
         action="store_true",
         help="Print the span from today's forecast low to its forecast high",
+    )
+    parser.add_argument(
+        "--today-psr",
+        action="store_true",
+        help="Print today's chance of significant rain",
     )
     parser.add_argument(
         "--yesterday",
@@ -4363,6 +4370,11 @@ def main(argv: list[str] | None = None) -> int:
             text = format_high_gap(weather.temperature_c, high, as_json=args.json)
         elif args.today_range:
             text = format_today_range(
+                fetch_today(timeout=args.timeout, lang=args.lang),
+                as_json=args.json,
+            )
+        elif args.today_psr:
+            text = format_today_psr(
                 fetch_today(timeout=args.timeout, lang=args.lang),
                 as_json=args.json,
             )
