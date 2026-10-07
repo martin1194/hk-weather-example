@@ -617,6 +617,7 @@ from hk_weather.hko import (
     format_hour_driest,
     format_icon_time,
     format_icon_time_miss,
+    format_icon_ago,
     format_icon,
     format_icon_miss,
     format_current_updated,
@@ -1329,6 +1330,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--uv-level prints whether that 15-minute index is low through extreme; "
             "--uv-gap prints how far that 15-minute index is from the hourly UV; "
             "--icon-time prints when the weather icon changed; "
+            "--icon-ago prints how long ago that change was; "
             "--icon prints the current weather icon; "
             "--current-updated prints when the current weather report was updated; "
             "--tips prints special weather tips; "
@@ -3525,6 +3527,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--icon-time",
         action="store_true",
         help="Print when the current weather icon was last updated",
+    )
+    parser.add_argument(
+        "--icon-ago",
+        action="store_true",
+        help="Print how long ago the current weather icon changed",
     )
     parser.add_argument(
         "--icon",
@@ -7348,6 +7355,11 @@ def main(argv: list[str] | None = None) -> int:
                 text = format_icon_time_miss(as_json=args.json)
             else:
                 text = format_json(icon_time) if args.json else format_icon_time(icon_time)
+        elif args.icon_ago:
+            text = format_icon_ago(
+                fetch_icon_time(timeout=args.timeout, lang=args.lang),
+                as_json=args.json,
+            )
         elif args.icon:
             icon = fetch_icon(timeout=args.timeout, lang=args.lang)
             if icon is None:
