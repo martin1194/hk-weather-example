@@ -688,6 +688,7 @@ from hk_weather.hko import (
     format_sunrise_miss,
     format_until_sunset,
     format_since_sunrise,
+    format_sun_up,
     format_until_transit,
     format_daylight,
     format_temps,
@@ -1729,6 +1730,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--sunrise prints today's sunrise and sunset; "
             "--until-sunset prints how long until today's sunset; "
             "--since-sunrise prints how long it has been since today's sunrise; "
+            "--sun-up says whether the sun is above the horizon; "
             "--until-transit prints how long until today's sun transit; "
             "--daylight prints how long the sun is up; "
             "--moon prints today's moonrise and moonset; "
@@ -3356,6 +3358,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--since-sunrise",
         action="store_true",
         help="Print how long it has been since today's sunrise",
+    )
+    parser.add_argument(
+        "--sun-up",
+        action="store_true",
+        help="Say whether the sun is above the horizon",
     )
     parser.add_argument(
         "--until-transit",
@@ -7107,6 +7114,11 @@ def main(argv: list[str] | None = None) -> int:
             )
         elif args.since_sunrise:
             text = format_since_sunrise(
+                fetch_sunrise(timeout=args.timeout, lang=args.lang),
+                as_json=args.json,
+            )
+        elif args.sun_up:
+            text = format_sun_up(
                 fetch_sunrise(timeout=args.timeout, lang=args.lang),
                 as_json=args.json,
             )

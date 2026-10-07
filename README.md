@@ -640,6 +640,8 @@ hk-weather --until-sunset
 hk-weather --until-sunset --json
 hk-weather --since-sunrise
 hk-weather --since-sunrise --json
+hk-weather --sun-up
+hk-weather --sun-up --json
 hk-weather --until-transit
 hk-weather --until-transit --json
 hk-weather --daylight
@@ -1606,6 +1608,8 @@ The temperature and humidity lines use the Hong Kong Observatory station when th
 `hk-weather --until-sunset` prints how long until that sunset, for example `Sunset in 10 hours 9 min` at 08:00 when sunset is 18:09. After sunset it says `Sunset was 1 hour 51 min ago`. Within the sunset minute it says `Sunset now`. `--until-sunset --json` prints the sunset clock and that phrase. If the sunset time is missing, it says `No sunset time is available.`
 
 `hk-weather --since-sunrise` prints how long it has been since today's sunrise. At 08:00, with sunrise at 06:15, that is `Sunrise was 1 hour 45 min ago`. Before sunrise it says `Sunrise in 1 hour 15 min`. Within the sunrise minute it says `Sunrise now`. `--since-sunrise --json` prints the sunrise clock and that phrase. If the sunrise time is missing, it says `No sunrise time is available.`
+
+`hk-weather --sun-up` says whether the sun is above the horizon. With sunrise at 06:15 and sunset at 18:09, 10:00 is `The sun is up` and 01:00 is `The sun is down`. The sun is up from sunrise until sunset. `--sunrise` still prints the clocks. `--sun-up --json` prints that answer with the rise and set. If either time is missing, it says `No sun times are available.`
 
 `hk-weather --until-transit` prints how long until today's sun transit, the time the sun is highest. At 08:00, with transit at 12:12, that is `Transit in 4 hours 12 min`. After transit it says `Transit was 1 hour 48 min ago`. Within that minute it says `Transit now`. `--sunrise` still prints the rise, transit, and set clocks. `--until-transit --json` prints the transit clock and that phrase. If the transit time is missing, it says `No sun transit time is available.`
 

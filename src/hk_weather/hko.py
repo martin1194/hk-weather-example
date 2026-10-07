@@ -11432,6 +11432,22 @@ def format_since_sunrise(reading: Sunrise | None, *, as_json: bool) -> str:
     return phrase + "\n"
 
 
+def format_sun_up(reading: Sunrise | None, *, as_json: bool) -> str:
+    """Say whether the sun is above the horizon."""
+    up = (
+        _moon_is_up(reading.rise, reading.set, _clock())
+        if reading is not None
+        else None
+    )
+    if reading is None or up is None:
+        return _unavailable("No sun times are available.", as_json=as_json)
+    phrase = "The sun is up" if up else "The sun is down"
+    if as_json:
+        payload = {"up": up, "rise": reading.rise, "set": reading.set, "phrase": phrase}
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
+
+
 def _until_transit_phrase(moment: datetime, now: datetime) -> str:
     """Say whether sun transit is ahead, now, or already past."""
     seconds = int((moment - now).total_seconds())
