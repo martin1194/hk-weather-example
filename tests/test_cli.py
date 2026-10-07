@@ -108,6 +108,7 @@ def test_cli_find_lists_matching_flags(monkeypatch, capsys):
         "--tide-latest  Print the latest observed tide height at tide stations\n"
         "--tide-span  Print the gap between the lowest and highest latest tide heights\n"
         "--next-tide  Print how long until the next high or low tide at Quarry Bay\n"
+        "--tide-swing  Print how the first Quarry Bay tide changes to the next one\n"
     )
 
     assert main(["--find", "TIDE", "--json"]) == 0
@@ -119,6 +120,7 @@ def test_cli_find_lists_matching_flags(monkeypatch, capsys):
         "--tide-latest",
         "--tide-span",
         "--next-tide",
+        "--tide-swing",
     ]
 
     assert main(["--find", "no-such-flag-xyz"]) == 0
