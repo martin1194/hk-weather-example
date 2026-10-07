@@ -15782,6 +15782,57 @@ def format_since_midnight_miss(*, as_json: bool = False) -> str:
     return _unavailable("No temperatures since midnight are available.", as_json=as_json)
 
 
+def _midnight_span(reading: SinceMidnightReading) -> float | None:
+    """High minus low since midnight, when both readings are present."""
+    if reading.temp_high_c is None or reading.temp_low_c is None:
+        return None
+    span = round(reading.temp_high_c - reading.temp_low_c, 1)
+    if span < 0:
+        return None
+    return span
+
+
+def format_midnight_span(report: SinceMidnightReport, *, as_json: bool) -> str:
+    """Print the station with the widest temperature range since midnight."""
+    if not report.stations:
+        return _unavailable("No temperatures since midnight are available.", as_json=as_json)
+    spans = [(reading, _midnight_span(reading)) for reading in report.stations]
+    usable = [(reading, span) for reading, span in spans if span is not None]
+    if not usable:
+        return _unavailable("No temperature range since midnight is available.", as_json=as_json)
+    peak = max(span for _, span in usable)
+    winners = [(reading, span) for reading, span in usable if span == peak]
+
+    def clause(reading: SinceMidnightReading, span: float) -> str:
+        return (
+            f"{reading.place}  {_number(span)}°C, "
+            f"from {_number(reading.temp_low_c)}°C to {_number(reading.temp_high_c)}°C"
+        )
+
+    listed = "; ".join(clause(reading, span) for reading, span in winners)
+    if report.obs_time:
+        phrase = f"Widest since midnight: {report.obs_time}  {listed}"
+    else:
+        phrase = f"Widest since midnight: {listed}"
+    if as_json:
+        payload = {
+            "time": report.obs_time,
+            "span_c": peak,
+            "places": [
+                {
+                    "place": reading.place,
+                    "high_c": reading.temp_high_c,
+                    "low_c": reading.temp_low_c,
+                    "span_c": span,
+                }
+                for reading, span in winners
+            ],
+            "phrase": phrase,
+        }
+        return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    return phrase + "\n"
+
+
 def parse_pressure(text: str) -> PressureReport:
     """Turn the regional sea-level pressure CSV into one row per station."""
     stations: list[PressureReading] = []

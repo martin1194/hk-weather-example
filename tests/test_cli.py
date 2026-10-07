@@ -25262,6 +25262,85 @@ def test_cli_since_midnight_when_missing(monkeypatch, capsys):
     }
 
 
+def test_cli_midnight_span_prints_the_widest_range(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _text_response(
+            "Date time,Station,Maximum,Minimum\n"
+            "202610040150,Chek Lap Kok,  28.2  ,27.8\n"
+            "202610040150,Clear Water Bay,N/A,22\n"
+            "202610040150,HK Observatory,27.9,27.6\n"
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--midnight-span", "--lang", "tc"]) == 0
+    assert seen["url"].endswith("latest_since_midnight_maxmin_uc.csv")
+    assert capsys.readouterr().out == (
+        "Widest since midnight: 2026-10-04 01:50  Chek Lap Kok  0.4°C, "
+        "from 27.8°C to 28.2°C\n"
+    )
+
+    assert main(["--midnight-span", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "time": "2026-10-04 01:50",
+        "span_c": 0.4,
+        "places": [
+            {
+                "place": "Chek Lap Kok",
+                "high_c": 28.2,
+                "low_c": 27.8,
+                "span_c": 0.4,
+            }
+        ],
+        "phrase": (
+            "Widest since midnight: 2026-10-04 01:50  Chek Lap Kok  0.4°C, "
+            "from 27.8°C to 28.2°C"
+        ),
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Date time,Station,Maximum,Minimum\n"
+            "202610040150,Lau Fau Shan,25,20\n"
+            "202610040150,Tai Lung,23,18\n"
+            "202610040150,Sha Tin,24,20\n"
+        ),
+    )
+    assert main(["--midnight-span"]) == 0
+    assert capsys.readouterr().out == (
+        "Widest since midnight: 2026-10-04 01:50  "
+        "Lau Fau Shan  5°C, from 20°C to 25°C; "
+        "Tai Lung  5°C, from 18°C to 23°C\n"
+    )
+
+    assert main(["--midnight-span", "--since-midnight"]) == 2
+    assert "(--since-midnight --midnight-span)" in capsys.readouterr().err
+
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response(
+            "Date time,Station,Maximum,Minimum\n"
+            "202610040150,Clear Water Bay,28,N/A\n"
+        ),
+    )
+    assert main(["--midnight-span"]) == 0
+    assert capsys.readouterr().out == "No temperature range since midnight is available.\n"
+    assert main(["--midnight-span", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No temperature range since midnight is available."
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _text_response("Date time,Station,Maximum,Minimum\n"),
+    )
+    assert main(["--midnight-span"]) == 0
+    assert capsys.readouterr().out == "No temperatures since midnight are available.\n"
+
+
 def test_cli_pressure_prints_latest_stations(monkeypatch, capsys):
     seen = {}
 
