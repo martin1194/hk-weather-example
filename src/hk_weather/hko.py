@@ -10819,6 +10819,38 @@ def format_until_sunset(reading: Sunrise | None, *, as_json: bool) -> str:
     return phrase + "\n"
 
 
+def _clock_minutes(clock: str) -> int | None:
+    """Turn an HH:MM clock into minutes after midnight."""
+    parts = clock.strip().split(":")
+    if len(parts) != 2:
+        return None
+    try:
+        hour = int(parts[0])
+        minute = int(parts[1])
+    except ValueError:
+        return None
+    if not (0 <= hour <= 23 and 0 <= minute <= 59):
+        return None
+    return hour * 60 + minute
+
+
+def format_daylight(reading: Sunrise | None, *, as_json: bool) -> str:
+    """Print how long the sun is up, from sunrise to sunset."""
+    if reading is None:
+        return _unavailable("No daylight length is available.", as_json=as_json)
+    rise = _clock_minutes(reading.rise)
+    sunset = _clock_minutes(reading.set)
+    if rise is None or sunset is None or sunset <= rise:
+        return _unavailable("No daylight length is available.", as_json=as_json)
+    phrase = _span_phrase(sunset - rise)
+    if as_json:
+        return (
+            json.dumps({"rise": reading.rise, "set": reading.set, "daylight": phrase}, indent=2)
+            + "\n"
+        )
+    return f"Daylight {phrase}\n"
+
+
 def parse_moon(payload: dict) -> Moon | None:
     """Turn an `MRS` document into today's moonrise, transit, and moonset."""
     reading = parse_sunrise(payload)
