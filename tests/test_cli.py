@@ -19888,6 +19888,54 @@ def test_cli_until_moonset_says_how_long(monkeypatch, capsys):
     assert capsys.readouterr().out == "No moonset time is available.\n"
 
 
+def test_cli_moon_up_says_whether_the_moon_is_above_the_horizon(monkeypatch, capsys):
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_moon",
+        lambda timeout, lang="en": Moon("2026-10-03", "02:51", "09:26", "15:54"),
+    )
+    monkeypatch.setattr(
+        "hk_weather.hko._clock",
+        lambda: datetime.fromisoformat("2026-10-03T02:00:00+00:00"),
+    )
+    assert main(["--moon-up"]) == 0
+    assert capsys.readouterr().out == "The moon is up\n"
+    assert main(["--moon-up", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "up": True,
+        "rise": "02:51",
+        "set": "15:54",
+    }
+    monkeypatch.setattr(
+        "hk_weather.hko._clock",
+        lambda: datetime.fromisoformat("2026-10-02T17:00:00+00:00"),
+    )
+    assert main(["--moon-up"]) == 0
+    assert capsys.readouterr().out == "The moon is down\n"
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_moon",
+        lambda timeout, lang="en": Moon("2026-10-03", "23:39", "06:00", "12:48"),
+    )
+    monkeypatch.setattr(
+        "hk_weather.hko._clock",
+        lambda: datetime.fromisoformat("2026-10-02T17:00:00+00:00"),
+    )
+    assert main(["--moon-up"]) == 0
+    assert capsys.readouterr().out == "The moon is up\n"
+    monkeypatch.setattr(
+        "hk_weather.hko._clock",
+        lambda: datetime.fromisoformat("2026-10-03T10:00:00+00:00"),
+    )
+    assert main(["--moon-up"]) == 0
+    assert capsys.readouterr().out == "The moon is down\n"
+    assert main(["--moon-up", "--moon"]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "pass one report flag at a time (--moon --moon-up)" in captured.err
+    monkeypatch.setattr("hk_weather.cli.fetch_moon", lambda timeout, lang="en": None)
+    assert main(["--moon-up"]) == 0
+    assert capsys.readouterr().out == "No moon times are available.\n"
+
+
 def test_cli_moon_prints_times(monkeypatch, capsys):
     seen = {}
 
