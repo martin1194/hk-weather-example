@@ -19807,6 +19807,79 @@ def test_cli_forecast_icon_lists_each_day(monkeypatch, capsys):
     )
 
 
+def test_cli_sunny_days_lists_icon_50(monkeypatch, capsys):
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return _json_response(
+            {
+                "weatherForecast": [
+                    {"forecastDate": "20261008", "week": "Thursday", "ForecastIcon": 51},
+                    {"forecastDate": "20261010", "week": "Saturday", "ForecastIcon": 50},
+                    {"forecastDate": "20261011", "week": "Sunday", "ForecastIcon": 50},
+                    {"forecastDate": "20261016", "week": "Friday", "ForecastIcon": 51},
+                ]
+            }
+        )
+
+    monkeypatch.setattr("hk_weather.hko.urllib.request.urlopen", fake_urlopen)
+    assert main(["--sunny-days", "--lang", "tc"]) == 0
+    assert "dataType=fnd" in seen["url"]
+    assert "lang=tc" in seen["url"]
+    assert capsys.readouterr().out == (
+        "2 sunny days: 2026-10-10 Saturday and 2026-10-11 Sunday\n"
+    )
+
+    assert main(["--sunny-days", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "count": 2,
+        "days": [
+            {"date": "2026-10-10", "week": "Saturday", "icon": 50, "label": "Sunny"},
+            {"date": "2026-10-11", "week": "Sunday", "icon": 50, "label": "Sunny"},
+        ],
+        "phrase": "2 sunny days: 2026-10-10 Saturday and 2026-10-11 Sunday",
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {
+                "weatherForecast": [
+                    {"forecastDate": "20261012", "week": "Monday", "ForecastIcon": 50}
+                ]
+            }
+        ),
+    )
+    assert main(["--sunny-days"]) == 0
+    assert capsys.readouterr().out == "1 sunny day: 2026-10-12 Monday\n"
+
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response(
+            {
+                "weatherForecast": [
+                    {"forecastDate": "20261008", "week": "Thursday", "ForecastIcon": 51}
+                ]
+            }
+        ),
+    )
+    assert main(["--sunny-days"]) == 0
+    assert capsys.readouterr().out == "No sunny day is in the forecast.\n"
+
+    monkeypatch.setattr(
+        "hk_weather.hko.urllib.request.urlopen",
+        lambda request, timeout: _json_response({"weatherForecast": []}),
+    )
+    assert main(["--sunny-days", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No forecast icons are available."
+    }
+
+    assert main(["--sunny-days", "--today-icon"]) == 2
+    assert "(--today-icon --sunny-days)" in capsys.readouterr().err
+
+
 def test_cli_forecast_icon_json_is_one_object(monkeypatch, capsys):
     monkeypatch.setattr(
         "hk_weather.hko.urllib.request.urlopen",
