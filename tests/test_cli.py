@@ -42,6 +42,8 @@ from hk_weather.hko import (
     SoilReading,
     SoilReport,
     Sunrise,
+    SinceMidnightReading,
+    SinceMidnightReport,
     Sunshine,
     LatestTideReading,
     LatestTideReport,
@@ -27934,6 +27936,97 @@ def test_cli_midnight_span_prints_the_widest_range(monkeypatch, capsys):
     )
     assert main(["--midnight-span"]) == 0
     assert capsys.readouterr().out == "No temperatures since midnight are available.\n"
+
+
+def test_cli_so_far_compares_the_current_temperature_with_todays_high(monkeypatch, capsys):
+    seen = {}
+    report = SinceMidnightReport(
+        "2026-10-07 21:40",
+        (
+            SinceMidnightReading("Chek Lap Kok", 29.1, 26.0),
+            SinceMidnightReading("HK Observatory", 28.8, 23.5),
+        ),
+    )
+
+    def fake_current(timeout, lang="en"):
+        seen["current_lang"] = lang
+        return replace(SAMPLE_WEATHER, temperature_c=26)
+
+    def fake_midnight(timeout, lang="en"):
+        seen["midnight_lang"] = lang
+        if lang == "tc":
+            return SinceMidnightReport(
+                report.obs_time,
+                (
+                    SinceMidnightReading("赤鱲角", 29.1, 26.0),
+                    SinceMidnightReading("天文台", 28.8, 23.5),
+                ),
+            )
+        return report
+
+    monkeypatch.setattr("hk_weather.cli.fetch_current", fake_current)
+    monkeypatch.setattr("hk_weather.cli.fetch_since_midnight", fake_midnight)
+    phrase = "26°C is 2.8°C below today's high so far of 28.8°C at 天文台."
+    assert main(["--so-far", "--lang", "tc"]) == 0
+    assert seen["current_lang"] == "tc"
+    assert seen["midnight_lang"] == "tc"
+    assert capsys.readouterr().out == phrase + "\n"
+    assert main(["--so-far", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "temperature_c": 26,
+        "high_c": 28.8,
+        "place": "HK Observatory",
+        "time": "2026-10-07 21:40",
+        "gap_c": -2.8,
+        "phrase": "26°C is 2.8°C below today's high so far of 28.8°C at HK Observatory.",
+    }
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_current",
+        lambda timeout, lang="en": replace(SAMPLE_WEATHER, temperature_c=30),
+    )
+    assert main(["--so-far"]) == 0
+    assert capsys.readouterr().out == (
+        "30°C is 1.2°C above today's high so far of 28.8°C at HK Observatory.\n"
+    )
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_current",
+        lambda timeout, lang="en": replace(SAMPLE_WEATHER, temperature_c=28.8),
+    )
+    assert main(["--so-far"]) == 0
+    assert capsys.readouterr().out == (
+        "28.8°C matches today's high so far of 28.8°C at HK Observatory.\n"
+    )
+
+    def fail_midnight(timeout, lang="en"):
+        raise AssertionError("must not fetch temperatures since midnight")
+
+    monkeypatch.setattr("hk_weather.cli.fetch_since_midnight", fail_midnight)
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_current",
+        lambda timeout, lang="en": replace(SAMPLE_WEATHER, temperature_c=None),
+    )
+    assert main(["--so-far"]) == 0
+    assert capsys.readouterr().out == "No temperature reading is available.\n"
+
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_current",
+        lambda timeout, lang="en": replace(SAMPLE_WEATHER, temperature_c=26),
+    )
+    monkeypatch.setattr(
+        "hk_weather.cli.fetch_since_midnight",
+        lambda timeout, lang="en": SinceMidnightReport(
+            "2026-10-07 21:40",
+            (SinceMidnightReading("Chek Lap Kok", 29.1, 26.0),),
+        ),
+    )
+    assert main(["--so-far", "--json"]) == 0
+    assert json.loads(capsys.readouterr().out) == {
+        "message": "No Observatory high since midnight is available."
+    }
+
+    assert main(["--midnight-span", "--so-far"]) == 2
+    assert "(--midnight-span --so-far)" in capsys.readouterr().err
 
 
 def test_cli_pressure_prints_latest_stations(monkeypatch, capsys):

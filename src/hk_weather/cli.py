@@ -727,6 +727,7 @@ from hk_weather.hko import (
     format_since_midnight,
     format_since_midnight_miss,
     format_midnight_span,
+    format_so_far,
     format_pressure,
     format_pressure_miss,
     format_high_pressure,
@@ -1433,6 +1434,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--temp-gap prints where those readings differ most from the Observatory; "
             "--since-midnight prints each station's high and low since midnight; "
             "--midnight-span prints the station with the widest of those ranges; "
+            "--so-far compares the current temperature with the Observatory high since midnight; "
             "--pressure prints the latest 1-minute sea level pressure; "
             "--high-pressure prints the station with the highest of those readings; "
             "--pressure-gap prints where those readings differ most from the Observatory; "
@@ -4297,6 +4299,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--midnight-span",
         action="store_true",
         help="Print the station with the widest temperature range since midnight",
+    )
+    parser.add_argument(
+        "--so-far",
+        action="store_true",
+        help="Compare the current temperature with the Observatory high since midnight",
     )
     parser.add_argument(
         "--pressure",
@@ -8806,6 +8813,14 @@ def main(argv: list[str] | None = None) -> int:
         elif args.midnight_span:
             since_midnight = fetch_since_midnight(timeout=args.timeout, lang=args.lang)
             text = format_midnight_span(since_midnight, as_json=args.json)
+        elif args.so_far:
+            weather = fetch_current(timeout=args.timeout, lang=args.lang)
+            since_midnight = None
+            if weather.temperature_c is not None:
+                since_midnight = fetch_since_midnight(timeout=args.timeout, lang=args.lang)
+            text = format_so_far(
+                weather.temperature_c, since_midnight, as_json=args.json
+            )
         elif args.pressure:
             pressure = fetch_pressure(timeout=args.timeout, lang=args.lang)
             if not pressure.stations:
