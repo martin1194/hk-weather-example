@@ -9375,6 +9375,36 @@ def format_hotter(weather: CurrentWeather, threshold_c: float, *, as_json: bool)
     return "yes\n" if hotter else "no\n"
 
 
+def _humidex_c(temperature_c: float, humidity_percent: float) -> float:
+    """Canadian humidex from air temperature and relative humidity."""
+    dew = _live_dew_c(temperature_c, humidity_percent)
+    vapour = 6.11 * math.exp(5417.7530 * (1 / 273.16 - 1 / (273.15 + dew)))
+    return temperature_c + 0.5555 * (vapour - 10)
+
+
+def format_feels_like(
+    weather: CurrentWeather, *, as_json: bool, fahrenheit: bool = False
+) -> str:
+    """Estimate how warm it feels from the current temperature and humidity."""
+    humidity = weather.humidity_percent
+    if humidity is None or not 0 < humidity <= 100:
+        return _unavailable("No feels-like temperature is available.", as_json=as_json)
+    feels = round(_humidex_c(weather.temperature_c, humidity), 1)
+    if as_json:
+        return (
+            json.dumps(
+                {
+                    "feels_like_c": feels,
+                    "temperature_c": weather.temperature_c,
+                    "humidity_percent": humidity,
+                },
+                indent=2,
+            )
+            + "\n"
+        )
+    return f"Feels like {_celsius_text(feels, fahrenheit=fahrenheit)}\n"
+
+
 def _brief_warning(message: str) -> str:
     sentence = message.strip().split(". ", 1)[0].rstrip(".")
     if len(sentence) > 80:
